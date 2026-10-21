@@ -1,0 +1,85 @@
+/* Khung đăng nhập — Design_Web §6.3. Tấm phải dùng cùng gradient với sider để nhận ra là một hệ thống. */
+.auth-layout {
+  min-height: 100vh;
+  display: flex;
+  background: var(--c-surface);
+}
+
+.auth-layout__brand {
+  flex: 1 1 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+}
+
+.auth-layout__panel {
+  flex: 1 1 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 12px;
+  padding: 32px;
+  border-radius: 32px;
+  background: var(--grad-sider);
+  box-shadow: var(--shadow-pop);
+}
+
+.auth-layout__form {
+  width: 100%;
+  max-width: 400px;
+  color: var(--c-surface);
+}
+
+.auth-layout__title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--c-surface);
+}
+
+.auth-layout__desc {
+  margin: 4px 0 32px;
+  text-align: center;
+  color: var(--c-onGreenMuted);
+}
+
+.auth-layout__form .ant-form-item-label > label {
+  color: var(--c-surface);
+}
+
+.auth-layout__form .ant-btn-primary:not(:disabled) {
+  width: 100%;
+  height: 44px;
+  color: var(--c-green700);
+  background: var(--c-surface);
+  box-shadow: none;
+  font-weight: 600;
+}
+
+.auth-layout__form .ant-btn-primary:not(:disabled):hover {
+  background: var(--c-green50);
+  color: var(--c-green800);
+}
+
+.auth-layout__form .ant-btn-link {
+  color: var(--c-surface);
+}
+
+.auth-layout__footer {
+  margin-top: 16px;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .auth-layout__brand {
+    display: none;
+  }
+
+  .auth-layout__panel {
+    margin: 0;
+    border-radius: 0;
+  }
+}

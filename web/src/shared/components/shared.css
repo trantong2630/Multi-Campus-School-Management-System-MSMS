@@ -1,0 +1,365 @@
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 22px;
+  white-space: nowrap;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.page-header__title {
+  margin: 0;
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+  color: var(--c-text1);
+}
+
+.page-header__desc {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--c-text2);
+}
+
+.page-header__extra {
+  display: flex;
+  gap: 8px;
+}
+
+.narrow-notice {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px;
+  text-align: center;
+  color: var(--c-text2);
+  background: var(--c-bg);
+}
+
+.narrow-notice h2 {
+  margin: 8px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--c-text1);
+}
+
+.narrow-notice p {
+  margin: 0;
+  max-width: 360px;
+}
+
+/* ---------- Bảng (Design_Web §8.2) ---------- */
+.data-table .ant-table-thead > tr > th {
+  height: 40px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text2);
+}
+
+.data-table .ant-table-tbody > tr > td {
+  padding: 10px 16px;
+  height: 44px;
+}
+
+.data-table .ant-table-container {
+  border-radius: var(--radius-lg);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 0;
+  color: var(--c-text2);
+}
+
+.empty-state p {
+  margin: 0;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.filter-bar {
+  margin-bottom: 16px;
+}
+
+.filter-bar__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.table-card .ant-card-body {
+  padding: 16px;
+}
+
+.mono {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 13px;
+}
+
+.muted {
+  color: var(--c-text3);
+}
+
+/* ---------- Bảng lỗi import (Design_Web §9.2) ---------- */
+.import-errors__banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  color: var(--c-danger);
+  background: var(--c-coralBg);
+}
+
+.import-errors__banner span {
+  color: var(--c-text2);
+}
+
+.import-errors__skipped {
+  margin-top: 16px;
+  background: var(--c-neutralBg);
+}
+
+/* Thanh thao tác nổi khi chọn nhiều dòng (Design_Web §8.2). */
+.floating-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 20;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px 12px 20px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-modal);
+}
+
+.inline-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--c-text2);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 16px;
+}
+
+@media (max-width: 1400px) {
+  .form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ---------- Ô người trong bảng (Design_Web §8.2b) ---------- */
+.person-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.person-cell__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+  min-width: 0;
+}
+
+.person-cell__name {
+  font-weight: 500;
+  color: var(--c-text1);
+}
+
+.person-cell__sub {
+  font-size: 12px;
+  color: var(--c-text3);
+}
+
+.person-cell--muted .person-cell__name {
+  color: var(--c-text3);
+}
+
+/* ---------- Cảnh báo trong trang (Design_Web §8.7) ---------- */
+.inline-alert {
+  margin-bottom: 16px;
+}
+
+/* ---------- Kích thước ô lọc chuẩn: mọi màn dùng chung, không đặt width riêng (Design_Web §8.3) ---------- */
+.filter-bar .ant-select {
+  width: 220px;
+}
+
+.filter-bar .ant-input-search {
+  width: 280px;
+}
+
+/* ---------- Hero banner (Design_Web §8.5b) ---------- */
+.hero-banner {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 32px;
+  border-radius: var(--radius-lg);
+  background: var(--grad-hero);
+  color: var(--c-green800);
+}
+
+.hero-banner__text,
+.hero-banner__extra {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-banner__eyebrow {
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.hero-banner__title {
+  margin: 4px 0 0;
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+  color: var(--c-green800);
+}
+
+.hero-banner__desc {
+  margin: 4px 0 0;
+  color: var(--c-green800);
+}
+
+.hero-banner__orb {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--c-surface);
+  opacity: 0.35;
+}
+
+.hero-banner__orb--a {
+  width: 220px;
+  height: 220px;
+  right: -40px;
+  top: -80px;
+}
+
+.hero-banner__orb--b {
+  width: 120px;
+  height: 120px;
+  right: 160px;
+  bottom: -60px;
+}
+
+/* ---------- Thẻ chỉ số (Design_Web §8.6) ---------- */
+.stat-card .ant-card-body {
+  padding: 24px;
+}
+
+.stat-card--clickable {
+  cursor: pointer;
+  transition: box-shadow 150ms;
+}
+
+.stat-card--clickable:hover {
+  box-shadow: var(--shadow-pop);
+}
+
+.stat-card__icon {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+}
+
+.stat-card__value {
+  margin-top: 16px;
+  font-size: 30px;
+  line-height: 38px;
+  font-weight: 600;
+  color: var(--c-text1);
+}
+
+.stat-card__label {
+  font-size: 13px;
+  color: var(--c-text2);
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1440px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ---------- Logo chữ (Design_Web §6.0) ---------- */
+.brand-logo {
+  display: inline-block;
+  font-family: Montserrat, 'Be Vietnam Pro', sans-serif;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.brand-logo--green {
+  color: var(--c-green500);
+}
+
+.brand-logo--white {
+  color: var(--c-surface);
+}
+
+.brand-logo b {
+  font-weight: 700;
+}
+
+.brand-logo i {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--c-logoDot);
+}
