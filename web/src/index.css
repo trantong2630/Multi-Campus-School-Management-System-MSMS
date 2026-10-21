@@ -1,0 +1,66 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--c-bg);
+  color: var(--c-text1);
+  font-family: 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 22px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Card luôn có cả đổ bóng lẫn viền 1px: chỉ bóng thì mất hút trên nền bg (Design_Web §4). */
+.ant-card {
+  border: 1px solid var(--c-border);
+  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-lg);
+}
+
+/* Cột chứa số, điểm, giờ, mã phải dùng chữ số đều nhau để không nhảy khi cuộn. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Vòng focus luôn nhìn thấy được, phục vụ thao tác bàn phím (Design_Web §10). */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+/* Nút chính: đổ bóng xanh nhẹ để nổi trên nền sáng (Design_Web §8.1). */
+.ant-btn-primary:not(:disabled) {
+  box-shadow: 0 6px 14px var(--focus-ring);
+}
+
+.ant-table-wrapper .ant-table {
+  background: transparent;
+}
+
+/* Mũi tên giữa hai ô ngày: icon mặc định bị cắt mất một nét nên thay bằng ký tự (Design_Web §8.4). */
+.ant-picker-range-separator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ant-picker-range-separator .anticon {
+  display: none;
+}
+
+.ant-picker-range-separator::after {
+  content: '→';
+  font-size: 14px;
+  line-height: 1;
+  color: var(--c-text3);
+}
