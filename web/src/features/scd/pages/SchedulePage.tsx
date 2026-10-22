@@ -96,9 +96,9 @@ function SessionTd({ cell }: { cell: SessionCell | null }) {
   if (!cell) return <td className="tt-cell tt-cell--empty" />;
   const cls = cell.status === 'Cancelled' ? 'tt-cell--cancelled' : cell.status === 'Pending' ? 'tt-cell--pending' : 'tt-cell--filled';
   return (
-    <td className={`tt-cell ${cls}`} title={`${cell.subjectName} — ${cell.teacherName}`}>
+    <td className={`tt-cell ${cls}`} title={`${cell.subjectName} — ${cell.teacherName ?? 'Chờ phân công giáo viên'}`}>
       <div className="tt-subject">{cell.subjectAbbr}</div>
-      <div className="tt-teacher">{cell.teacherAbbr}</div>
+      <div className="tt-teacher">{cell.teacherAbbr ?? 'Chờ GV'}</div>
     </td>
   );
 }

@@ -82,8 +82,8 @@ public sealed class TimetablePublishService(
             throw ApiException.BadRequest("Phát hành sẽ xóa tiết Chỉnh tay, tiết bù hoặc tiết Chờ xử lý. Xem số lượng ở màn hình xem trước và xác nhận để tiếp tục.");
 
         // Khóa tiết cũ trước khi xóa, dùng để biết giáo viên nào thực sự có lịch thay đổi.
-        var oldKeys = (await deletable.Where(s => s.Status != "Cancelled")
-                .Select(s => new { s.ClassId, s.SessionDate, s.PeriodSlotId, s.SubjectId, s.TeacherId }).ToListAsync())
+        var oldKeys = (await deletable.Where(s => s.Status == "Scheduled" && s.TeacherId != null)
+                .Select(s => new { s.ClassId, s.SessionDate, s.PeriodSlotId, s.SubjectId, TeacherId = s.TeacherId!.Value }).ToListAsync())
             .Select(s => new SessionKey(s.ClassId, s.SessionDate, s.PeriodSlotId, s.SubjectId, s.TeacherId)).ToHashSet();
 
         var deleteIds = deletable.Select(s => s.SessionId);
@@ -179,7 +179,7 @@ public sealed class TimetablePublishService(
     }
 
     /// <summary>
-    /// BR-13: mỗi giáo viên tối đa một tiết tại một (ngày, khung giờ) trên toàn trường.
+    /// BR-13: mỗi giáo viên tối đa một tiết Đã xếp lịch tại một (ngày, khung giờ) trên toàn trường; tiết Chờ xử lý để trống giáo viên nên không chiếm chỗ.
     /// Tiết cùng phân hiệu trong khoảng sinh lại sẽ bị xóa nên không chiếm chỗ; chỉ tiết ở phân hiệu khác
     /// (hoặc tiết đã có điểm danh) mới gây xung đột.
     /// </summary>
@@ -190,11 +190,11 @@ public sealed class TimetablePublishService(
         if (teacherIds.Count == 0) return;
 
         var occupied = await db.TeachingSession.AsNoTracking()
-            .Where(s => teacherIds.Contains(s.TeacherId) && s.SessionDate >= plan.From && s.SessionDate <= plan.To && s.Status != "Cancelled")
+            .Where(s => s.TeacherId != null && teacherIds.Contains(s.TeacherId.Value) && s.SessionDate >= plan.From && s.SessionDate <= plan.To && s.Status == "Scheduled")
             .Where(s => s.Class.CampusId != campusId || s.AttendanceRecord.Any())
             .Select(s => new
             {
-                s.TeacherId, s.SessionDate, s.PeriodSlotId, CampusId = s.Class.CampusId, CampusName = s.Class.Campus.Name,
+                TeacherId = s.TeacherId!.Value, s.SessionDate, s.PeriodSlotId, CampusId = s.Class.CampusId, CampusName = s.Class.Campus.Name,
                 ClassName = s.Class.Name, Subject = s.Subject.Abbreviation,
             }).ToListAsync();
         if (occupied.Count == 0) return;

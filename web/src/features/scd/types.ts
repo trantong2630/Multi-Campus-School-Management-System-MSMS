@@ -100,8 +100,8 @@ export interface SessionCell {
   sessionId: number;
   subjectName: string;
   subjectAbbr: string;
-  teacherName: string;
-  teacherAbbr: string;
+  teacherName: string | null;
+  teacherAbbr: string | null;
   status: 'Scheduled' | 'Pending' | 'Cancelled';
   source: string;
 }

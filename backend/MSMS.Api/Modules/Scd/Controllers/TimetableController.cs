@@ -12,7 +12,7 @@ public class TimetableController(
     TimetableTemplateService template, TimetableImportService import, TimetablePublishService publish, ScheduleQueryService query)
     : ControllerBase
 {
-    [HttpGet("campuses"), Authorize(Policy = Policies.CampusReader)]
+    [HttpGet("campuses"), Authorize(Policy = Policies.TimetableReader)]
     public Task<List<CampusOptionDto>> MyCampuses() => query.MyCampusesAsync();
 
     [HttpGet("template"), Authorize(Policy = Policies.TimetableManager)]
@@ -27,10 +27,10 @@ public class TimetableController(
         return await import.ImportAsync(stream, file.FileName);
     }
 
-    [HttpGet("versions"), Authorize(Policy = Policies.CampusReader)]
+    [HttpGet("versions"), Authorize(Policy = Policies.TimetableReader)]
     public Task<List<TimetableVersionDto>> Versions([FromQuery] int campusId, [FromQuery] int semesterId) => query.ListVersionsAsync(campusId, semesterId);
 
-    [HttpGet("versions/{id:int}"), Authorize(Policy = Policies.CampusReader)]
+    [HttpGet("versions/{id:int}"), Authorize(Policy = Policies.TimetableReader)]
     public Task<VersionGridDto> VersionGrid(int id) => query.GetVersionGridAsync(id);
 
     [HttpGet("versions/{id:int}/preview"), Authorize(Policy = Policies.TimetableManager)]
