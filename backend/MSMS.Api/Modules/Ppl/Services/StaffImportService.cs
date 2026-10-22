@@ -13,7 +13,7 @@ namespace MSMS.Api.Modules.Ppl.Services;
 
 /// <summary>
 /// BR-11 — import một bước: validate TOÀN BỘ file rồi ghi trong một transaction; có một lỗi là không ghi gì.
-/// Người đã có (trùng Họ tên + Ngày sinh) bị bỏ qua cả dòng, import không bao giờ cập nhật hồ sơ cũ.
+/// Người đã có (trùng Số định danh) bị bỏ qua cả dòng, import không bao giờ cập nhật hồ sơ cũ.
 /// </summary>
 public sealed class StaffImportService(MsmsDbContext db, IClock clock)
 {
@@ -21,13 +21,13 @@ public sealed class StaffImportService(MsmsDbContext db, IClock clock)
     private static readonly string[] Headers =
     [
         "Họ và tên", "Ngày sinh", "Giới tính", "Số điện thoại", "Email",
-        "Tổ chuyên môn", "Phân hiệu chính", "Viết tắt GV",
+        "Tổ chuyên môn", "Phân hiệu chính", "Viết tắt GV", "Số định danh",
     ];
-    private static readonly int[] RequiredColumns = [1, 2, 7];
+    private static readonly int[] RequiredColumns = [1, 2, 7, 9];
 
     private const string SheetName = "02_Can_bo";
     private const int InputRows = 200;
-    private static readonly double[] ColumnWidths = [26, 13, 10, 15, 26, 20, 18, 12];
+    private static readonly double[] ColumnWidths = [26, 13, 10, 15, 26, 20, 18, 12, 16];
 
     /// <summary>Mẫu cố định, bố cục và kiểu dáng khớp sheet 02_Can_bo của MSMS_Excel_Import_Templates.xlsx.</summary>
     public FileContentResult BuildTemplate()
@@ -39,9 +39,9 @@ public sealed class StaffImportService(MsmsDbContext db, IClock clock)
 
         ws.WriteTitle("MSMS — MẪU IMPORT CÁN BỘ", last);
         ws.WriteNote(2,
-            "Bắt buộc (ô tô cam): Họ và tên, Ngày sinh, Phân hiệu chính. Tùy chọn: Giới tính, Số điện thoại, Email, Tổ chuyên môn, Viết tắt GV. "
+            "Bắt buộc (ô tô cam): Họ và tên, Ngày sinh, Phân hiệu chính, Số định danh. Tùy chọn: Giới tính, Số điện thoại, Email, Tổ chuyên môn, Viết tắt GV. "
             + "KHÔNG có cột mã hồ sơ — hệ thống tự sinh mã CB và tên đăng nhập. Viết tắt GV chỉ điền cho giáo viên, duy nhất toàn trường, chỉ chữ và số. "
-            + "Người đã có (trùng Họ và tên + Ngày sinh) thì bỏ qua cả dòng. Ngày sinh dd/mm/yyyy. Import chỉ tạo hồ sơ, không tạo tài khoản.",
+            + "Số định danh là 12 chữ số, duy nhất toàn trường, dùng để nhận diện người đã có (nên định dạng cột là Text để giữ số 0 đầu). Người đã có thì bỏ qua cả dòng. Ngày sinh dd/mm/yyyy. Import chỉ tạo hồ sơ, không tạo tài khoản.",
             last, 40);
 
         for (var i = 0; i < Headers.Length; i++)
@@ -59,6 +59,7 @@ public sealed class StaffImportService(MsmsDbContext db, IClock clock)
         foreach (var c in RequiredColumns)
             ws.Range(HeaderRow + 1, c, HeaderRow + InputRows, c).Style.Fill.BackgroundColor = ExcelHelpers.RequiredOrange;
 
+        ws.Range(HeaderRow + 1, 9, HeaderRow + InputRows, 9).Style.NumberFormat.Format = "@";
         ws.SheetView.FreezeRows(HeaderRow);
         return wb.ToFile("MSMS_Mau_Import_Can_bo.xlsx");
     }
@@ -88,13 +89,12 @@ public sealed class StaffImportService(MsmsDbContext db, IClock clock)
             var departments = await db.SubjectDepartment.AsNoTracking().ToDictionaryAsync(d => d.Name, d => d.DepartmentId, StringComparer.OrdinalIgnoreCase);
             var existingAbbrs = (await db.StaffProfile.Where(s => s.TeacherAbbr != null).Select(s => s.TeacherAbbr!).ToListAsync())
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var existingKeys = (await db.Person.Where(p => p.PersonType == "Staff")
-                    .Select(p => new { p.FullName, p.DateOfBirth }).ToListAsync())
-                .Select(p => Key(p.FullName, p.DateOfBirth)).ToHashSet();
+            var existingIds = await db.Person.Where(p => p.NationalId != null)
+                .ToDictionaryAsync(p => p.NationalId!, p => p.PersonCode);
 
             var skipped = new List<StaffImportSkipped>();
-            var valid = new List<(int Row, string Name, DateOnly Dob, string? Gender, string? Phone, string? Email, int? DeptId, int CampusId, string? Abbr)>();
-            var fileKeys = new Dictionary<string, int>();
+            var valid = new List<(int Row, string Name, DateOnly Dob, string NationalId, string? Gender, string? Phone, string? Email, int? DeptId, int CampusId, string? Abbr)>();
+            var fileIds = new Dictionary<string, int>();
             var fileAbbrs = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
             var lastRow = ws.LastRowUsed()?.RowNumber() ?? HeaderRow;
@@ -115,18 +115,21 @@ public sealed class StaffImportService(MsmsDbContext db, IClock clock)
                     Err(2, ws.Cell(row, 2).IsEmpty() ? "Thiếu ngày sinh. Điền theo dạng dd/mm/yyyy." : "Ngày sinh sai định dạng. Điền theo dạng dd/mm/yyyy.");
                 else if (dob > clock.Today) Err(2, "Ngày sinh ở tương lai. Kiểm tra lại năm sinh.");
 
+                var nationalId = ws.Cell(row, 9).NationalIdText();
+                if (nationalId.Length == 0) Err(9, "Thiếu số định danh. Điền đủ 12 chữ số.");
+                else if (!Guard.IsNationalId(nationalId)) Err(9, "Số định danh phải gồm đúng 12 chữ số.");
+
                 // Khóa nhận diện hợp lệ thì mới tra người đã có; người đã có thì bỏ qua cả dòng, không kiểm các cột còn lại.
                 if (errors.Count == rowErrors)
                 {
-                    var key = Key(name, dob);
-                    if (existingKeys.Contains(key))
+                    if (existingIds.TryGetValue(nationalId, out var existingCode))
                     {
-                        skipped.Add(new StaffImportSkipped(row, name, "Đã có hồ sơ cùng họ tên và ngày sinh, bỏ qua cả dòng."));
+                        skipped.Add(new StaffImportSkipped(row, name, $"Đã có hồ sơ {existingCode} cùng số định danh, bỏ qua cả dòng.", existingCode));
                         continue;
                     }
-                    if (fileKeys.TryGetValue(key, out var firstRow))
-                        Err(1, $"Trùng họ tên và ngày sinh với dòng {firstRow} trong cùng file. Xóa hoặc sửa một trong hai dòng.");
-                    else fileKeys[key] = row;
+                    if (fileIds.TryGetValue(nationalId, out var firstRow))
+                        Err(9, $"Trùng số định danh với dòng {firstRow} trong cùng file. Xóa hoặc sửa một trong hai dòng.");
+                    else fileIds[nationalId] = row;
                 }
 
                 var genderText = ws.Cell(row, 3).Text();
@@ -165,7 +168,7 @@ public sealed class StaffImportService(MsmsDbContext db, IClock clock)
                 }
 
                 if (errors.Count == rowErrors)
-                    valid.Add((row, name, dob, gender, phone.Length > 0 ? phone : null, email.Length > 0 ? email : null, deptId, campusId, abbr));
+                    valid.Add((row, name, dob, nationalId, gender, phone.Length > 0 ? phone : null, email.Length > 0 ? email : null, deptId, campusId, abbr));
             }
 
             if (errors.Count > 0) return Rejected(errors, skipped);
@@ -176,7 +179,7 @@ public sealed class StaffImportService(MsmsDbContext db, IClock clock)
                 var person = new Person
                 {
                     PersonType = "Staff", PersonCode = await PersonCodes.NextAsync(db, PersonCodes.Staff),
-                    FullName = v.Name, DateOfBirth = v.Dob, Gender = v.Gender, PhoneNumber = v.Phone, Email = v.Email,
+                    FullName = v.Name, DateOfBirth = v.Dob, NationalId = v.NationalId, Gender = v.Gender, PhoneNumber = v.Phone, Email = v.Email,
                     CreatedAt = clock.Now,
                 };
                 db.Person.Add(person);
@@ -190,9 +193,6 @@ public sealed class StaffImportService(MsmsDbContext db, IClock clock)
             return new StaffImportResult(true, valid.Count, skipped, [], 0);
         }
     }
-
-    private static string Key(string name, DateOnly? dob) =>
-        $"{TextNormalizer.Normalize(name).ToUpperInvariant()}|{dob:yyyy-MM-dd}";
 
     private static StaffImportResult Rejected(List<ImportError> errors, List<StaffImportSkipped> skipped) =>
         new(false, 0, skipped, errors.Take(ExcelHelpers.MaxReportedErrors).ToList(), errors.Count);

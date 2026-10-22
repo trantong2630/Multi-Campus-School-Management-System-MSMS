@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MSMS.Api.Common.Errors;
 using MSMS.Api.Data;
+using MSMS.Api.Modules.Iam.Services;
 
 namespace MSMS.Api.Common.Auth;
 
@@ -9,10 +10,18 @@ public sealed class AccountStatusMiddleware(RequestDelegate next)
 {
     private static readonly string[] AllowedWhenPending = ["/api/auth/change-password", "/api/auth/me", "/api/auth/logout"];
 
-    public async Task InvokeAsync(HttpContext context, MsmsDbContext db, CurrentUser user)
+    public async Task InvokeAsync(HttpContext context, MsmsDbContext db, CurrentUser user, SessionService sessions)
     {
         if (user.IsAuthenticated)
         {
+            // Phiên đã đăng xuất hoặc bị thu hồi thì access token còn hạn cũng bị từ chối (BR-05).
+            if (user.SessionId is not { } sid || !await sessions.IsActiveAsync(sid, user.AccountId))
+            {
+                await ExceptionMiddleware.Write(context, 401, ErrorCodes.Unauthorized,
+                    "Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Đăng nhập lại để tiếp tục.");
+                return;
+            }
+
             var status = await db.Account.AsNoTracking()
                 .Where(a => a.AccountId == user.AccountId)
                 .Select(a => a.Status)

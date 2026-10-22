@@ -16,9 +16,13 @@ public partial class MsmsDbContext : DbContext
 
     public virtual DbSet<Account> Account { get; set; }
 
+    public virtual DbSet<AccountSession> AccountSession { get; set; }
+
     public virtual DbSet<AiFeedback> AiFeedback { get; set; }
 
     public virtual DbSet<Assignment> Assignment { get; set; }
+
+    public virtual DbSet<AssignmentRecipient> AssignmentRecipient { get; set; }
 
     public virtual DbSet<AttendanceRecord> AttendanceRecord { get; set; }
 
@@ -129,6 +133,27 @@ public partial class MsmsDbContext : DbContext
                 .HasForeignKey<Account>(d => d.PersonId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Account__PersonI__10566F31");
+        });
+
+        modelBuilder.Entity<AccountSession>(entity =>
+        {
+            entity.HasKey(e => e.SessionId);
+
+            entity.HasIndex(e => e.AccountId, "IX_AccountSession_Account");
+
+            entity.HasIndex(e => e.RefreshTokenHash, "IX_AccountSession_RefreshToken");
+
+            entity.Property(e => e.CreatedAt).HasPrecision(0);
+            entity.Property(e => e.ExpiresAt).HasPrecision(0);
+            entity.Property(e => e.LastUsedAt).HasPrecision(0);
+            entity.Property(e => e.PreviousRefreshTokenHash).HasMaxLength(64);
+            entity.Property(e => e.RefreshTokenHash).HasMaxLength(64);
+            entity.Property(e => e.RevokedAt).HasPrecision(0);
+            entity.Property(e => e.UserAgent).HasMaxLength(300);
+
+            entity.HasOne(d => d.Account).WithMany(p => p.AccountSession)
+                .HasForeignKey(d => d.AccountId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         modelBuilder.Entity<AiFeedback>(entity =>
@@ -655,6 +680,8 @@ public partial class MsmsDbContext : DbContext
 
             entity.HasIndex(e => e.PhoneNumber, "IX_Person_Phone");
 
+            entity.HasIndex(e => e.NationalId, "UQ_Person_NationalId").IsUnique().HasFilter("([NationalId] IS NOT NULL)");
+
             entity.HasIndex(e => e.PersonCode, "UQ__Person__7B5569ED2848A4AA").IsUnique();
 
             entity.Property(e => e.Address).HasMaxLength(255);
@@ -665,6 +692,7 @@ public partial class MsmsDbContext : DbContext
             entity.Property(e => e.Email).HasMaxLength(150);
             entity.Property(e => e.FullName).HasMaxLength(150);
             entity.Property(e => e.Gender).HasMaxLength(10);
+            entity.Property(e => e.NationalId).HasMaxLength(12).IsUnicode(false).IsFixedLength();
             entity.Property(e => e.PersonCode).HasMaxLength(10);
             entity.Property(e => e.PersonType).HasMaxLength(10);
             entity.Property(e => e.PhoneNumber).HasMaxLength(20);
@@ -864,6 +892,21 @@ public partial class MsmsDbContext : DbContext
             entity.Property(e => e.Description).HasMaxLength(255);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.Name).HasMaxLength(150);
+        });
+
+        modelBuilder.Entity<AssignmentRecipient>(entity =>
+        {
+            entity.HasKey(e => new { e.AssignmentId, e.StudentId });
+
+            entity.HasIndex(e => e.StudentId, "IX_AssignmentRecipient_Student");
+
+            entity.HasOne(d => d.Assignment).WithMany(p => p.AssignmentRecipient)
+                .HasForeignKey(d => d.AssignmentId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+
+            entity.HasOne(d => d.Student).WithMany(p => p.AssignmentRecipient)
+                .HasForeignKey(d => d.StudentId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         modelBuilder.Entity<Submission>(entity =>

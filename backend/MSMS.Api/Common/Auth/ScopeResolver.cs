@@ -28,18 +28,17 @@ public sealed class ScopeResolver(MsmsDbContext db, CurrentUser user, IClock clo
         return _ledCampuses;
     }
 
-    /// <summary>Có đọc được dữ liệu vận hành (lịch dạy, thời khóa biểu) của phân hiệu này không.</summary>
+    /// <summary>Có đọc được lịch dạy và thời khóa biểu của phân hiệu này không. School Admin không làm thời khóa biểu.</summary>
     public async Task<bool> CanReadCampusAsync(int campusId) => user.AccountType switch
     {
-        AccountTypes.SchoolAdmin or AccountTypes.Principal => true,
+        AccountTypes.Principal => true,
         AccountTypes.VicePrincipal => (await LedCampusIdsAsync()).Contains(campusId),
         _ => false,
     };
 
-    /// <summary>Có ghi được (thời khóa biểu, điều chỉnh lịch) cho phân hiệu này không. Principal chỉ đọc.</summary>
+    /// <summary>Có ghi được (thời khóa biểu, điều chỉnh lịch) cho phân hiệu này không. Chỉ hiệu phó phụ trách phân hiệu; Principal chỉ đọc.</summary>
     public async Task<bool> CanManageCampusAsync(int campusId) => user.AccountType switch
     {
-        AccountTypes.SchoolAdmin => true,
         AccountTypes.VicePrincipal => (await LedCampusIdsAsync()).Contains(campusId),
         _ => false,
     };
@@ -47,7 +46,7 @@ public sealed class ScopeResolver(MsmsDbContext db, CurrentUser user, IClock clo
     public async Task EnsureCanManageCampusAsync(int campusId)
     {
         if (!await CanManageCampusAsync(campusId))
-            throw ApiException.Forbidden("Chỉ hiệu phó đang phụ trách phân hiệu này hoặc quản trị hệ thống mới thao tác được. Liên hệ hiệu trưởng để được gán phụ trách phân hiệu.");
+            throw ApiException.Forbidden("Chỉ hiệu phó đang phụ trách phân hiệu này mới thao tác được. Liên hệ hiệu trưởng để được gán phụ trách phân hiệu.");
     }
 
     public async Task EnsureCanReadCampusAsync(int campusId)

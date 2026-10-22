@@ -46,7 +46,7 @@ public sealed class StaffService(MsmsDbContext db, IClock clock)
         }
 
         return query.OrderBy(s => s.Staff.FullName)
-            .Select(s => new StaffDto(s.StaffId, s.Staff.PersonCode, s.Staff.FullName, s.Staff.DateOfBirth, s.Staff.Gender,
+            .Select(s => new StaffDto(s.StaffId, s.Staff.PersonCode, s.Staff.FullName, s.Staff.DateOfBirth, s.Staff.NationalId, s.Staff.Gender,
                 s.Staff.PhoneNumber, s.Staff.Email, s.PrimaryCampusId, s.PrimaryCampus.Name, s.DepartmentId,
                 s.Department == null ? null : s.Department.Name, s.TeacherAbbr, s.Position, s.IsActive,
                 s.Staff.Account == null ? null : s.Staff.Account.AccountId,
@@ -65,7 +65,7 @@ public sealed class StaffService(MsmsDbContext db, IClock clock)
         var person = new Person
         {
             PersonType = "Staff", PersonCode = await PersonCodes.NextAsync(db, PersonCodes.Staff),
-            FullName = v.FullName, DateOfBirth = r.DateOfBirth, Gender = v.Gender, PhoneNumber = v.Phone, Email = v.Email,
+            FullName = v.FullName, DateOfBirth = r.DateOfBirth, NationalId = v.NationalId, Gender = v.Gender, PhoneNumber = v.Phone, Email = v.Email,
             CreatedAt = clock.Now,
         };
         db.Person.Add(person);
@@ -127,7 +127,7 @@ public sealed class StaffService(MsmsDbContext db, IClock clock)
 
     private Task<StaffDto?> ListByIdAsync(int id) =>
         db.StaffProfile.AsNoTracking().Where(s => s.StaffId == id)
-            .Select(s => new StaffDto(s.StaffId, s.Staff.PersonCode, s.Staff.FullName, s.Staff.DateOfBirth, s.Staff.Gender,
+            .Select(s => new StaffDto(s.StaffId, s.Staff.PersonCode, s.Staff.FullName, s.Staff.DateOfBirth, s.Staff.NationalId, s.Staff.Gender,
                 s.Staff.PhoneNumber, s.Staff.Email, s.PrimaryCampusId, s.PrimaryCampus.Name, s.DepartmentId,
                 s.Department == null ? null : s.Department.Name, s.TeacherAbbr, s.Position, s.IsActive,
                 s.Staff.Account == null ? null : s.Staff.Account.AccountId,
@@ -135,12 +135,12 @@ public sealed class StaffService(MsmsDbContext db, IClock clock)
                 s.Staff.Account == null ? null : s.Staff.Account.Status))
             .FirstOrDefaultAsync();
 
-    private record Validated(string FullName, string? Gender, string? Phone, string? Email, string? Abbr);
+    private record Validated(string FullName, string? NationalId, string? Gender, string? Phone, string? Email, string? Abbr);
 
     private async Task<Validated> ValidateAsync(int? selfId, StaffRequest r)
     {
         var name = Guard.Required(r.FullName, "Họ và tên", 150);
-        if (r.DateOfBirth is not { } dob) throw ApiException.BadRequest("Ngày sinh không được để trống. Họ tên và ngày sinh là khóa nhận diện khi import.");
+        if (r.DateOfBirth is not { } dob) throw ApiException.BadRequest("Ngày sinh không được để trống.");
         if (dob > clock.Today) throw ApiException.BadRequest("Ngày sinh không được ở tương lai.");
 
         var gender = Genders.Parse(r.Gender);
@@ -162,9 +162,16 @@ public sealed class StaffService(MsmsDbContext db, IClock clock)
                 throw ApiException.BadRequest($"Viết tắt \"{abbr}\" đã được cán bộ khác dùng. Viết tắt giáo viên phải duy nhất toàn trường.");
         }
 
-        if (await db.Person.AnyAsync(p => p.PersonId != selfId && p.PersonType == "Staff" && p.FullName == name && p.DateOfBirth == dob))
-            throw ApiException.BadRequest($"Đã có cán bộ \"{name}\" sinh ngày {dob:dd/MM/yyyy}. Mở hồ sơ đó để sửa thay vì tạo mới.");
+        // Số định danh chỉ nhập khi tạo; sửa hồ sơ không đổi được (BR-10).
+        string? nationalId = null;
+        if (selfId is null)
+        {
+            nationalId = Guard.NationalId(r.NationalId);
+            var owner = await db.Person.Where(p => p.NationalId == nationalId).Select(p => new { p.PersonCode, p.FullName }).FirstOrDefaultAsync();
+            if (owner is not null)
+                throw ApiException.BadRequest($"Số định danh {nationalId} đã thuộc hồ sơ {owner.PersonCode} ({owner.FullName}). Mở hồ sơ đó để sửa thay vì tạo mới.");
+        }
 
-        return new Validated(name, gender, Guard.Optional(r.PhoneNumber, "Số điện thoại", 20), email, abbr);
+        return new Validated(name, nationalId, gender, Guard.Optional(r.PhoneNumber, "Số điện thoại", 20), email, abbr);
     }
 }

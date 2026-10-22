@@ -38,7 +38,7 @@ public record PublishRequest(bool ConfirmWarnings);
 public record PublishResultDto(int VersionId, int DeletedCount, int CreatedCount, int NotifiedTeachers);
 
 // ---- Lịch dạy ----
-public record SessionCellDto(long SessionId, string SubjectName, string SubjectAbbr, string TeacherName, string TeacherAbbr, string Status, string Source);
+public record SessionCellDto(long SessionId, string SubjectName, string SubjectAbbr, string? TeacherName, string? TeacherAbbr, string Status, string Source);
 public record DaySlotRow(int PeriodSlotId, string SessionOfDay, byte PeriodNo, TimeOnly StartTime, TimeOnly EndTime, IReadOnlyList<SessionCellDto?> Cells);
 public record DayScheduleDto(DateOnly Date, string? HolidayReason, bool IsHoliday, IReadOnlyList<GridClassDto> Classes, IReadOnlyList<DaySlotRow> Rows);
 public record MySessionDto(long SessionId, DateOnly Date, string SessionOfDay, byte PeriodNo, TimeOnly StartTime, TimeOnly EndTime,

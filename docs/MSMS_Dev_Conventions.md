@@ -15,10 +15,11 @@ Tài liệu kỹ thuật đi kèm Business Specification V3. Chốt bốn thứ:
 | Runtime | .NET 10 (ASP.NET Core) |
 | CSDL | SQL Server |
 | ORM | EF Core |
-| Đăng nhập | JWT Bearer |
+| Đăng nhập | JWT Bearer (access token 15 phút) + refresh token 7 ngày xoay vòng; phiên theo thiết bị lưu ở bảng `AccountSession` (chỉ lưu bản băm refresh token) để thu hồi được. Web giữ refresh token trong cookie HttpOnly `msms_rt` (Path `/api/auth`, SameSite=Lax, Secure khi HTTPS, không đặt hạn nên đóng trình duyệt là hết), access token chỉ giữ trong bộ nhớ trang; mobile nhận refresh token trong body và lưu bằng `flutter_secure_storage`. Web và API phải cùng domain khi deploy |
 | Phân quyền | Authorization Policy |
 | Excel | ClosedXML |
-| Email OTP | Google Gmail API (spec mục 3.2) |
+| Realtime | ASP.NET Core SignalR, một hub cho thông báo và chat. Server → client: `NotificationCreated`, `MessageReceived`, `MessageRead`, `Typing`, `PresenceChanged`; client → server chỉ `Typing` và `JoinConversation`, gửi tin vẫn qua REST. Web dùng `@microsoft/signalr`, mobile dùng `signalr_netcore` (chỉ khi app mở, có polling dự phòng). Token truyền qua query `access_token`, hub đi qua cùng kiểm tài khoản và phiên như REST. Đẩy sau `SaveChanges`. Đang nhập và online chỉ ở bộ nhớ, không thêm bảng; không backplane khi chạy một instance |
+| Email OTP | Gmail SMTP (`smtp.gmail.com:587`, STARTTLS) bằng App Password của hộp thư chung của trường; tài khoản và mật khẩu ứng dụng đặt trong cấu hình môi trường, không commit (spec mục 3.2) |
 | Gọi AI | HttpClient + REST của nhà cung cấp |
 | Log | Serilog, ghi ra file |
 | Test | xUnit |
@@ -48,7 +49,6 @@ Triển khai thật (VPS Windows + IIS, Docker, CI/CD) **có thể làm sau**, c
 | Bỏ | Lý do |
 | --- | --- |
 | Hangfire / Quartz | Spec không có job chạy nền nào; trạng thái suy lúc đọc |
-| SignalR | Thông báo dùng polling, chạy giống nhau trên web và mobile |
 | ASP.NET Core Identity | Đã có bảng Account riêng, 6 loại tài khoản cố định |
 | Redis | Chưa có nhu cầu cache thật |
 | Thư viện i18n | Chỉ một ngôn ngữ |
@@ -87,7 +87,7 @@ MSMS.Api/
   Program.cs
 
   Common/
-    Auth/            CurrentUser, ScopeResolver, IdentityActionGuard, Policies
+    Auth/            CurrentUser, ScopeResolver, Policies
     Time/            IClock — "hôm nay" theo giờ VN
     Rules/           SessionRules, AttendanceRules, AssignmentRules,
                      EnrollmentRules, EffectivePeriod, ScheduleConflict
@@ -182,7 +182,7 @@ Thư mục `shared/lib/labels/` (mỗi module một file, `index.ts` chỉ re-ex
 FE chỉ hiện `message`, dùng `code` khi cần xử lý riêng.
 
 **4. Chuẩn hóa chuỗi trước khi lưu và trước khi so sánh.**
-Trim, gộp khoảng trắng thừa, chuẩn hóa NFC. Áp cho mọi tên người, tên lớp, viết tắt. Thiếu bước này thì import đối chiếu "Họ tên + Ngày sinh" sẽ trượt, vì hai máy gõ dấu ra hai chuỗi khác nhau dù nhìn y hệt. **Đây là chỗ duy nhất sẽ sinh bug khó tìm.**
+Trim, gộp khoảng trắng thừa, chuẩn hóa NFC. Áp cho mọi tên người, tên lớp, viết tắt. Thiếu bước này thì import đối chiếu tên người, tên lớp, viết tắt sẽ trượt, vì hai máy gõ dấu ra hai chuỗi khác nhau dù nhìn y hệt. **Đây là chỗ duy nhất sẽ sinh bug khó tìm.**
 
 **5. Một hàm bỏ dấu chung.**
 Dùng cho sinh tên đăng nhập (BR-03). Tìm kiếm trên danh sách **phân biệt dấu** (collation `Vietnamese_CI_AS`): gõ có dấu mới khớp, không phân biệt hoa thường. Nhớ xử lý `đ → d`, `Đ → D` — bỏ dấu kiểu Unicode thường sót chữ này.
@@ -233,6 +233,7 @@ Chốt chữ nào hiện trên màn hình. Mọi màn hình, mọi file xuất E
 | Class | Lớp |
 | Staff | Cán bộ |
 | Enrollment | Ghi danh |
+| AccountSession | Phiên đăng nhập (theo thiết bị) |
 | **Responsibility** | **Trách nhiệm** |
 | **TeachingAssignment** | **Phụ trách chuyên môn** |
 | TimetableVersion | Phiên bản thời khóa biểu |
@@ -294,7 +295,7 @@ Màu badge: xanh lá = đang hiệu lực · vàng = chờ · xám = nháp hoặ
 
 **Chung:** Lưu · Đóng · Thêm · Sửa · Xóa · Tìm kiếm · Tải file mẫu · Tải lên · Xuất Excel
 
-**Nghiệp vụ:** Phát hành · Xem trước · Đổi giáo viên · Hủy tiết · Thêm tiết bù · Để nguyên · Gửi đơn · Rút đơn · Duyệt · Từ chối · Giao bài · Công bố điểm · Công bố nhận xét · Nhân bản · Ẩn bài · Khóa tài khoản · Cấp lại mật khẩu
+**Nghiệp vụ:** Phát hành · Xem trước · Đổi giáo viên · Hủy tiết · Thêm tiết bù · Gửi đơn · Rút đơn · Duyệt · Từ chối · Giao bài · Công bố điểm · Công bố nhận xét · Nhân bản · Ẩn bài · Khóa tài khoản · Cấp lại mật khẩu
 
 **Quy tắc:** nút đóng hộp thoại luôn là **"Đóng"**, không bao giờ "Hủy" — vì "Hủy" trong MSMS nghĩa là hủy tiết. Nhầm chỗ này là bấm nhầm thật.
 
@@ -322,7 +323,7 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Bảng tin | — |
 | Quản trị | Tài khoản · Nhật ký · Xuất dữ liệu |
 
-- Nhóm chỉ có một màn hình thì không có cấp 2. Áp dụng cả sau khi lọc theo quyền: nhóm chỉ còn một mục con hiển thị cho loại tài khoản đó thì hiện thẳng thành mục cấp 1 (ví dụ giáo viên chỉ thấy **Lịch dạy**; School Admin chỉ thấy **Tài khoản** khi nhóm Quản trị chưa có mục nào khác).
+- Nhóm chỉ có một màn hình thì không có cấp 2. Áp dụng cả sau khi lọc theo quyền: nhóm chỉ còn một mục con hiển thị cho loại tài khoản đó thì hiện thẳng thành mục cấp 1 (ví dụ giáo viên chỉ thấy **Lịch dạy**; chủ nhiệm chỉ có quyền xuất điểm danh thì nhóm Quản trị hiện thẳng thành **Xuất dữ liệu**). School Admin không thấy Dashboard, Thời khóa biểu và Xuất dữ liệu; nhóm Quản trị của School Admin gồm **Tài khoản** và **Nhật ký**.
 - **Trang chủ** là mục cấp 1 đầu tiên, mọi loại tài khoản đều thấy.
 - Mục cha **không điều hướng**, chỉ xổ ra; vào trang con thì cha tự xổ và sáng lên.
 - Icon chỉ ở cấp 1; mục con thụt vào, có chấm tròn đầu dòng, không icon.

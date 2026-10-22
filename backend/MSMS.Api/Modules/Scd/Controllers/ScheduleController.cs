@@ -9,7 +9,7 @@ namespace MSMS.Api.Modules.Scd.Controllers;
 [ApiController, Route("api/scd/schedule")]
 public class ScheduleController(ScheduleQueryService query) : ControllerBase
 {
-    [HttpGet("day"), Authorize(Policy = Policies.CampusReader)]
+    [HttpGet("day"), Authorize(Policy = Policies.TimetableReader)]
     public Task<DayScheduleDto> Day([FromQuery] int campusId, [FromQuery] DateOnly date) => query.GetDayAsync(campusId, date);
 
     [HttpGet("mine"), Authorize(Policy = Policies.Staff)]

@@ -4,16 +4,16 @@ namespace MSMS.Api.Modules.Ppl.Dtos;
 
 // PPL-01 Danh bạ cán bộ
 public record StaffDto(
-    int StaffId, string PersonCode, string FullName, DateOnly? DateOfBirth, string? Gender, string? PhoneNumber, string? Email,
+    int StaffId, string PersonCode, string FullName, DateOnly? DateOfBirth, string? NationalId, string? Gender, string? PhoneNumber, string? Email,
     int PrimaryCampusId, string PrimaryCampusName, int? DepartmentId, string? DepartmentName,
     string? TeacherAbbr, string? Position, bool IsActive,
     int? AccountId, string? AccountType, string? AccountStatus);
 
 public record StaffRequest(
-    string FullName, DateOnly? DateOfBirth, string? Gender, string? PhoneNumber, string? Email,
+    string FullName, DateOnly? DateOfBirth, string? NationalId, string? Gender, string? PhoneNumber, string? Email,
     int PrimaryCampusId, int? DepartmentId, string? TeacherAbbr, string? Position);
 
-public record StaffImportSkipped(int Row, string FullName, string Reason);
+public record StaffImportSkipped(int Row, string FullName, string Reason, string? PersonCode = null);
 
 public record StaffImportResult(bool Accepted, int Created, IReadOnlyList<StaffImportSkipped> Skipped,
     IReadOnlyList<ImportError> Errors, int TotalErrors);

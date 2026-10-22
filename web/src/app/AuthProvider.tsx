@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from 'react';
 import { iamApi } from '@/features/iam/api';
 import type { UserInfo } from '@/features/iam/types';
-import { AUTH_LOST_EVENT, tokenStore } from './apiClient';
+import { AUTH_LOST_EVENT, refreshSession, tokenStore } from './apiClient';
 
 interface AuthContextValue {
   user: UserInfo | null;
@@ -16,11 +16,11 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserInfo | null>(null);
-  const [loading, setLoading] = useState(() => tokenStore.get() !== null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!tokenStore.get()) return;
-    iamApi.me().then(setUser).catch(() => tokenStore.clear()).finally(() => setLoading(false));
+    // Mở tab mới hoặc F5: access token trong bộ nhớ đã mất, lấy lại bằng cookie phiên nếu còn.
+    refreshSession().then((s) => setUser(s.user)).catch(() => tokenStore.clear()).finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await iamApi.logout();
     } finally {
-      // Đăng xuất chỉ kết thúc phiên trên thiết bị hiện tại (BR-05).
+      // Backend thu hồi phiên của thiết bị hiện tại (BR-05); dù gọi lỗi vẫn bỏ token ở client.
       tokenStore.clear();
       setUser(null);
     }

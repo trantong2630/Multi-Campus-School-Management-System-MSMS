@@ -1,11 +1,18 @@
 import axios, { isAxiosError } from 'axios';
+import type { UserInfo } from '@/features/iam/types';
 
-const TOKEN_KEY = 'msms.token';
+// Access token chỉ giữ trong bộ nhớ trang. Refresh token nằm trong cookie HttpOnly do backend đặt: các tab dùng chung,
+// đóng trình duyệt là mất, JavaScript không đọc được (BR-05).
+let accessToken: string | null = null;
 
 export const tokenStore = {
-  get: () => localStorage.getItem(TOKEN_KEY),
-  set: (token: string) => localStorage.setItem(TOKEN_KEY, token),
-  clear: () => localStorage.removeItem(TOKEN_KEY),
+  get: () => accessToken,
+  set: (token: string) => {
+    accessToken = token;
+  },
+  clear: () => {
+    accessToken = null;
+  },
 };
 
 export const apiClient = axios.create({ baseURL: '/api' });
@@ -16,15 +23,51 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Phiên hết hạn hoặc tài khoản bị khóa giữa phiên (BR-05): bỏ token, AuthProvider đưa về trang đăng nhập.
+// Access token ngắn hạn hết hạn thì đổi bằng refresh token rồi gọi lại; không đổi được (hết hạn, đã đăng xuất,
+// tài khoản bị khóa) thì bỏ token, AuthProvider đưa về trang đăng nhập (BR-05).
 export const AUTH_LOST_EVENT = 'msms:auth-lost';
+
+let refreshing: Promise<RefreshedSession> | null = null;
+
+interface RefreshedSession {
+  token: string;
+  user: UserInfo;
+}
+
+/** Đổi cookie refresh lấy access token mới. Nhiều nơi gọi cùng lúc thì dùng chung một lần gọi. */
+export function refreshSession(): Promise<RefreshedSession> {
+  refreshing ??= axios
+    .post<RefreshedSession>('/api/auth/refresh', {})
+    .then((r) => {
+      tokenStore.set(r.data.token);
+      return r.data;
+    })
+    .finally(() => {
+      refreshing = null;
+    });
+  return refreshing;
+}
+
 apiClient.interceptors.response.use(
   (res) => res,
-  (error) => {
-    if (isAxiosError(error) && error.response?.status === 401 && !error.config?.url?.includes('/auth/login')) {
-      tokenStore.clear();
-      window.dispatchEvent(new Event(AUTH_LOST_EVENT));
+  async (error) => {
+    if (!isAxiosError(error) || error.response?.status !== 401 || !error.config) return Promise.reject(error);
+    const url = error.config.url ?? '';
+    if (url.includes('/auth/login') || url.includes('/auth/refresh')) return Promise.reject(error);
+
+    const config = error.config as typeof error.config & { _retried?: boolean };
+    if (!config._retried) {
+      try {
+        const session = await refreshSession();
+        config._retried = true;
+        config.headers.Authorization = `Bearer ${session.token}`;
+        return apiClient(config);
+      } catch {
+        // rơi xuống bước bỏ phiên bên dưới
+      }
     }
+    tokenStore.clear();
+    window.dispatchEvent(new Event(AUTH_LOST_EVENT));
     return Promise.reject(error);
   },
 );

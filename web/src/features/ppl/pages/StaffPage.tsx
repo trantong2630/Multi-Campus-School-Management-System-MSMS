@@ -30,6 +30,7 @@ import type { Staff } from '../types';
 interface FormValues {
   fullName: string;
   dateOfBirth: Dayjs;
+  nationalId?: string;
   gender?: string;
   phoneNumber?: string;
   email?: string;
@@ -152,6 +153,7 @@ export function StaffPage() {
           columns={[
             { title: 'Họ và tên', dataIndex: 'fullName', width: 260, render: (v: string, s: Staff) => <PersonCell name={v} sub={s.personCode} muted={!s.isActive} /> },
             { title: 'Ngày sinh', dataIndex: 'dateOfBirth', width: 110, className: 'tabular', render: (v: string | null) => formatDate(v) },
+            { title: 'Số định danh', dataIndex: 'nationalId', width: 140, className: 'tabular', render: (v: string | null) => v ?? <span className="muted">—</span> },
             { title: 'Phân hiệu chính', dataIndex: 'primaryCampusName', width: 140 },
             { title: 'Tổ chuyên môn', dataIndex: 'departmentName', width: 150, render: (v: string | null) => v ?? <span className="muted">—</span> },
             { title: 'Viết tắt GV', dataIndex: 'teacherAbbr', width: 100, render: (v: string | null) => v ? <code className="mono">{v}</code> : <span className="muted">Chưa có</span> },
@@ -199,7 +201,7 @@ export function StaffPage() {
         open={editing !== null} title={editing === 'new' ? 'Thêm cán bộ' : 'Sửa hồ sơ cán bộ'} width={640}
         form={form} onClose={() => setEditing(null)} onSubmit={save}
         initialValues={editing && editing !== 'new'
-          ? { ...editing, dateOfBirth: editing.dateOfBirth ? dayjs(editing.dateOfBirth) : undefined, gender: editing.gender ?? undefined,
+          ? { ...editing, nationalId: editing.nationalId ?? undefined, dateOfBirth: editing.dateOfBirth ? dayjs(editing.dateOfBirth) : undefined, gender: editing.gender ?? undefined,
             phoneNumber: editing.phoneNumber ?? undefined, email: editing.email ?? undefined, departmentId: editing.departmentId ?? undefined,
             teacherAbbr: editing.teacherAbbr ?? undefined, position: editing.position ?? undefined } as Partial<FormValues>
           : undefined}
@@ -208,8 +210,13 @@ export function StaffPage() {
           <Form.Item label="Họ và tên" name="fullName" rules={[{ required: true, whitespace: true, message: 'Nhập họ và tên đầy đủ.' }]}>
             <Input maxLength={150} />
           </Form.Item>
-          <Form.Item label="Ngày sinh" name="dateOfBirth" rules={[{ required: true, message: 'Chọn ngày sinh. Họ tên và ngày sinh là khóa nhận diện khi import.' }]}>
+          <Form.Item label="Ngày sinh" name="dateOfBirth" rules={[{ required: true, message: 'Chọn ngày sinh.' }]}>
             <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(dayjs())} />
+          </Form.Item>
+          <Form.Item label="Số định danh cá nhân" name="nationalId"
+            extra={editing === 'new' ? 'Đủ 12 chữ số, duy nhất toàn trường, không sửa được sau khi tạo.' : 'Không sửa được sau khi tạo.'}
+            rules={editing === 'new' ? [{ required: true, message: 'Nhập số định danh cá nhân.' }, { pattern: /^\d{12}$/, message: 'Số định danh gồm đúng 12 chữ số.' }] : []}>
+            <Input maxLength={12} inputMode="numeric" disabled={editing !== 'new'} />
           </Form.Item>
           <Form.Item label="Phân hiệu chính" name="primaryCampusId" rules={[{ required: true, message: 'Chọn phân hiệu chính.' }]}>
             <Select options={campuses.data?.filter((c) => c.isActive).map((c) => ({ value: c.campusId, label: c.name }))} />

@@ -1,4 +1,4 @@
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
@@ -17,17 +17,19 @@ namespace MSMS.Api.Modules.Iam.Services;
 
 public interface IAuthService
 {
-    Task<LoginResponse> LoginAsync(LoginRequest request);
+    Task<LoginResponse> LoginAsync(LoginRequest request, string? userAgent);
+    Task<LoginResponse> RefreshAsync(RefreshRequest request);
+    Task LogoutAsync(Guid sessionId);
     Task<UserInfo> GetMeAsync(int accountId);
-    Task ChangePasswordAsync(int accountId, ChangePasswordRequest request);
+    Task ChangePasswordAsync(int accountId, Guid? sessionId, ChangePasswordRequest request);
 }
 
-public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOptions> jwt) : IAuthService
+public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOptions> jwt, SessionService sessions) : IAuthService
 {
     private static readonly PasswordHasher<Account> Hasher = new();
     private const int MinPasswordLength = 8;
 
-    public async Task<LoginResponse> LoginAsync(LoginRequest request)
+    public async Task<LoginResponse> LoginAsync(LoginRequest request, string? userAgent)
     {
         var username = TextNormalizer.Normalize(request.Username);
         var account = await db.Account.Include(a => a.Person)
@@ -43,9 +45,27 @@ public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOpti
         account.LastLoginAt = clock.Now;
         await db.SaveChangesAsync();
 
-        var expires = clock.Now.AddMinutes(jwt.Value.ExpiryMinutes);
-        return new LoginResponse(IssueToken(account), expires, ToInfo(account));
+        var (session, refreshToken) = await sessions.CreateAsync(account.AccountId, userAgent);
+        return Issue(account, session.SessionId, refreshToken);
     }
+
+    public async Task<LoginResponse> RefreshAsync(RefreshRequest request)
+    {
+        var result = await sessions.RefreshAsync(request.RefreshToken);
+        if (result.Outcome != RefreshOutcome.Ok)
+            throw ApiException.Unauthorized("Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Đăng nhập lại để tiếp tục.");
+
+        var account = await db.Account.Include(a => a.Person).AsNoTracking()
+            .FirstAsync(a => a.AccountId == result.Session!.AccountId);
+        if (account.Status == AccountStatuses.Locked)
+        {
+            await sessions.RevokeAsync(result.Session!.SessionId);
+            throw ApiException.Unauthorized("Tài khoản đã bị khóa. Liên hệ quản trị để được hỗ trợ.", ErrorCodes.AccountLocked);
+        }
+        return Issue(account, result.Session!.SessionId, result.RefreshToken);
+    }
+
+    public Task LogoutAsync(Guid sessionId) => sessions.RevokeAsync(sessionId);
 
     public async Task<UserInfo> GetMeAsync(int accountId)
     {
@@ -53,7 +73,7 @@ public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOpti
         return ToInfo(account);
     }
 
-    public async Task ChangePasswordAsync(int accountId, ChangePasswordRequest request)
+    public async Task ChangePasswordAsync(int accountId, Guid? sessionId, ChangePasswordRequest request)
     {
         var account = await db.Account.FirstAsync(a => a.AccountId == accountId);
 
@@ -68,11 +88,18 @@ public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOpti
         account.Status = AccountStatuses.Active;   // đổi lần đầu xong thì Chờ đổi mật khẩu → Đang hoạt động (BR-04)
         account.UpdatedAt = clock.Now;
         await db.SaveChangesAsync();
+        await sessions.RevokeAllAsync(accountId, exceptSessionId: sessionId);   // thiết bị khác phải đăng nhập lại
     }
 
     public static string HashPassword(Account account, string password) => Hasher.HashPassword(account, password);
 
-    private string IssueToken(Account account)
+    private LoginResponse Issue(Account account, Guid sessionId, string? refreshToken)
+    {
+        var expires = clock.Now.AddMinutes(jwt.Value.ExpiryMinutes);
+        return new LoginResponse(IssueToken(account, sessionId), expires, refreshToken, ToInfo(account));
+    }
+
+    private string IssueToken(Account account, Guid sessionId)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Value.Key));
         var token = new JwtSecurityToken(
@@ -83,6 +110,7 @@ public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOpti
                 new Claim(CurrentUser.AccountIdClaim, account.AccountId.ToString()),
                 new Claim(CurrentUser.PersonIdClaim, account.PersonId.ToString()),
                 new Claim(CurrentUser.TypeClaim, account.AccountType),
+                new Claim(CurrentUser.SessionIdClaim, sessionId.ToString()),
             ],
             expires: DateTime.UtcNow.AddMinutes(jwt.Value.ExpiryMinutes),
             signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256));

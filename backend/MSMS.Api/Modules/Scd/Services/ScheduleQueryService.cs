@@ -95,7 +95,7 @@ public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, Sco
             {
                 s.SessionId, s.ClassId, s.PeriodSlotId, s.Status, s.Source,
                 SubjectName = s.Subject.Name, SubjectAbbr = s.Subject.Abbreviation,
-                TeacherName = s.Teacher.Staff.FullName, TeacherAbbr = s.Teacher.TeacherAbbr,
+                TeacherName = s.Teacher == null ? null : s.Teacher.Staff.FullName, TeacherAbbr = s.Teacher == null ? null : s.Teacher.TeacherAbbr,
             }).ToListAsync();
 
         var rows = slots.Select(slot => new DaySlotRow(slot.PeriodSlotId, slot.SessionOfDay, slot.PeriodNo, slot.StartTime, slot.EndTime,
@@ -104,7 +104,7 @@ public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, Sco
                 // Một khung có thể có tiết Đã hủy kèm tiết khác: ưu tiên tiết còn hiệu lực.
                 var s = sessions.Where(x => x.ClassId == c.ClassId && x.PeriodSlotId == slot.PeriodSlotId)
                     .OrderBy(x => x.Status == "Cancelled" ? 1 : 0).FirstOrDefault();
-                return s is null ? null : new SessionCellDto(s.SessionId, s.SubjectName, s.SubjectAbbr, s.TeacherName, s.TeacherAbbr ?? "", s.Status, s.Source);
+                return s is null ? null : new SessionCellDto(s.SessionId, s.SubjectName, s.SubjectAbbr, s.TeacherName, s.TeacherAbbr, s.Status, s.Source);
             }).ToList())).ToList();
 
         return new DayScheduleDto(date, holiday, holiday is not null, classes, rows);

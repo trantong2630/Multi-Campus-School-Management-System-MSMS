@@ -116,6 +116,53 @@ namespace MSMS.Api.Migrations
                     b.ToTable("Account");
                 });
 
+            modelBuilder.Entity("MSMS.Api.Data.Entities.AccountSession", b =>
+                {
+                    b.Property<Guid>("SessionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)");
+
+                    b.Property<DateTime>("LastUsedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)");
+
+                    b.Property<string>("PreviousRefreshTokenHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("RefreshTokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.HasKey("SessionId");
+
+                    b.HasIndex(new[] { "AccountId" }, "IX_AccountSession_Account");
+
+                    b.HasIndex(new[] { "RefreshTokenHash" }, "IX_AccountSession_RefreshToken");
+
+                    b.ToTable("AccountSession");
+                });
+
             modelBuilder.Entity("MSMS.Api.Data.Entities.AiFeedback", b =>
                 {
                     b.Property<long>("FeedbackId")
@@ -248,6 +295,21 @@ namespace MSMS.Api.Migrations
                     b.HasIndex(new[] { "ExamId" }, "IX_Assignment_Exam");
 
                     b.ToTable("Assignment");
+                });
+
+            modelBuilder.Entity("MSMS.Api.Data.Entities.AssignmentRecipient", b =>
+                {
+                    b.Property<int>("AssignmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AssignmentId", "StudentId");
+
+                    b.HasIndex(new[] { "StudentId" }, "IX_AssignmentRecipient_Student");
+
+                    b.ToTable("AssignmentRecipient");
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.AttendanceRecord", b =>
@@ -1107,6 +1169,12 @@ namespace MSMS.Api.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
 
+                    b.Property<string>("NationalId")
+                        .HasMaxLength(12)
+                        .IsUnicode(false)
+                        .HasColumnType("char(12)")
+                        .IsFixedLength();
+
                     b.Property<string>("PersonCode")
                         .IsRequired()
                         .HasMaxLength(10)
@@ -1131,6 +1199,10 @@ namespace MSMS.Api.Migrations
                     b.HasIndex(new[] { "FullName", "DateOfBirth" }, "IX_Person_Identify");
 
                     b.HasIndex(new[] { "PhoneNumber" }, "IX_Person_Phone");
+
+                    b.HasIndex(new[] { "NationalId" }, "UQ_Person_NationalId")
+                        .IsUnique()
+                        .HasFilter("([NationalId] IS NOT NULL)");
 
                     b.HasIndex(new[] { "PersonCode" }, "UQ__Person__7B5569ED2848A4AA")
                         .IsUnique();
@@ -1779,7 +1851,7 @@ namespace MSMS.Api.Migrations
                     b.Property<int?>("TeacherAbsenceId")
                         .HasColumnType("int");
 
-                    b.Property<int>("TeacherId")
+                    b.Property<int?>("TeacherId")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -1933,6 +2005,16 @@ namespace MSMS.Api.Migrations
                     b.Navigation("Person");
                 });
 
+            modelBuilder.Entity("MSMS.Api.Data.Entities.AccountSession", b =>
+                {
+                    b.HasOne("MSMS.Api.Data.Entities.Account", "Account")
+                        .WithMany("AccountSession")
+                        .HasForeignKey("AccountId")
+                        .IsRequired();
+
+                    b.Navigation("Account");
+                });
+
             modelBuilder.Entity("MSMS.Api.Data.Entities.AiFeedback", b =>
                 {
                     b.HasOne("MSMS.Api.Data.Entities.Person", "ApprovedByPerson")
@@ -1990,6 +2072,23 @@ namespace MSMS.Api.Migrations
                     b.Navigation("Exam");
 
                     b.Navigation("ScorePublishedByPerson");
+                });
+
+            modelBuilder.Entity("MSMS.Api.Data.Entities.AssignmentRecipient", b =>
+                {
+                    b.HasOne("MSMS.Api.Data.Entities.Assignment", "Assignment")
+                        .WithMany("AssignmentRecipient")
+                        .HasForeignKey("AssignmentId")
+                        .IsRequired();
+
+                    b.HasOne("MSMS.Api.Data.Entities.StudentProfile", "Student")
+                        .WithMany("AssignmentRecipient")
+                        .HasForeignKey("StudentId")
+                        .IsRequired();
+
+                    b.Navigation("Assignment");
+
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.AttendanceRecord", b =>
@@ -2614,7 +2713,6 @@ namespace MSMS.Api.Migrations
                     b.HasOne("MSMS.Api.Data.Entities.StaffProfile", "Teacher")
                         .WithMany("TeachingSession")
                         .HasForeignKey("TeacherId")
-                        .IsRequired()
                         .HasConstraintName("FK__TeachingS__Teach__42E1EEFE");
 
                     b.HasOne("MSMS.Api.Data.Entities.Person", "UpdatedByPerson")
@@ -2733,12 +2831,16 @@ namespace MSMS.Api.Migrations
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.Account", b =>
                 {
+                    b.Navigation("AccountSession");
+
                     b.Navigation("PasswordResetOtp");
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.Assignment", b =>
                 {
                     b.Navigation("AiFeedback");
+
+                    b.Navigation("AssignmentRecipient");
 
                     b.Navigation("Submission");
                 });
@@ -2908,6 +3010,8 @@ namespace MSMS.Api.Migrations
             modelBuilder.Entity("MSMS.Api.Data.Entities.StudentProfile", b =>
                 {
                     b.Navigation("AiFeedback");
+
+                    b.Navigation("AssignmentRecipient");
 
                     b.Navigation("AttendanceRecord");
 

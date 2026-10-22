@@ -34,7 +34,7 @@ const STAFF: AccountType[] = [...MGMT, 'Teacher'];
 // Cấu trúc menu theo Dev_Conventions §4.7, màu nhấn theo Design_Web §7.
 export const menu: MenuGroup[] = [
   { key: 'home', label: 'Trang chủ', icon: House, accent: 'green', path: '/', roles: ALL, ready: true },
-  { key: 'dashboard', label: 'Dashboard', icon: House, accent: 'green', path: '/dashboard', roles: MGMT, ready: false },
+  { key: 'dashboard', label: 'Dashboard', icon: House, accent: 'green', path: '/dashboard', roles: ['Principal', 'VicePrincipal'], ready: false },
   {
     key: 'sch', label: 'Thiết lập', icon: Settings2, accent: 'sky',
     children: [
@@ -61,9 +61,9 @@ export const menu: MenuGroup[] = [
   {
     key: 'scd', label: 'Thời khóa biểu', icon: CalendarDays, accent: 'violet',
     children: [
-      { key: 'scd-timetable', label: 'Thời khóa biểu', path: '/scd/timetable', roles: ['SchoolAdmin', 'VicePrincipal'], ready: true },
-      { key: 'scd-schedule', label: 'Lịch dạy', path: '/scd/schedule', roles: STAFF, ready: true },
-      { key: 'scd-absence', label: 'Giáo viên vắng', path: '/scd/absences', roles: ['SchoolAdmin', 'VicePrincipal'], ready: false },
+      { key: 'scd-timetable', label: 'Thời khóa biểu', path: '/scd/timetable', roles: ['VicePrincipal'], ready: true },
+      { key: 'scd-schedule', label: 'Lịch dạy', path: '/scd/schedule', roles: ['Principal', 'VicePrincipal', 'Teacher'], ready: true },
+      { key: 'scd-absence', label: 'Giáo viên vắng', path: '/scd/absences', roles: ['VicePrincipal'], ready: false },
     ],
   },
   { key: 'att', label: 'Điểm danh', icon: ClipboardCheck, accent: 'green', path: '/att', roles: [...STAFF, 'Student', 'Parent'], ready: false },
@@ -80,9 +80,9 @@ export const menu: MenuGroup[] = [
   {
     key: 'par', label: 'Phụ huynh', icon: HeartHandshake, accent: 'coral',
     children: [
-      { key: 'par-leave', label: 'Đơn xin nghỉ', path: '/par/leave-requests', roles: ['SchoolAdmin', 'VicePrincipal', 'Teacher', 'Parent'], ready: false },
+      { key: 'par-leave', label: 'Đơn xin nghỉ', path: '/par/leave-requests', roles: ['VicePrincipal', 'Teacher', 'Parent'], ready: false },
       { key: 'par-report', label: 'Sổ liên lạc', path: '/par/weekly-reports', roles: ['Teacher', 'Student', 'Parent'], ready: false },
-      { key: 'par-inbox', label: 'Hộp thư', path: '/par/inbox', roles: ['SchoolAdmin', 'Teacher', 'Parent'], ready: false },
+      { key: 'par-inbox', label: 'Hộp thư', path: '/par/inbox', roles: ['Teacher', 'Parent'], ready: false },
     ],
   },
   { key: 'com', label: 'Bảng tin', icon: Newspaper, accent: 'sky', path: '/com/posts', roles: ALL, ready: false },
@@ -91,7 +91,7 @@ export const menu: MenuGroup[] = [
     children: [
       { key: 'adm-account', label: 'Tài khoản', path: '/adm/accounts', roles: ['SchoolAdmin'], ready: true },
       { key: 'adm-audit', label: 'Nhật ký', path: '/adm/audit-log', roles: ['SchoolAdmin'], ready: false },
-      { key: 'adm-export', label: 'Xuất dữ liệu', path: '/adm/exports', roles: STAFF, ready: false },
+      { key: 'adm-export', label: 'Xuất dữ liệu', path: '/adm/exports', roles: ['VicePrincipal', 'Teacher'], ready: false },
     ],
   },
 ];
