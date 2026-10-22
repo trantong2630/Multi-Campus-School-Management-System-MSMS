@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using MSMS.Api.Common.Audit;
 using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
+using MSMS.Api.Common.Notifications;
 using MSMS.Api.Common.Excel;
 using MSMS.Api.Common.Text;
 using MSMS.Api.Common.Time;
@@ -15,7 +16,7 @@ using MSMS.Api.Modules.Iam.Dtos;
 namespace MSMS.Api.Modules.Iam.Services;
 
 /// <summary>IAM-02: quản lý tài khoản. Chỉ School Admin; mỗi hồ sơ đúng một tài khoản (BR-01).</summary>
-public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock clock, AuditWriter audit)
+public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock clock, AuditWriter audit, SessionService sessions, NotificationSender notifier)
 {
     private static readonly string[] StaffTypes =
         [AccountTypes.SchoolAdmin, AccountTypes.Principal, AccountTypes.VicePrincipal, AccountTypes.Teacher];
@@ -114,33 +115,102 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
         return new BulkCreateResult(items, skipped);
     }
 
-    /// <summary>Khóa tài khoản. Không khóa được Teacher còn tiết Đã xếp lịch từ hôm nay trở đi ở bất kỳ phân hiệu nào (BR-05).</summary>
+    /// <summary>Xem trước hệ quả khóa tài khoản để màn hình cảnh báo trước khi xác nhận (BR-05).</summary>
+    public async Task<LockImpact> LockImpactAsync(int accountId)
+    {
+        var account = await FindAsync(accountId);
+        var sessions = account.AccountType == AccountTypes.Teacher ? await AffectedSessionsAsync(account.PersonId) : [];
+        var byCampus = sessions.GroupBy(s => s.Class.Campus.Name)
+            .Select(g => new CampusSessionCount(g.Key, g.Count())).ToList();
+        var duties = (await EffectiveDutiesAsync(account.PersonId)).Select(d => new DutyImpact(d.Kind, d.TargetName)).ToList();
+        return new LockImpact(sessions.Count, byCampus, duties);
+    }
+
+    /// <summary>
+    /// Khóa tài khoản không bị chặn bởi lịch dạy. Cùng transaction: tiết Đã xếp lịch từ hôm nay của Teacher chuyển Chờ xử lý,
+    /// trách nhiệm và phụ trách chuyên môn đang hiệu lực kết thúc vào ngày khóa (BR-05, BR-09).
+    /// </summary>
     public async Task LockAsync(int accountId)
     {
         var account = await FindAsync(accountId);
         if (account.AccountId == user.AccountId) throw ApiException.BadRequest("Không khóa được tài khoản đang đăng nhập.");
         if (account.Status == AccountStatuses.Locked) throw ApiException.BadRequest("Tài khoản đã bị khóa từ trước.");
 
-        if (account.AccountType == AccountTypes.Teacher)
+        await using var tx = await db.Database.BeginTransactionAsync();
+        var (sessionCount, dutyCount) = await ReleaseDutiesAsync(account);
+        account.Status = AccountStatuses.Locked;
+        audit.Add(AuditCategories.Account, "LockAccount", [account.AccountId], new { pendingSessions = sessionCount, closedDuties = dutyCount });
+        await db.SaveChangesAsync();
+        await tx.CommitAsync();
+        await sessions.RevokeAllAsync(account.AccountId);
+    }
+
+    private async Task<List<TeachingSession>> AffectedSessionsAsync(int teacherId)
+    {
+        var today = clock.Today;
+        return await db.TeachingSession.Include(s => s.Class).ThenInclude(c => c.Campus)
+            .Where(s => s.TeacherId == teacherId && s.Status == "Scheduled" && s.SessionDate >= today
+                        && !s.AttendanceRecord.Any())
+            .ToListAsync();
+    }
+
+    private record Duty(string Kind, string TargetName, IEffectivePeriod Record);
+
+    private async Task<List<Duty>> EffectiveDutiesAsync(int staffId)
+    {
+        var today = clock.Today;
+        var duties = new List<Duty>();
+        duties.AddRange((await db.CampusLeadership.Include(x => x.Campus)
+            .Where(x => x.StaffId == staffId && (x.EndDate == null || x.EndDate >= today)).ToListAsync())
+            .Select(x => new Duty("Campus", x.Campus.Name, x)));
+        duties.AddRange((await db.DepartmentHead.Include(x => x.Department)
+            .Where(x => x.StaffId == staffId && (x.EndDate == null || x.EndDate >= today)).ToListAsync())
+            .Select(x => new Duty("Department", x.Department.Name, x)));
+        duties.AddRange((await db.HomeroomAssignment.Include(x => x.Class)
+            .Where(x => x.StaffId == staffId && (x.EndDate == null || x.EndDate >= today)).ToListAsync())
+            .Select(x => new Duty("Homeroom", x.Class.Name, x)));
+        duties.AddRange((await db.TeachingAssignment.Include(x => x.Class).Include(x => x.Subject)
+            .Where(x => x.TeacherId == staffId && (x.EndDate == null || x.EndDate >= today)).ToListAsync())
+            .Select(x => new Duty("Teaching", $"{x.Subject.Name} — {x.Class.Name}", x)));
+        return duties;
+    }
+
+    /// <summary>
+    /// Dùng chung cho khóa và đổi loại tài khoản: tiết tương lai của Teacher sang Chờ xử lý và để trống giáo viên,
+    /// Vice Principal phân hiệu chứa tiết nhận thông báo; trách nhiệm đang hiệu lực kết thúc vào ngày hôm nay.
+    /// Chỉ thêm vào context, người gọi SaveChanges trong transaction của mình.
+    /// </summary>
+    private async Task<(int Sessions, int Duties)> ReleaseDutiesAsync(Account account)
+    {
+        var today = clock.Today;
+        var affected = account.AccountType == AccountTypes.Teacher ? await AffectedSessionsAsync(account.PersonId) : [];
+        foreach (var s in affected)
         {
-            var today = clock.Today;
-            var byCampus = await db.TeachingSession
-                .Where(s => s.TeacherId == account.PersonId && s.Status == "Scheduled" && s.SessionDate >= today)
-                .GroupBy(s => s.Class.Campus.Name)
-                .Select(g => new { Campus = g.Key, Count = g.Count() })
-                .ToListAsync();
-            if (byCampus.Count > 0)
-            {
-                var total = byCampus.Sum(x => x.Count);
-                var detail = string.Join(", ", byCampus.Select(x => $"{x.Campus}: {x.Count} tiết"));
-                throw ApiException.BadRequest(
-                    $"Giáo viên còn {total} tiết Đã xếp lịch từ hôm nay ({detail}). Hiệu phó đổi giáo viên, hủy tiết hoặc khai báo vắng trước, rồi mới khóa được.");
-            }
+            s.Status = "Pending";
+            s.Source = "Manual";
+            s.UpdatedByPersonId = user.PersonId;
+            s.UpdatedAt = clock.Now;
+            s.TeacherId = null;
+            s.TeacherAbsenceId = null;
+            s.ChangeNote = "Giáo viên không còn dùng tài khoản";
         }
 
-        account.Status = AccountStatuses.Locked;
-        audit.Add(AuditCategories.Account, "LockAccount", [account.AccountId]);
-        await db.SaveChangesAsync();
+        foreach (var campusGroup in affected.GroupBy(s => s.Class.CampusId))
+        {
+            var viceIds = await db.CampusLeadership
+                .Where(x => x.CampusId == campusGroup.Key && (x.EndDate == null || x.EndDate >= today) && x.StartDate <= today)
+                .Select(x => x.StaffId).ToListAsync();
+            notifier.Add(viceIds, NotificationTypes.SessionPending, "Có tiết chuyển Chờ xử lý",
+                $"{campusGroup.Count()} tiết của {account.Person.FullName} cần đổi giáo viên hoặc hủy vì tài khoản không còn hoạt động.");
+        }
+
+        var duties = await EffectiveDutiesAsync(account.PersonId);
+        foreach (var d in duties)
+        {
+            if (d.Record.StartDate > today) d.Record.EndDate = d.Record.StartDate;   // chưa hiệu lực: rút về đúng ngày bắt đầu
+            else d.Record.EndDate = today;
+        }
+        return (affected.Count, duties.Count);
     }
 
     /// <summary>
@@ -165,6 +235,7 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
         account.UpdatedAt = null;
         audit.Add(AuditCategories.Account, "ResetPassword", [account.AccountId]);   // không ghi mật khẩu
         await db.SaveChangesAsync();
+        await sessions.RevokeAllAsync(account.AccountId);
         return new ResetPasswordResult(account.Username, password);
     }
 
@@ -182,14 +253,19 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
         if (!allowed.Contains(r.AccountType)) throw ApiException.BadRequest("Loại tài khoản không phù hợp với loại hồ sơ.");
         if (account.AccountType == r.AccountType) throw ApiException.BadRequest("Tài khoản đã đúng loại này.");
 
+        await using var tx = await db.Database.BeginTransactionAsync();
+        var (sessionCount, dutyCount) = await ReleaseDutiesAsync(account);   // loại cũ chưa bị đổi nên Teacher vẫn nhận diện được
         var password = TempPasswords.Generate();
         var from = account.AccountType;
         account.AccountType = r.AccountType;
         account.PasswordHash = AuthService.HashPassword(account, password);
         account.Status = AccountStatuses.PendingPasswordChange;
         account.UpdatedAt = null;
-        audit.Add(AuditCategories.Account, "ChangeAccountType", [account.AccountId], new { from, to = r.AccountType });
+        audit.Add(AuditCategories.Account, "ChangeAccountType", [account.AccountId],
+            new { from, to = r.AccountType, pendingSessions = sessionCount, closedDuties = dutyCount });
         await db.SaveChangesAsync();
+        await tx.CommitAsync();
+        await sessions.RevokeAllAsync(account.AccountId);
         return new ResetPasswordResult(account.Username, password);
     }
 

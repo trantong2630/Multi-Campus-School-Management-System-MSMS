@@ -18,9 +18,12 @@ import { PersonCell } from '@/shared/components/PersonCell';
 import { accountApi } from '../accountApi';
 import { STAFF_ACCOUNT_TYPES } from '../accountTypes';
 import { TempPasswordModal } from '../components/TempPasswordModal';
-import type { Account, TempPasswordItem } from '../types';
+import type { Account, LockImpact, TempPasswordItem } from '../types';
 
 const ALL_TYPES: AccountType[] = ['SchoolAdmin', 'Principal', 'VicePrincipal', 'Teacher', 'Student', 'Parent'];
+const dutyLabel: Record<string, string> = {
+  Campus: 'Phụ trách phân hiệu', Department: 'Tổ trưởng', Homeroom: 'Chủ nhiệm lớp', Teaching: 'Phụ trách chuyên môn',
+};
 const STATUSES = ['PendingPasswordChange', 'Active', 'Locked'];
 const PAGE_SIZE = 20;
 
@@ -114,12 +117,31 @@ export function AccountsPage() {
                     }
                     : {
                       key: 'lock', label: 'Khóa tài khoản', icon: <Lock size={16} />, danger: true,
-                      onClick: () => confirmAction({
-                        title: `Khóa tài khoản ${a.username}?`,
-                        content: 'Người này không đăng nhập được và phiên đang mở bị từ chối ở thao tác kế tiếp. Hồ sơ và lịch sử giữ nguyên. Giáo viên còn tiết Đã xếp lịch từ hôm nay thì hệ thống sẽ từ chối.',
-                        okText: 'Khóa tài khoản', danger: true,
-                        onOk: () => run(() => accountApi.lock(a.accountId), 'Đã khóa tài khoản.'),
-                      }),
+                      onClick: async () => {
+                        let impact: LockImpact | null = null;
+                        try { impact = await accountApi.lockImpact(a.accountId); } catch (e) { showError(e); return; }
+                        confirmAction({
+                          title: `Khóa tài khoản ${a.username}?`,
+                          content: (
+                            <div>
+                              <p>Người này không đăng nhập được và phiên đang mở bị từ chối ở thao tác kế tiếp. Hồ sơ và lịch sử giữ nguyên.</p>
+                              {impact.sessionCount > 0 && (
+                                <p>
+                                  {impact.sessionCount} tiết từ hôm nay trở đi sẽ chuyển sang <b>Chờ xử lý</b> ({impact.campuses.map((c) => `${c.campus}: ${c.count}`).join(', ')}).
+                                  Hiệu phó phân hiệu sẽ nhận thông báo để đổi giáo viên hoặc hủy tiết.
+                                </p>
+                              )}
+                              {impact.duties.length > 0 && (
+                                <p>
+                                  Trách nhiệm sẽ kết thúc vào hôm nay: {impact.duties.map((d) => `${dutyLabel[d.kind] ?? d.kind} ${d.targetName}`).join('; ')}.
+                                </p>
+                              )}
+                            </div>
+                          ),
+                          okText: 'Khóa tài khoản', danger: true,
+                          onOk: () => run(() => accountApi.lock(a.accountId), 'Đã khóa tài khoản.'),
+                        });
+                      },
                     },
                   {
                     key: 'reset', label: 'Cấp lại mật khẩu', icon: <KeyRound size={16} />,

@@ -24,6 +24,9 @@ public class AccountsController(AccountService service) : ControllerBase
     [HttpPost("temp-password-sheet")]
     public IActionResult TempPasswordSheet(TempPasswordSheetRequest r) => service.BuildTempPasswordSheet(r);
 
+    [HttpGet("{id:int}/lock-impact")]
+    public Task<LockImpact> LockImpact(int id) => service.LockImpactAsync(id);
+
     [HttpPut("{id:int}/lock")]
     public async Task<IActionResult> Lock(int id) { await service.LockAsync(id); return NoContent(); }
 
