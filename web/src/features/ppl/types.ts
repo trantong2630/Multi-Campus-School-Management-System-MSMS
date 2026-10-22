@@ -5,6 +5,7 @@ export interface Staff {
   personCode: string;
   fullName: string;
   dateOfBirth: string | null;
+  nationalId: string | null;
   gender: string | null;
   phoneNumber: string | null;
   email: string | null;
