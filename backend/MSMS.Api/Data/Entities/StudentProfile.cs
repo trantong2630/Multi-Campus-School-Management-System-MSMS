@@ -29,5 +29,7 @@ public partial class StudentProfile
 
     public virtual Person Student { get; set; } = null!;
 
+    public virtual ICollection<AssignmentRecipient> AssignmentRecipient { get; set; } = new List<AssignmentRecipient>();
+
     public virtual ICollection<Submission> Submission { get; set; } = new List<Submission>();
 }

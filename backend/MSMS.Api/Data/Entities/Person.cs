@@ -15,6 +15,8 @@ public partial class Person
 
     public DateOnly? DateOfBirth { get; set; }
 
+    public string? NationalId { get; set; }
+
     public string? Gender { get; set; }
 
     public string? PhoneNumber { get; set; }

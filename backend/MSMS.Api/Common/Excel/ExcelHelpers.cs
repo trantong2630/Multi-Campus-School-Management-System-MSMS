@@ -19,6 +19,20 @@ public static class ExcelHelpers
         return Common.Text.TextNormalizer.Normalize(raw);
     }
 
+    /// <summary>
+    /// Đọc ô số định danh: ô số (Excel tự chuyển 12 chữ số thành số) được đưa về chuỗi 12 chữ số, bù số 0 đầu đã mất.
+    /// </summary>
+    public static string NationalIdText(this IXLCell cell)
+    {
+        if (cell.IsEmpty()) return string.Empty;
+        if (cell.DataType == XLDataType.Number)
+        {
+            var d = cell.GetDouble();
+            return d >= 0 && d == Math.Floor(d) ? ((long)d).ToString().PadLeft(12, '0') : cell.Text();
+        }
+        return cell.Text();
+    }
+
     public static string Address(this IXLCell cell) => cell.Address.ToStringRelative();
 
     public static FileContentResult ToFile(this XLWorkbook workbook, string fileName)

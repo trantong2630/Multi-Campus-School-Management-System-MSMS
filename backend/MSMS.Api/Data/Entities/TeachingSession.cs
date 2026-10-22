@@ -11,7 +11,7 @@ public partial class TeachingSession
 
     public int SubjectId { get; set; }
 
-    public int TeacherId { get; set; }
+    public int? TeacherId { get; set; }
 
     public DateOnly SessionDate { get; set; }
 
@@ -51,7 +51,7 @@ public partial class TeachingSession
 
     public virtual Subject Subject { get; set; } = null!;
 
-    public virtual StaffProfile Teacher { get; set; } = null!;
+    public virtual StaffProfile? Teacher { get; set; }
 
     public virtual TeacherAbsence? TeacherAbsence { get; set; }
 

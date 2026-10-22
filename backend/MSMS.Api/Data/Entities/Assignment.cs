@@ -33,6 +33,8 @@ public partial class Assignment
 
     public virtual ICollection<AiFeedback> AiFeedback { get; set; } = new List<AiFeedback>();
 
+    public virtual ICollection<AssignmentRecipient> AssignmentRecipient { get; set; } = new List<AssignmentRecipient>();
+
     public virtual Person AssignedByPerson { get; set; } = null!;
 
     public virtual Class Class { get; set; } = null!;

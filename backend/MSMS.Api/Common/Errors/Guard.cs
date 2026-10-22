@@ -34,5 +34,16 @@ public static partial class Guard
         return v;
     }
 
+    /// <summary>Số định danh cá nhân: đúng 12 chữ số, khóa nhận diện học sinh và cán bộ khi import (BR-10, BR-11).</summary>
+    public static bool IsNationalId(string value) => value.Length == 12 && value.All(char.IsAsciiDigit);
+
+    public static string NationalId(string? value)
+    {
+        var v = (value ?? "").Trim();
+        if (v.Length == 0) throw ApiException.BadRequest("Số định danh cá nhân không được để trống. Điền đủ 12 chữ số.");
+        if (!IsNationalId(v)) throw ApiException.BadRequest("Số định danh cá nhân phải gồm đúng 12 chữ số.");
+        return v;
+    }
+
     public static bool IsAlnum(string value) => AlnumRegex().IsMatch(value);
 }

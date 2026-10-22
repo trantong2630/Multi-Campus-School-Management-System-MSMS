@@ -23,6 +23,8 @@ public partial class Account
 
     public DateTime? UpdatedAt { get; set; }
 
+    public virtual ICollection<AccountSession> AccountSession { get; set; } = new List<AccountSession>();
+
     public virtual ICollection<PasswordResetOtp> PasswordResetOtp { get; set; } = new List<PasswordResetOtp>();
 
     public virtual Person Person { get; set; } = null!;

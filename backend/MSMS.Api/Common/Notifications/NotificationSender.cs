@@ -7,6 +7,7 @@ namespace MSMS.Api.Common.Notifications;
 public static class NotificationTypes
 {
     public const string TimetablePublished = "TimetablePublished";
+    public const string SessionPending = "SessionPending";
 }
 
 /// <summary>
