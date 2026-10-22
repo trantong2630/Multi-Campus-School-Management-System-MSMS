@@ -1,6 +1,6 @@
 # 4. Software Product Development — MSMS
 
-Cấu trúc phân rã: Module → Feature → Task. Mỗi Task là một hành động nghiệp vụ hoàn chỉnh của một actor. Các task thuộc cùng một Feature tô cùng màu ở cột Feature. Căn theo Business Specification V3.1 (Oct 20, 2026) — 9 Module / 33 Feature / 263 Task.
+Cấu trúc phân rã: Module → Feature → Task. Mỗi Task là một hành động nghiệp vụ hoàn chỉnh của một actor. Các task thuộc cùng một Feature tô cùng màu ở cột Feature. Căn theo Business Specification V3.1 (Oct 20, 2026) — 9 Module / 33 Feature / 264 Task.
 
 ## Mục lục
 - 4.1 IAM — Identity & Access (Định danh & Truy cập)
@@ -21,11 +21,11 @@ Cấu trúc phân rã: Module → Feature → Task. Mỗi Task là một hành �
 
 **4.1.1 — Đăng nhập / Log In**  
 `BE + Web + Mobile` · 1.5 MD  
-Đăng nhập bằng tên đăng nhập và mật khẩu, dùng chung cho cả sáu loại tài khoản. Tài khoản Đã khóa không vào được; thông báo lỗi không tiết lộ tài khoản có tồn tại hay không (BR-01, BR-05).
+Đăng nhập bằng tên đăng nhập và mật khẩu, dùng chung cho cả sáu loại tài khoản. Tài khoản Đã khóa không vào được; thông báo lỗi không tiết lộ tài khoản có tồn tại hay không (BR-01, BR-05). Mỗi lần đăng nhập tạo một phiên theo thiết bị và trả access token ngắn hạn (15 phút) kèm refresh token (7 ngày, xoay vòng mỗi lần dùng, chỉ lưu bản băm); Web nhận refresh token qua cookie HttpOnly không đặt hạn (các tab dùng chung, đóng trình duyệt là phải đăng nhập lại; access token chỉ giữ trong bộ nhớ trang); mobile nhận trong body. Client gọi `POST /api/auth/refresh` để lấy access token mới; web và API phải cùng domain khi deploy.
 
 **4.1.2 — Đăng xuất / Log Out**  
 `BE + Web + Mobile` · 0.5 MD · dep: 4.1.1  
-Kết thúc phiên trên thiết bị hiện tại. Không có chức năng đăng xuất khỏi mọi thiết bị (BR-05).
+Thu hồi phiên của thiết bị hiện tại ở Backend (`POST /api/auth/logout`): access token và refresh token của phiên đó mất hiệu lực ngay. Không có chức năng đăng xuất khỏi mọi thiết bị (BR-05).
 
 **4.1.3 — Phân giải phạm vi và trách nhiệm tại ngày hiện tại / Resolve Scope and Responsibilities**  
 `BE` · 2 MD · dep: 4.1.1  
@@ -35,21 +35,21 @@ Sau khi đăng nhập, hệ thống xác định phạm vi dữ liệu người 
 `BE` · 2 MD · dep: 4.1.3  
 Mọi yêu cầu qua hai lần kiểm độc lập: loại tài khoản có được gọi chức năng này không, và đối tượng cụ thể có nằm trong phạm vi của người gọi không. Giao diện không bao giờ là căn cứ phân quyền (BR-01).
 
-**4.1.5 — Hàm kiểm hành vi gắn danh tính / Guard Identity-bound Actions**  
-`BE` · 1.5 MD · dep: 4.1.4  
-Một hàm duy nhất ở Backend chặn danh sách đóng các hành vi chỉ chính chủ làm được: làm và nộp bài, gửi và rút đơn nghỉ, tạo hội thoại và nhắn tin, soạn — giao — nhân bản đề, công bố điểm, thao tác nhận xét AI, điểm danh với tư cách giáo viên của tiết. School Admin vượt phạm vi nhưng không vượt danh tính (BR-02).
+**4.1.5 — Cấp quyền hành vi theo vai trò / Role-bound Action Policies**  
+`BE` · 0.5 MD · dep: 4.1.4  
+Các hành vi chỉ đúng vai trò làm được — làm và nộp bài, gửi và rút đơn nghỉ, tạo hội thoại và nhắn tin, soạn — giao — nhân bản đề, công bố điểm, thao tác nhận xét AI, điểm danh với tư cách giáo viên của tiết — chỉ được cấp cho vai trò tương ứng bằng Authorization Policy thông thường. School Admin không nằm trong policy nào của chúng và không có cờ bỏ qua phân quyền (BR-02).
 
 **4.1.6 — Kiểm trạng thái tài khoản ở mỗi request / Enforce Account Status per Request**  
 `BE` · 1 MD · dep: 4.1.4  
-Backend đọc trạng thái tài khoản mỗi request, nên tài khoản bị khóa giữa phiên bị từ chối ngay ở thao tác kế tiếp mà không cần cơ chế hủy phiên riêng (BR-05).
+Backend đọc trạng thái tài khoản và kiểm phiên (chưa đăng xuất, chưa bị thu hồi, chưa hết hạn) ở mỗi request, nên tài khoản bị khóa hoặc phiên đã đăng xuất bị từ chối ngay ở thao tác kế tiếp. Khóa tài khoản, reset mật khẩu và đổi loại tài khoản thu hồi mọi phiên của tài khoản; đổi mật khẩu thu hồi các phiên khác ngoài phiên đang dùng. Refresh token cũ bị dùng lại thì thu hồi cả phiên (BR-05).
 
 **4.1.7 — Hiển thị menu theo loại tài khoản và trách nhiệm / Render Role-based Navigation**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.1.3  
-Menu dựng theo loại tài khoản cộng trách nhiệm đang hiệu lực. Giáo viên chỉ thấy chức năng của lớp và môn mình phụ trách; thêm mục chủ nhiệm hoặc tổ trưởng khi đang giữ trách nhiệm đó. Chức năng gắn danh tính không hiện cho School Admin.
+Menu dựng theo loại tài khoản cộng trách nhiệm đang hiệu lực. Giáo viên chỉ thấy chức năng của lớp và môn mình phụ trách; thêm mục chủ nhiệm hoặc tổ trưởng khi đang giữ trách nhiệm đó. School Admin không thấy Dashboard, Thời khóa biểu, Xuất dữ liệu và các chức năng làm việc đứng tên người khác.
 
 **4.1.8 — Kiểm thử phạm vi theo loại tài khoản và trách nhiệm / Scope Tests per Role**  
 `QA` · 2.5 MD · dep: 4.1.4, 4.1.5  
-Mỗi loại tài khoản và mỗi trách nhiệm có bộ kiểm thử riêng trên dữ liệu mẫu. Không dùng tài khoản School Admin để kiểm phạm vi của loại khác vì tài khoản này bỏ qua bộ lọc phạm vi (mục 2.5).
+Mỗi loại tài khoản và mỗi trách nhiệm có bộ kiểm thử riêng trên dữ liệu mẫu. Không dùng tài khoản School Admin để kiểm phạm vi của loại khác vì tài khoản này có phạm vi toàn trường nên không phát hiện được rò rỉ (mục 2.5).
 
 ### IAM-02 Account Management (Quản lý tài khoản)
 
@@ -75,23 +75,23 @@ Mật khẩu tạm hiển thị MỘT lần ngay trong màn hình kết quả t�
 
 **4.1.14 — Khóa tài khoản / Lock Account**  
 `BE + Web` · 1 MD · dep: 4.1.9  
-Khóa tài khoản khiến người đó không đăng nhập được và phiên đang mở bị từ chối ở request kế tiếp. Hồ sơ và lịch sử nghiệp vụ giữ nguyên (BR-05).
+Khóa tài khoản khiến người đó không đăng nhập được và phiên đang mở bị từ chối ở request kế tiếp; Backend thu hồi mọi phiên của tài khoản. Hồ sơ và lịch sử nghiệp vụ giữ nguyên. Hệ quả lên lịch dạy và trách nhiệm xử lý ở 4.1.15 (BR-05).
 
-**4.1.15 — Chặn khóa tài khoản giáo viên còn tiết sắp tới / Block Locking Teacher with Upcoming Lessons**  
+**4.1.15 — Khóa tài khoản giáo viên: chuyển tiết và đóng trách nhiệm / Lock Teacher: Reassign Lessons and Close Duties**  
 `BE + Web` · 1.5 MD · dep: 4.1.14  
-Không khóa được tài khoản Teacher khi người đó còn tiết Đã xếp lịch từ hôm nay trở đi ở bất kỳ phân hiệu nào. Thông báo lỗi ghi rõ số tiết và phân hiệu để Vice Principal xử lý lịch trước bằng đổi giáo viên, hủy tiết hoặc khai báo vắng (BR-05).
+Khóa tài khoản không bị chặn bởi lịch dạy. Cùng một transaction: với tài khoản Teacher, tiết Đã xếp lịch chưa khóa từ hôm nay trở đi ở mọi phân hiệu chuyển Chờ xử lý (Chỉnh tay, để trống giáo viên) và Vice Principal phân hiệu chứa tiết nhận thông báo để xử lý theo 4.4.29–4.4.34; với mọi tài khoản cán bộ, trách nhiệm và phụ trách chuyên môn đang hiệu lực (phụ trách phân hiệu, tổ trưởng, chủ nhiệm, phụ trách chuyên môn) được đặt ngày kết thúc là ngày khóa và quyền mất ngay lúc khóa. Mở khóa lại không khôi phục các trách nhiệm đã đóng. Màn hình cảnh báo số tiết, phân hiệu và danh sách trách nhiệm trước khi xác nhận; Audit ghi số tiết và số trách nhiệm bị ảnh hưởng (BR-05, BR-09).
 
 **4.1.16 — Mở khóa tài khoản / Unlock Account**  
 `BE + Web` · 0.5 MD · dep: 4.1.14  
 Mở lại tài khoản đang bị khóa. Tài khoản chưa từng đổi mật khẩu lần đầu quay về trạng thái Chờ đổi mật khẩu (BR-05).
 
 **4.1.17 — Đổi loại tài khoản / Change Account Type**  
-`BE + Web` · 1.5 MD · dep: 4.1.9  
-Cấp sai loại thì đổi loại tài khoản bằng MỘT thao tác: ghi Audit, cấp lại mật khẩu tạm và đưa tài khoản về Chờ đổi mật khẩu. Hồ sơ và mọi lịch sử nghiệp vụ giữ nguyên vì chúng gắn với hồ sơ, không gắn với tài khoản (BR-01, BR-28).
+`BE + Web` · 1.5 MD · dep: 4.1.9, 4.1.15  
+Cấp sai loại thì đổi loại tài khoản bằng MỘT thao tác: ghi Audit, cấp lại mật khẩu tạm, đưa tài khoản về Chờ đổi mật khẩu và thu hồi mọi phiên. Trách nhiệm đang hiệu lực kết thúc vào ngày đổi, và nếu loại cũ là Teacher thì tiết tương lai chuyển Chờ xử lý, cùng cách với 4.1.15. Hồ sơ và mọi lịch sử nghiệp vụ giữ nguyên vì chúng gắn với hồ sơ, không gắn với tài khoản (BR-01, BR-05, BR-28).
 
 **4.1.18 — Kiểm thử vòng đời tài khoản / Account Lifecycle Tests**  
 `QA` · 1.5 MD · dep: 4.1.12, 4.1.15, 4.1.17  
-Tạo đơn lẻ và hàng loạt; một hồ sơ không tạo được tài khoản thứ hai; khóa tài khoản giáo viên còn tiết sắp tới bị chặn; đổi loại tài khoản không làm mất lịch sử; mật khẩu tạm không xem lại được.
+Tạo đơn lẻ và hàng loạt; một hồ sơ không tạo được tài khoản thứ hai; khóa tài khoản giáo viên còn tiết sắp tới không bị chặn, tiết chuyển Chờ xử lý, Vice Principal nhận thông báo và trách nhiệm kết thúc vào ngày khóa; đổi loại tài khoản cũng đóng trách nhiệm mà không làm mất lịch sử; mật khẩu tạm không xem lại được.
 
 ### IAM-03 Password (Mật khẩu)
 
@@ -109,7 +109,7 @@ Người dùng nhập tên đăng nhập. Nếu tài khoản Đang hoạt độn
 
 **4.1.22 — Gửi mã OTP dùng Gmail SMTP / Send OTP via Gmail SMTP**  
 `BE` · 1.5 MD · dep: 4.1.21  
-Gửi email chỉ chứa mã OTP và thời hạn, từ hộp thư chung của trường, tới email ghi trong hồ sơ. Không hàng đợi, không thử lại tự động; Gmail API hỏng thì người dùng bấm Gửi lại mã (mục 3.2).
+Gửi email chỉ chứa mã OTP và thời hạn, từ hộp thư chung của trường, tới email ghi trong hồ sơ. Không hàng đợi, không thử lại tự động; Gmail SMTP hỏng thì người dùng bấm Gửi lại mã (mục 3.2).
 
 **4.1.23 — Gửi lại mã / Resend Code**  
 `BE + Web + Mobile` · 0.5 MD · dep: 4.1.21  
@@ -121,11 +121,11 @@ Nhập đúng OTP rồi đặt mật khẩu mới. OTP hết hạn sau 10 phút 
 
 **4.1.25 — School Admin cấp lại mật khẩu tạm / Admin Reset Password**  
 `BE + Web` · 1 MD · dep: 4.1.9  
-Đường dự phòng cho hồ sơ không có email hoặc khi Gmail API hỏng. Sinh mật khẩu tạm mới, hiển thị một lần, tài khoản quay về Chờ đổi mật khẩu; ghi Audit (BR-04, BR-28).
+Đường dự phòng cho hồ sơ không có email hoặc khi Gmail SMTP hỏng. Sinh mật khẩu tạm mới, hiển thị một lần, tài khoản quay về Chờ đổi mật khẩu; ghi Audit (BR-04, BR-28).
 
 **4.1.26 — Kiểm thử mật khẩu và OTP / Password and OTP Tests**  
 `QA` · 1.5 MD · dep: 4.1.21, 4.1.24  
-Mã hết hạn, nhập sai quá số lần, gửi lại quá sớm, mã cũ mất hiệu lực khi có mã mới, hồ sơ không có email, Gmail API hỏng.
+Mã hết hạn, nhập sai quá số lần, gửi lại quá sớm, mã cũ mất hiệu lực khi có mã mới, hồ sơ không có email, Gmail SMTP hỏng.
 
 ### IAM-04 User Profile (Hồ sơ cá nhân)
 
@@ -355,7 +355,7 @@ Lọc theo phân hiệu chính, tổ chuyên môn, loại tài khoản và tình
 
 **4.3.4 — Tạo hồ sơ cán bộ / Create Staff Profile**  
 `BE + Web` · 1.5 MD · dep: 4.3.1, 4.3.2  
-Khai hồ sơ cán bộ với Họ tên, Ngày sinh và Phân hiệu chính bắt buộc; hệ thống sinh mã hồ sơ. Họ tên và ngày sinh là khóa nhận diện khi import (BR-10).
+Khai hồ sơ cán bộ với Họ tên, Ngày sinh, Số định danh cá nhân (12 chữ số, duy nhất, không sửa sau khi tạo) và Phân hiệu chính bắt buộc; hệ thống sinh mã hồ sơ. Số định danh là khóa nhận diện khi import (BR-10).
 
 **4.3.5 — Cập nhật hồ sơ cán bộ / Update Staff Profile**  
 `BE + Web` · 1 MD · dep: 4.3.4  
@@ -375,15 +375,15 @@ Tải mẫu Excel cố định của danh bạ cán bộ. Mẫu này không đư
 
 **4.3.9 — Import cán bộ từ file Excel / Import Staff from Excel**  
 `BE + Web` · 2 MD · dep: 4.3.4, 4.3.8  
-Import một bước: gửi file, hệ thống validate TOÀN BỘ file rồi ghi, tất cả trong một transaction. Có bất kỳ lỗi nào thì không ghi gì. Người đã tồn tại (trùng Họ tên + Ngày sinh) thì bỏ qua cả dòng (BR-11).
+Import một bước: gửi file, hệ thống validate TOÀN BỘ file rồi ghi, tất cả trong một transaction. Có bất kỳ lỗi nào thì không ghi gì. Số định danh là cột bắt buộc, 12 chữ số, duy nhất toàn trường. Người đã tồn tại (trùng Số định danh) thì bỏ qua cả dòng, không cập nhật hồ sơ cũ (BR-10, BR-11).
 
 **4.3.10 — Xem bảng lỗi và kết quả import cán bộ / View Staff Import Result**  
 `BE + Web` · 1.5 MD · dep: 4.3.9  
-Bảng lỗi kèm số dòng, cột và giá trị gốc; mục Đã có, bỏ qua; số hồ sơ đã tạo khi thành công (BR-11).
+Bảng lỗi kèm số dòng, cột và giá trị gốc; mục Đã có, bỏ qua kèm mã hồ sơ đã tồn tại; số hồ sơ đã tạo khi thành công (BR-11).
 
 **4.3.11 — Kiểm thử import cán bộ / Staff Import Tests**  
 `QA` · 1.5 MD · dep: 4.3.9  
-Một ô sai là không ghi gì; hai dòng trùng khóa nhận diện là lỗi; chạy lại cùng một file không tạo bản trùng; viết tắt trùng bị chặn.
+Một ô sai là không ghi gì; thiếu hoặc sai định dạng số định danh là lỗi; hai dòng trùng số định danh là lỗi; hai người trùng họ tên và ngày sinh nhưng khác số định danh vẫn thành hai hồ sơ; chạy lại cùng một file không tạo bản trùng; viết tắt trùng bị chặn.
 
 ### PPL-02 Student Directory (Danh bạ học sinh)
 
@@ -397,23 +397,23 @@ Lọc theo năm học, phân hiệu, lớp và trạng thái; tìm theo tên ho�
 
 **4.3.14 — Tạo hồ sơ học sinh / Create Student Profile**  
 `BE + Web` · 1.5 MD · dep: 4.3.12  
-Khai hồ sơ học sinh trên giao diện với Họ tên và Ngày sinh bắt buộc; hệ thống sinh mã hồ sơ (BR-03, BR-10).
+Khai hồ sơ học sinh trên giao diện với Họ tên, Ngày sinh và Số định danh cá nhân (12 chữ số, duy nhất toàn trường, không sửa sau khi tạo) bắt buộc; hệ thống sinh mã hồ sơ (BR-03, BR-10).
 
 **4.3.15 — Cập nhật hồ sơ học sinh / Update Student Profile**  
 `BE + Web` · 1 MD · dep: 4.3.14  
-Sửa thông tin học sinh trên giao diện. Import không bao giờ cập nhật hồ sơ đã có (BR-11).
+Sửa thông tin học sinh trên giao diện; số định danh không sửa được. Import không bao giờ cập nhật hồ sơ đã có (BR-10, BR-11).
 
 **4.3.16 — Tải file mẫu import học sinh / Download Student Import Template**  
 `BE + Web` · 0.5 MD  
-Tải mẫu Excel cố định của danh bạ học sinh, gồm hai ô meta Năm học và Phân hiệu (BR-11).
+Tải mẫu Excel cố định của danh bạ học sinh, gồm hai ô meta Năm học và Phân hiệu và cột bắt buộc Số định danh (BR-11).
 
 **4.3.17 — Import học sinh kèm ghi danh và phụ huynh / Import Students with Enrollment and Guardian**  
-`BE + Web` · 2.5 MD · dep: 4.3.14, 4.3.16  
-Một dòng = một học sinh kèm phụ huynh đại diện, tạo tối đa bốn thứ trong một transaction: hồ sơ học sinh, ghi danh (chỉ khi cột Tên lớp có giá trị, hiệu lực từ ngày bắt đầu năm học), hồ sơ phụ huynh và liên kết. Các dòng cùng số điện thoại dùng chung một hồ sơ phụ huynh. Hệ thống không tự tạo lớp (BR-11).
+`BE + Web` · 2.5 MD · dep: 4.3.14, 4.3.16, 4.2.30, 4.3.23  
+Một dòng = một học sinh kèm phụ huynh đại diện, nhận diện học sinh theo Số định danh (cột bắt buộc), tạo tối đa bốn thứ trong một transaction: hồ sơ học sinh, ghi danh (chỉ khi cột Tên lớp có giá trị, hiệu lực từ ngày bắt đầu năm học), hồ sơ phụ huynh và liên kết. Các dòng cùng số điện thoại dùng chung một hồ sơ phụ huynh. Hệ thống không tự tạo lớp (BR-11).
 
 **4.3.18 — Xem bảng lỗi và kết quả import học sinh / View Student Import Result**  
 `BE + Web` · 1.5 MD · dep: 4.3.17  
-Bảng lỗi kèm số dòng, cột, giá trị gốc — tên lớp không khớp, cùng số điện thoại mà họ tên phụ huynh khác nhau, trùng khóa nhận diện trong file; mục Đã có, bỏ qua; số học sinh, ghi danh và phụ huynh đã tạo (BR-11).
+Bảng lỗi kèm số dòng, cột, giá trị gốc — tên lớp không khớp, cùng số điện thoại mà họ tên phụ huynh khác nhau, thiếu hoặc trùng số định danh trong file; mục Đã có, bỏ qua kèm mã hồ sơ đã tồn tại; số học sinh, ghi danh và phụ huynh đã tạo (BR-11).
 
 **4.3.19 — Chuyển trường cho học sinh / Transfer Student Out**  
 `BE + Web` · 1.5 MD · dep: 4.3.14  
@@ -425,7 +425,7 @@ Giống chuyển trường nhưng đổi trạng thái sang Đã tốt nghiệp;
 
 **4.3.21 — Kiểm thử import học sinh / Student Import Tests**  
 `QA` · 2 MD · dep: 4.3.17  
-Lớp không tồn tại là lỗi; học sinh đã có bị bỏ qua cả dòng kể cả khi đổi lớp; nhiều con cùng một số điện thoại ra một hồ sơ phụ huynh; chạy lại cùng file không tạo trùng.
+Lớp không tồn tại là lỗi; thiếu hoặc trùng số định danh là lỗi; học sinh đã có (trùng số định danh) bị bỏ qua cả dòng kể cả khi đổi lớp; hai học sinh trùng họ tên và ngày sinh nhưng khác số định danh thành hai hồ sơ; nhiều con cùng một số điện thoại ra một hồ sơ phụ huynh; chạy lại cùng file không tạo trùng.
 
 ### PPL-03 Parent Directory & Linking (Danh bạ phụ huynh & Liên kết)
 
@@ -473,7 +473,7 @@ Một thao tác, một transaction: ngày kết thúc của bản cũ là NGÀY 
 
 **4.3.32 — Kết thúc trách nhiệm / End Responsibility**  
 `BE + Web` · 0.5 MD · dep: 4.3.28  
-Đặt ngày kết thúc cho một trách nhiệm; quyền tương ứng mất ngay, loại tài khoản không đổi (BR-09).
+Đặt ngày kết thúc là ngày thao tác cho một trách nhiệm; quyền tương ứng mất ngay tại thời điểm thao tác, không đợi hết ngày; loại tài khoản không đổi. Gán lại trong cùng ngày tạo bản mới bắt đầu từ hôm nay (BR-09).
 
 **4.3.33 — Xem lịch sử trách nhiệm theo đích / View Responsibility History**  
 `BE + Web` · 1 MD · dep: 4.3.28  
@@ -481,7 +481,7 @@ Xem những ai đã từng phụ trách một phân hiệu, một tổ hay một
 
 **4.3.34 — Cảnh báo lớp chưa có chủ nhiệm / View Classes Without Homeroom Teacher**  
 `BE + Web` · 1 MD · dep: 4.3.30  
-Liệt kê lớp của năm hiện hành không có trách nhiệm chủ nhiệm đang hiệu lực — đó là lớp mà đơn xin nghỉ chỉ School Admin duyệt được (BR-19, mục 5.1).
+Liệt kê lớp của năm hiện hành không có trách nhiệm chủ nhiệm đang hiệu lực — đó là lớp mà đơn xin nghỉ nằm chờ tới khi có chủ nhiệm được gán (BR-19, mục 5.1).
 
 **4.3.35 — Kiểm thử phạm vi theo trách nhiệm / Responsibility Scope Tests**  
 `QA` · 1.5 MD · dep: 4.3.28, 4.3.30  
@@ -507,11 +507,11 @@ Kết thúc bản phụ trách cũ ở ngày liền trước và mở bản mớ
 
 **4.3.40 — Kết thúc phụ trách chuyên môn / End Teaching Assignment**  
 `BE + Web` · 0.5 MD · dep: 4.3.37  
-Đặt ngày kết thúc cho phụ trách chuyên môn; dữ liệu bài tập đã phát sinh giữ nguyên.
+Đặt ngày kết thúc là ngày thao tác cho phụ trách chuyên môn; quyền với bài tập của (lớp, môn) mất ngay tại thời điểm thao tác, không đợi hết ngày, cùng quy tắc với 4.3.32 (kết thúc trách nhiệm). Gán lại trong cùng ngày tạo bản mới bắt đầu từ hôm nay. Dữ liệu bài tập đã phát sinh giữ nguyên (BR-09).
 
 **4.3.41 — Kiểm thử chuyển quyền theo phụ trách chuyên môn / Assignment Handover Tests**  
 `QA` · 1.5 MD · dep: 4.3.39  
-Giáo viên mới công bố được điểm bài do người cũ giao; người cũ mất quyền ngay sau ngày kết thúc; phụ trách chuyên môn không ảnh hưởng quyền điểm danh (quyền đó theo tiết).
+Giáo viên mới công bố được điểm bài do người cũ giao; người cũ mất quyền ngay tại thời điểm thay người hoặc kết thúc (không đợi hết ngày); phụ trách chuyên môn không ảnh hưởng quyền điểm danh (quyền đó theo tiết).
 
 ---
 
@@ -549,7 +549,7 @@ Xem các phiên bản Nháp và Đã phát hành của một phân hiệu và h�
 
 **4.4.8 — Kiểm xung đột lịch toàn trường / Check School-wide Schedule Conflicts**  
 `BE` · 2 MD · dep: 4.4.5  
-Quy tắc dùng chung: trùng lịch là cùng NGÀY và cùng KHUNG GIỜ. Mỗi lớp và mỗi giáo viên có tối đa một tiết Đã xếp lịch hoặc Chờ xử lý tại một (ngày, khung giờ), kiểm trên toàn trường vì giáo viên dạy nhiều phân hiệu (BR-13).
+Quy tắc dùng chung: trùng lịch là cùng NGÀY và cùng KHUNG GIỜ. Mỗi lớp có tối đa một tiết Đã xếp lịch hoặc Chờ xử lý, và mỗi giáo viên có tối đa một tiết Đã xếp lịch (tiết Chờ xử lý để trống giáo viên), tại một (ngày, khung giờ), kiểm trên toàn trường vì giáo viên dạy nhiều phân hiệu (BR-13).
 
 **4.4.9 — Xem trước kết quả phát hành / Preview Publish Result**  
 `BE + Web` · 2 MD · dep: 4.4.8  
@@ -557,7 +557,7 @@ Hiển thị số tiết sẽ xóa và sẽ tạo, nhóm theo lớp và ngày, k
 
 **4.4.10 — Xem danh sách xung đột giáo viên / View Teacher Conflicts**  
 `BE + Web` · 1.5 MD · dep: 4.4.8  
-Mỗi dòng xung đột ghi rõ tiết đang chiếm chỗ thuộc phân hiệu nào và ai là Vice Principal phụ trách phân hiệu đó, vì xung đột liên phân hiệu phải do phía kia sửa hoặc School Admin gỡ. Còn xung đột là CHẶN Phát hành (BR-14).
+Mỗi dòng xung đột ghi rõ tiết đang chiếm chỗ thuộc phân hiệu nào và ai là Vice Principal phụ trách phân hiệu đó, vì xung đột liên phân hiệu phải do Vice Principal phía kia sửa. Còn xung đột là CHẶN Phát hành (BR-14).
 
 **4.4.11 — Phát hành thời khóa biểu / Publish Timetable**  
 `BE + Web` · 2.5 MD · dep: 4.4.9, 4.4.10  
@@ -611,7 +611,7 @@ Tạo tiết mới ở một (ngày, khung giờ) trống; ngày phải là ngà
 
 **4.4.23 — Khai ngày nghỉ đột xuất / Declare Ad-hoc Day Off**  
 `BE + Web` · 2 MD · dep: 4.4.19  
-Vice Principal khai cho phân hiệu mình, School Admin khai cho một phân hiệu hoặc toàn trường, ngày ≥ hôm nay. Mọi tiết Đã xếp lịch hoặc Chờ xử lý CHƯA CÓ ĐIỂM DANH của ngày đó chuyển sang Đã hủy; Phát hành sau đó cũng bỏ qua ngày này (BR-15).
+Vice Principal khai cho phân hiệu mình, ngày ≥ hôm nay; nghỉ toàn trường thì Vice Principal mỗi phân hiệu khai cho phân hiệu mình. Mọi tiết Đã xếp lịch hoặc Chờ xử lý CHƯA CÓ ĐIỂM DANH của ngày đó chuyển sang Đã hủy; Phát hành sau đó cũng bỏ qua ngày này (BR-15).
 
 **4.4.24 — Xem trước số tiết sẽ bị hủy / Preview Lessons to Be Cancelled**  
 `BE + Web` · 1 MD · dep: 4.4.23  
@@ -633,19 +633,19 @@ Khai giáo viên, từ ngày – đến ngày, buổi (sáng / chiều / cả ng
 
 **4.4.28 — Đưa tiết bị ảnh hưởng về Chờ xử lý / Move Affected Lessons to Pending**  
 `BE` · 1.5 MD · dep: 4.4.27  
-Khai báo không tự đổi lịch: mọi tiết Đã xếp lịch chưa bị khóa của giáo viên đó trong khoảng, ở MỌI PHÂN HIỆU, chuyển sang Chờ xử lý (Chỉnh tay) và vẫn giữ giáo viên cũ. Vice Principal của phân hiệu chứa tiết nhận thông báo (BR-16, BR-26).
+Khai báo không tự đổi lịch: mọi tiết Đã xếp lịch chưa bị khóa của giáo viên đó trong khoảng, ở MỌI PHÂN HIỆU, chuyển sang Chờ xử lý (Chỉnh tay) và để trống giáo viên; tiết trống không chiếm chỗ của giáo viên nào khi kiểm xung đột. Mỗi tiết ghi lại khai báo đã đưa nó về Chờ xử lý. Vice Principal của phân hiệu chứa tiết nhận thông báo. Khóa hoặc đổi loại tài khoản Teacher (4.1.15, 4.1.17) cũng đưa tiết về Chờ xử lý và để trống giáo viên theo cách này, nhưng không gắn với khai báo nào (BR-05, BR-13, BR-16, BR-26).
 
 **4.4.29 — Xem danh sách tiết Chờ xử lý / View Pending Lessons**  
 `BE + Web` · 1.5 MD · dep: 4.4.28  
-Danh sách tiết Chờ xử lý theo phân hiệu, lọc theo ngày và giáo viên, mở được màn hình quyết định từng tiết.
+Danh sách tiết Chờ xử lý theo phân hiệu, lọc theo ngày và lớp, mở được màn hình quyết định từng tiết.
 
 **4.4.30 — Xem gợi ý giáo viên rảnh / View Free Teacher Suggestions**  
 `BE + Web` · 2 MD · dep: 4.4.29  
-Teacher đủ điều kiện dạy, không có tiết tại (ngày, khung giờ) đó và không có khai báo vắng phủ ngày và buổi đó. Danh sách sắp theo tên, tối đa 10 người, KHÔNG xếp hạng ưu tiên — Vice Principal tự chọn (BR-06, BR-13, BR-16).
+Teacher đủ điều kiện dạy, không có tiết Đã xếp lịch tại (ngày, khung giờ) đó ở bất kỳ phân hiệu nào và không có khai báo vắng phủ ngày và buổi đó. Danh sách sắp theo tên, tối đa 10 người, KHÔNG xếp hạng ưu tiên — Vice Principal tự chọn (BR-06, BR-13, BR-16).
 
-**4.4.31 — Xử lý tiết chờ bằng cách đổi giáo viên / Resolve by Replacement**  
+**4.4.31 — Xử lý tiết chờ bằng cách chọn giáo viên dạy thay / Resolve by Substitute Teacher**  
 `BE + Web` · 1.5 MD · dep: 4.4.30  
-Lựa chọn 1: gán giáo viên mới, tiết quay lại Đã xếp lịch. Kiểm xung đột lịch toàn trường (BR-13, BR-16).
+Lựa chọn 1: gán giáo viên được chọn, tiết quay lại Đã xếp lịch. Backend kiểm lại điều kiện dạy và xung đột lịch toàn trường lúc lưu (BR-06, BR-13, BR-16).
 
 **4.4.32 — Xử lý tiết chờ bằng cách hủy / Resolve by Cancelling**  
 `BE + Web` · 0.5 MD · dep: 4.4.29  
@@ -655,21 +655,21 @@ Lựa chọn 2: tiết chuyển sang Đã hủy.
 `BE + Web` · 1.5 MD · dep: 4.4.29  
 Lựa chọn 3: hủy tiết rồi tạo tiết bù ở (ngày, khung giờ) trống theo quy tắc tiết bù, ghi lại tiết gốc (BR-15, BR-16).
 
-**4.4.34 — Giữ nguyên giáo viên cho tiết chờ / Keep Original Teacher**  
-`BE + Web` · 0.5 MD · dep: 4.4.29  
-Lựa chọn 4: tiết quay lại Đã xếp lịch với giáo viên cũ, dùng khi giáo viên đi dạy lại được.
+**4.4.34 — Xử lý tiết chờ đã quá ngày / Resolve Overdue Pending Lesson**  
+`BE + Web` · 1 MD · dep: 4.4.29, 4.4.31  
+Tiết Chờ xử lý đã qua ngày mà chưa quyết hiện trên Dashboard và xử lý theo cùng ba lựa chọn; nếu chọn giáo viên thì School Admin nhập bù điểm danh trên màn hình điểm danh (BR-16, BR-17).
 
-**4.4.35 — Xử lý tiết chờ đã quá ngày / Resolve Overdue Pending Lesson**  
-`BE + Web` · 1 MD · dep: 4.4.29  
-Tiết Chờ xử lý đã qua ngày mà chưa quyết hiện trên Dashboard và chỉ còn lựa chọn Hủy hoặc Để nguyên; chọn Để nguyên rồi nhờ School Admin nhập bù điểm danh (BR-16, BR-17).
+**4.4.35 — Xóa khai báo giáo viên vắng / Delete Teacher Absence**  
+`BE + Web` · 1.5 MD · dep: 4.4.28  
+Xóa khai báo thì các tiết còn Chờ xử lý do khai báo đó được trả về giáo viên của khai báo, trở lại Đã xếp lịch, với điều kiện giáo viên không trùng lịch tại tiết đó và vẫn đủ điều kiện dạy (tài khoản Teacher không bị khóa, BR-06). Tiết trùng lịch hoặc giáo viên không còn đủ điều kiện giữ nguyên Chờ xử lý và được báo cho Vice Principal; tiết đã xử lý không bị đụng tới; tiết trống do khóa hoặc đổi loại tài khoản không tự khôi phục. Ghi Audit, thông báo giáo viên và học sinh của lớp (BR-06, BR-13, BR-16, BR-26, BR-28).
 
 **4.4.36 — Xem lịch dạy của mọi giáo viên toàn trường / View School-wide Teacher Calendar**  
 `BE + Web` · 1.5 MD · dep: 4.4.14  
 Vice Principal xem lịch dạy của mọi giáo viên ở mọi phân hiệu để chọn người khi gán phụ trách chuyên môn hoặc dạy thay (mục 2.3).
 
 **4.4.37 — Kiểm thử xử lý giáo viên vắng / Absence Tests**  
-`QA` · 2 MD · dep: 4.4.28, 4.4.31  
-Tiết Chờ xử lý không điểm danh được; tiết ở phân hiệu khác cũng bị đưa về Chờ xử lý; gợi ý không trả về người đã có tiết hoặc đang vắng; bốn lựa chọn ghi đúng Audit.
+`QA` · 2 MD · dep: 4.4.28, 4.4.31, 4.4.35  
+Tiết Chờ xử lý để trống giáo viên và không điểm danh được; tiết ở phân hiệu khác cũng bị đưa về Chờ xử lý; gợi ý không trả về người đã có tiết hoặc đang vắng; ba lựa chọn ghi đúng Audit; tiết trống không chiếm chỗ giáo viên khi kiểm xung đột; xóa khai báo trả tiết về đúng giáo viên, bỏ qua tiết đã xử lý và tiết trùng lịch, không khôi phục tiết trống do khóa tài khoản.
 
 ---
 
@@ -699,11 +699,11 @@ Chỉ điểm danh trên tiết Đã xếp lịch. Tiết Chờ xử lý và ti�
 
 **4.5.6 — Xem danh sách tiết đã qua chưa điểm danh / View Lessons Missing Attendance**  
 `BE + Web` · 1.5 MD · dep: 4.5.3  
-Tiết Đã xếp lịch có ngày nhỏ hơn hôm nay và chưa có bản ghi điểm danh nào. Danh sách này cũng là một chỉ số trên Dashboard (mục 5.1).
+Tiết Đã xếp lịch có ngày nhỏ hơn hôm nay và chưa có bản ghi điểm danh nào. Danh sách này cũng là một chỉ số trên Dashboard của Principal và Vice Principal (mục 5.1); School Admin tìm tiết cần nhập bù bằng cách chọn lớp và khoảng ngày trên màn hình điểm danh.
 
 **4.5.7 — School Admin nhập bù điểm danh / Backfill Attendance**  
 `BE + Web` · 2 MD · dep: 4.5.6  
-Sau ngày của tiết, CHỈ School Admin nhập bù, trên cùng màn hình điểm danh, cho tiết Đã xếp lịch có ngày ≤ hôm nay. Đây không phải hành vi gắn danh tính nên School Admin làm thay được (BR-02, BR-17).
+Sau ngày của tiết, CHỈ School Admin nhập bù, trên cùng màn hình điểm danh, cho tiết Đã xếp lịch có ngày ≤ hôm nay. Đây là việc duy nhất School Admin làm thay trên dữ liệu giảng dạy, ghi là người nhập (BR-02, BR-17).
 
 **4.5.8 — School Admin sửa điểm danh tiết đã qua / Correct Attendance After the Day**  
 `BE + Web` · 1 MD · dep: 4.5.7  
@@ -776,8 +776,8 @@ Câu do AI sinh là nháp cho tới khi giáo viên xác nhận; chỉ câu Sẵ
 Bỏ các câu nháp không dùng.
 
 **4.6.10 — Tạo đề từ câu hỏi Sẵn dùng / Create Quiz**  
-`BE + Web` · 1.5 MD · dep: 4.6.8  
-Đề gồm các câu Sẵn dùng CÙNG MỘT MÔN. Đề thuộc về người tạo (BR-20).
+`BE + Web` · 1.5 MD · dep: 4.6.3  
+Đề gồm các câu Sẵn dùng CÙNG MỘT MÔN, soạn thủ công (4.6.3) hoặc xác nhận từ nháp AI (4.6.8); tạo đề không phụ thuộc AI. Đề thuộc về người tạo (BR-20).
 
 **4.6.11 — Sắp thứ tự và đặt điểm từng câu / Order Questions and Set Points**  
 `BE + Web` · 1.5 MD · dep: 4.6.10  
@@ -803,7 +803,7 @@ Người khác không sửa được câu và đề của mình; đề đã giao
 
 **4.6.16 — Giao đề cho lớp / Assign Quiz to Class**  
 `BE + Web` · 2 MD · dep: 4.6.10, 4.3.37  
-Teacher ĐANG PHỤ TRÁCH CHUYÊN MÔN ở (lớp, môn của đề) giao ĐỀ MÌNH SỞ HỮU cho lớp đó, chọn thời điểm mở (mặc định ngay) và hạn nộp lớn hơn hiện tại (BR-21).
+Teacher ĐANG PHỤ TRÁCH CHUYÊN MÔN ở (lớp, môn của đề) giao ĐỀ MÌNH SỞ HỮU cho lớp đó, chọn thời điểm mở (mặc định ngay) và hạn nộp lớn hơn hiện tại. Khi bài chuyển sang Đã giao, hệ thống lưu danh sách học sinh có ghi danh hiệu lực ở lớp lúc đó làm DANH SÁCH ĐƯỢC GIAO; danh sách này không đổi khi học sinh chuyển lớp về sau (BR-21).
 
 **4.6.17 — Cập nhật bài đang ở Nháp / Update Draft Assignment**  
 `BE + Web` · 1 MD · dep: 4.6.16  
@@ -827,7 +827,7 @@ Học sinh xem bài được giao kèm hạn nộp và tình trạng đã nộp 
 
 **4.6.22 — Mở đề và làm bài / Open and Take Quiz**  
 `BE + Web + Mobile` · 2 MD · dep: 4.6.21  
-Học sinh có ghi danh hiệu lực ở lớp mở bài từ thời điểm mở tới hạn nộp. Mở đề không tính lượt, không giới hạn thời lượng (BR-21).
+Học sinh trong danh sách được giao (4.6.16) mở bài từ thời điểm mở tới hạn nộp. Mở đề không tính lượt, không giới hạn thời lượng (BR-21).
 
 **4.6.23 — Tự lưu nháp bài làm / Autosave Attempt**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.6.22  
@@ -839,11 +839,11 @@ Tối đa MỘT lần nộp. Backend từ chối nộp sau hạn và nộp lại
 
 **4.6.25 — Chấm tự động khi nộp / Auto-grade on Submission**  
 `BE` · 2 MD · dep: 4.6.24  
-Backend chấm ngay khi nộp: điểm = tổng điểm câu đúng / tổng điểm đề × 10. Chưa nộp KHÔNG phải 0 điểm — hiển thị Không nộp (BR-21).
+Backend chấm ngay khi nộp: điểm = tổng điểm câu đúng / tổng điểm đề × 10. Chưa nộp KHÔNG phải 0 điểm — hiển thị Không nộp, chỉ áp dụng cho học sinh trong danh sách được giao; mẫu số tỉ lệ nộp là số học sinh của danh sách đó (BR-21).
 
 **4.6.26 — Kiểm thử nộp bài và hạn nộp / Submission Tests**  
 `QA` · 2 MD · dep: 4.6.24, 4.6.25  
-Nộp sau hạn bị chặn; nộp lần hai bị chặn; nháp không ra điểm; học sinh ngoài lớp không mở được bài; chuyển lớp sau khi nộp vẫn giữ bài.
+Nộp sau hạn bị chặn; nộp lần hai bị chặn; nháp không ra điểm; học sinh ngoài danh sách được giao không mở được bài; chuyển lớp sau khi giao hoặc sau khi nộp không đổi người nhận, mẫu số và bài đã nộp.
 
 ### LRN-03 Grading & Score Publication (Chấm bài & Công bố điểm)
 
@@ -909,9 +909,9 @@ Công bố cho học sinh và phụ huynh; công bố nhận xét ĐỘC LẬP v
 `BE + Web` · 1 MD · dep: 4.6.39  
 Duyệt và công bố nhiều nhận xét trong một thao tác.
 
-**4.6.42 — Chạy lại phân tích khi AI lỗi / Retry Failed Analysis**  
-`BE + Web` · 1 MD · dep: 4.6.35  
-AI lỗi thì nhận xét ở trạng thái Lỗi kèm lý do, giáo viên chạy lại. Không ảnh hưởng chấm, nộp và công bố điểm (mục 3.1, BR-23).
+**4.6.42 — Tạo lại nhận xét khi Lỗi hoặc Nháp / Regenerate Failed or Draft Analysis**  
+`BE + Web` · 1.5 MD · dep: 4.6.35  
+AI lỗi thì nhận xét ở trạng thái Lỗi kèm lý do, giáo viên chạy lại. Nhận xét còn Nháp cũng tạo lại được và nội dung Nháp cũ bị thay bằng kết quả mới. Nhận xét đã Đã duyệt hoặc Đã công bố thì không tạo lại và không bị ghi đè. Không ảnh hưởng chấm, nộp và công bố điểm (mục 3.1, BR-23).
 
 **4.6.43 — Xem nhận xét đã công bố / View Published Comment**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.6.40  
@@ -919,7 +919,7 @@ Student và Parent chỉ thấy nhận xét Đã công bố.
 
 **4.6.44 — Kiểm thử phân tích AI / AI Analysis Tests**  
 `QA` · 2 MD · dep: 4.6.34, 4.6.35, 4.6.40  
-Dữ liệu gửi đi không chứa thông tin định danh; bài chưa đóng hoặc không có bài nộp thì không chạy được; AI hỏng không chặn chấm và công bố điểm; nhận xét Nháp không lộ cho học sinh.
+Dữ liệu gửi đi không chứa thông tin định danh; bài chưa đóng hoặc không có bài nộp thì không chạy được; AI hỏng không chặn chấm và công bố điểm; nhận xét Nháp không lộ cho học sinh; tạo lại được khi Nháp hoặc Lỗi, bị chặn khi đã duyệt hoặc công bố.
 
 ### LRN-05 Department Monitoring (Giám sát cấp tổ)
 
@@ -973,73 +973,65 @@ Quyết định là cuối cùng. Đơn duyệt KHÔNG tự sinh vắng — nó 
 `BE + Web + Mobile` · 0.5 MD · dep: 4.7.5  
 Từ chối kèm lý do; bị từ chối thì phụ huynh gửi đơn mới. Kết quả tạo thông báo cho Parent (BR-19, BR-26).
 
-**4.7.8 — School Admin duyệt thay / Admin Decide Leave Request**  
-`BE + Web` · 1 MD · dep: 4.7.5  
-School Admin duyệt hoặc từ chối bất kỳ đơn nào, người duyệt ghi là School Admin. Lớp chưa có chủ nhiệm thì chỉ School Admin duyệt được (BR-02, BR-19).
-
-**4.7.9 — Kiểm thử đơn xin nghỉ / Leave Request Tests**  
+**4.7.8 — Kiểm thử đơn xin nghỉ / Leave Request Tests**  
 `QA` · 2 MD · dep: 4.7.2, 4.7.6  
 Ngày bắt đầu trong quá khứ bị chặn; hai đơn chồng ngày và chồng buổi bị chặn còn sáng/chiều riêng thì không; đổi chủ nhiệm giữa chừng vẫn đúng một người duyệt; đơn duyệt muộn đổi nhãn vắng đã ghi.
 
 ### PAR-02 Weekly Student Report (Sổ liên lạc tuần)
 
-**4.7.10 — Tính sổ liên lạc tuần khi mở / Compute Weekly Report on Read**  
+**4.7.9 — Tính sổ liên lạc tuần khi mở / Compute Weekly Report on Read**  
 `BE` · 2.5 MD · dep: 4.5.10, 4.6.29  
 TÍNH TRỰC TIẾP khi mở, không lưu, không có job sinh sổ, không ai viết tay. Một sổ = một học sinh + một tuần (thứ Hai – Chủ nhật) của năm học hiện hành mà học sinh có ghi danh (BR-24).
 
-**4.7.11 — Xem sổ liên lạc tuần của con / View Child's Weekly Report**  
-`BE + Web + Mobile` · 1.5 MD · dep: 4.7.10  
+**4.7.10 — Xem sổ liên lạc tuần của con / View Child's Weekly Report**  
+`BE + Web + Mobile` · 1.5 MD · dep: 4.7.9  
 Gồm chuyên cần theo tiết Đã xếp lịch đã diễn ra; bài tập có hạn nộp trong tuần với số được giao, đã nộp, không nộp; điểm và nhận xét đã công bố của các bài đó. Không xếp hạng, không điểm trung bình lớp, không hạnh kiểm (BR-24).
 
-**4.7.12 — Xem sổ liên lạc tuần của mình / View Own Weekly Report**  
-`BE + Web + Mobile` · 1 MD · dep: 4.7.10  
+**4.7.11 — Xem sổ liên lạc tuần của mình / View Own Weekly Report**  
+`BE + Web + Mobile` · 1 MD · dep: 4.7.9  
 Học sinh xem sổ của chính mình, cùng nội dung như phụ huynh xem.
 
-**4.7.13 — Chọn tuần để xem / Select Report Week**  
-`BE + Web + Mobile` · 1 MD · dep: 4.7.10  
+**4.7.12 — Chọn tuần để xem / Select Report Week**  
+`BE + Web + Mobile` · 1 MD · dep: 4.7.9  
 Xem được mọi tuần của năm học hiện hành mà học sinh có ghi danh; mục không có dữ liệu để trống.
 
-**4.7.14 — Chủ nhiệm xem sổ của học sinh lớp mình / View Class Weekly Reports**  
-`BE + Web + Mobile` · 1.5 MD · dep: 4.7.10  
+**4.7.13 — Chủ nhiệm xem sổ của học sinh lớp mình / View Class Weekly Reports**  
+`BE + Web + Mobile` · 1.5 MD · dep: 4.7.9  
 Chủ nhiệm mở sổ của từng học sinh trong lớp chủ nhiệm.
 
-**4.7.15 — Kiểm thử sổ liên lạc / Weekly Report Tests**  
-`QA` · 1 MD · dep: 4.7.10  
+**4.7.14 — Kiểm thử sổ liên lạc / Weekly Report Tests**  
+`QA` · 1 MD · dep: 4.7.9  
 Nhập bù điểm danh và đơn duyệt muộn được phản ánh ngay lần mở sau; tiết Đã hủy không vào thống kê; bài chưa công bố điểm không hiện điểm.
 
 ### PAR-03 Parent–Teacher Messaging (Hộp thư phụ huynh – giáo viên)
 
-**4.7.16 — Tạo hội thoại với giáo viên / Create Conversation**  
+**4.7.15 — Tạo hội thoại với giáo viên / Create Conversation**  
 `BE + Web + Mobile` · 2 MD · dep: 4.3.37, 4.3.30  
 Chỉ Parent TẠO hội thoại, về một con được liên kết, với chủ nhiệm lớp con đang học hoặc giáo viên đang phụ trách chuyên môn ở lớp đó. Mỗi bộ (phụ huynh, cán bộ, học sinh) có một hội thoại (BR-25).
 
-**4.7.17 — Xem danh sách hội thoại / View Conversation List**  
-`BE + Web + Mobile` · 1.5 MD · dep: 4.7.16  
+**4.7.16 — Xem danh sách hội thoại / View Conversation List**  
+`BE + Web + Mobile` · 1.5 MD · dep: 4.7.15  
 Hai bên xem danh sách hội thoại của mình kèm tin nhắn gần nhất.
 
-**4.7.18 — Gửi tin nhắn / Send Message**  
-`BE + Web + Mobile` · 1.5 MD · dep: 4.7.16  
+**4.7.17 — Gửi tin nhắn / Send Message**  
+`BE + Web + Mobile` · 1.5 MD · dep: 4.7.15  
 Chỉ văn bản, tối đa 2.000 ký tự. Không file, không gọi, không nhóm. Tin nhắn mới tạo thông báo cho người nhận (BR-25, BR-26).
 
-**4.7.19 — Kiểm quan hệ mỗi lần gửi / Verify Relationship on Each Send**  
-`BE` · 1 MD · dep: 4.7.18  
+**4.7.18 — Kiểm quan hệ mỗi lần gửi / Verify Relationship on Each Send**  
+`BE` · 1 MD · dep: 4.7.17  
 Quan hệ được kiểm MỖI LẦN GỬI; quan hệ đã kết thúc thì hội thoại thành chỉ đọc, lịch sử giữ nguyên (BR-25).
 
-**4.7.20 — Đánh dấu đã đọc và đếm tin chưa đọc / Mark Read and Count Unread**  
-`BE + Web + Mobile` · 1 MD · dep: 4.7.18  
+**4.7.19 — Đánh dấu đã đọc và đếm tin chưa đọc / Mark Read and Count Unread**  
+`BE + Web + Mobile` · 1 MD · dep: 4.7.17  
 Đếm tin chưa đọc theo từng hội thoại và tổng trên thanh điều hướng.
 
-**4.7.21 — Xem hội thoại chỉ đọc khi quan hệ kết thúc / View Read-only Conversation**  
-`BE + Web + Mobile` · 1 MD · dep: 4.7.19  
+**4.7.20 — Xem hội thoại chỉ đọc khi quan hệ kết thúc / View Read-only Conversation**  
+`BE + Web + Mobile` · 1 MD · dep: 4.7.18  
 Hội thoại chỉ đọc vẫn mở xem được, nút gửi bị tắt và Backend từ chối gửi (BR-25).
 
-**4.7.22 — School Admin đọc hội thoại / Admin Read Conversation**  
-`BE + Web` · 1.5 MD · dep: 4.7.16  
-School Admin ĐỌC mọi hội thoại nhưng KHÔNG nhắn — gửi tin nhắn là hành vi gắn danh tính (BR-02, BR-25).
-
-**4.7.23 — Kiểm thử hộp thư / Messaging Tests**  
-`QA` · 1.5 MD · dep: 4.7.19, 4.7.22  
-Phụ huynh không tạo được hội thoại với giáo viên không dạy con mình; hết phụ trách chuyên môn thì hội thoại thành chỉ đọc; School Admin không có đường gửi tin.
+**4.7.21 — Kiểm thử hộp thư / Messaging Tests**  
+`QA` · 1.5 MD · dep: 4.7.18  
+Phụ huynh không tạo được hội thoại với giáo viên không dạy con mình; hết phụ trách chuyên môn thì hội thoại thành chỉ đọc; School Admin không đọc được hội thoại và không có đường gửi tin.
 
 ---
 
@@ -1049,7 +1041,7 @@ Phụ huynh không tạo được hội thoại với giáo viên không dạy c
 
 **4.8.1 — Phát thông báo theo danh sách sự kiện đóng / Dispatch Event Notifications**  
 `BE` · 2 MD · dep: 4.1.4  
-Chỉ trong ứng dụng, không gửi email. Danh sách sự kiện là DANH SÁCH ĐÓNG: phát hành thời khóa biểu, tiết bị đổi — hủy — thêm bù — ngày nghỉ đột xuất, tiết chuyển Chờ xử lý, đơn nghỉ mới, đơn được duyệt hoặc từ chối, bài mới được giao, điểm và nhận xét được công bố, tin nhắn mới (BR-26).
+Chỉ trong ứng dụng, không gửi email. Danh sách sự kiện là DANH SÁCH ĐÓNG: phát hành thời khóa biểu, tiết bị đổi — hủy — thêm bù — ngày nghỉ đột xuất — trả lại giáo viên khi xóa khai báo vắng, tiết chuyển Chờ xử lý, đơn nghỉ mới, đơn được duyệt hoặc từ chối, bài mới được giao, điểm và nhận xét được công bố, tin nhắn mới (BR-26).
 
 **4.8.2 — Xem trung tâm thông báo / View Notification Center**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.8.1  
@@ -1065,41 +1057,57 @@ Có thông báo KHÔNG đồng nghĩa có quyền — Backend kiểm lại quy�
 
 **4.8.5 — Kiểm thử thông báo / Notification Tests**  
 `QA` · 1 MD · dep: 4.8.1, 4.8.3  
-Chỉ đúng nhóm người nhận được thông báo; mở thông báo của dữ liệu ngoài phạm vi bị từ chối; bảng tin không sinh thông báo.
+Chỉ đúng nhóm người nhận được thông báo; mở thông báo của dữ liệu ngoài phạm vi bị từ chối; bảng tin không sinh thông báo; sự kiện realtime chỉ tới đúng người nhận và chỉ sau khi lưu thành công; kết nối bị ngắt khi tài khoản bị khóa; nối lại thì không mất tin; đang nhập và online chỉ hiện cho bên kia trong cùng hội thoại; hub không cho gửi tin vượt BR-25.
+
+**4.8.6 — Hub SignalR và xác thực kết nối / SignalR Hub and Connection Auth**  
+`BE` · 2 MD · dep: 4.8.1, 4.1.6  
+Một hub SignalR cho cả thông báo và tin nhắn. Kết nối xác thực bằng access token qua query string `access_token`, đi qua cùng kiểm tài khoản và phiên như REST: tài khoản bị khóa hoặc phiên bị thu hồi thì kết nối bị ngắt; access token đổi thì client dựng lại kết nối. Mỗi tài khoản vào một nhóm riêng để đẩy đúng người. Không thêm bảng CSDL; chạy một instance nên không cần backplane.
+
+**4.8.7 — Đẩy thông báo và tin nhắn mới sau khi lưu / Push After Commit**  
+`BE` · 1.5 MD · dep: 4.8.6, 4.7.17  
+Sự kiện `NotificationCreated` và `MessageReceived` chỉ được đẩy **sau khi** `SaveChanges` thành công, để giao dịch bị hoàn tác không sinh thông báo ảo. Chữ ký `NotificationSender` giữ nguyên, module khác không đổi. Gửi tin vẫn qua REST và kiểm quan hệ mỗi lần gửi (BR-25); hub không nhận lệnh gửi tin. Quyền vẫn do Backend kiểm khi mở (BR-26).
+
+**4.8.8 — Đang nhập, đã xem và online/offline / Typing, Seen and Presence**  
+`BE` · 1.5 MD · dep: 4.8.6, 4.7.19  
+Hub nhận thêm lệnh `Typing(conversationId)` và `JoinConversation(conversationId)`; mỗi lệnh kiểm người gọi thuộc hội thoại rồi chuyển cho bên kia. Đang nhập không lưu CSDL, tự tắt sau vài giây. Đã xem tính khi người nhận mở hội thoại: ghi `Message.ReadAt` và đẩy `MessageRead` cho người gửi. Online khi tài khoản còn ít nhất một kết nối, offline khi mất hết (nhiều tab, nhiều thiết bị); trạng thái chỉ hiện cho bên kia trong cùng hội thoại. School Admin không tham gia hội thoại nên không hiện online và không gửi đang nhập.
+
+**4.8.9 — Realtime trên Web / Web Realtime Client**  
+`Web` · 2 MD · dep: 4.8.7, 4.8.8  
+Dùng `@microsoft/signalr`, kết nối một lần ở lớp xác thực. Chuông thông báo và hộp thư cập nhật ngay khi có sự kiện; hiện chỉ báo đang nhập, đã xem, chấm online. Khi nối lại sau khi mất kết nối thì tải lại phần đã lỡ qua REST.
+
+**4.8.10 — Realtime trên Mobile / Mobile Realtime Client**  
+`Mobile` · 3 MD · dep: 4.8.7, 4.8.8  
+Dùng `signalr_netcore` trong dịch vụ Riverpod; chỉ giữ kết nối khi app đang mở, ra nền thì ngắt và tính là offline. Khi quay lại hoặc nối lại thì tải phần đã lỡ qua REST. Giữ polling chậm làm dự phòng nếu kết nối không dựng được. Cùng chức năng như Web: chuông, hộp thư, đang nhập, đã xem, online.
 
 ### COM-02 News Feed (Bảng tin)
 
-**4.8.6 — Xem bảng tin theo phạm vi người đọc / View News Feed**  
+**4.8.11 — Xem bảng tin theo phạm vi người đọc / View News Feed**  
 `BE + Web + Mobile` · 2 MD · dep: 4.1.4  
 Bài Nội bộ chỉ cán bộ đọc; bài Toàn trường mọi người đọc, gồm học sinh và phụ huynh. Ảnh đầu là ảnh bìa hiện trên danh sách (BR-27).
 
-**4.8.7 — Soạn bài đăng và chọn phạm vi / Create Post with Scope**  
-`BE + Web` · 1.5 MD · dep: 4.8.6  
+**4.8.12 — Soạn bài đăng và chọn phạm vi / Create Post with Scope**  
+`BE + Web` · 1.5 MD · dep: 4.8.11  
 MỌI CÁN BỘ đăng được — School Admin, Principal, Vice Principal, Teacher — và chọn một trong hai phạm vi Nội bộ hoặc Toàn trường. Soạn bài chỉ có trên web (BR-27, mục 8.1).
 
-**4.8.8 — Đính kèm ảnh cho bài đăng / Attach Post Images**  
-`BE + Web` · 2 MD · dep: 4.8.7  
+**4.8.13 — Đính kèm ảnh cho bài đăng / Attach Post Images**  
+`BE + Web` · 2 MD · dep: 4.8.12  
 Tối đa 5 ảnh JPG hoặc PNG, mỗi ảnh ≤ 2 MB. Dùng chung cách lưu file với ảnh đại diện người dùng (BR-27).
 
-**4.8.9 — Cập nhật bài đăng của mình / Update Own Post**  
-`BE + Web` · 1 MD · dep: 4.8.7  
+**4.8.14 — Cập nhật bài đăng của mình / Update Own Post**  
+`BE + Web` · 1 MD · dep: 4.8.12  
 Người đăng sửa nội dung, phạm vi và ảnh của bài mình.
 
-**4.8.10 — Ẩn và hiện lại bài của mình / Hide and Unhide Own Post**  
-`BE + Web` · 0.5 MD · dep: 4.8.7  
-Trạng thái Đã đăng ↔ Đã ẩn, không có trạng thái nháp. Ẩn bài giữ ảnh (BR-27).
+**4.8.15 — Ẩn và hiện lại bài / Hide and Unhide Post**  
+`BE + Web` · 1 MD · dep: 4.8.12  
+Trạng thái Đã đăng ↔ Đã ẩn, không có trạng thái nháp. Người đăng ẩn bài của mình; School Admin và Principal ẩn bài của người khác, bắt buộc nhập lý do, lưu người ẩn, thời điểm, lý do; tác giả và nội dung giữ nguyên. Ẩn bài giữ ảnh (BR-27).
 
-**4.8.11 — School Admin ẩn mọi bài / Admin Hide Any Post**  
-`BE + Web` · 0.5 MD · dep: 4.8.10  
-School Admin ẩn được mọi bài — đó là van xả duy nhất vì bảng tin không có bước duyệt (BR-27).
-
-**4.8.12 — Xóa bài và xóa file ảnh kèm theo / Delete Post and Its Images**  
-`BE + Web` · 0.5 MD · dep: 4.8.10  
+**4.8.16 — Xóa bài và xóa file ảnh kèm theo / Delete Post and Its Images**  
+`BE + Web` · 0.5 MD · dep: 4.8.15  
 Xóa bài thì xóa luôn file ảnh, khác với ẩn bài (BR-27).
 
-**4.8.13 — Kiểm thử phạm vi bảng tin / News Feed Scope Tests**  
-`QA` · 1 MD · dep: 4.8.6, 4.8.7  
-Học sinh và phụ huynh không thấy bài Nội bộ; giáo viên đăng được không cần trách nhiệm; bảng tin không tạo thông báo.
+**4.8.17 — Kiểm thử phạm vi bảng tin / News Feed Scope Tests**  
+`QA` · 1 MD · dep: 4.8.11, 4.8.12  
+Học sinh và phụ huynh không thấy bài Nội bộ; giáo viên đăng được không cần trách nhiệm; School Admin và Principal ẩn được bài của người khác nhưng phải nhập lý do, Teacher và Vice Principal thì không; bảng tin không tạo thông báo.
 
 ---
 
@@ -1108,65 +1116,61 @@ Học sinh và phụ huynh không thấy bài Nội bộ; giáo viên đăng đ�
 ### ADM-01 Dashboard (Bảng điều khiển)
 
 **4.9.1 — Tính sáu chỉ số theo phạm vi / Compute Dashboard Metrics**  
-`BE` · 2.5 MD · dep: 4.4.29, 4.5.6, 4.7.5  
-Sáu chỉ số: tiết Chờ xử lý, tiết đã qua chưa điểm danh, chuyên cần 7 ngày, đơn nghỉ chờ duyệt, tỉ lệ nộp bài 30 ngày, lớp chưa có chủ nhiệm. Một tiết, đơn hay bài thuộc phân hiệu nào là theo PHÂN HIỆU CỦA LỚP liên quan (mục 5.1).
+`BE` · 2.5 MD · dep: 4.4.29, 4.5.6, 4.7.5, 4.6.16, 4.6.24, 4.3.34  
+Sáu chỉ số: tiết Chờ xử lý, tiết đã qua chưa điểm danh, chuyên cần 7 ngày, đơn nghỉ chờ duyệt (chỉ Vice Principal; Principal không thấy), tỉ lệ nộp bài 30 ngày (mẫu số là danh sách được giao ở 4.6.16), lớp chưa có chủ nhiệm. Một tiết, đơn hay bài thuộc phân hiệu nào là theo PHÂN HIỆU CỦA LỚP liên quan (mục 5.1).
 
 **4.9.2 — Xem Dashboard / View Dashboard**  
 `BE + Web` · 2 MD · dep: 4.9.1  
-Principal xem toàn trường và không đổi được; Vice Principal xem cố định phân hiệu mình; School Admin chọn toàn trường hoặc một phân hiệu (mục 5.1).
+Principal xem toàn trường và không đổi được; Vice Principal xem cố định phân hiệu mình. School Admin không có Dashboard (mục 5.1).
 
-**4.9.3 — Chọn phạm vi xem Dashboard / Select Dashboard Scope**  
-`BE + Web` · 1 MD · dep: 4.9.2  
-Bộ chọn phạm vi chỉ hiện với School Admin; Backend vẫn kiểm phạm vi độc lập với giao diện.
-
-**4.9.4 — Mở danh sách gốc từ một chỉ số / Drill into KPI Source List**  
+**4.9.3 — Mở danh sách gốc từ một chỉ số / Drill into KPI Source List**  
 `BE + Web` · 1.5 MD · dep: 4.9.2  
-Mỗi số mở ra danh sách gốc: tiết Chờ xử lý mở màn hình xử lý của SCD-03, lớp chưa có chủ nhiệm mở màn hình trách nhiệm của PPL-04, đơn nghỉ mở hộp đơn của PAR-01; nút nhập bù điểm danh chỉ hiện với School Admin (mục 5.1).
+Mỗi số mở ra danh sách gốc: tiết Chờ xử lý mở màn hình xử lý của SCD-03, lớp chưa có chủ nhiệm mở màn hình trách nhiệm của PPL-04, đơn nghỉ (chỉ Vice Principal) mở hộp đơn của PAR-01 ở chế độ chỉ đọc, không có nút duyệt hay từ chối; không có nút nhập bù, School Admin nhập bù ở màn hình điểm danh (mục 5.1).
 
-**4.9.5 — Kiểm thử phạm vi Dashboard / Dashboard Scope Tests**  
+**4.9.4 — Kiểm thử phạm vi Dashboard / Dashboard Scope Tests**  
 `QA` · 1 MD · dep: 4.9.2  
 Vice Principal không xem được số liệu phân hiệu khác; con số khớp với danh sách gốc mở ra; nút nhập bù không hiện với Vice Principal.
 
 ### ADM-02 Audit Log (Nhật ký kiểm toán)
 
-**4.9.6 — Ghi nhật ký cho ba nhóm sự kiện / Record Audit Entry**  
+**4.9.5 — Ghi nhật ký cho ba nhóm sự kiện / Record Audit Entry**  
 `BE` · 2 MD · dep: 4.1.12, 4.4.11  
-Đúng ba nhóm: tài khoản (tạo đơn lẻ và hàng loạt, khóa, mở, đổi loại tài khoản, School Admin reset mật khẩu — không ghi mật khẩu); phát hành thời khóa biểu (phiên bản, số tiết xóa và tạo); điều chỉnh lịch (đổi giáo viên, hủy, tiết bù, ngày nghỉ đột xuất, khai báo và xử lý giáo viên vắng). Thao tác hàng loạt ghi MỘT bản ghi kèm danh sách ID (BR-28).
+Đúng ba nhóm: tài khoản (tạo đơn lẻ và hàng loạt, khóa, mở, đổi loại tài khoản, School Admin reset mật khẩu — không ghi mật khẩu); phát hành thời khóa biểu (phiên bản, số tiết xóa và tạo); điều chỉnh lịch (đổi giáo viên, hủy, tiết bù, ngày nghỉ đột xuất, khai báo, xóa khai báo và xử lý giáo viên vắng). Thao tác hàng loạt ghi MỘT bản ghi kèm danh sách ID (BR-28).
 
-**4.9.7 — Tra cứu nhật ký kiểm toán / Browse Audit Log**  
-`BE + Web` · 1.5 MD · dep: 4.9.6  
+**4.9.6 — Tra cứu nhật ký kiểm toán / Browse Audit Log**  
+`BE + Web` · 1.5 MD · dep: 4.9.5  
 School Admin xem nhật ký theo thứ tự thời gian.
 
-**4.9.8 — Lọc nhật ký theo nhóm, người và thời gian / Filter Audit Log**  
-`BE + Web` · 1 MD · dep: 4.9.7  
+**4.9.7 — Lọc nhật ký theo nhóm, người và thời gian / Filter Audit Log**  
+`BE + Web` · 1 MD · dep: 4.9.6  
 Lọc theo ba nhóm sự kiện, người thực hiện và khoảng thời gian (BR-28).
 
-**4.9.9 — Xem chi tiết một bản ghi nhật ký / View Audit Entry Detail**  
-`BE + Web` · 1 MD · dep: 4.9.7  
+**4.9.8 — Xem chi tiết một bản ghi nhật ký / View Audit Entry Detail**  
+`BE + Web` · 1 MD · dep: 4.9.6  
 Xem nội dung đầy đủ của một bản ghi, gồm danh sách ID của thao tác hàng loạt.
 
-**4.9.10 — Kiểm thử tính chỉ ghi thêm / Append-only Tests**  
-`QA` · 1 MD · dep: 4.9.6  
+**4.9.9 — Kiểm thử tính chỉ ghi thêm / Append-only Tests**  
+`QA` · 1 MD · dep: 4.9.5  
 Không có API sửa hay xóa nhật ký; quyền CSDL chặn UPDATE và DELETE; việc ngoài ba nhóm (đăng nhập, nộp bài, điểm danh, trách nhiệm, phụ trách chuyên môn, kết chuyển) không vào nhật ký.
 
 ### ADM-03 Data Export (Xuất dữ liệu)
 
-**4.9.11 — Xuất điểm danh theo lớp và khoảng ngày / Export Class Attendance**  
+**4.9.10 — Xuất điểm danh theo lớp và khoảng ngày / Export Class Attendance**  
 `BE + Web` · 1.5 MD · dep: 4.5.3  
-Nguồn là bản ghi điểm danh, kèm nhãn cuối suy ra. Chủ nhiệm xuất lớp mình, Vice Principal xuất phân hiệu mình, School Admin xuất toàn trường (BR-18, mục 5.2).
+Nguồn là bản ghi điểm danh, kèm nhãn cuối suy ra. Chủ nhiệm xuất lớp mình, Vice Principal xuất phân hiệu mình (BR-18, mục 5.2).
 
-**4.9.12 — Xuất thời khóa biểu hiện hành / Export Current Timetable**  
+**4.9.11 — Xuất thời khóa biểu hiện hành / Export Current Timetable**  
 `BE + Web` · 1.5 MD · dep: 4.4.11  
-Nguồn là LỊCH DẠY chứ không phải phiên bản thời khóa biểu, để phản ánh cả các điều chỉnh tay. Vice Principal xuất phân hiệu mình, School Admin xuất toàn trường (BR-14, mục 5.2).
+Nguồn là LỊCH DẠY chứ không phải phiên bản thời khóa biểu, để phản ánh cả các điều chỉnh tay. Vice Principal xuất phân hiệu mình (BR-14, mục 5.2).
 
-**4.9.13 — Xuất kết quả bài tập theo lớp / Export Class Assignment Results**  
+**4.9.12 — Xuất kết quả bài tập theo lớp / Export Class Assignment Results**  
 `BE + Web` · 1.5 MD · dep: 4.6.25  
-Nguồn là lượt làm bài. Teacher đang phụ trách chuyên môn và School Admin xuất được (mục 5.2).
+Nguồn là lượt làm bài. Chỉ Teacher đang phụ trách chuyên môn xuất được (mục 5.2).
 
-**4.9.14 — Kiểm thử phạm vi xuất dữ liệu / Export Scope Tests**  
-`QA` · 1 MD · dep: 4.9.11, 4.9.12, 4.9.13  
+**4.9.13 — Kiểm thử phạm vi xuất dữ liệu / Export Scope Tests**  
+`QA` · 1 MD · dep: 4.9.10, 4.9.11, 4.9.12  
 Mỗi mục chỉ xuất đúng phạm vi của người gọi; danh sách tài khoản kèm mật khẩu tạm KHÔNG phải một mục xuất và không xuất lại được (BR-04).
 
 ---
 
-**Tổng:** 263 task · 345 MD
+**Tổng:** 264 task · 352 MD

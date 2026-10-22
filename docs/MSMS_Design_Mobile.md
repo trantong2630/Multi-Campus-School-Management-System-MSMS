@@ -267,7 +267,7 @@ Routing via `go_router`, state via `Riverpod`, HTTP via `dio` — per `MSMS_Dev_
 | Excluded | Reason |
 | --- | --- |
 | Dark mode | Doubles QA for no assessment credit |
-| Push notifications | Spec: in-app notifications only, polling |
+| Push notifications | Spec: in-app notifications only (no FCM/APNs). Realtime while app is open via SignalR; polling as fallback |
 | Offline-first | Not required; introduces sync complexity |
 | Custom page transitions | Keep Material defaults |
 | Table / grid screens | Web-only per spec §8.1 |
