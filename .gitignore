@@ -1,9 +1,19 @@
+# Cline AI Configuration
+.clineignore
+.clinerules
+.cline/
+
+# Build & Dependencies
 bin/
 obj/
 node_modules/
 dist/
+
+# Visual Studio & User settings
 .vs/
 *.user
+
+# Configs, Logs & Data
 appsettings.Development.json
 logs/
 App_Data/
