@@ -13,6 +13,7 @@ public static class Policies
     public const string ResponsibilityManager = nameof(ResponsibilityManager);   // gán trách nhiệm: SchoolAdmin, Principal
     public const string SchoolProfileManager = nameof(SchoolProfileManager);   // sửa thông tin trường: SchoolAdmin, Principal
     public const string CampusReader = nameof(CampusReader);           // đọc dữ liệu phân hiệu: SchoolAdmin, Principal, VicePrincipal
+    public const string Parent = nameof(Parent);
 
     public static void Register(AuthorizationOptions o)
     {
@@ -30,5 +31,6 @@ public static class Policies
             AccountTypes.SchoolAdmin, AccountTypes.Principal, AccountTypes.VicePrincipal));
         o.AddPolicy(Staff, p => p.RequireClaim(CurrentUser.TypeClaim,
             AccountTypes.SchoolAdmin, AccountTypes.Principal, AccountTypes.VicePrincipal, AccountTypes.Teacher));
+        o.AddPolicy(Parent, p => p.RequireClaim(CurrentUser.TypeClaim, AccountTypes.Parent));
     }
 }
