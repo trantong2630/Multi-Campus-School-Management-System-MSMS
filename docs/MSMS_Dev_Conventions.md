@@ -324,8 +324,31 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Quản trị | Tài khoản · Nhật ký · Xuất dữ liệu |
 
 - Nhóm chỉ có một màn hình thì không có cấp 2. Áp dụng cả sau khi lọc theo quyền: nhóm chỉ còn một mục con hiển thị cho loại tài khoản đó thì hiện thẳng thành mục cấp 1 (ví dụ giáo viên chỉ thấy **Lịch dạy**; chủ nhiệm chỉ có quyền xuất điểm danh thì nhóm Quản trị hiện thẳng thành **Xuất dữ liệu**). School Admin không thấy Dashboard, Thời khóa biểu và Xuất dữ liệu; nhóm Quản trị của School Admin gồm **Tài khoản** và **Nhật ký**.
-- **Trang chủ** là mục cấp 1 đầu tiên, mọi loại tài khoản đều thấy.
+- **Trang chủ** là mục cấp 1 đầu tiên, mọi loại tài khoản đều thấy. Trang chủ chỉ chào và hiện thông tin chung (hôm nay, năm học, liên hệ trường — Business Spec §5.1); không đặt số liệu, lối tắt hay bảng tin ở Trang chủ (số liệu ở **Dashboard**, chỉ Principal và Vice Principal).
 - Mục cha **không điều hướng**, chỉ xổ ra; vào trang con thì cha tự xổ và sáng lên.
-- Icon chỉ ở cấp 1; mục con thụt vào, có chấm tròn đầu dòng, không icon.
+- Icon chỉ ở cấp 1; mục con thụt vào, không icon, không chấm đầu dòng.
 - **Ẩn hẳn mục không có quyền**, không hiện rồi khóa.
 - Thông báo, hồ sơ cá nhân, đổi mật khẩu, đăng xuất nằm ở **góc phải header**, không vào sidebar.
+
+**Ai thấy mục nào.** Một mục chỉ hiện cho loại tài khoản **có việc làm trên màn hình đó**. Quyền đọc dữ liệu (cột Đọc của Business Spec §5) không tự sinh ra màn hình: Hiệu phó và giáo viên đọc môn học, khung giờ tiết, lớp, ngày nghỉ ngay trong lưới thời khóa biểu, lịch dạy và trang chủ, nên không có màn hình Thiết lập. Gõ thẳng đường dẫn của mục không được thấy thì hiện trang 403. Nguồn duy nhất ở web là `app/menu.tsx`.
+
+| Mục | Ai thấy |
+| --- | --- |
+| Trang chủ · Bảng tin | Mọi loại |
+| Dashboard | HT, HP |
+| Thiết lập › Thông tin trường | SA, HT |
+| Thiết lập › mọi mục còn lại | SA |
+| Hồ sơ › Cán bộ · Học sinh · Phụ huynh · Phụ trách chuyên môn | SA, HT, HP |
+| Hồ sơ › Trách nhiệm | SA, HT |
+| Thời khóa biểu › Thời khóa biểu · Giáo viên vắng | HP |
+| Thời khóa biểu › Lịch dạy | HT, HP, GV |
+| Điểm danh | SA, HT, HP, GV, HS, PH |
+| Học tập › Ngân hàng câu hỏi · Đề · Nhận xét AI · Giám sát tổ | GV |
+| Học tập › Bài tập | GV, HS |
+| Phụ huynh › Đơn xin nghỉ | HP, GV, PH |
+| Phụ huynh › Sổ liên lạc | GV, HS, PH |
+| Phụ huynh › Hộp thư | GV, PH |
+| Quản trị › Tài khoản · Nhật ký | SA |
+| Quản trị › Xuất dữ liệu | HP, GV |
+
+Ký hiệu như Business Spec §5. Kết quả với các màn đã có: **SA** Trang chủ · Thiết lập · Hồ sơ (Cán bộ, Trách nhiệm) · Tài khoản — **HT** Trang chủ · Dashboard · Thông tin trường · Hồ sơ (Cán bộ, Trách nhiệm) · Lịch dạy — **HP** Trang chủ · Dashboard · Cán bộ · Thời khóa biểu (Thời khóa biểu, Lịch dạy) — **GV** Trang chủ · Lịch dạy — **HS, PH** Trang chủ.
