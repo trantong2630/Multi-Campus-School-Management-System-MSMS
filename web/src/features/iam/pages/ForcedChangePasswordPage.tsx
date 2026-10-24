@@ -7,7 +7,7 @@ import { ChangePasswordForm } from '../components/ChangePasswordForm';
 export function ForcedChangePasswordPage() {
   const { logout } = useAuth();
   return (
-    <AuthLayout title="Đổi mật khẩu lần đầu" description="Đặt mật khẩu mới để tiếp tục">
+    <AuthLayout title="Đổi mật khẩu" subtitle="Đặt mật khẩu mới trước khi tiếp tục">
       <ChangePasswordForm />
       <div className="auth-layout__footer">
         <Button type="link" onClick={() => void logout()}>
