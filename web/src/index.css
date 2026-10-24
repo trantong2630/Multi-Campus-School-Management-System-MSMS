@@ -20,11 +20,23 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Card luôn có cả đổ bóng lẫn viền 1px: chỉ bóng thì mất hút trên nền bg (Design_Web §4). */
+/* Panel (AntD Card): card trắng bo 20, viền mảnh, bóng rất nhẹ — cùng họ với các ô bento (Design_Web §4). */
 .ant-card {
   border: 1px solid var(--c-border);
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-card);
-  border-radius: var(--radius-lg);
+}
+
+.ant-card .ant-card-head {
+  border-bottom-color: var(--c-border);
+}
+
+/* Tiêu đề panel, hộp thoại, ngăn kéo (Design_Web §3). */
+.ant-card .ant-card-head-title,
+.ant-modal .ant-modal-title,
+.ant-drawer .ant-drawer-title {
+  font-weight: 600;
+  color: var(--c-text1);
 }
 
 /* Cột chứa số, điểm, giờ, mã phải dùng chữ số đều nhau để không nhảy khi cuộn. */
@@ -36,11 +48,6 @@ body {
 :focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 1px;
-}
-
-/* Nút chính: đổ bóng xanh nhẹ để nổi trên nền sáng (Design_Web §8.1). */
-.ant-btn-primary:not(:disabled) {
-  box-shadow: 0 6px 14px var(--focus-ring);
 }
 
 .ant-table-wrapper .ant-table {
@@ -63,4 +70,13 @@ body {
   font-size: 14px;
   line-height: 1;
   color: var(--c-text3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

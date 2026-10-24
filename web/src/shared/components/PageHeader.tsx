@@ -7,14 +7,18 @@ interface Props {
   extra?: ReactNode;
 }
 
+/**
+ * Đầu trang (Design_Web §8.0): tiêu đề, mô tả,
+ * nút thao tác bên phải. Không icon trang trí.
+ */
 export function PageHeader({ title, description, extra }: Props) {
   return (
-    <div className="page-header">
-      <div>
+    <header className="page-header">
+      <div className="page-header__text">
         <h1 className="page-header__title">{title}</h1>
         {description && <p className="page-header__desc">{description}</p>}
       </div>
       {extra && <div className="page-header__extra">{extra}</div>}
-    </div>
+    </header>
   );
 }
