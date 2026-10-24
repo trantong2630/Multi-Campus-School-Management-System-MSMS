@@ -17,3 +17,6 @@ dist/
 appsettings.Development.json
 logs/
 App_Data/
+prompt/
+test/
+Multi-Campus-School-Management-System-MSMS/
