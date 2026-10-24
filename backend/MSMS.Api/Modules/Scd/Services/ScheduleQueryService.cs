@@ -118,8 +118,64 @@ public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, Sco
         return await db.TeachingSession.AsNoTracking()
             .Where(s => s.TeacherId == user.PersonId && s.SessionDate >= from && s.SessionDate <= to)
             .OrderBy(s => s.SessionDate).ThenBy(s => s.PeriodSlot.StartTime)
-            .Select(s => new MySessionDto(s.SessionId, s.SessionDate, s.PeriodSlot.SessionOfDay, s.PeriodSlot.PeriodNo,
-                s.PeriodSlot.StartTime, s.PeriodSlot.EndTime, s.Class.Name, s.Class.Campus.Name, s.Subject.Name, s.Status, s.Source))
+            .Select(s => new MySessionDto(s.SessionId, s.SessionDate, s.PeriodSlotId, s.PeriodSlot.SessionOfDay, s.PeriodSlot.PeriodNo,
+                s.PeriodSlot.StartTime, s.PeriodSlot.EndTime, s.Class.Name, s.Class.Campus.Name, s.Subject.Name, s.Subject.Abbreviation, s.Status, s.Source))
             .ToListAsync();
     }
+
+    /// <summary>Lớp đang hoạt động của phân hiệu trong năm học hiện hành, dùng cho bộ chọn lớp ở màn xem lịch.</summary>
+    public async Task<List<GridClassDto>> ListClassesAsync(int campusId)
+    {
+        await scope.EnsureCanReadCampusAsync(campusId);
+        var year = await db.AcademicYear.AsNoTracking().FirstOrDefaultAsync(y => y.IsCurrent);
+        if (year is null) return [];
+        return await db.Class.AsNoTracking()
+            .Where(c => c.CampusId == campusId && c.AcademicYearId == year.AcademicYearId && c.IsActive)
+            .OrderBy(c => c.GradeLevel).ThenBy(c => c.Name).Select(c => new GridClassDto(c.ClassId, c.Name)).ToListAsync();
+    }
+
+    /// <summary>Giáo viên đang hoạt động có phân hiệu chính là phân hiệu này.</summary>
+    public async Task<List<TeacherOptionDto>> ListTeachersAsync(int campusId)
+    {
+        await scope.EnsureCanReadCampusAsync(campusId);
+        return await db.StaffProfile.AsNoTracking()
+            .Where(t => t.PrimaryCampusId == campusId && t.IsActive && t.TeacherAbbr != null)
+            .OrderBy(t => t.Staff.FullName).Select(t => new TeacherOptionDto(t.StaffId, t.Staff.FullName, t.TeacherAbbr)).ToListAsync();
+    }
+
+    /// <summary>Lịch dạy của một lớp trong khoảng ngày.</summary>
+    public async Task<List<ViewSessionDto>> GetClassSessionsAsync(int classId, DateOnly from, DateOnly to)
+    {
+        CheckRange(from, to);
+        var campusId = await db.Class.AsNoTracking().Where(c => c.ClassId == classId).Select(c => (int?)c.CampusId).FirstOrDefaultAsync()
+                       ?? throw ApiException.NotFound("Không tìm thấy lớp.");
+        await scope.EnsureCanReadCampusAsync(campusId);
+        return await ProjectSessions(db.TeachingSession.AsNoTracking().Where(s => s.ClassId == classId && s.SessionDate >= from && s.SessionDate <= to));
+    }
+
+    /// <summary>Lịch dạy của một giáo viên trong khoảng ngày; chỉ gồm các tiết ở phân hiệu người gọi đọc được.</summary>
+    public async Task<List<ViewSessionDto>> GetTeacherSessionsAsync(int teacherId, DateOnly from, DateOnly to)
+    {
+        CheckRange(from, to);
+        var query = db.TeachingSession.AsNoTracking().Where(s => s.TeacherId == teacherId && s.SessionDate >= from && s.SessionDate <= to);
+        if (user.AccountType == AccountTypes.VicePrincipal)
+        {
+            var led = await scope.LedCampusIdsAsync();
+            query = query.Where(s => led.Contains(s.Class.CampusId));
+        }
+        return await ProjectSessions(query);
+    }
+
+    private static void CheckRange(DateOnly from, DateOnly to)
+    {
+        if (to < from) throw ApiException.BadRequest("Ngày kết thúc phải sau ngày bắt đầu.");
+        if (to.DayNumber - from.DayNumber > 62) throw ApiException.BadRequest("Chỉ xem tối đa 62 ngày mỗi lần. Chọn khoảng ngắn hơn.");
+    }
+
+    private static Task<List<ViewSessionDto>> ProjectSessions(IQueryable<Data.Entities.TeachingSession> query) =>
+        query.OrderBy(s => s.SessionDate).ThenBy(s => s.PeriodSlot.StartTime)
+            .Select(s => new ViewSessionDto(s.SessionId, s.SessionDate, s.PeriodSlotId, s.PeriodSlot.SessionOfDay, s.PeriodSlot.PeriodNo,
+                s.PeriodSlot.StartTime, s.PeriodSlot.EndTime, s.Class.Name, s.Class.Campus.Name, s.Subject.Name, s.Subject.Abbreviation,
+                s.Teacher == null ? null : s.Teacher.Staff.FullName, s.Status, s.Source))
+            .ToListAsync();
 }

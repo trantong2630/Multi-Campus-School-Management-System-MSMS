@@ -1,15 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
-import { Card, DatePicker, Select } from 'antd';
+import { Button, Card, DatePicker, Segmented, Select } from 'antd';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { InlineAlert } from '@/shared/components/InlineAlert';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useAuth } from '@/app/AuthProvider';
 import { DataTable } from '@/shared/components/DataTable';
 import { FilterBar } from '@/shared/components/FilterBar';
 import { PageHeader } from '@/shared/components/PageHeader';
-import { StatusBadge } from '@/shared/components/StatusBadge';
-import { formatDate, formatTime, sessionOfDayLabel, toDateString, weekdayOfDate } from '@/shared/lib/format';
+import { accent } from '@/shared/lib/tokens';
+import { toneOf } from '../components/TimetableGrid';
+import { schApi } from '@/features/sch/api';
+import { formatTime, sessionOfDayLabel, toDateString, weekdayOfDate } from '@/shared/lib/format';
 import { scdApi } from '../api';
 import type { DaySchedule, MySession, SessionCell } from '../types';
 import '../components/scd.css';
@@ -17,34 +20,64 @@ import '../components/scd.css';
 /** Lịch dạy là tiết thực tế theo ngày, có điều chỉnh tay — nguồn sự thật của thời khóa biểu hiện hành (BR-14). */
 export function SchedulePage() {
   const { user } = useAuth();
-  return user?.accountType === 'Teacher' ? <MySchedule /> : <CampusDaySchedule />;
+  return user?.accountType === 'Teacher' ? <MySchedule /> : <CampusSchedule />;
 }
 
-function CampusDaySchedule() {
+type ViewMode = 'day' | 'class' | 'teacher';
+
+/** Hiệu trưởng và hiệu phó: xem cả phân hiệu theo ngày, hoặc xem tuần của một lớp / một giáo viên. */
+function CampusSchedule() {
   const campuses = useQuery({ queryKey: ['scd', 'campuses'], queryFn: scdApi.campuses });
   const [campusId, setCampusId] = useState<number | undefined>();
-  const [date, setDate] = useState<Dayjs>(dayjs());
+  const [mode, setMode] = useState<ViewMode>('day');
   const effectiveCampus = campusId ?? campuses.data?.[0]?.campusId;
+
+  const modeSwitch = (
+    <Segmented
+      value={mode} onChange={(v) => setMode(v as ViewMode)}
+      options={[{ value: 'day', label: 'Theo ngày' }, { value: 'class', label: 'Theo lớp' }, { value: 'teacher', label: 'Theo giáo viên' }]}
+    />
+  );
+  const campusSelect = (
+    <Select
+      placeholder="Phân hiệu" value={effectiveCampus} onChange={setCampusId}
+      options={campuses.data?.map((c) => ({ value: c.campusId, label: c.name }))}
+    />
+  );
+  const lead = <>{modeSwitch}{campusSelect}</>;
+
+  return (
+    <>
+      <PageHeader
+        title="Lịch dạy"
+        description={mode === 'day'
+          ? 'Lịch dạy thực tế của phân hiệu theo ngày. Tiết đã hủy gạch ngang, tiết chờ xử lý nền vàng.'
+          : 'Lịch dạy theo tuần của một lớp hoặc một giáo viên. Tiết đã hủy gạch ngang, tiết chờ xử lý nền vàng.'}
+      />
+      {campuses.isSuccess && campuses.data.length === 0 && (
+        <InlineAlert type="warning" title="Chưa có phân hiệu nào để xem" description="Hiệu phó cần được gán phụ trách phân hiệu ở Hồ sơ → Trách nhiệm." />
+      )}
+      {effectiveCampus !== undefined && (mode === 'day'
+        ? <CampusDayView campusId={effectiveCampus} lead={lead} />
+        : <EntityWeekView key={`${mode}-${effectiveCampus}`} mode={mode} campusId={effectiveCampus} lead={lead} />)}
+    </>
+  );
+}
+
+function CampusDayView({ campusId, lead }: { campusId: number; lead: React.ReactNode }) {
+  const [date, setDate] = useState<Dayjs>(dayjs());
   const day = useQuery({
-    queryKey: ['scd', 'day', effectiveCampus, toDateString(date)],
-    queryFn: () => scdApi.day(effectiveCampus!, toDateString(date)),
-    enabled: effectiveCampus !== undefined,
+    queryKey: ['scd', 'day', campusId, toDateString(date)],
+    queryFn: () => scdApi.day(campusId, toDateString(date)),
   });
 
   return (
     <>
-      <PageHeader title="Lịch dạy" description="Lịch dạy thực tế của phân hiệu theo ngày. Tiết đã hủy gạch ngang, tiết chờ xử lý nền vàng." />
       <FilterBar>
-        <Select
-          placeholder="Phân hiệu" value={effectiveCampus} onChange={setCampusId}
-          options={campuses.data?.map((c) => ({ value: c.campusId, label: c.name }))}
-        />
+        {lead}
         <DatePicker format="DD/MM/YYYY" allowClear={false} value={date} onChange={(d) => d && setDate(d)} />
         <span className="muted">{weekdayOfDate(date)}</span>
       </FilterBar>
-      {campuses.isSuccess && campuses.data.length === 0 && (
-        <InlineAlert type="warning" title="Chưa có phân hiệu nào để xem" description="Hiệu phó cần được gán phụ trách phân hiệu ở Hồ sơ → Trách nhiệm." />
-      )}
       {day.data?.isHoliday && (
         <InlineAlert type="info" title={`Ngày nghỉ: ${day.data.holidayReason}`} description="Ngày nghỉ không có tiết dạy." />
       )}
@@ -94,46 +127,192 @@ function DayGrid({ day }: { day: DaySchedule }) {
 
 function SessionTd({ cell }: { cell: SessionCell | null }) {
   if (!cell) return <td className="tt-cell tt-cell--empty" />;
-  const cls = cell.status === 'Cancelled' ? 'tt-cell--cancelled' : cell.status === 'Pending' ? 'tt-cell--pending' : 'tt-cell--filled';
+  const state = cell.status === 'Cancelled' ? 'tt-chip--cancelled' : cell.status === 'Pending' ? 'tt-chip--pending' : '';
+  const a = accent[toneOf(cell.subjectAbbr)];
   return (
-    <td className={`tt-cell ${cls}`} title={`${cell.subjectName} — ${cell.teacherName ?? 'Chờ phân công giáo viên'}`}>
-      <div className="tt-subject">{cell.subjectAbbr}</div>
-      <div className="tt-teacher">{cell.teacherAbbr ?? 'Chờ GV'}</div>
+    <td className="tt-cell" title={`${cell.subjectName} — ${cell.teacherName ?? 'Chờ phân công giáo viên'}`}>
+      <div className={`tt-chip ${state}`} style={{ '--tt-bg': a.bg, '--tt-fg': a.fg } as React.CSSProperties}>
+        <div className="tt-subject">{cell.subjectAbbr}</div>
+        <div className="tt-teacher">{cell.teacherAbbr ?? 'Chờ GV'}</div>
+      </div>
     </td>
   );
 }
 
+const STATUS_NOTE: Record<MySession['status'], string | null> = { Scheduled: null, Pending: 'Chờ xử lý', Cancelled: 'Đã hủy' };
+
+type WeekSession = MySession & { teacherName?: string | null };
+
+/** Lưới tuần dùng chung: hàng là Buổi × Tiết, cột là Thứ 2 → Thứ 7 của tuần đang chọn. `detail` quyết định dòng phụ của mỗi ô. */
+function WeekGrid({ monday, sessions, loading, detail }: {
+  monday: Dayjs; sessions: WeekSession[] | undefined; loading: boolean; detail: (s: WeekSession) => string;
+}) {
+  const days = Array.from({ length: 6 }, (_, i) => monday.add(i, 'day'));
+  const slots = useQuery({ queryKey: ['sch', 'slots'], queryFn: schApi.periodSlots.list });
+  // Khung đã ngừng dùng vẫn hiện nếu tuần này còn tiết nằm ở khung đó.
+  const used = new Set(sessions?.map((s) => s.periodSlotId));
+  const rows = (slots.data ?? [])
+    .filter((p) => p.isActive || used.has(p.periodSlotId))
+    .sort((a, b) => (a.sessionOfDay === b.sessionOfDay ? a.periodNo - b.periodNo : a.sessionOfDay === 'Morning' ? -1 : 1));
+  const today = dayjs();
+
+  if (slots.isLoading || loading) return <DataTable<object> rowKey="x" loading dataSource={[]} columns={[]} />;
+  return (
+    <div className="tt-scroll">
+      <table className="tt-grid tt-week">
+        <thead>
+          <tr>
+            <th className="tt-sticky tt-col-session" style={{ left: 0 }}>Buổi</th>
+            <th className="tt-sticky" style={{ left: 64, minWidth: 110 }}>Tiết</th>
+            {days.map((d) => (
+              <th key={d.valueOf()} className={`tt-class${d.isSame(today, 'day') ? ' tt-today' : ''}`}>
+                {weekdayOfDate(d)}
+                <span className="tt-time">{d.format('DD/MM')}</span>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((slot, i) => {
+            const newSession = i > 0 && rows[i - 1].sessionOfDay !== slot.sessionOfDay;
+            const firstOfSession = i === 0 || newSession;
+            return (
+              <Fragment key={slot.periodSlotId}>
+                {newSession && <tr className="tt-band"><td colSpan={2 + days.length} /></tr>}
+                <tr>
+                  {firstOfSession && (
+                    <td className="tt-sticky tt-col-session" style={{ left: 0 }} rowSpan={rows.filter((r) => r.sessionOfDay === slot.sessionOfDay).length}>
+                      {sessionOfDayLabel(slot.sessionOfDay)}
+                    </td>
+                  )}
+                  <td className="tt-sticky tabular" style={{ left: 64, minWidth: 110 }}>
+                    {slot.periodNo}
+                    <span className="tt-time">{formatTime(slot.startTime)}–{formatTime(slot.endTime)}</span>
+                  </td>
+                  {days.map((d) => (
+                    <WeekTd
+                      key={d.valueOf()} detail={detail}
+                      sessions={(sessions ?? []).filter((s) => s.periodSlotId === slot.periodSlotId && s.date === toDateString(d))}
+                    />
+                  ))}
+                </tr>
+              </Fragment>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function WeekNav({ monday, onChange }: { monday: Dayjs; onChange: (m: Dayjs) => void }) {
+  const end = monday.add(5, 'day');
+  return (
+    <>
+      <Button icon={<ChevronLeft size={16} />} aria-label="Tuần trước" onClick={() => onChange(monday.subtract(1, 'week'))} />
+      <DatePicker
+        picker="week" allowClear={false} value={monday}
+        format={() => `${monday.format('DD/MM')} – ${end.format('DD/MM/YYYY')}`}
+        onChange={(d) => d && onChange(d.startOf('week'))}
+      />
+      <Button icon={<ChevronRight size={16} />} aria-label="Tuần sau" onClick={() => onChange(monday.add(1, 'week'))} />
+      <Button disabled={monday.isSame(dayjs().startOf('week'), 'day')} onClick={() => onChange(dayjs().startOf('week'))}>Tuần này</Button>
+    </>
+  );
+}
+
+/** Lịch dạy của giáo viên đang đăng nhập. */
 function MySchedule() {
-  const [range, setRange] = useState<[Dayjs, Dayjs]>([dayjs().startOf('week').add(1, 'day'), dayjs().startOf('week').add(7, 'day')]);
+  const [monday, setMonday] = useState<Dayjs>(() => dayjs().startOf('week'));
+  const from = toDateString(monday);
+  const to = toDateString(monday.add(5, 'day'));
+  const sessions = useQuery({ queryKey: ['scd', 'mine', from, to], queryFn: () => scdApi.mine(from, to) });
+
+  return (
+    <>
+      <PageHeader title="Lịch dạy của tôi" description="Gồm tiết bù và tiết được phân dạy thay. Tiết đã hủy gạch ngang, tiết chờ xử lý nền vàng." />
+      <FilterBar><WeekNav monday={monday} onChange={setMonday} /></FilterBar>
+      {sessions.isSuccess && sessions.data.length === 0 && (
+        <InlineAlert type="info" title="Tuần này không có tiết dạy nào" description="Tuần nghỉ, tuần chưa phát hành thời khóa biểu hoặc bạn chưa được phân công dạy." />
+      )}
+      <Card className="table-card">
+        <WeekGrid monday={monday} sessions={sessions.data} loading={sessions.isLoading} detail={(s) => s.className} />
+      </Card>
+    </>
+  );
+}
+
+/** Lịch tuần của một lớp hoặc một giáo viên trong phân hiệu đang chọn. */
+function EntityWeekView({ mode, campusId, lead }: { mode: 'class' | 'teacher'; campusId: number; lead: React.ReactNode }) {
+  const isClass = mode === 'class';
+  const [monday, setMonday] = useState<Dayjs>(() => dayjs().startOf('week'));
+  const [entityId, setEntityId] = useState<number | undefined>();
+  const from = toDateString(monday);
+  const to = toDateString(monday.add(5, 'day'));
+
+  const options = useQuery({
+    queryKey: ['scd', isClass ? 'classes' : 'teachers', campusId],
+    queryFn: async () => isClass
+      ? (await scdApi.classes(campusId)).map((c) => ({ value: c.classId, label: c.name }))
+      : (await scdApi.teachers(campusId)).map((t) => ({ value: t.teacherId, label: t.abbr ? `${t.name} (${t.abbr})` : t.name })),
+  });
   const sessions = useQuery({
-    queryKey: ['scd', 'mine', toDateString(range[0]), toDateString(range[1])],
-    queryFn: () => scdApi.mine(toDateString(range[0]), toDateString(range[1])),
+    queryKey: ['scd', 'by', mode, entityId, from, to],
+    queryFn: () => (isClass ? scdApi.byClass(entityId!, from, to) : scdApi.byTeacher(entityId!, from, to)),
+    enabled: entityId !== undefined,
   });
 
   return (
     <>
-      <PageHeader title="Lịch dạy của tôi" description="Gồm tiết bù và tiết được phân dạy thay; tiết chờ xử lý và đã hủy hiện rõ trạng thái." />
       <FilterBar>
-        <DatePicker.RangePicker
-          format="DD/MM/YYYY" allowClear={false} value={range}
-          onChange={(v) => v?.[0] && v[1] && setRange([v[0], v[1]])}
+        {lead}
+        <Select
+          showSearch optionFilterProp="label" style={{ minWidth: 220 }} value={entityId} onChange={setEntityId}
+          placeholder={isClass ? 'Chọn lớp' : 'Chọn giáo viên'} loading={options.isLoading} options={options.data}
         />
+        <WeekNav monday={monday} onChange={setMonday} />
       </FilterBar>
-      <Card className="table-card">
-        <DataTable<MySession>
-          rowKey="sessionId" loading={sessions.isLoading} dataSource={sessions.data}
-          emptyText="Không có tiết dạy nào trong khoảng ngày này."
-          columns={[
-            { title: 'Ngày', dataIndex: 'date', width: 120, className: 'tabular', render: (v: string) => formatDate(v) },
-            { title: 'Thứ', dataIndex: 'date', key: 'weekday', width: 80, render: (v: string) => weekdayOfDate(v) },
-            { title: 'Tiết', key: 'slot', width: 190, className: 'tabular', render: (_: unknown, s: MySession) => `${sessionOfDayLabel(s.sessionOfDay)} tiết ${s.periodNo} (${formatTime(s.startTime)}–${formatTime(s.endTime)})` },
-            { title: 'Lớp', dataIndex: 'className', width: 100 },
-            { title: 'Môn', dataIndex: 'subjectName' },
-            { title: 'Phân hiệu', dataIndex: 'campusName', width: 170 },
-            { title: 'Trạng thái', dataIndex: 'status', width: 150, align: 'center', render: (v: string) => <StatusBadge domain="session" value={v} /> },
-          ]}
-        />
-      </Card>
+      {entityId === undefined ? (
+        <InlineAlert type="info" title={isClass ? 'Chọn một lớp để xem lịch' : 'Chọn một giáo viên để xem lịch'} description="Lịch hiện theo tuần, Thứ 2 đến Thứ 7." />
+      ) : (
+        <>
+          {sessions.isSuccess && sessions.data.length === 0 && (
+            <InlineAlert type="info" title="Tuần này không có tiết nào" description="Tuần nghỉ hoặc tuần chưa phát hành thời khóa biểu." />
+          )}
+          <Card className="table-card">
+            <WeekGrid
+              monday={monday} sessions={sessions.data} loading={sessions.isLoading}
+              detail={(s) => (isClass ? s.teacherName ?? 'Chờ GV' : `${s.className} · ${s.campusName}`)}
+            />
+          </Card>
+        </>
+      )}
     </>
+  );
+}
+
+function WeekTd({ sessions, detail }: { sessions: WeekSession[]; detail: (s: WeekSession) => string }) {
+  if (sessions.length === 0) return <td className="tt-cell tt-cell--empty" />;
+  // Một khung có thể có tiết Đã hủy kèm tiết bù hoặc dạy thay: tiết còn hiệu lực đứng trước.
+  const ordered = [...sessions].sort((a, b) => (a.status === 'Cancelled' ? 1 : 0) - (b.status === 'Cancelled' ? 1 : 0));
+  return (
+    <td className="tt-cell">
+      <div className="tt-stack">
+        {ordered.map((s) => {
+          const state = s.status === 'Cancelled' ? 'tt-chip--cancelled' : s.status === 'Pending' ? 'tt-chip--pending' : '';
+          const a = accent[toneOf(s.subjectAbbr)];
+          const note = STATUS_NOTE[s.status];
+          return (
+            <div
+              key={s.sessionId} className={`tt-chip ${state}`} title={`${s.subjectName} — ${s.className} — ${s.campusName}`}
+              style={{ '--tt-bg': a.bg, '--tt-fg': a.fg } as React.CSSProperties}
+            >
+              <div className="tt-subject">{s.subjectName}</div>
+              <div className="tt-teacher">{detail(s)}{note && ` · ${note}`}</div>
+            </div>
+          );
+        })}
+      </div>
+    </td>
   );
 }
