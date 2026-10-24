@@ -1,43 +1,66 @@
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  height: 22px;
-  padding: 0 10px;
-  border-radius: var(--radius-pill);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 22px;
-  white-space: nowrap;
+/* Component dùng chung — Design_Web §8. Mọi màu lấy từ biến CSS sinh từ tokens.ts. */
+
+/* ---------- Đầu trang: tiêu đề lớn trên nền trang, nút thao tác bên phải (Design_Web §8.0) ---------- */
+.page-header {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+  padding: 8px 4px 0;
 }
 
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 24px;
+.page-header__text {
+  position: relative;
+  min-width: 0;
 }
 
 .page-header__title {
   margin: 0;
-  font-size: 24px;
-  line-height: 32px;
-  font-weight: 600;
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
   color: var(--c-text1);
 }
 
 .page-header__desc {
-  margin: 4px 0 0;
+  max-width: 720px;
+  margin: 6px 0 0;
   font-size: 14px;
   line-height: 22px;
   color: var(--c-text2);
 }
 
 .page-header__extra {
+  position: relative;
   display: flex;
-  gap: 8px;
+  flex: none;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
+/* ---------- Trạng thái: viên nền đậm vừa + icon, chữ trắng (Design_Web §8.5) ---------- */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px 0 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 26px;
+  white-space: nowrap;
+}
+
+.status-badge__icon {
+  flex: none;
+}
+
+/* ---------- Thông báo màn hình hẹp (Design_Web §10) ---------- */
 .narrow-notice {
   min-height: 100vh;
   display: flex;
@@ -53,7 +76,7 @@
 
 .narrow-notice h2 {
   margin: 8px 0 0;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--c-text1);
 }
@@ -63,22 +86,165 @@
   max-width: 360px;
 }
 
-/* ---------- Bảng (Design_Web §8.2) ---------- */
-.data-table .ant-table-thead > tr > th {
-  height: 40px;
-  padding: 8px 16px;
+/* ---------- Thanh lọc (Design_Web §8.3) ---------- */
+/* Một hàng công cụ phẳng ngay trên danh sách: ô lọc dạng viên thuốc trên nền trang, không bọc card. */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+/* Kích thước ô lọc chuẩn: mọi màn dùng chung, không đặt width riêng. */
+.filter-bar .ant-select {
+  width: 200px;
+}
+
+.filter-bar .ant-input-search {
+  width: 320px;
+}
+
+/* Lọc nhanh dạng segmented đứng đầu thanh lọc. */
+.filter-bar .ant-segmented {
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-card);
+  background: var(--c-surface);
+}
+
+.filter-bar .ant-segmented .ant-segmented-item,
+.filter-bar .ant-segmented .ant-segmented-thumb {
+  border-radius: var(--radius-pill);
+}
+
+.filter-bar .ant-segmented .ant-segmented-item-selected,
+.filter-bar .ant-segmented .ant-segmented-thumb {
+  background: var(--c-green500);
+  color: var(--c-surface);
+}
+
+.inline-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 4px;
   font-size: 13px;
-  font-weight: 500;
   color: var(--c-text2);
 }
 
-.data-table .ant-table-tbody > tr > td {
-  padding: 10px 16px;
-  height: 44px;
+/* ---------- Danh sách dạng thẻ-hàng (Design_Web §8.2) ---------- */
+/* Mỗi dòng là một thẻ trắng bo tròn tách khỏi dòng khác bằng khe hở; header bảng và chân trang nằm thẳng trên nền trang. */
+.ant-card.table-card {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
-.data-table .ant-table-container {
-  border-radius: var(--radius-lg);
+.ant-card.table-card > .ant-card-body {
+  padding: 0;
+}
+
+.ant-table-wrapper.data-table .ant-table-container table {
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+
+.ant-table-wrapper.data-table .ant-table-content > table {
+  margin-top: -10px;
+}
+
+/* Khi header dính tách khỏi thân bảng, dòng đo độ rộng của antd cũng chiếm một khe hở: bù lại để khoảng cách header-dòng đầu đúng 10px. */
+.ant-table-wrapper.data-table .ant-table-body > table {
+  margin-top: -20px;
+}
+
+.ant-table-wrapper.data-table .ant-table-header table,
+.ant-table-wrapper.data-table .ant-table-sticky-holder table {
+  border-spacing: 0;
+}
+
+.ant-table-wrapper.data-table .ant-table-thead > tr > th {
+  height: 40px;
+  padding-block: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--c-text3);
+  background: var(--c-tableHeaderBg);
+  border-bottom: none;
+  border-radius: 0 !important;
+}
+
+.ant-table-wrapper.data-table .ant-table-thead > tr > th::before {
+  display: none;
+}
+
+.ant-table-wrapper.data-table .ant-table-tbody > tr > td {
+  height: 64px;
+  border-block: 1px solid var(--c-border);
+  background: var(--c-surface);
+  transition: background 120ms, border-color 120ms;
+}
+
+.ant-table-wrapper.data-table .ant-table-tbody > tr > td:first-child {
+  border-inline-start: 1px solid var(--c-border);
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+}
+
+.ant-table-wrapper.data-table .ant-table-tbody > tr > td:last-child {
+  border-inline-end: 1px solid var(--c-border);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+}
+
+.ant-table-wrapper.data-table .ant-table-placeholder > td {
+  border: 1px dashed var(--c-borderStrong) !important;
+  border-radius: var(--radius-xl) !important;
+  background: transparent !important;
+}
+
+.ant-table-wrapper.data-table .ant-table-tbody > tr:hover > td {
+  background: var(--c-rowHoverBg);
+  border-color: var(--c-green200);
+}
+
+/* Dòng đang được chọn: nền xanh rất nhạt + vạch xanh ở mép trái. */
+.ant-table-wrapper.data-table .ant-table-tbody > tr.ant-table-row-selected > td {
+  background: var(--c-green50);
+  border-color: var(--c-green200);
+}
+
+.ant-table-wrapper.data-table .ant-table-tbody > tr.ant-table-row-selected > td:first-child {
+  box-shadow: inset 4px 0 0 var(--c-green500);
+}
+
+.ant-table-wrapper.data-table .ant-table-thead > tr > th:first-child,
+.ant-table-wrapper.data-table .ant-table-tbody > tr > td:first-child {
+  padding-left: 20px;
+}
+
+.ant-table-wrapper.data-table .ant-table-thead > tr > th:last-child,
+.ant-table-wrapper.data-table .ant-table-tbody > tr > td:last-child {
+  padding-right: 20px;
+}
+
+.ant-table-wrapper.data-table .ant-table-pagination.ant-pagination {
+  margin: 8px 0 0;
+  padding: 8px 4px;
+}
+
+.ant-table-wrapper.data-table .ant-pagination-total-text {
+  margin-inline-end: auto;
+  font-size: 13px;
+  color: var(--c-text2);
+}
+
+.data-table__skeleton {
+  padding: 20px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-xl);
+  background: var(--c-surface);
 }
 
 .empty-state {
@@ -86,7 +252,7 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  padding: 32px 0;
+  padding: 40px 0;
   color: var(--c-text2);
 }
 
@@ -94,6 +260,13 @@
   margin: 0;
 }
 
+.empty-state__title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--c-text2);
+}
+
+/* ---------- Thao tác trên dòng: mờ khi nghỉ, rõ khi rê chuột vào dòng hoặc dùng bàn phím ---------- */
 .row-actions {
   display: flex;
   align-items: center;
@@ -101,85 +274,109 @@
   gap: 4px;
 }
 
-.filter-bar {
-  margin-bottom: 16px;
-}
-
-.filter-bar__row {
-  display: flex;
-  flex-wrap: wrap;
+.icon-btn.ant-btn {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
-}
-
-.table-card .ant-card-body {
-  padding: 16px;
-}
-
-.mono {
-  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
-  font-size: 13px;
-}
-
-.muted {
-  color: var(--c-text3);
-}
-
-/* ---------- Bảng lỗi import (Design_Web §9.2) ---------- */
-.import-errors__banner {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-  padding: 12px 16px;
-  border-radius: var(--radius-md);
-  color: var(--c-danger);
-  background: var(--c-coralBg);
-}
-
-.import-errors__banner span {
+  justify-content: center;
+  border-radius: var(--radius-sm);
   color: var(--c-text2);
 }
 
-.import-errors__skipped {
-  margin-top: 16px;
-  background: var(--c-neutralBg);
+.icon-btn.ant-btn svg {
+  width: 19px;
+  height: 19px;
+  stroke-width: 2.1;
+}
+
+.icon-btn.ant-btn:not(.ant-btn-dangerous):hover {
+  background: var(--c-green50) !important;
+  color: var(--c-green700) !important;
 }
 
 /* Thanh thao tác nổi khi chọn nhiều dòng (Design_Web §8.2). */
 .floating-bar {
   position: fixed;
   left: 50%;
-  bottom: 24px;
+  bottom: 28px;
   z-index: 20;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 12px 16px 12px 20px;
-  border: 1px solid var(--c-border);
+  gap: 12px;
+  padding: 10px 10px 10px 20px;
   border-radius: var(--radius-lg);
-  background: var(--c-surface);
+  color: var(--c-surface);
+  background: var(--c-ink);
   box-shadow: var(--shadow-modal);
+  animation: bar-in 200ms ease-out both;
 }
 
-.inline-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--c-text2);
+.floating-bar strong {
+  color: var(--c-amber);
 }
 
+.floating-bar .ant-btn-default {
+  border-color: transparent;
+  color: var(--c-surface);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.floating-bar .ant-btn-default:hover {
+  color: var(--c-surface) !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+@keyframes bar-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* ---------- Chữ phụ trợ ---------- */
+.mono {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 12.5px;
+  padding: 2px 7px;
+  border-radius: var(--radius-xs);
+  color: var(--c-green800);
+  background: var(--c-green50);
+}
+
+.muted {
+  color: var(--c-text3);
+}
+
+/* Ô bảng hai dòng xếp dọc (nhãn + trạng thái). */
+.stack-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+/* ---------- Form ---------- */
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   column-gap: 16px;
 }
 
-@media (max-width: 1400px) {
-  .form-grid {
-    grid-template-columns: 1fr 1fr;
-  }
+.form-modal {
+  margin-top: 20px;
+}
+
+.form-drawer__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 /* ---------- Ô người trong bảng (Design_Web §8.2b) ---------- */
@@ -188,6 +385,14 @@
   align-items: center;
   gap: 12px;
   min-width: 0;
+}
+
+.person-cell__avatar.ant-avatar {
+  flex: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-green700);
+  background: var(--c-green100);
 }
 
 .person-cell__text {
@@ -211,131 +416,203 @@
   color: var(--c-text3);
 }
 
+.person-cell--muted .person-cell__avatar.ant-avatar {
+  color: var(--c-text3);
+  background: var(--c-neutralBg);
+}
+
 /* ---------- Cảnh báo trong trang (Design_Web §8.7) ---------- */
 .inline-alert {
   margin-bottom: 16px;
 }
 
-/* ---------- Kích thước ô lọc chuẩn: mọi màn dùng chung, không đặt width riêng (Design_Web §8.3) ---------- */
-.filter-bar .ant-select {
-  width: 220px;
+.inline-alert.ant-alert {
+  border-radius: var(--radius-md);
 }
 
-.filter-bar .ant-input-search {
-  width: 280px;
+/* ---------- Bảng lỗi import (Design_Web §9.2) ---------- */
+.import-errors__banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  color: var(--c-danger);
+  background: var(--c-coralBg);
 }
 
-/* ---------- Hero banner (Design_Web §8.5b) ---------- */
-.hero-banner {
+.import-errors__banner span {
+  color: var(--c-text2);
+}
+
+.import-errors__skipped {
+  margin-top: 16px;
+  background: var(--c-sunken);
+}
+
+/* ---------- Ô bento (Dashboard, Trang chủ) ---------- */
+.bento-tile {
   position: relative;
-  overflow: hidden;
+  min-width: 0;
+  padding: 22px 24px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-xl);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-card);
+}
+
+/* Ô nhấn sáng: mint nhạt sang sky nhạt, chữ tối — mỗi màn có đúng một ô như vậy. */
+.bento-tile--accent {
+  border-color: var(--c-borderMint);
+  color: var(--c-text1);
+  background: var(--grad-accent);
+}
+
+/* ---------- Lời chào Trang chủ (Design_Web §8.5b) ---------- */
+.greeting {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 24px;
-  padding: 32px;
-  border-radius: var(--radius-lg);
-  background: var(--grad-hero);
-  color: var(--c-green800);
+  gap: 24px;
+  min-height: 188px;
 }
 
-.hero-banner__text,
-.hero-banner__extra {
-  position: relative;
-  z-index: 1;
-}
-
-.hero-banner__eyebrow {
-  font-size: 13px;
-  font-weight: 500;
-  text-transform: capitalize;
-}
-
-.hero-banner__title {
-  margin: 4px 0 0;
-  font-size: 24px;
-  line-height: 32px;
+.greeting__eyebrow {
+  display: block;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--c-green800);
+  line-height: 18px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-text2);
 }
 
-.hero-banner__desc {
-  margin: 4px 0 0;
-  color: var(--c-green800);
+.greeting__title {
+  margin: 14px 0 0;
+  font-size: 34px;
+  line-height: 42px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--c-text1);
 }
 
-.hero-banner__orb {
-  position: absolute;
-  border-radius: 50%;
-  background: var(--c-surface);
-  opacity: 0.35;
+.greeting__desc {
+  margin: 12px 0 0;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--c-text2);
 }
 
-.hero-banner__orb--a {
-  width: 220px;
-  height: 220px;
-  right: -40px;
-  top: -80px;
+.greeting__desc::first-letter {
+  text-transform: uppercase;
 }
 
-.hero-banner__orb--b {
-  width: 120px;
-  height: 120px;
-  right: 160px;
-  bottom: -60px;
+.greeting__extra {
+  flex: none;
 }
 
-/* ---------- Thẻ chỉ số (Design_Web §8.6) ---------- */
-.stat-card .ant-card-body {
-  padding: 24px;
+/* ---------- Ô chỉ số (Design_Web §8.6) ---------- */
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 180ms, transform 180ms;
 }
 
 .stat-card--clickable {
   cursor: pointer;
-  transition: box-shadow 150ms;
 }
 
 .stat-card--clickable:hover {
-  box-shadow: var(--shadow-pop);
+  box-shadow: var(--shadow-lift);
+  transform: translateY(-2px);
+}
+
+.stat-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .stat-card__icon {
-  width: 40px;
-  height: 40px;
+  flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-sm);
+  width: 40px;
+  height: 40px;
+  margin: -4px -4px 0 0;
+  border-radius: var(--radius-md);
 }
 
-.stat-card__value {
-  margin-top: 16px;
-  font-size: 30px;
-  line-height: 38px;
-  font-weight: 600;
-  color: var(--c-text1);
+.bento-tile--accent .stat-card__icon {
+  color: var(--c-green700);
+  background: var(--c-surface);
 }
 
 .stat-card__label {
   font-size: 13px;
+  font-weight: 500;
   color: var(--c-text2);
 }
 
-.stat-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+.stat-card--attention .stat-card__label::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 8px;
+  vertical-align: middle;
+  border-radius: 50%;
+  background: var(--c-amber);
 }
 
-@media (max-width: 1440px) {
-  .stat-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.stat-card__value {
+  margin-top: 8px;
+  font-size: 36px;
+  line-height: 44px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--c-ink);
 }
 
-/* ---------- Logo chữ (Design_Web §6.0) ---------- */
+.stat-card--attention .stat-card__value {
+  color: var(--c-amberInk);
+}
+
+.stat-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 20px;
+  margin-top: auto;
+  padding-top: 10px;
+  font-size: 12px;
+  color: var(--c-text3);
+}
+
+.stat-card__go {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  color: var(--c-green700);
+  transition: gap 150ms;
+}
+
+.stat-card--clickable:hover .stat-card__go {
+  gap: 7px;
+}
+
+.stat-card.bento-tile--accent .stat-card__value {
+  font-size: 56px;
+  line-height: 64px;
+  color: var(--c-green700);
+}
+
+/* ---------- Logo chữ (Design_Web §3.1) ---------- */
 .brand-logo {
   display: inline-block;
   font-family: Montserrat, 'Be Vietnam Pro', sans-serif;
@@ -362,4 +639,9 @@
   font-style: normal;
   font-weight: 700;
   color: var(--c-logoDot);
+}
+
+/* Header dính của bảng: cùng màu nền trang để các thẻ-hàng cuộn qua phía dưới không lộ ra. */
+.ant-table-wrapper.data-table .ant-table-sticky-holder {
+  background: var(--c-bg);
 }

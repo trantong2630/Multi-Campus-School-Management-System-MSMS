@@ -12,7 +12,7 @@ interface FormValues {
   confirmPassword: string;
 }
 
-const MIN_LENGTH = 8;
+export const MIN_PASSWORD_LENGTH = 8;
 
 export function ChangePasswordForm({ onDone }: { onDone?: () => void }) {
   const { refresh } = useAuth();
@@ -56,7 +56,7 @@ export function ChangePasswordForm({ onDone }: { onDone?: () => void }) {
         name="newPassword"
         rules={[
           { required: true, message: 'Nhập mật khẩu mới.' },
-          { min: MIN_LENGTH, message: `Mật khẩu mới cần ít nhất ${MIN_LENGTH} ký tự.` },
+          { min: MIN_PASSWORD_LENGTH, message: `Mật khẩu mới cần ít nhất ${MIN_PASSWORD_LENGTH} ký tự.` },
         ]}
       >
         <Input.Password autoComplete="new-password" />

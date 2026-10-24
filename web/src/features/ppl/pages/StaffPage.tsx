@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, Card, DatePicker, Form, Input, Modal, Select, Switch } from 'antd';
+import { Button, Card, DatePicker, Form, Input, Modal, Segmented, Select } from 'antd';
 import { message } from '@/shared/lib/antdStatic';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
@@ -125,6 +125,10 @@ export function StaffPage() {
         )}
       />
       <FilterBar>
+        <Segmented<boolean>
+          value={includeInactive} onChange={(v) => { setIncludeInactive(v); reset(); }}
+          options={[{ value: false, label: 'Đang hoạt động' }, { value: true, label: 'Tất cả hồ sơ' }]}
+        />
         <Input.Search
           allowClear placeholder="Tên, mã hồ sơ hoặc viết tắt" enterButton="Tìm kiếm"
           onSearch={(v) => { setSearch(v); reset(); }}
@@ -137,7 +141,6 @@ export function StaffPage() {
           options={STAFF_ACCOUNT_TYPES.map((t) => ({ value: t, label: accountTypeLabel[t] }))} />
         <Select allowClear placeholder="Viết tắt GV" value={hasAbbr} onChange={(v) => { setHasAbbr(v); reset(); }}
           options={[{ value: true, label: 'Đã có viết tắt' }, { value: false, label: 'Chưa có viết tắt' }]} />
-        <label className="inline-switch"><Switch checked={includeInactive} onChange={(v) => { setIncludeInactive(v); reset(); }} /> Hiện cả hồ sơ ngừng hoạt động</label>
       </FilterBar>
 
       <Card className="table-card">
@@ -151,24 +154,24 @@ export function StaffPage() {
             getCheckboxProps: (s) => ({ disabled: s.accountId !== null || !s.isActive }),
           } : undefined}
           columns={[
-            { title: 'Họ và tên', dataIndex: 'fullName', width: 260, render: (v: string, s: Staff) => <PersonCell name={v} sub={s.personCode} muted={!s.isActive} /> },
-            { title: 'Ngày sinh', dataIndex: 'dateOfBirth', width: 110, className: 'tabular', render: (v: string | null) => formatDate(v) },
-            { title: 'Số định danh', dataIndex: 'nationalId', width: 140, className: 'tabular', render: (v: string | null) => v ?? <span className="muted">—</span> },
-            { title: 'Phân hiệu chính', dataIndex: 'primaryCampusName', width: 140 },
-            { title: 'Tổ chuyên môn', dataIndex: 'departmentName', width: 150, render: (v: string | null) => v ?? <span className="muted">—</span> },
-            { title: 'Viết tắt GV', dataIndex: 'teacherAbbr', width: 100, render: (v: string | null) => v ? <code className="mono">{v}</code> : <span className="muted">Chưa có</span> },
+            { title: 'Họ và tên', dataIndex: 'fullName', width: 210, render: (v: string, s: Staff) => <PersonCell name={v} sub={s.personCode} muted={!s.isActive} /> },
+            { title: 'Ngày sinh', dataIndex: 'dateOfBirth', width: 104, className: 'tabular', render: (v: string | null) => formatDate(v) },
+            { title: 'Số định danh', dataIndex: 'nationalId', width: 120, className: 'tabular', render: (v: string | null) => v ?? <span className="muted">—</span> },
+            { title: 'Phân hiệu chính', dataIndex: 'primaryCampusName', width: 120, render: (v: string | null) => v ?? <span className="muted">—</span> },
+            { title: 'Tổ chuyên môn', dataIndex: 'departmentName', width: 130, render: (v: string | null) => v ?? <span className="muted">—</span> },
+            { title: 'Viết tắt GV', dataIndex: 'teacherAbbr', width: 96, render: (v: string | null) => v ? <code className="mono">{v}</code> : <span className="muted">Chưa có</span> },
             {
-              title: 'Tài khoản', key: 'account', width: 170,
+              title: 'Tài khoản', key: 'account', width: 150,
               render: (_: unknown, s: Staff) => s.accountId === null
                 ? <span className="muted">Chưa có</span>
-                : <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                : <div className="stack-cell">
                   <span>{accountTypeLabel[s.accountType as AccountType]}</span>
                   <StatusBadge domain="account" value={s.accountStatus ?? ''} />
                 </div>,
             },
             ...(includeInactive ? [{ title: 'Hồ sơ', dataIndex: 'isActive', width: 150, align: 'center' as const, render: (v: boolean) => <StatusBadge domain="catalog" value={v ? 'Active' : 'Inactive'} /> }] : []),
             ...(canWrite ? [{
-              title: 'Thao tác', key: 'actions', width: 110, align: 'center' as const, fixed: 'right' as const,
+              title: 'Thao tác', key: 'actions', width: 96, align: 'center' as const, fixed: 'right' as const,
               render: (_: unknown, s: Staff) => (
                 <RowActions actions={[
                   { key: 'edit', label: 'Sửa', icon: <Pencil size={16} />, onClick: () => setEditing(s) },
@@ -198,7 +201,7 @@ export function StaffPage() {
       )}
 
       <FormModal<FormValues>
-        open={editing !== null} title={editing === 'new' ? 'Thêm cán bộ' : 'Sửa hồ sơ cán bộ'} width={640}
+        open={editing !== null} title={editing === 'new' ? 'Thêm cán bộ' : 'Sửa hồ sơ cán bộ'} width={640} variant="drawer"
         form={form} onClose={() => setEditing(null)} onSubmit={save}
         initialValues={editing && editing !== 'new'
           ? { ...editing, nationalId: editing.nationalId ?? undefined, dateOfBirth: editing.dateOfBirth ? dayjs(editing.dateOfBirth) : undefined, gender: editing.gender ?? undefined,

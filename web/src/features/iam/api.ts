@@ -8,4 +8,8 @@ export const iamApi = {
   logout: () => apiClient.post('/auth/logout'),
   changePassword: (currentPassword: string, newPassword: string) =>
     apiClient.post('/auth/change-password', { currentPassword, newPassword }),
+  // Quên mật khẩu (BR-04): luôn trả cùng một kết quả, không tiết lộ tài khoản có tồn tại hay có email không.
+  requestPasswordReset: (username: string) => apiClient.post('/auth/forgot-password', { username }),
+  resetPassword: (username: string, code: string, newPassword: string) =>
+    apiClient.post('/auth/reset-password', { username, code, newPassword }),
 };

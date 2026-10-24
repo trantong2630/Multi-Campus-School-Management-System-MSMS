@@ -53,7 +53,8 @@ apiClient.interceptors.response.use(
   async (error) => {
     if (!isAxiosError(error) || error.response?.status !== 401 || !error.config) return Promise.reject(error);
     const url = error.config.url ?? '';
-    if (url.includes('/auth/login') || url.includes('/auth/refresh')) return Promise.reject(error);
+    // Các API dùng khi chưa đăng nhập: 401 ở đây là lỗi nghiệp vụ, không phải hết phiên.
+    if (/\/auth\/(login|refresh|forgot-password|reset-password)/.test(url)) return Promise.reject(error);
 
     const config = error.config as typeof error.config & { _retried?: boolean };
     if (!config._retried) {
