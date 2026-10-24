@@ -34,7 +34,7 @@ One notch warmer than web — users are teachers on their feet, students, and pa
 
 ## 2. Tokens
 
-Color, type, and radius **inherit `MSMS_Design_Web.md` §2–4 (V1.1) unchanged** — page `bg` is `#F1F5F2`, `sm/md` radius 10/12, status badges are pills. The mobile header gradient is the same `gradient.hero` used by the web hero banner. Mobile overrides exactly five values:
+Color, type, and radius **inherit `MSMS_Design_Web.md` §2–4 (V1.1) unchanged** — page `bg` is `#F1F5F2`, `sm/md` radius 10/12, status badges are pills. The mobile header gradient is spelled out in §2.1 below. Mobile overrides exactly five values:
 
 | Aspect | Web | Mobile |
 | --- | --- | --- |

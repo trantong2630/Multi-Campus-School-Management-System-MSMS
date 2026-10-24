@@ -13,13 +13,13 @@
 
 .school-logo--fallback {
   color: var(--c-surface);
-  background: var(--c-green600);
+  background: var(--c-green700);
 }
 
 .school-grid {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
-  gap: 24px;
+  gap: 20px;
   align-items: start;
 }
 
@@ -30,9 +30,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px dashed var(--c-border);
-  border-radius: var(--radius-lg);
-  background: var(--c-bg);
+  border: 1px dashed var(--c-borderStrong);
+  border-radius: var(--radius-md);
+  background: var(--c-sunken);
   overflow: hidden;
 }
 
@@ -46,4 +46,39 @@
   display: flex;
   justify-content: center;
   gap: 8px;
+}
+
+/* Form học kỳ: ngày bắt đầu + số tuần, ngày kết thúc tự tính. */
+.semester-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px 112px;
+  gap: 12px;
+  align-items: start;
+}
+
+.semester-row__end {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 2px;
+}
+
+.semester-row__end span {
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--c-text1);
+}
+
+.semester-row__end b {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: var(--c-ink);
+}
+
+.semester-total {
+  margin: 0;
+  font-size: 13px;
+  color: var(--c-text2);
 }

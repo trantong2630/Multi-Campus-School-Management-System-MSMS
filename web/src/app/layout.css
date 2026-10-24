@@ -1,24 +1,47 @@
-/* Layout shell — Design_Web §6. Mọi màu lấy từ biến CSS sinh từ tokens.ts. */
+/* Khung app — Design_Web §6. Nền xám ngả xanh có quầng xanh nhạt; sider là tấm xanh nổi; nội dung là các card trên nền. */
 
-.app-shell {
+.app-shell.ant-layout {
   min-height: 100vh;
-  background: var(--grad-page), var(--c-bg);
+  background: var(--c-bg);
+}
+
+/* Sóng lượn phía sau nội dung (Design_Web §6). Cố định theo khung nhìn, mờ dần về mép trái. */
+.page-backdrop {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 220px);
+  mask-image: linear-gradient(90deg, transparent 0, #000 220px);
+  transition: left 200ms;
+}
+
+.page-backdrop svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.app-header.ant-layout-header,
+.app-content.ant-layout-content {
+  position: relative;
+  z-index: 1;
 }
 
 .app-shell .ant-layout {
   background: transparent;
 }
 
-/* ---------- Sider: tấm xanh bo tròn nổi trên nền ---------- */
+/* ---------- Sider: tấm xanh sát mép trái, bo tròn mép phải; mục đang chọn là tab "khuyết" nối liền với nền ---------- */
 .app-sider.ant-layout-sider {
   position: sticky;
-  top: 12px;
-  height: calc(100vh - 24px);
-  margin: 12px 0 12px 12px;
-  border-radius: 24px;
+  top: 0;
+  height: 100vh;
+  border-radius: 0 32px 32px 0;
   background: var(--grad-sider);
-  box-shadow: var(--shadow-pop);
-  overflow: hidden;
+  z-index: 2;
 }
 
 .app-sider .ant-layout-sider-children {
@@ -30,69 +53,129 @@
 .app-sider__brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  justify-content: center;
-  height: 84px;
-  padding: 0 20px;
+  height: 68px;
+  padding: 0 24px;
   flex: none;
 }
 
-.app-sider .school-logo {
-  border-radius: var(--radius-md);
+.app-sider--collapsed .app-sider__brand {
+  justify-content: center;
+  padding: 0;
 }
 
-.app-sider .school-logo--fallback {
-  color: var(--c-green600);
-  background: var(--c-surface);
+/* ---------- Menu ---------- */
+.app-nav {
+  position: relative;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px 0 8px 12px;
+  /* Tab khuyết chạy lố 2px ra ngoài mép sider để không lộ đường chân; thanh cuộn ẩn đi. */
+  margin-right: -2px;
+  scrollbar-width: none;
+}
+
+.app-nav::-webkit-scrollbar {
+  display: none;
+}
+
+/* Tab khuyết của mục đang chọn: cùng màu nền trang, chạy tới mép phải sider; hai góc lõm ở mép trên và dưới làm tab liền mạch với nội dung (Design_Web §6.1). */
+.nav-indicator {
+  position: absolute;
+  top: 0;
+  left: 12px;
+  right: 0;
+  z-index: 0;
+  border-radius: var(--radius-xl) 0 0 var(--radius-xl);
+  background: var(--c-bg);
+  pointer-events: none;
+  transition: transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1), height 280ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 150ms;
+}
+
+/* Góc lõm cao 21px, chồng 1px vào thân tab: đặt khít mép thì màn hình phóng 125%/150% để lộ khe thành vạch ngang. */
+.nav-indicator::before,
+.nav-indicator::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  width: 20px;
+  height: 21px;
+  pointer-events: none;
+}
+
+.nav-indicator::before {
+  top: -20px;
+  background: radial-gradient(circle at 0 0, transparent 19.5px, var(--c-bg) 20px);
+}
+
+.nav-indicator::after {
+  bottom: -20px;
+  background: radial-gradient(circle at 0 100%, transparent 19.5px, var(--c-bg) 20px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-indicator {
+    transition: none;
+  }
 }
 
 .app-menu.ant-menu {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px 12px;
-  border-inline-end: none;
+  position: relative;
+  z-index: 1;
+  padding: 0;
+  border-inline-end: none !important;
   background: transparent;
   color: var(--c-surface);
 }
 
-/* Thanh cuộn mảnh, nền trong suốt, thanh kéo trắng mờ — hợp với tấm xanh thay vì thanh trắng mặc định. */
-.app-menu.ant-menu {
-  scrollbar-width: thin;
-  scrollbar-color: var(--c-onGreenLine) transparent;
+/* Nhãn cụm: chữ nhỏ in hoa trắng mờ; khi thu gọn thành một vạch mảnh. */
+.app-menu .ant-menu-item-group-title {
+  padding: 16px 10px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.62);
 }
 
-.app-menu.ant-menu::-webkit-scrollbar {
-  width: 6px;
+.app-menu > .ant-menu-item-group:first-child > .ant-menu-item-group-title {
+  padding-top: 4px;
 }
 
-.app-menu.ant-menu::-webkit-scrollbar-track {
+.app-sider--collapsed .app-menu .ant-menu-item-group-title {
+  height: 1px;
+  margin: 10px 14px;
+  padding: 0;
+  font-size: 0;
+  background: var(--c-onGreenLine);
+}
+
+.app-sider--collapsed .app-menu > .ant-menu-item-group:first-child > .ant-menu-item-group-title {
+  margin-top: 0;
   background: transparent;
 }
 
-.app-menu.ant-menu::-webkit-scrollbar-thumb {
-  border-radius: var(--radius-pill);
-  background: var(--c-onGreenMuted);
-}
-
-.app-menu .ant-menu-item,
-.app-menu .ant-menu-submenu-title {
-  height: 46px;
-  line-height: 46px;
-  margin: 0 0 4px;
+.app-menu .ant-menu-item-group-list .ant-menu-item,
+.app-menu .ant-menu-item-group-list .ant-menu-submenu-title {
+  height: 44px;
+  line-height: 44px;
+  margin: 0 0 2px;
   width: 100%;
   border-radius: var(--radius-md);
   font-size: 14px;
   font-weight: 500;
   color: var(--c-surface);
-  transition: background 150ms, color 150ms;
+  transition: background 150ms, color 200ms;
 }
 
-.app-sider--expanded .app-menu > .ant-menu-item,
-.app-sider--expanded .app-menu > .ant-menu-submenu > .ant-menu-submenu-title {
+.app-sider--expanded .app-menu .ant-menu-item-group-list > .ant-menu-item,
+.app-sider--expanded .app-menu .ant-menu-item-group-list > .ant-menu-submenu > .ant-menu-submenu-title {
   padding-inline: 8px 12px !important;
+  width: calc(100% - 12px);
 }
 
-.app-menu .ant-menu-item:hover,
+.app-menu .ant-menu-item:not(.ant-menu-item-selected):hover,
 .app-menu .ant-menu-submenu-title:hover {
   background: var(--c-onGreenHover) !important;
   color: var(--c-surface) !important;
@@ -115,10 +198,10 @@
   align-items: center;
   justify-content: center;
   color: var(--c-surface);
-  transition: background 150ms, color 150ms;
+  transition: background 150ms, color 200ms;
 }
 
-/* Cấp 2: thụt vào, đường kẻ dọc nối các mục, chấm tròn đầu dòng, không icon. */
+/* Cấp 2: thụt vào, một đường kẻ dọc mảnh nối các mục, không icon, không chấm. */
 .app-menu .ant-menu-sub.ant-menu-inline {
   position: relative;
   background: transparent;
@@ -129,7 +212,7 @@
   position: absolute;
   top: 4px;
   bottom: 8px;
-  left: 23px;
+  left: 27px;
   width: 1px;
   background: var(--c-onGreenLine);
 }
@@ -137,7 +220,7 @@
 .app-sider--expanded .app-menu .ant-menu-sub .ant-menu-item {
   height: 38px;
   line-height: 38px;
-  padding-inline: 36px 4px !important;
+  padding-inline: 48px 4px !important;
   font-weight: 400;
   color: var(--c-onGreenMuted);
 }
@@ -155,181 +238,301 @@
   white-space: nowrap;
 }
 
-.nav-bullet {
-  width: 5px;
-  height: 5px;
-  margin-right: 12px;
-  border-radius: 50%;
-  background: var(--c-onGreenMuted);
-  flex: none;
-}
-
-/* Mục đang chọn: viên thuốc trắng, chữ xanh đậm. */
-.app-menu .ant-menu-item-selected {
-  background: var(--c-surface) !important;
+/* Mục đang chọn: nền do viên trắng phía dưới đảm nhận, ở đây chỉ đổi chữ sang xanh đậm. */
+.app-menu .ant-menu-item-selected,
+.app-menu .ant-menu-item-selected:hover {
+  background: transparent !important;
   color: var(--c-green700) !important;
   font-weight: 600;
 }
 
-.app-menu .ant-menu-item-selected:hover {
-  background: var(--c-surface) !important;
-  color: var(--c-green700) !important;
-}
-
-.app-menu .ant-menu-item-selected .nav-tile {
+.app-menu .ant-menu-item-selected .nav-tile,
+.app-menu .ant-menu-submenu-selected:not(.ant-menu-submenu-open) > .ant-menu-submenu-title .nav-tile {
   color: var(--c-green600);
 }
 
-.app-menu .ant-menu-item-selected .nav-bullet {
-  background: var(--c-green600);
-}
-
-/* Cha của mục đang chọn: chữ trắng đậm, nền trong suốt. */
+/* Cha của mục đang chọn: chữ trắng đậm khi đang mở; khi đóng (hoặc sider thu gọn) viên trắng nằm ở đây nên chữ xanh. */
 .app-menu .ant-menu-submenu-selected > .ant-menu-submenu-title {
   color: var(--c-surface);
   font-weight: 600;
   background: transparent;
 }
 
+.app-menu .ant-menu-submenu-selected:not(.ant-menu-submenu-open) > .ant-menu-submenu-title,
+.app-menu .ant-menu-submenu-selected:not(.ant-menu-submenu-open) > .ant-menu-submenu-title:hover {
+  color: var(--c-green700) !important;
+  background: transparent !important;
+}
+
+.app-menu .ant-menu-submenu-selected:not(.ant-menu-submenu-open) > .ant-menu-submenu-title .ant-menu-submenu-arrow {
+  color: var(--c-green600);
+}
+
+/* ---------- Nút thu gọn ở chân sider ---------- */
 .app-sider__footer {
   flex: none;
   display: flex;
   justify-content: flex-end;
-  padding: 12px 16px;
+  padding: 12px 16px 16px;
 }
 
-.app-sider:not(.app-sider--expanded) .app-sider__footer {
+.app-sider--collapsed .app-sider__footer {
   justify-content: center;
+  padding-inline: 0;
 }
 
-.app-sider:not(.app-sider--expanded) .app-sider__brand {
-  justify-content: center;
+.sider-collapse.ant-btn {
+  width: 36px;
+  height: 36px;
   padding: 0;
+  border-radius: var(--radius-md);
+  color: var(--c-onGreenMuted);
 }
 
-.app-sider .icon-btn.ant-btn {
-  color: var(--c-surface);
-  background: transparent;
-  box-shadow: none;
-}
-
-.app-sider .icon-btn.ant-btn:hover {
-  background: var(--c-onGreenHover) !important;
+.sider-collapse.ant-btn:hover {
   color: var(--c-surface) !important;
+  background: var(--c-onGreenHover) !important;
 }
 
-/* ---------- Header: trong suốt, nút tròn trắng nổi ---------- */
+/* ---------- Thanh trên: nút thu gọn, breadcrumb, ô tìm nhanh ---------- */
 .app-header.ant-layout-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
   height: 72px;
-  line-height: 72px;
-  padding: 0 24px;
+  line-height: normal;
+  padding: 0 32px 0 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--c-bg);
+  gap: 24px;
 }
 
-.app-header .ant-breadcrumb {
-  font-size: 13px;
-}
-
-.app-header__left {
+/* Bên trái: thanh trắng bo tròn, đường dẫn trang | tên trường (tên trường đậm, đứng sau vạch ngăn). */
+.header-crumb {
   display: flex;
   align-items: center;
-  gap: 16px;
   min-width: 0;
+  height: 44px;
+  padding: 0 20px;
+  border: 1px solid transparent;
+  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-pill);
+  background: var(--c-surface);
+  line-height: 1;
 }
 
-.app-header__school {
-  max-width: 360px;
+.header-crumb__path {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  padding-right: 16px;
+  border-right: 1px solid var(--c-border);
+  font-size: 14px;
+  color: var(--c-text3);
+}
+
+.header-crumb__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.header-crumb__item--current {
+  font-weight: 500;
+  color: var(--c-text2);
+}
+
+.header-crumb__school {
+  overflow: hidden;
+  padding-left: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 700;
+  /* overflow: hidden cắt theo khung dòng; line-height: 1 của cha làm mất dấu nặng (ạ, ợ) và dấu hỏi trên chữ hoa. */
+  line-height: 1.5;
+  color: var(--c-text1);
+}
+
+.header-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  margin-left: auto;
+  padding: 0 10px 0 16px;
+  border: 1px solid transparent;
+  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-pill);
+  background: var(--c-surface);
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--c-text3);
+  cursor: pointer;
+  transition: border-color 150ms, color 150ms;
+}
+
+.header-search:hover {
+  border-color: var(--c-green300);
+  color: var(--c-text2);
+}
+
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  padding: 0 12px 0 7px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-pill);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-card);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 150ms;
+}
+
+.header-user:hover {
+  border-color: var(--c-green300);
+}
+
+.header-user__avatar.ant-avatar {
+  flex: none;
+  background: var(--c-green500);
+  color: var(--c-surface);
+  font-weight: 600;
+}
+
+.header-user__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.header-user__name {
+  max-width: 160px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding-left: 16px;
-  border-left: 1px solid var(--c-border);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--c-text1);
 }
 
-.app-header__right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.header-user__type {
+  font-size: 12px;
+  color: var(--c-text3);
 }
 
-.icon-btn.ant-btn {
-  width: 40px;
-  height: 40px;
-  padding: 0;
+.header-user__more {
+  color: var(--c-text3);
+}
+
+.kbd {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  color: var(--c-text2);
-  border-radius: var(--radius-pill);
-}
-
-.app-header .icon-btn.ant-btn {
-  border: 1px solid var(--c-border);
-  background: var(--c-surface);
-  box-shadow: var(--shadow-card);
-}
-
-.icon-btn.ant-btn:hover {
-  background: var(--c-hoverBg) !important;
-  color: var(--c-text1) !important;
-}
-
-.user-chip {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  height: 48px;
-  padding: 0 16px 0 8px;
+  height: 24px;
+  padding: 0 8px;
   border: 1px solid var(--c-border);
   border-radius: var(--radius-pill);
-  background: var(--c-surface);
-  box-shadow: var(--shadow-card);
-  cursor: pointer;
+  background: var(--c-sunken);
   font-family: inherit;
-  text-align: left;
-  transition: background 150ms;
-}
-
-.user-chip:hover {
-  background: var(--c-green50);
-}
-
-.user-chip:focus-visible {
-  outline: 3px solid var(--focus-ring);
-}
-
-.user-chip__text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.3;
-}
-
-.user-chip__name {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--c-text1);
-}
-
-.user-chip__type {
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
   color: var(--c-text2);
 }
 
-/* ---------- Content ---------- */
+/* ---------- Nội dung ---------- */
 .app-content.ant-layout-content {
-  padding: 8px 24px 32px;
+  padding: 4px 32px 56px 20px;
 }
 
 .app-content__inner {
-  max-width: 1440px;
+  max-width: 1400px;
   margin: 0 auto;
+  animation: content-in 240ms ease-out both;
+}
+
+@keyframes content-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- Tìm nhanh màn hình (Ctrl+K) ---------- */
+.cmdk .ant-modal-container {
+  padding: 0;
+  overflow: hidden;
+}
+
+.cmdk__search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--c-border);
+  color: var(--c-text3);
+}
+
+.cmdk__search .ant-input {
+  padding: 4px 0;
+  font-size: 15px;
+}
+
+.cmdk__search .ant-input:focus-visible {
+  outline: none;
+}
+
+.cmdk__list {
+  max-height: 400px;
+  margin: 0;
+  padding: 8px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.cmdk__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--c-text1);
+}
+
+.cmdk__item--active {
+  background: var(--c-green50);
+}
+
+.cmdk__label {
+  flex: 1;
+  font-weight: 500;
+}
+
+.cmdk__group {
+  margin-right: 8px;
+  font-weight: 400;
+  color: var(--c-text3);
+}
+
+.cmdk__group::after {
+  content: ' /';
+}
+
+.cmdk__enter {
+  color: var(--c-green600);
+}
+
+.cmdk__empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--c-text2);
 }

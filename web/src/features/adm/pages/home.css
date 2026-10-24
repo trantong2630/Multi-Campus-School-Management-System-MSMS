@@ -1,36 +1,371 @@
-.home-welcome .ant-card-body {
-  display: flex;
-  align-items: center;
+/* Trang chủ — Design_Web §9.4. */
+
+/* Lưới bento 3 cột: lời chào chiếm 2 cột cạnh ô năm học; hôm nay chiếm 2 cột cạnh ô ngày nghỉ. */
+.home-bento {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
+  align-items: stretch;
 }
 
-.home-welcome__info {
-  flex: 1;
+.home-bento__greet,
+.home-bento__today {
+  grid-column: span 2;
 }
 
-.home-welcome__name {
-  font-size: 16px;
-  line-height: 24px;
+.home-bento__greet--wide {
+  grid-column: 1 / -1;
+}
+
+.home-bento__school {
+  grid-column: 1 / -1;
+}
+
+.home-bento__greet.bento-tile {
+  padding: 28px 32px;
+}
+
+/* Logo trường cạnh lời chào: vòng trắng có quầng mint nhạt. */
+.home-crest {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: var(--c-surface);
+}
+
+.home-crest .school-logo {
+  border-radius: 50%;
+}
+
+.home-crest .school-logo--fallback {
+  color: var(--c-green700);
+  background: transparent;
+}
+
+.home-card .ant-card-head {
+  border-bottom: none;
+}
+
+.home-card .ant-card-body {
+  padding-top: 4px;
+}
+
+.home-clock {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--c-green700);
+}
+
+.home-year {
+  font-size: 13px;
   font-weight: 600;
-}
-
-.home-welcome__meta {
   color: var(--c-text2);
 }
 
-.home-empty {
-  margin-top: 24px;
-}
-
-.home-empty .ant-card-body {
+.home-rest {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 48px 24px;
+  gap: 6px;
+  padding: 40px 0;
   color: var(--c-text2);
 }
 
-.home-empty p {
+.home-rest b {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--c-text1);
+}
+
+/* ---------- Trục thời gian các tiết trong ngày ---------- */
+.home-periods {
   margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Cột giờ · nút trên trục · nội dung · nhãn trạng thái. Trục là đường kẻ dọc chạy qua cột nút. */
+.home-period {
+  position: relative;
+  display: grid;
+  grid-template-columns: 64px 24px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  min-height: 52px;
+}
+
+.home-period::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 87px;
+  width: 1px;
+  background: var(--c-border);
+}
+
+.home-period__session {
+  grid-column: 1 / -1;
+  padding: 16px 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text3);
+}
+
+.home-period:first-child .home-period__session {
+  padding-top: 0;
+}
+
+.home-period__time {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--c-text1);
+}
+
+.home-period__time i {
+  font-style: normal;
+  font-weight: 400;
+  color: var(--c-text3);
+}
+
+.home-period__node {
+  position: relative;
+  z-index: 1;
+  justify-self: center;
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--c-borderStrong);
+  border-radius: 50%;
+  background: var(--c-surface);
+}
+
+.home-period__what {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 20px;
+}
+
+.home-period__no {
+  font-weight: 500;
+  color: var(--c-text1);
+}
+
+.home-period__lesson {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--c-text2);
+}
+
+.home-period__lesson b {
+  font-weight: 600;
+  color: var(--c-text1);
+}
+
+.home-period__tag {
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-amberInk);
+  background: var(--c-amberSoft);
+}
+
+.home-period__tag--next {
+  color: var(--c-ink);
+  background: var(--c-neutralBg);
+}
+
+.home-period--done .home-period__time,
+.home-period--done .home-period__what {
+  opacity: 0.45;
+}
+
+.home-period--done .home-period__node {
+  border-color: var(--c-border);
+  background: var(--c-border);
+}
+
+.home-period--next .home-period__node {
+  border-color: var(--c-ink);
+}
+
+/* Tiết đang diễn ra: chấm hổ phách (chấm của logo) có vầng sáng nhịp chậm. */
+.home-period--current .home-period__node {
+  border-color: var(--c-amber);
+  background: var(--c-amber);
+  box-shadow: 0 0 0 4px var(--c-amberSoft);
+  animation: now-pulse 2.4s ease-in-out infinite;
+}
+
+.home-period--current .home-period__no {
+  font-weight: 600;
+  color: var(--c-ink);
+}
+
+@keyframes now-pulse {
+  50% {
+    box-shadow: 0 0 0 7px var(--c-amberSoft);
+  }
+}
+
+/* ---------- Năm học: donut theo học kỳ ---------- */
+.home-term {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 4px 0 8px;
+  text-align: center;
+}
+
+.home-donut {
+  position: relative;
+  width: 160px;
+  height: 160px;
+}
+
+.home-ring {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+}
+
+.home-ring b {
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--c-text1);
+}
+
+.home-ring small {
+  font-size: 12px;
+  color: var(--c-text2);
+}
+
+.home-term__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.home-term__text b {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--c-text1);
+}
+
+.home-term__sub {
+  font-size: 13px;
+  color: var(--c-text2);
+}
+
+/* ---------- Ngày nghỉ sắp tới ---------- */
+.home-holidays {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-holidays li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.home-holidays li:first-child {
+  padding-top: 0;
+}
+
+.home-holidays li:last-child {
+  border-bottom: none;
+}
+
+/* Tờ lịch nhỏ: nền xanh rất nhạt, số ngày đậm, tháng chữ nhỏ bên dưới. */
+.home-date {
+  flex: none;
+  width: 48px;
+  height: 52px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--c-green50);
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--c-green700);
+}
+
+.home-date b {
+  font-size: 20px;
+  line-height: 24px;
+  font-weight: 700;
+  color: var(--c-green800);
+}
+
+.home-holiday__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-holiday__campus {
+  font-size: 12px;
+  color: var(--c-text3);
+}
+
+.home-holiday__left {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-green700);
+  background: var(--c-green50);
+}
+
+/* ---------- Học sinh, phụ huynh: thông tin liên hệ của trường ---------- */
+.home-card--school {
+  max-width: none;
+}
+
+.home-contact {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-contact li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--c-border);
+  color: var(--c-text1);
+}
+
+.home-contact li:last-child {
+  border-bottom: none;
+}
+
+.home-contact svg {
+  flex: none;
+  color: var(--c-text3);
 }

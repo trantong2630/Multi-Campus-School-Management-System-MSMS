@@ -1,8 +1,7 @@
 import {
-  BookOpen, CalendarDays, ClipboardCheck, HeartHandshake, House, Newspaper, Settings2, ShieldCheck, Users,
+  BookOpen, CalendarDays, ClipboardCheck, HeartHandshake, House, LayoutDashboard, Newspaper, Settings2, ShieldCheck, Users,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import type { AccentName } from '@/shared/lib/tokens';
 import type { AccountType } from '@/shared/lib/labels';
 
 export interface MenuLeaf {
@@ -19,7 +18,8 @@ export interface MenuGroup {
   key: string;
   label: string;
   icon: LucideIcon;
-  accent: AccentName;
+  /** Cụm trên sider: menu chia thành vài cụm có nhãn nhỏ, thứ tự các nhóm vẫn giữ nguyên. */
+  section: MenuSection;
   /** Nhóm một màn hình thì không có cấp 2: dùng `path` thay `children`. */
   path?: string;
   roles?: AccountType[];
@@ -27,48 +27,51 @@ export interface MenuGroup {
   children?: MenuLeaf[];
 }
 
+export type MenuSection = 'overview' | 'manage' | 'system';
+export const sectionLabel: Record<MenuSection, string> = { overview: 'Tổng quan', manage: 'Quản lý', system: 'Hệ thống' };
+
 const ALL: AccountType[] = ['SchoolAdmin', 'Principal', 'VicePrincipal', 'Teacher', 'Student', 'Parent'];
 const MGMT: AccountType[] = ['SchoolAdmin', 'Principal', 'VicePrincipal'];
 const STAFF: AccountType[] = [...MGMT, 'Teacher'];
 
-// Cấu trúc menu theo Dev_Conventions §4.7, màu nhấn theo Design_Web §7.
+// Cấu trúc menu theo Dev_Conventions §4.7.
 export const menu: MenuGroup[] = [
-  { key: 'home', label: 'Trang chủ', icon: House, accent: 'green', path: '/', roles: ALL, ready: true },
-  { key: 'dashboard', label: 'Dashboard', icon: House, accent: 'green', path: '/dashboard', roles: ['Principal', 'VicePrincipal'], ready: false },
+  { key: 'home', label: 'Trang chủ', icon: House, section: 'overview', path: '/', roles: ALL, ready: true },
+  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, section: 'overview', path: '/dashboard', roles: ['Principal', 'VicePrincipal'], ready: true },
   {
-    key: 'sch', label: 'Thiết lập', icon: Settings2, accent: 'sky',
+    key: 'sch', label: 'Thiết lập', icon: Settings2, section: 'manage',
     children: [
-      { key: 'sch-school', label: 'Thông tin trường', path: '/sch/school', roles: MGMT, ready: true },
-      { key: 'sch-campus', label: 'Phân hiệu', path: '/sch/campuses', roles: MGMT, ready: true },
-      { key: 'sch-subject', label: 'Tổ chuyên môn & Môn học', path: '/sch/subjects', roles: MGMT, ready: true },
-      { key: 'sch-year', label: 'Năm học & Học kỳ', path: '/sch/years', roles: MGMT, ready: true },
-      { key: 'sch-holiday', label: 'Ngày nghỉ', path: '/sch/holidays', roles: MGMT, ready: true },
-      { key: 'sch-slot', label: 'Khung giờ tiết', path: '/sch/period-slots', roles: MGMT, ready: true },
-      { key: 'sch-class', label: 'Lớp & Ghi danh', path: '/sch/classes', roles: MGMT, ready: true },
+      { key: 'sch-school', label: 'Thông tin trường', path: '/sch/school', roles: ['SchoolAdmin', 'Principal'], ready: true },
+      { key: 'sch-campus', label: 'Phân hiệu', path: '/sch/campuses', roles: ['SchoolAdmin'], ready: true },
+      { key: 'sch-subject', label: 'Tổ chuyên môn & Môn học', path: '/sch/subjects', roles: ['SchoolAdmin'], ready: true },
+      { key: 'sch-year', label: 'Năm học & Học kỳ', path: '/sch/years', roles: ['SchoolAdmin'], ready: true },
+      { key: 'sch-holiday', label: 'Ngày nghỉ', path: '/sch/holidays', roles: ['SchoolAdmin'], ready: true },
+      { key: 'sch-slot', label: 'Khung giờ tiết', path: '/sch/period-slots', roles: ['SchoolAdmin'], ready: true },
+      { key: 'sch-class', label: 'Lớp & Ghi danh', path: '/sch/classes', roles: ['SchoolAdmin'], ready: true },
       { key: 'sch-rollover', label: 'Kết chuyển năm học', path: '/sch/rollover', roles: ['SchoolAdmin'], ready: false },
     ],
   },
   {
-    key: 'ppl', label: 'Hồ sơ', icon: Users, accent: 'teal',
+    key: 'ppl', label: 'Hồ sơ', icon: Users, section: 'manage',
     children: [
       { key: 'ppl-staff', label: 'Cán bộ', path: '/ppl/staff', roles: MGMT, ready: true },
       { key: 'ppl-student', label: 'Học sinh', path: '/ppl/students', roles: MGMT, ready: false },
       { key: 'ppl-parent', label: 'Phụ huynh', path: '/ppl/parents', roles: MGMT, ready: false },
-      { key: 'ppl-resp', label: 'Trách nhiệm', path: '/ppl/responsibilities', roles: MGMT, ready: true },
+      { key: 'ppl-resp', label: 'Trách nhiệm', path: '/ppl/responsibilities', roles: ['SchoolAdmin', 'Principal'], ready: true },
       { key: 'ppl-assign', label: 'Phụ trách chuyên môn', path: '/ppl/teaching-assignments', roles: MGMT, ready: false },
     ],
   },
   {
-    key: 'scd', label: 'Thời khóa biểu', icon: CalendarDays, accent: 'violet',
+    key: 'scd', label: 'Thời khóa biểu', icon: CalendarDays, section: 'manage',
     children: [
       { key: 'scd-timetable', label: 'Thời khóa biểu', path: '/scd/timetable', roles: ['VicePrincipal'], ready: true },
       { key: 'scd-schedule', label: 'Lịch dạy', path: '/scd/schedule', roles: ['Principal', 'VicePrincipal', 'Teacher'], ready: true },
       { key: 'scd-absence', label: 'Giáo viên vắng', path: '/scd/absences', roles: ['VicePrincipal'], ready: false },
     ],
   },
-  { key: 'att', label: 'Điểm danh', icon: ClipboardCheck, accent: 'green', path: '/att', roles: [...STAFF, 'Student', 'Parent'], ready: false },
+  { key: 'att', label: 'Điểm danh', icon: ClipboardCheck, section: 'manage', path: '/att', roles: [...STAFF, 'Student', 'Parent'], ready: false },
   {
-    key: 'lrn', label: 'Học tập', icon: BookOpen, accent: 'amber',
+    key: 'lrn', label: 'Học tập', icon: BookOpen, section: 'manage',
     children: [
       { key: 'lrn-bank', label: 'Ngân hàng câu hỏi', path: '/lrn/questions', roles: ['Teacher'], ready: false },
       { key: 'lrn-exam', label: 'Đề', path: '/lrn/exams', roles: ['Teacher'], ready: false },
@@ -78,16 +81,16 @@ export const menu: MenuGroup[] = [
     ],
   },
   {
-    key: 'par', label: 'Phụ huynh', icon: HeartHandshake, accent: 'coral',
+    key: 'par', label: 'Phụ huynh', icon: HeartHandshake, section: 'manage',
     children: [
       { key: 'par-leave', label: 'Đơn xin nghỉ', path: '/par/leave-requests', roles: ['VicePrincipal', 'Teacher', 'Parent'], ready: false },
       { key: 'par-report', label: 'Sổ liên lạc', path: '/par/weekly-reports', roles: ['Teacher', 'Student', 'Parent'], ready: false },
       { key: 'par-inbox', label: 'Hộp thư', path: '/par/inbox', roles: ['Teacher', 'Parent'], ready: false },
     ],
   },
-  { key: 'com', label: 'Bảng tin', icon: Newspaper, accent: 'sky', path: '/com/posts', roles: ALL, ready: false },
+  { key: 'com', label: 'Bảng tin', icon: Newspaper, section: 'manage', path: '/com/posts', roles: ALL, ready: false },
   {
-    key: 'adm', label: 'Quản trị', icon: ShieldCheck, accent: 'teal',
+    key: 'adm', label: 'Quản trị', icon: ShieldCheck, section: 'system',
     children: [
       { key: 'adm-account', label: 'Tài khoản', path: '/adm/accounts', roles: ['SchoolAdmin'], ready: true },
       { key: 'adm-audit', label: 'Nhật ký', path: '/adm/audit-log', roles: ['SchoolAdmin'], ready: false },

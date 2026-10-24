@@ -74,7 +74,7 @@ Có **6 loại tài khoản; một tài khoản mang đúng một loại** (BR-0
 | --- | --- | --- |
 | **School Admin** | Mọi dữ liệu vận hành toàn trường, kể cả điểm và nhận xét chưa công bố. **Không** đọc hội thoại phụ huynh – giáo viên | Mọi danh mục (kể cả thông tin trường), hồ sơ, tài khoản, trách nhiệm, phụ trách chuyên môn, ngày nghỉ cấp trường hoặc phân hiệu, **nhập bù và sửa điểm danh**. **Không** có Dashboard, **không** xuất Excel, **không** làm thời khóa biểu, **không** làm việc đứng tên người khác (mục 2.4) |
 | **Principal** | Toàn trường: lịch dạy, điểm danh, Dashboard, bảng tin. **Không** đọc đơn nghỉ | Trách nhiệm (mục 2.2), thông tin trường, bài đăng bảng tin |
-| **Vice Principal** | Phân hiệu mình: lịch dạy, điểm danh, đơn nghỉ, Dashboard. **Lịch dạy của mọi giáo viên toàn trường** (để chọn người khi gán phụ trách hoặc dạy thay) | Phụ trách chuyên môn, thời khóa biểu, điều chỉnh lịch, giáo viên vắng, ngày nghỉ đột xuất — cho phân hiệu mình. Bài đăng bảng tin. Xuất Excel phân hiệu mình. **Không** sửa điểm danh |
+| **Vice Principal** | Phân hiệu mình: lịch dạy, điểm danh, đơn nghỉ, Dashboard. Màn hình Lịch dạy chỉ cho xem phân hiệu mình; riêng khi chọn người gán phụ trách hoặc dạy thay thì **danh sách và lịch dạy của giáo viên là toàn trường**, kiểm trùng lịch cũng toàn trường (BR-13) | Phụ trách chuyên môn, thời khóa biểu, điều chỉnh lịch, giáo viên vắng, ngày nghỉ đột xuất — cho phân hiệu mình. Bài đăng bảng tin. Xuất Excel phân hiệu mình. **Không** sửa điểm danh |
 | **Teacher** | Tiết mình dạy; lớp + môn mình phụ trách. Nếu chủ nhiệm: hồ sơ, chuyên cần, đơn nghỉ, sổ liên lạc của lớp chủ nhiệm. Nếu tổ trưởng: bài tập các môn của tổ | Điểm danh tiết mình dạy **trong ngày của tiết**; soạn câu hỏi và đề của mình; giao bài, công bố điểm và nhận xét cho lớp + môn mình phụ trách; trả lời tin nhắn; bài đăng bảng tin. Nếu chủ nhiệm: duyệt đơn nghỉ |
 | **Student** | Lịch học, bài tập, điểm và nhận xét đã công bố, chuyên cần, sổ liên lạc của chính mình; bài đăng Toàn trường | Làm và nộp bài |
 | **Parent** | Như Student, cho từng con được liên kết | Gửi và rút đơn nghỉ, tạo hội thoại và nhắn tin |
@@ -193,6 +193,8 @@ Mọi tính năng phục vụ một trong bốn luồng. Tính năng không nằ
 
 Ký hiệu trong cột Ghi / Đọc: **SA** Quản trị · **HT** Hiệu trưởng · **HP** Hiệu phó · **GV** Giáo viên · **CN** chủ nhiệm · **TT** tổ trưởng · **HS** Học sinh · **PH** Phụ huynh. 📱 = có trên mobile (mục 8.1).
 
+Cột Đọc là quyền đọc **dữ liệu**, không phải quyền có **màn hình**. Màn hình quản lý một danh mục chỉ hiện cho loại tài khoản có việc làm trên đó; loại chỉ đọc dùng dữ liệu ấy ngay tại màn hình nghiệp vụ của mình (lưới thời khóa biểu, lịch dạy, trang chủ, bộ chọn trong form). Ai thấy màn hình nào xem bảng menu ở Dev_Conventions §4.7.
+
 ### IAM — Identity & Access (4)
 
 | ID | Feature | Nội dung chính | Ghi | Đọc | BR |
@@ -204,6 +206,8 @@ Ký hiệu trong cột Ghi / Đọc: **SA** Quản trị · **HT** Hiệu trư�
 
 ### SCH — School Setup (7) — chỉ SA ghi (riêng SCH-07: SA và HT cùng ghi), chỉ web
 
+Màn hình Thiết lập chỉ dành cho SA; HT chỉ có màn hình Thông tin trường. HP và GV không có màn hình nào của SCH — cột Đọc thêm là dữ liệu họ dùng ở màn hình khác.
+
 | ID | Feature | Nội dung chính | Đọc thêm | BR |
 | --- | --- | --- | --- | --- |
 | SCH-01 | Phân hiệu | Mã, tên, địa chỉ, ngừng hoạt động | HT, HP | BR-07 |
@@ -212,7 +216,7 @@ Ký hiệu trong cột Ghi / Đọc: **SA** Quản trị · **HT** Hiệu trư�
 | SCH-04 | Khung giờ tiết | Khung giờ dùng chung toàn trường, khóa là cặp (Buổi, Tiết) | HP, GV | BR-07 |
 | SCH-05 | Lớp & Ghi danh | Lớp theo phân hiệu và năm học; ghi danh có hiệu lực; chuyển lớp giữa năm | HP, CN | BR-07, 09 |
 | SCH-06 | Kết chuyển năm học | Sao chép danh sách lớp sang năm mới (gợi ý tên và khối tăng 1, sửa được trước khi tạo); chuyển nguyên lớp. Không tự xét lên lớp hay lưu ban, không sao chép thời khóa biểu, phụ trách chuyên môn hay trách nhiệm | — | BR-09 |
-| SCH-07 | Thông tin trường | Tên trường, địa chỉ, điện thoại, email, website và logo. Đúng một bản; tên và logo hiện ở màn hình đăng nhập và đầu thanh bên nên ai cũng đọc được, kể cả chưa đăng nhập. **HT và SA cùng ghi** | HP, GV | BR-27 |
+| SCH-07 | Thông tin trường | Tên trường, địa chỉ, điện thoại, email, website và logo. Đúng một bản; tên trường hiện ở thanh đường dẫn đầu trang, tiêu đề tab trình duyệt và lời chào Trang chủ, logo hiện ở Trang chủ; ai cũng đọc được, kể cả chưa đăng nhập. **HT và SA cùng ghi** | HP, GV | BR-27 |
 
 ### PPL — People & Assignment (5)
 
@@ -267,22 +271,30 @@ Ký hiệu trong cột Ghi / Đọc: **SA** Quản trị · **HT** Hiệu trư�
 
 | ID | Feature | Nội dung chính | Đọc | BR |
 | --- | --- | --- | --- | --- |
-| ADM-01 | Dashboard | Sáu chỉ số theo phạm vi (Principal thấy năm, không có "Đơn nghỉ chờ duyệt"), mỗi số mở ra danh sách gốc (mục 5.1) | HT, HP | — |
+| ADM-01 | Dashboard | Bốn số quy mô và biểu đồ học sinh theo khối theo phạm vi; Principal lọc được theo phân hiệu và có bảng so sánh phân hiệu; số nào có màn hình gốc thì bấm vào mở ra (mục 5.1) | HT, HP | — |
 | ADM-02 | Audit Log | Ba nhóm sự kiện, chỉ ghi thêm, lọc theo nhóm, người và thời gian | SA | BR-28 |
 | ADM-03 | Xuất dữ liệu | Ba mục xuất Excel (mục 5.2) | theo từng mục | — |
 
 ### 5.1. Dashboard (ADM-01)
 
-**Phạm vi:** Principal xem toàn trường, không đổi được. Vice Principal xem cố định phân hiệu mình. Một tiết, đơn hay bài thuộc phân hiệu nào là theo **phân hiệu của lớp** liên quan.
+**Phạm vi:** Principal mặc định xem **toàn trường** và **lọc được theo từng phân hiệu**; khi xem toàn trường có thêm bảng so sánh các phân hiệu, bấm một hàng thì lọc theo phân hiệu đó. Vice Principal xem cố định phân hiệu mình phụ trách, không có bộ lọc (phụ trách nhiều phân hiệu thì lọc được trong số đó). School Admin không có Dashboard. Một tiết, đơn hay bài thuộc phân hiệu nào là theo **phân hiệu của lớp** liên quan; cán bộ tính theo **phân hiệu chính**.
 
-| Chỉ số | Đếm gì | Bấm vào ra gì |
+**Trang chủ không phải Dashboard.** Trang chủ là màn đầu tiên của mọi loại tài khoản, mang tính chào đón: lời chào theo buổi, tên trường và năm học hiện hành. Cán bộ thấy thêm **Hôm nay** (khung giờ tiết của trường, đánh dấu tiết đang diễn ra theo giờ thực; cán bộ có tiết — trừ School Admin — thấy lớp và môn mình dạy ở từng tiết; ngày nghỉ cấp trường hoặc Chủ nhật thì báo trường nghỉ), **Năm học** (học kỳ hiện tại, đang ở tuần thứ mấy) và **Ngày nghỉ sắp tới** (bốn ngày gần nhất). Học sinh và phụ huynh thấy thông tin liên hệ của trường. Trang chủ không có số liệu thống kê, lối tắt hay bảng tin; số liệu chỉ nằm ở Dashboard.
+
+**Số quy mô** (năm học hiện hành, tại hôm nay):
+
+| Số | Đếm gì | Bấm vào ra gì |
 | --- | --- | --- |
-| Tiết chờ xử lý | Tiết ở trạng thái Chờ xử lý, mọi ngày, chưa được quyết | Danh sách tiết, mở màn hình xử lý của SCD-03 |
-| Tiết đã qua chưa điểm danh | Tiết Đã xếp lịch, ngày < hôm nay, chưa có bản ghi điểm danh nào | Danh sách tiết. Không có nút nhập bù; School Admin tìm tiết cần nhập bù trên màn hình điểm danh |
-| Chuyên cần 7 ngày | (Có mặt + Muộn) / tổng bản ghi điểm danh trong 7 ngày gần nhất | Danh sách lớp kèm tỉ lệ từng lớp |
-| Đơn nghỉ chờ duyệt (chỉ Vice Principal; Principal không thấy chỉ số này) | Đơn ở trạng thái Chờ duyệt | Hộp đơn của PAR-01, chỉ đọc: Vice Principal không duyệt hay từ chối |
-| Tỉ lệ nộp bài | Với bài Đã đóng trong 30 ngày: số lượt đã nộp / số học sinh trong danh sách được giao lúc giao bài (BR-21) | Danh sách bài kèm tỉ lệ từng bài |
-| Lớp chưa có chủ nhiệm | Lớp của năm hiện hành không có trách nhiệm chủ nhiệm đang hiệu lực | Danh sách lớp, mở màn hình trách nhiệm của PPL-04 |
+| Lớp đang hoạt động | Lớp đang hoạt động của năm hiện hành | — |
+| Học sinh đang học | Học sinh có ghi danh hiệu lực hôm nay ở các lớp trên | — |
+| Cán bộ đang công tác | Hồ sơ cán bộ đang hoạt động, theo phân hiệu chính | Danh bạ cán bộ |
+| Tiết dạy hôm nay | Tiết Đã xếp lịch có ngày là hôm nay | Lịch dạy |
+
+Kèm biểu đồ cột **Học sinh theo khối** (một chuỗi, rê chuột thấy số học sinh và số lớp của khối).
+
+Tiết Chờ xử lý không nằm trên Dashboard — Vice Principal theo dõi ở danh sách tiết Chờ xử lý của SCD-03. Lớp chưa có chủ nhiệm cũng không — cảnh báo nằm trên màn hình trách nhiệm của PPL-04.
+
+Bảng so sánh phân hiệu gồm: Phân hiệu · Lớp · Học sinh · Cán bộ.
 
 ### 5.2. Xuất Excel (ADM-03)
 
@@ -441,7 +453,7 @@ Khai báo **không tự đổi lịch**: mọi tiết Đã xếp lịch chưa b�
 2. **Hủy** → Đã hủy.
 3. **Hủy và tạo tiết bù** → Đã hủy + tiết bù mới (BR-15).
 
-Tiết Chờ xử lý **không điểm danh được**. Tiết Chờ xử lý đã qua ngày mà chưa xử lý hiện trên Dashboard và xử lý theo cùng ba lựa chọn; nếu chọn giáo viên thì School Admin nhập bù điểm danh theo BR-17.
+Tiết Chờ xử lý **không điểm danh được**. Tiết Chờ xử lý đã qua ngày mà chưa xử lý vẫn nằm trong danh sách tiết Chờ xử lý của SCD-03 và xử lý theo cùng ba lựa chọn; nếu chọn giáo viên thì School Admin nhập bù điểm danh theo BR-17.
 
 **Xóa khai báo vắng:** các tiết còn ở Chờ xử lý do khai báo đó được trả về giáo viên của khai báo, trở lại Đã xếp lịch, với điều kiện giáo viên không trùng lịch tại tiết đó (BR-13). Tiết trùng thì giữ nguyên Chờ xử lý và hệ thống báo cho Vice Principal. Tiết đã được xử lý (đã chọn người dạy thay, đã hủy, đã bù) không bị đụng tới. Tiết trống do khóa hoặc đổi loại tài khoản không thuộc khai báo nào nên không tự khôi phục.
 
@@ -451,7 +463,7 @@ Tiết Chờ xử lý **không điểm danh được**. Tiết Chờ xử lý đ
 
 **BR-17 — Điểm danh.** Chỉ **giáo viên của tiết** điểm danh, chỉ trên tiết Đã xếp lịch, chỉ **trong ngày của tiết** (tới 23:59). Điểm danh dựa vào tiết, không dựa vào phụ trách chuyên môn — giáo viên dạy thay điểm danh được. Danh sách là học sinh có ghi danh hiệu lực ở lớp vào ngày của tiết. Giáo viên gửi một trong **ba giá trị**: Có mặt, Muộn, Vắng; kèm ghi chú tùy chọn. Mỗi học sinh có đúng một bản ghi cho mỗi tiết; lưu lại là cập nhật bản ghi đó, có hiệu lực ngay, không có bước chốt.
 
-Sau ngày của tiết giáo viên không sửa được nữa. **Chỉ School Admin** nhập bù hoặc sửa, trên **cùng màn hình điểm danh**, cho tiết Đã xếp lịch có ngày ≤ hôm nay. Bản ghi lưu **người nhập, thời điểm, cờ nhập bù**. Vice Principal thấy số liệu nhưng không sửa. Danh sách tiết đã qua chưa điểm danh nằm trên Dashboard của Principal và Vice Principal (mục 5.1); School Admin tìm tiết cần nhập bù bằng cách chọn lớp và khoảng ngày trên màn hình điểm danh.
+Sau ngày của tiết giáo viên không sửa được nữa. **Chỉ School Admin** nhập bù hoặc sửa, trên **cùng màn hình điểm danh**, cho tiết Đã xếp lịch có ngày ≤ hôm nay. Bản ghi lưu **người nhập, thời điểm, cờ nhập bù**. Vice Principal thấy số liệu nhưng không sửa. School Admin tìm tiết cần nhập bù bằng cách chọn lớp và khoảng ngày trên màn hình điểm danh.
 
 **BR-18 — Có phép / không phép.** **Không lưu, luôn suy ra** (mục 6.2): Vắng + có đơn Đã duyệt của học sinh phủ ngày của tiết và đúng buổi ("sáng" = tiết khung Sáng, "chiều" = tiết khung Chiều, "cả ngày" = mọi tiết) → **có phép**; còn lại → **không phép**. Đơn duyệt muộn tự đổi nhãn các buổi vắng đã ghi, không cần chạy lại gì. **Đơn không tự sinh vắng:** học sinh có đơn mà vẫn đi học thì ghi Có mặt. Vì BR-19 không cho xin nghỉ cho ngày đã qua, buổi vắng mà phụ huynh báo muộn luôn là **không phép** — giới hạn này được chấp nhận.
 

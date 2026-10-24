@@ -1,10 +1,11 @@
-/* Lưới thời khóa biểu — Design_Web §9.1 */
+/* Lưới thời khóa biểu — Design_Web §9.1. Khung là một thẻ trắng bo tròn; mỗi tiết là một viên pastel theo màu môn. */
 .tt-scroll {
   max-height: 68vh;
   overflow: auto;
   border: 1px solid var(--c-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   background: var(--c-surface);
+  box-shadow: var(--shadow-card);
 }
 
 .tt-grid {
@@ -24,14 +25,22 @@
   background: var(--c-surface);
 }
 
+.tt-grid th:last-child,
+.tt-grid td:last-child {
+  border-right: none;
+}
+
 .tt-grid thead th {
   position: sticky;
   top: 0;
   z-index: 3;
-  height: 40px;
-  font-weight: 500;
+  height: 44px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   color: var(--c-text2);
-  background: var(--c-tableHeaderBg);
+  background: var(--c-sunken);
+  border-bottom-color: var(--c-borderStrong);
 }
 
 /* Ba cột đầu dính trái khi cuộn ngang. */
@@ -49,31 +58,41 @@
 .tt-col-period { left: 128px; min-width: 52px; width: 52px; }
 
 .tt-day {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--c-green700);
   background: var(--c-green50) !important;
 }
 
 .tt-class {
-  min-width: 110px;
+  min-width: 112px;
 }
 
 .tt-cell {
-  min-width: 110px;
-  height: 48px;
-}
-
-.tt-cell--filled {
-  background: var(--c-green50) !important;
+  min-width: 112px;
+  height: 56px;
+  padding: 5px !important;
 }
 
 .tt-cell--empty:hover {
   background: var(--c-hoverBg);
 }
 
+/* Viên tiết: nền pastel theo màu môn, chữ môn đậm, vạch màu ở mép trái. */
+.tt-chip {
+  height: 100%;
+  min-height: 44px;
+  padding: 4px 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--tt-bg, var(--c-green50));
+  box-shadow: inset 3px 0 0 var(--tt-fg, var(--c-green500));
+}
+
 .tt-subject {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 18px;
   color: var(--c-text1);
 }
@@ -85,28 +104,30 @@
 }
 
 .tt-band td {
-  height: 6px;
+  height: 8px;
   padding: 0;
-  background: var(--c-hoverBg);
+  background: var(--c-sunken);
 }
 
 .tt-day-start td {
-  border-top: 2px solid var(--c-border);
+  border-top: 2px solid var(--c-borderStrong);
 }
 
-/* Lịch dạy một ngày: tiết đã hủy gạch ngang, tiết chờ xử lý nền vàng nhạt. */
-.tt-cell--cancelled {
-  background: var(--c-neutralBg) !important;
+/* Lịch dạy một ngày: tiết đã hủy xám và gạch ngang, tiết chờ xử lý viền hổ phách. */
+.tt-chip--cancelled {
+  background: var(--c-neutralBg);
+  box-shadow: inset 3px 0 0 var(--c-disabled);
 }
 
-.tt-cell--cancelled .tt-subject,
-.tt-cell--cancelled .tt-teacher {
+.tt-chip--cancelled .tt-subject,
+.tt-chip--cancelled .tt-teacher {
   text-decoration: line-through;
   color: var(--c-text3);
 }
 
-.tt-cell--pending {
-  background: var(--c-amberBg) !important;
+.tt-chip--pending {
+  background: var(--c-amberBg);
+  box-shadow: inset 3px 0 0 var(--c-amber), 0 0 0 1.5px var(--c-amber);
 }
 
 .tt-time {
@@ -126,14 +147,14 @@
 .stat-tile {
   padding: 12px 16px;
   border: 1px solid var(--c-border);
-  border-radius: var(--radius-md);
-  background: var(--c-surface);
+  border-radius: var(--radius-sm);
+  background: var(--c-sunken);
 }
 
 .stat-tile__value {
   font-size: 24px;
   line-height: 32px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--c-text1);
 }
 
@@ -144,4 +165,31 @@
 
 .stat-tile--danger .stat-tile__value {
   color: var(--c-danger);
+}
+
+/* Lịch dạy của tôi — lưới tuần: sáu cột Thứ 2 → Thứ 7 chia đều bề ngang, cột hôm nay tô xanh. */
+.tt-week {
+  width: 100%;
+  min-width: 860px;
+  table-layout: fixed;
+}
+
+.tt-week .tt-col-session {
+  width: 64px;
+}
+
+.tt-week thead th:nth-child(2) {
+  width: 110px;
+}
+
+.tt-grid thead th.tt-today {
+  color: var(--c-green700);
+  background: var(--c-green50);
+}
+
+.tt-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100%;
 }

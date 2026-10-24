@@ -41,5 +41,8 @@ public record PublishResultDto(int VersionId, int DeletedCount, int CreatedCount
 public record SessionCellDto(long SessionId, string SubjectName, string SubjectAbbr, string? TeacherName, string? TeacherAbbr, string Status, string Source);
 public record DaySlotRow(int PeriodSlotId, string SessionOfDay, byte PeriodNo, TimeOnly StartTime, TimeOnly EndTime, IReadOnlyList<SessionCellDto?> Cells);
 public record DayScheduleDto(DateOnly Date, string? HolidayReason, bool IsHoliday, IReadOnlyList<GridClassDto> Classes, IReadOnlyList<DaySlotRow> Rows);
-public record MySessionDto(long SessionId, DateOnly Date, string SessionOfDay, byte PeriodNo, TimeOnly StartTime, TimeOnly EndTime,
-    string ClassName, string CampusName, string SubjectName, string Status, string Source);
+public record MySessionDto(long SessionId, DateOnly Date, int PeriodSlotId, string SessionOfDay, byte PeriodNo, TimeOnly StartTime, TimeOnly EndTime,
+    string ClassName, string CampusName, string SubjectName, string SubjectAbbr, string Status, string Source);
+public record TeacherOptionDto(int TeacherId, string Name, string? Abbr);
+public record ViewSessionDto(long SessionId, DateOnly Date, int PeriodSlotId, string SessionOfDay, byte PeriodNo, TimeOnly StartTime, TimeOnly EndTime,
+    string ClassName, string CampusName, string SubjectName, string SubjectAbbr, string? TeacherName, string Status, string Source);
