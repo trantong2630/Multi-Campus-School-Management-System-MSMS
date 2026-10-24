@@ -8,18 +8,19 @@ interface Props {
   extra?: ReactNode;
 }
 
-/** Banner chào đầu Trang chủ và Dashboard (Design_Web §8.5b). */
+/**
+ * Lời chào đầu Trang chủ (Design_Web §8.5b): dòng trường · năm học chữ hoa nhỏ màu xám, lời chào chữ lớn,
+ * dòng ngày hôm nay, logo trường bên phải. Không nền màu, không hình trang trí.
+ */
 export function HeroBanner({ eyebrow, title, description, extra }: Props) {
   return (
-    <section className="hero-banner">
-      <div className="hero-banner__text">
-        {eyebrow && <span className="hero-banner__eyebrow">{eyebrow}</span>}
-        <h1 className="hero-banner__title">{title}</h1>
-        {description && <p className="hero-banner__desc">{description}</p>}
+    <section className="greeting">
+      <div className="greeting__text">
+        {eyebrow && <span className="greeting__eyebrow">{eyebrow}</span>}
+        <h1 className="greeting__title">{title}</h1>
+        {description && <p className="greeting__desc">{description}</p>}
       </div>
-      {extra && <div className="hero-banner__extra">{extra}</div>}
-      <span className="hero-banner__orb hero-banner__orb--a" aria-hidden />
-      <span className="hero-banner__orb hero-banner__orb--b" aria-hidden />
+      {extra && <div className="greeting__extra">{extra}</div>}
     </section>
   );
 }

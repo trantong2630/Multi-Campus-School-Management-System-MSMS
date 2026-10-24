@@ -1,4 +1,6 @@
 import { Fragment } from 'react';
+import { accent } from '@/shared/lib/tokens';
+import type { AccentName } from '@/shared/lib/tokens';
 import { sessionOfDayLabel, weekdayLabel } from '@/shared/lib/format';
 import type { GridCell, VersionGrid } from '../types';
 import './scd.css';
@@ -52,12 +54,24 @@ export function TimetableGrid({ grid }: { grid: VersionGrid }) {
   );
 }
 
+export const SUBJECT_TONES: AccentName[] = ['green', 'sky', 'violet', 'amber', 'coral', 'teal'];
+
+/** Cùng một môn luôn ra cùng một màu: băm viết tắt môn vào bảng màu nhấn. */
+export function toneOf(abbr: string): AccentName {
+  let h = 0;
+  for (const ch of abbr) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return SUBJECT_TONES[h % SUBJECT_TONES.length];
+}
+
 function Cell({ cell }: { cell: GridCell | null }) {
   if (!cell) return <td className="tt-cell tt-cell--empty" />;
+  const a = accent[toneOf(cell.subjectAbbr)];
   return (
-    <td className="tt-cell tt-cell--filled" title={`${cell.subjectName} — ${cell.teacherName}`}>
-      <div className="tt-subject">{cell.subjectAbbr}</div>
-      <div className="tt-teacher">{cell.teacherAbbr}</div>
+    <td className="tt-cell" title={`${cell.subjectName} — ${cell.teacherName}`}>
+      <div className="tt-chip" style={{ '--tt-bg': a.bg, '--tt-fg': a.fg } as React.CSSProperties}>
+        <div className="tt-subject">{cell.subjectAbbr}</div>
+        <div className="tt-teacher">{cell.teacherAbbr}</div>
+      </div>
     </td>
   );
 }

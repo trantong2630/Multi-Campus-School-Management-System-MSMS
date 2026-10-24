@@ -1,85 +1,365 @@
-/* Khung đăng nhập — Design_Web §6.3. Tấm phải dùng cùng gradient với sider để nhận ra là một hệ thống. */
+/* Khung đăng nhập — Design_Web §6.0. Thẻ liền khối nổi trên nền xanh trầm: cột form trắng và tấm lụa xanh chung một khung bo góc. */
 .auth-layout {
   min-height: 100vh;
-  display: flex;
-  background: var(--c-surface);
-}
-
-.auth-layout__brand {
-  flex: 1 1 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 48px;
+  position: relative;
+  overflow: hidden;
+  background: var(--grad-authPage);
 }
 
-.auth-layout__panel {
-  flex: 1 1 50%;
+/* Vòng tròn sáng lớn ở góc dưới phải, như ảnh nền EMIS. */
+.auth-layout::before {
+  content: '';
+  position: absolute;
+  right: -12vw;
+  bottom: -38vw;
+  width: 70vw;
+  height: 70vw;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.28);
+  pointer-events: none;
+}
+
+.auth-card {
+  position: relative;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 1120px;
+  min-height: min(640px, calc(100vh - 96px));
+  display: grid;
+  grid-template-columns: 456px 1fr;
+  overflow: hidden;
+  border-radius: 28px;
+  background: var(--c-surface);
+  box-shadow: var(--shadow-float);
+  animation: auth-rise 480ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* ---------- Cột form: trắng, căn trái, nhãn phía trên ô, ô viền mảnh ---------- */
+.auth-card__main {
+  display: flex;
+  flex-direction: column;
+  padding: 48px 48px 32px;
+}
+
+.auth-card__form {
+  width: 100%;
+  margin: auto 0;
+  padding: 24px 0;
+}
+
+.auth-card__title {
+  margin: 0;
+  font-size: 30px;
+  line-height: 38px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--c-text1);
+}
+
+.auth-card__subtitle {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--c-text2);
+}
+
+.auth-card__form .ant-form {
+  margin-top: 32px;
+}
+
+.auth-card__form .ant-form-item .ant-form-item-label {
+  padding-bottom: 8px;
+}
+
+.auth-card__form .ant-form-item .ant-form-item-label > label {
+  height: auto;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--c-text1);
+}
+
+.auth-card__form .ant-form-item-control-input-content > .ant-input.ant-input-lg,
+.auth-card__form .ant-input-affix-wrapper.ant-input-affix-wrapper-lg {
+  height: 48px;
+  padding: 0 16px;
+  border-color: var(--c-fieldBorder);
+  border-radius: var(--radius-md);
+  background: var(--c-surface);
+  font-size: 15px;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+
+.auth-card__form .ant-input-affix-wrapper.ant-input-affix-wrapper-lg > .ant-input {
+  height: auto;
+  padding: 0;
+  font-size: 15px;
+}
+
+.auth-card__form .ant-form-item-control-input-content > .ant-input.ant-input-lg:hover,
+.auth-card__form .ant-input-affix-wrapper.ant-input-affix-wrapper-lg:hover {
+  border-color: var(--c-green300);
+}
+
+.auth-card__form .ant-form-item-control-input-content > .ant-input.ant-input-lg:focus,
+.auth-card__form .ant-input-affix-wrapper.ant-input-affix-wrapper-lg:focus-within {
+  border-color: var(--c-green500);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.auth-card__form .ant-input-lg.ant-input-status-error,
+.auth-card__form .ant-input-lg.ant-input-status-error:hover,
+.auth-card__form .ant-input-affix-wrapper-lg.ant-input-status-error,
+.auth-card__form .ant-input-affix-wrapper-lg.ant-input-status-error:hover {
+  border-color: var(--c-danger);
+}
+
+/* Chrome tô nền xanh lam lên ô được tự động điền; ép về nền trắng và màu chữ của thiết kế. */
+.auth-card__form input:-webkit-autofill,
+.auth-card__form input:-webkit-autofill:hover,
+.auth-card__form input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--c-surface) inset;
+  -webkit-text-fill-color: var(--c-text1);
+  caret-color: var(--c-text1);
+  transition: background-color 600000s 0s;
+}
+
+.auth-card__form .ant-input::placeholder {
+  color: var(--c-text3);
+}
+
+.auth-card__form .ant-input-suffix {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin: 12px;
-  padding: 32px;
-  border-radius: 32px;
-  background: var(--grad-sider);
-  box-shadow: var(--shadow-pop);
+  gap: 8px;
+  color: var(--c-text3);
 }
 
-.auth-layout__form {
+/* Chip CAPS đứng trước icon con mắt (AntD đặt suffix sau icon). */
+.auth-caps {
+  order: -1;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  line-height: 20px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--c-amberFg);
+  background: var(--c-amberBg);
+}
+
+.auth-card__form .ant-form-item-explain {
+  padding-top: 4px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+/* Dòng phụ dưới ô (extra): chú thích bên trái, link hành động bên phải — "Quên mật khẩu?", "Gửi lại mã". */
+.auth-card__form .ant-form-item-extra {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 0;
+  padding-top: 8px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--c-text3);
+}
+
+/* Ô đang báo lỗi thì AntD bỏ khoảng cách dưới ô; giữ lại để dòng phụ không dính vào nhãn kế tiếp. */
+.auth-card__form .ant-form-item-with-help .ant-form-item-extra {
+  padding-bottom: 16px;
+}
+
+.auth-card__form .ant-form-item-extra .ant-btn-link {
+  height: auto;
+  margin-left: auto;
+  padding: 0;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+/* Ô mã OTP: 6 ô vuông cùng nét viền với ô nhập thường, chữ số lớn ở giữa. */
+.auth-card__form .ant-otp {
+  display: flex;
+  gap: 8px;
   width: 100%;
-  max-width: 400px;
-  color: var(--c-surface);
 }
 
-.auth-layout__title {
-  margin: 0;
-  font-size: 28px;
-  line-height: 36px;
+.auth-card__form .ant-otp .ant-otp-input-wrapper {
+  flex: 1;
+}
+
+.auth-card__form .ant-otp .ant-otp-input {
+  width: 100%;
+  height: 48px;
+  padding: 0;
+  border-color: var(--c-fieldBorder);
+  border-radius: var(--radius-md);
+  font-size: 20px;
   font-weight: 600;
   text-align: center;
-  color: var(--c-surface);
+  transition: border-color 150ms, box-shadow 150ms;
 }
 
-.auth-layout__desc {
-  margin: 4px 0 32px;
-  text-align: center;
-  color: var(--c-onGreenMuted);
+.auth-card__form .ant-otp .ant-otp-input:hover {
+  border-color: var(--c-green300);
 }
 
-.auth-layout__form .ant-form-item-label > label {
-  color: var(--c-surface);
+.auth-card__form .ant-otp .ant-otp-input:focus {
+  border-color: var(--c-green500);
+  box-shadow: 0 0 0 4px var(--focus-ring);
 }
 
-.auth-layout__form .ant-btn-primary:not(:disabled) {
+.auth-card__form .ant-otp .ant-otp-input.ant-input-status-error {
+  border-color: var(--c-danger);
+}
+
+/* Nút gửi: đặc xanh, nhích lên 1px khi rê chuột; đang gửi thì chạy vạch tiến trình thay vì icon xoay. */
+.auth-card__form .ant-btn.ant-btn-primary {
+  position: relative;
+  overflow: hidden;
   width: 100%;
-  height: 44px;
-  color: var(--c-green700);
+  height: 48px;
+  margin-top: 8px;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 600;
+  transition: transform 150ms, background 150ms, box-shadow 150ms;
+}
+
+.auth-card__form .ant-btn.ant-btn-primary:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.auth-submit--busy {
+  pointer-events: none;
+}
+
+.auth-submit--busy::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 40%;
+  height: 3px;
+  border-radius: var(--radius-pill);
   background: var(--c-surface);
-  box-shadow: none;
-  font-weight: 600;
-}
-
-.auth-layout__form .ant-btn-primary:not(:disabled):hover {
-  background: var(--c-green50);
-  color: var(--c-green800);
-}
-
-.auth-layout__form .ant-btn-link {
-  color: var(--c-surface);
+  opacity: 0.8;
+  animation: auth-progress 1100ms ease-in-out infinite;
 }
 
 .auth-layout__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
   margin-top: 16px;
-  text-align: center;
 }
 
-@media (max-width: 900px) {
-  .auth-layout__brand {
-    display: none;
+.auth-layout__footer .ant-btn-link {
+  padding: 0;
+}
+
+.auth-help {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--c-text2);
+}
+
+.auth-card__caption {
+  margin: 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--c-text3);
+}
+
+/* ---------- Tấm minh họa: phong cảnh đồi xanh ---------- */
+.auth-art {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 48px;
+}
+
+.auth-art .brand-logo {
+  position: relative;
+  z-index: 1;
+}
+
+.auth-art__scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.art-sky--top {
+  stop-color: var(--c-aqua);
+}
+
+.art-sky--bottom {
+  stop-color: var(--c-limeSoft);
+}
+
+.art-sun {
+  fill: var(--c-surface);
+}
+
+.art-cloud {
+  fill: var(--c-surface);
+}
+
+.art-hill--far {
+  fill: var(--c-meadow1);
+}
+
+.art-hill--mid,
+.art-bush {
+  fill: var(--c-meadow2);
+}
+
+.art-hill--near,
+.art-tree__crown {
+  fill: var(--c-meadow3);
+}
+
+.art-tree__trunk {
+  stroke: var(--c-meadow3);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+@keyframes auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+@keyframes auth-progress {
+  from {
+    transform: translateX(-100%);
   }
 
-  .auth-layout__panel {
-    margin: 0;
-    border-radius: 0;
+  to {
+    transform: translateX(250%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-card,
+  .auth-submit--busy::after {
+    animation: none;
   }
 }

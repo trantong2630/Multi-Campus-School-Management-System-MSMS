@@ -149,6 +149,8 @@ Xem loại tài khoản, trạng thái và lần đăng nhập gần nhất củ
 
 ## 4.2 SCH — School Setup (Thiết lập trường)
 
+Phần Web của module chỉ dành cho School Admin; Principal chỉ có màn hình Thông tin trường (SCH-07). Vice Principal và Teacher không có màn hình nào của SCH — họ đọc dữ liệu SCH qua API ngay tại thời khóa biểu, lịch dạy và trang chủ (Dev_Conventions §4.7).
+
 ### SCH-01 Campus (Phân hiệu)
 
 **4.2.1 — Xem danh sách phân hiệu / View Campus List**  
@@ -213,11 +215,11 @@ Khai năm học với nhãn, ngày bắt đầu và ngày kết thúc. Ngày b�
 
 **4.2.15 — Khai báo hai học kỳ của năm học / Configure Two Semesters**  
 `BE + Web` · 1.5 MD · dep: 4.2.13  
-Mỗi năm có đúng hai học kỳ, nằm trong năm học, không chồng nhau, kỳ 1 trước kỳ 2. Học kỳ chỉ là mốc lọc và mốc Phát hành; không có quy trình chuyển kỳ (BR-08).
+Mỗi năm có đúng hai học kỳ, nằm trong năm học, không chồng nhau, kỳ 1 trước kỳ 2. Mỗi học kỳ khai bằng ngày bắt đầu và số tuần (mặc định học kỳ 1 là 18 tuần, học kỳ 2 là 17 tuần); ngày kết thúc = ngày bắt đầu + số tuần × 7 − 1, hiện ngay khi nhập. Chưa chọn ngày bắt đầu học kỳ 2 thì gợi ý ngày liền sau học kỳ 1. Học kỳ chỉ là mốc lọc và mốc Phát hành; không có quy trình chuyển kỳ (BR-08).
 
 **4.2.16 — Cập nhật học kỳ / Update Semester**  
 `BE + Web` · 0.5 MD · dep: 4.2.15  
-Sửa ngày bắt đầu và kết thúc của học kỳ trong giới hạn của năm học.
+Sửa ngày bắt đầu và số tuần của học kỳ (ngày kết thúc tính lại) trong giới hạn của năm học.
 
 **4.2.17 — Khai báo ngày nghỉ theo kế hoạch / Declare Planned Non-teaching Day**  
 `BE + Web` · 1 MD · dep: 4.2.13  
@@ -327,9 +329,9 @@ Hiệu trưởng và School Admin cùng sửa. Tên trường bắt buộc; emai
 `BE + Web` · 2 MD · dep: 4.2.40
 Một ảnh JPG hoặc PNG, tối đa 2 MB, kiểm theo nội dung file chứ không tin đuôi file. Dùng chung cách lưu file với ảnh đại diện và ảnh bảng tin; đổi hoặc gỡ logo thì xóa file cũ (BR-27).
 
-**4.2.42 — Hiển thị tên và logo trường ở đăng nhập và thanh bên / Show School Identity**
+**4.2.42 — Hiển thị tên và logo trường / Show School Identity**
 `BE + Web` · 1 MD · dep: 4.2.39
-Màn hình đăng nhập, đầu thanh bên và tiêu đề tab trình duyệt hiện tên và logo trường. Không lấy được thì dùng biểu tượng và tên mặc định, không báo lỗi.
+Tên trường hiện ở thanh đường dẫn đầu trang, tiêu đề tab trình duyệt và lời chào Trang chủ; logo trường hiện ở Trang chủ. Sau đăng nhập, tiêu đề tab là `Tên trang · Tên trường` (Trang chủ chỉ có tên trường); các màn chưa đăng nhập để tiêu đề `MSMS`. Biểu tượng tab là logo MSMS, không đổi theo trường. Màn hình đăng nhập và thanh bên chỉ dùng logo chữ MSMS. Không lấy được thì dùng biểu tượng và tên mặc định, không báo lỗi.
 
 **4.2.43 — Kiểm thử thông tin trường / School Profile Tests**
 `QA` · 1.5 MD · dep: 4.2.41
@@ -453,7 +455,7 @@ Chuyển liên kết của một học sinh sang phụ huynh khác, có sẵn ho
 
 **4.3.27 — Xem trách nhiệm đang hiệu lực / View Active Responsibilities**  
 `BE + Web` · 1.5 MD · dep: 4.1.4  
-Ba nhóm: phụ trách phân hiệu, tổ trưởng và chủ nhiệm lớp. Mỗi đích tối đa một bản đang hiệu lực (BR-09).
+Ba nhóm: phụ trách phân hiệu, tổ trưởng và chủ nhiệm lớp. Mỗi đích tối đa một bản đang hiệu lực (BR-09). Màn hình chỉ có cho School Admin và Principal — hai loại được gán.
 
 **4.3.28 — Gán phụ trách phân hiệu / Assign Campus Responsibility**  
 `BE + Web` · 1 MD · dep: 4.3.27  
@@ -657,7 +659,7 @@ Lựa chọn 3: hủy tiết rồi tạo tiết bù ở (ngày, khung giờ) tr�
 
 **4.4.34 — Xử lý tiết chờ đã quá ngày / Resolve Overdue Pending Lesson**  
 `BE + Web` · 1 MD · dep: 4.4.29, 4.4.31  
-Tiết Chờ xử lý đã qua ngày mà chưa quyết hiện trên Dashboard và xử lý theo cùng ba lựa chọn; nếu chọn giáo viên thì School Admin nhập bù điểm danh trên màn hình điểm danh (BR-16, BR-17).
+Tiết Chờ xử lý đã qua ngày mà chưa quyết vẫn nằm trong danh sách ở 4.4.29 và xử lý theo cùng ba lựa chọn; nếu chọn giáo viên thì School Admin nhập bù điểm danh trên màn hình điểm danh (BR-16, BR-17).
 
 **4.4.35 — Xóa khai báo giáo viên vắng / Delete Teacher Absence**  
 `BE + Web` · 1.5 MD · dep: 4.4.28  
@@ -665,7 +667,7 @@ Xóa khai báo thì các tiết còn Chờ xử lý do khai báo đó được t
 
 **4.4.36 — Xem lịch dạy của mọi giáo viên toàn trường / View School-wide Teacher Calendar**  
 `BE + Web` · 1.5 MD · dep: 4.4.14  
-Vice Principal xem lịch dạy của mọi giáo viên ở mọi phân hiệu để chọn người khi gán phụ trách chuyên môn hoặc dạy thay (mục 2.3).
+Màn hình Lịch dạy của Vice Principal chỉ xem phân hiệu mình. Khi chọn người gán phụ trách chuyên môn hoặc dạy thay, danh sách giáo viên và lịch dạy của họ là toàn trường, kiểm trùng lịch cũng toàn trường (BR-13, mục 2.3).
 
 **4.4.37 — Kiểm thử xử lý giáo viên vắng / Absence Tests**  
 `QA` · 2 MD · dep: 4.4.28, 4.4.31, 4.4.35  
@@ -699,7 +701,7 @@ Chỉ điểm danh trên tiết Đã xếp lịch. Tiết Chờ xử lý và ti�
 
 **4.5.6 — Xem danh sách tiết đã qua chưa điểm danh / View Lessons Missing Attendance**  
 `BE + Web` · 1.5 MD · dep: 4.5.3  
-Tiết Đã xếp lịch có ngày nhỏ hơn hôm nay và chưa có bản ghi điểm danh nào. Danh sách này cũng là một chỉ số trên Dashboard của Principal và Vice Principal (mục 5.1); School Admin tìm tiết cần nhập bù bằng cách chọn lớp và khoảng ngày trên màn hình điểm danh.
+Tiết Đã xếp lịch có ngày nhỏ hơn hôm nay và chưa có bản ghi điểm danh nào. School Admin tìm tiết cần nhập bù bằng cách chọn lớp và khoảng ngày trên màn hình điểm danh.
 
 **4.5.7 — School Admin nhập bù điểm danh / Backfill Attendance**  
 `BE + Web` · 2 MD · dep: 4.5.6  
@@ -1115,21 +1117,21 @@ Học sinh và phụ huynh không thấy bài Nội bộ; giáo viên đăng đ�
 
 ### ADM-01 Dashboard (Bảng điều khiển)
 
-**4.9.1 — Tính sáu chỉ số theo phạm vi / Compute Dashboard Metrics**  
-`BE` · 2.5 MD · dep: 4.4.29, 4.5.6, 4.7.5, 4.6.16, 4.6.24, 4.3.34  
-Sáu chỉ số: tiết Chờ xử lý, tiết đã qua chưa điểm danh, chuyên cần 7 ngày, đơn nghỉ chờ duyệt (chỉ Vice Principal; Principal không thấy), tỉ lệ nộp bài 30 ngày (mẫu số là danh sách được giao ở 4.6.16), lớp chưa có chủ nhiệm. Một tiết, đơn hay bài thuộc phân hiệu nào là theo PHÂN HIỆU CỦA LỚP liên quan (mục 5.1).
+**4.9.1 — Tính chỉ số theo phạm vi / Compute Dashboard Metrics**  
+`BE` · 2.5 MD · dep: —  
+Bốn số quy mô (lớp đang hoạt động, học sinh đang học, cán bộ đang công tác, tiết dạy hôm nay) và học sinh theo khối. Tiết Chờ xử lý và lớp chưa có chủ nhiệm không nằm trên Dashboard (xem 4.4.29 và 4.3.34). Một tiết, đơn hay bài thuộc phân hiệu nào là theo PHÂN HIỆU CỦA LỚP liên quan (mục 5.1).
 
 **4.9.2 — Xem Dashboard / View Dashboard**  
 `BE + Web` · 2 MD · dep: 4.9.1  
-Principal xem toàn trường và không đổi được; Vice Principal xem cố định phân hiệu mình. School Admin không có Dashboard (mục 5.1).
+Principal mặc định xem toàn trường, lọc được theo phân hiệu, và có bảng so sánh các phân hiệu (Lớp · Học sinh · Cán bộ) khi xem toàn trường; Vice Principal xem cố định phân hiệu mình. School Admin không có Dashboard. Trang chủ tách riêng, chỉ chào và hiện thông tin chung, không hiển thị số liệu (mục 5.1).
 
 **4.9.3 — Mở danh sách gốc từ một chỉ số / Drill into KPI Source List**  
 `BE + Web` · 1.5 MD · dep: 4.9.2  
-Mỗi số mở ra danh sách gốc: tiết Chờ xử lý mở màn hình xử lý của SCD-03, lớp chưa có chủ nhiệm mở màn hình trách nhiệm của PPL-04, đơn nghỉ (chỉ Vice Principal) mở hộp đơn của PAR-01 ở chế độ chỉ đọc, không có nút duyệt hay từ chối; không có nút nhập bù, School Admin nhập bù ở màn hình điểm danh (mục 5.1).
+Số nào có màn hình gốc thì bấm vào mở ra, không có thì ô số không bấm được: cán bộ mở danh bạ cán bộ, tiết dạy hôm nay mở lịch dạy, lớp đang hoạt động và học sinh đang học không mở gì (mục 5.1).
 
 **4.9.4 — Kiểm thử phạm vi Dashboard / Dashboard Scope Tests**  
 `QA` · 1 MD · dep: 4.9.2  
-Vice Principal không xem được số liệu phân hiệu khác; con số khớp với danh sách gốc mở ra; nút nhập bù không hiện với Vice Principal.
+Vice Principal không xem được số liệu phân hiệu khác (gọi kèm phân hiệu khác bị từ chối); bộ lọc phân hiệu của Principal cho số khớp với từng hàng của bảng so sánh; con số khớp với danh sách gốc mở ra.
 
 ### ADM-02 Audit Log (Nhật ký kiểm toán)
 

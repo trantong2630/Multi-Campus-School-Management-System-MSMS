@@ -126,6 +126,7 @@ export interface DaySchedule {
 export interface MySession {
   sessionId: number;
   date: string;
+  periodSlotId: number;
   sessionOfDay: 'Morning' | 'Afternoon';
   periodNo: number;
   startTime: string;
@@ -133,6 +134,18 @@ export interface MySession {
   className: string;
   campusName: string;
   subjectName: string;
-  status: string;
+  subjectAbbr: string;
+  status: 'Scheduled' | 'Pending' | 'Cancelled';
   source: string;
+}
+
+export interface TeacherOption {
+  teacherId: number;
+  name: string;
+  abbr: string | null;
+}
+
+export interface ViewSession extends Omit<MySession, 'status'> {
+  teacherName: string | null;
+  status: MySession['status'];
 }

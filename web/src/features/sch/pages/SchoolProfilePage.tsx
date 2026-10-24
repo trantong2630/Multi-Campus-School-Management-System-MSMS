@@ -72,7 +72,7 @@ export function SchoolProfilePage() {
     <>
       <PageHeader
         title="Thông tin trường"
-        description="Tên trường hiện ở đầu trang; logo trường hiện ở thanh bên khi thu gọn. Hiệu trưởng và quản trị hệ thống được sửa."
+        description="Tên trường hiện ở đầu trang và Trang chủ; logo trường hiện ở Trang chủ. Hiệu trưởng và quản trị hệ thống được sửa."
       />
       <div className="school-grid">
         <Card title="Thông tin chung" loading={isLoading}>
@@ -121,7 +121,7 @@ export function SchoolProfilePage() {
                   <Button
                     danger icon={<Trash2 size={16} />}
                     onClick={() => confirmAction({
-                      title: 'Gỡ logo trường?', content: 'Màn hình đăng nhập và thanh bên sẽ dùng biểu tượng mặc định.',
+                      title: 'Gỡ logo trường?', content: 'Trang chủ sẽ dùng biểu tượng mặc định.',
                       okText: 'Gỡ logo', danger: true, onOk: () => remove.mutateAsync().catch(() => undefined),
                     })}
                   >

@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Card, Form, Input, Select } from 'antd';
+import { Card, Form, Input, Segmented, Select } from 'antd';
 import { message } from '@/shared/lib/antdStatic';
 import { KeyRound, Lock, LockOpen, Repeat } from 'lucide-react';
 import { useState } from 'react';
@@ -24,7 +24,8 @@ const ALL_TYPES: AccountType[] = ['SchoolAdmin', 'Principal', 'VicePrincipal', '
 const dutyLabel: Record<string, string> = {
   Campus: 'Phụ trách phân hiệu', Department: 'Tổ trưởng', Homeroom: 'Chủ nhiệm lớp', Teaching: 'Phụ trách chuyên môn',
 };
-const STATUSES = ['PendingPasswordChange', 'Active', 'Locked'];
+const STATUSES = ['Active', 'PendingPasswordChange', 'Locked'];
+const STATUS_LABEL: Record<string, string> = { Active: 'Đang hoạt động', PendingPasswordChange: 'Chờ đổi mật khẩu', Locked: 'Đã khóa' };
 const PAGE_SIZE = 20;
 
 interface TypeValues { accountType: string }
@@ -82,14 +83,16 @@ export function AccountsPage() {
         description="Mỗi hồ sơ có đúng một tài khoản. Tạo tài khoản bằng cách chọn nhiều dòng ở Hồ sơ → Cán bộ."
       />
       <FilterBar>
+        <Segmented<string>
+          value={status ?? 'All'} onChange={(v) => { setStatus(v === 'All' ? undefined : v); reset(); }}
+          options={[{ value: 'All', label: 'Tất cả' }, ...STATUSES.map((s) => ({ value: s, label: STATUS_LABEL[s] }))]}
+        />
         <Input.Search
           allowClear placeholder="Tên, mã hồ sơ hoặc tên đăng nhập" enterButton="Tìm kiếm"
           onSearch={(v) => { setSearch(v); reset(); }}
         />
         <Select allowClear placeholder="Loại tài khoản" value={accountType} onChange={(v) => { setAccountType(v); reset(); }}
           options={ALL_TYPES.map((t) => ({ value: t, label: accountTypeLabel[t] }))} />
-        <Select allowClear placeholder="Trạng thái" value={status} onChange={(v) => { setStatus(v); reset(); }}
-          options={STATUSES.map((s) => ({ value: s, label: { PendingPasswordChange: 'Chờ đổi mật khẩu', Active: 'Đang hoạt động', Locked: 'Đã khóa' }[s] }))} />
         <Select allowClear placeholder="Phân hiệu chính" value={campusId} onChange={(v) => { setCampusId(v); reset(); }}
           options={campuses.data?.map((c) => ({ value: c.campusId, label: c.name }))} />
       </FilterBar>
@@ -100,14 +103,14 @@ export function AccountsPage() {
           emptyText="Chưa có tài khoản nào khớp bộ lọc."
           pagination={{ current: page, pageSize: PAGE_SIZE, total: accounts.data?.total, onChange: setPage }}
           columns={[
-            { title: 'Họ và tên', dataIndex: 'fullName', width: 260, render: (v: string, a: Account) => <PersonCell name={v} sub={a.personCode} /> },
-            { title: 'Tên đăng nhập', dataIndex: 'username', width: 190, render: (v: string) => <code className="mono">{v}</code> },
-            { title: 'Loại tài khoản', dataIndex: 'accountType', width: 160, render: (v: AccountType) => accountTypeLabel[v] },
-            { title: 'Phân hiệu', dataIndex: 'campusName', width: 160, render: (v: string | null) => v ?? <span className="muted">—</span> },
-            { title: 'Đăng nhập gần nhất', dataIndex: 'lastLoginAt', width: 170, className: 'tabular', render: (v: string | null) => (v ? formatDateTime(v) : <span className="muted">Chưa đăng nhập</span>) },
-            { title: 'Trạng thái', dataIndex: 'status', width: 170, align: 'center', render: (v: string) => <StatusBadge domain="account" value={v} /> },
+            { title: 'Họ và tên', dataIndex: 'fullName', width: 220, render: (v: string, a: Account) => <PersonCell name={v} sub={a.personCode} /> },
+            { title: 'Tên đăng nhập', dataIndex: 'username', width: 170, render: (v: string) => <code className="mono">{v}</code> },
+            { title: 'Loại tài khoản', dataIndex: 'accountType', width: 140, render: (v: AccountType) => accountTypeLabel[v] },
+            { title: 'Phân hiệu', dataIndex: 'campusName', width: 120, render: (v: string | null) => v ?? <span className="muted">—</span> },
+            { title: 'Đăng nhập gần nhất', dataIndex: 'lastLoginAt', width: 150, className: 'tabular', render: (v: string | null) => (v ? formatDateTime(v) : <span className="muted">Chưa đăng nhập</span>) },
+            { title: 'Trạng thái', dataIndex: 'status', width: 150, align: 'center', render: (v: string) => <StatusBadge domain="account" value={v} /> },
             {
-              title: 'Thao tác', key: 'actions', width: 130, align: 'center', fixed: 'right',
+              title: 'Thao tác', key: 'actions', width: 120, align: 'center', fixed: 'right',
               render: (_: unknown, a: Account) => (
                 <RowActions actions={[
                   a.status === 'Locked'
