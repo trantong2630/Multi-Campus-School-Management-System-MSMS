@@ -8,6 +8,7 @@ using MSMS.Api.Common.Errors;
 using MSMS.Api.Common.Notifications;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
+using MSMS.Api.Modules.Adm;
 using MSMS.Api.Modules.Iam;
 using MSMS.Api.Modules.Ppl;
 using MSMS.Api.Modules.Sch;
@@ -62,6 +63,7 @@ builder.Services.AddIamModule();
 builder.Services.AddSchModule();
 builder.Services.AddPplModule();
 builder.Services.AddScdModule();
+builder.Services.AddAdmModule();
 builder.Services.AddControllers();
 
 var app = builder.Build();
