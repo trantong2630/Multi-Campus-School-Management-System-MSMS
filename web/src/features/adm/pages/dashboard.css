@@ -1,0 +1,119 @@
+.dash-scope {
+  width: 240px;
+}
+
+/* Lưới bento 4 cột: 4 ô chỉ số ở hàng trên, biểu đồ và bảng so sánh mỗi bên 2 cột ở hàng dưới. */
+.dash-bento {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.dash-bento__half {
+  grid-column: span 2;
+}
+
+.dash-bento__full {
+  grid-column: 1 / -1;
+}
+
+.dash-card .ant-card-body {
+  padding-top: 8px;
+}
+
+/* Bảng trong panel: sát mép panel, cột đầu và cuối thụt bằng lề tiêu đề panel. */
+.dash-card--table .ant-card-body {
+  padding: 0 0 8px;
+}
+
+.dash-card--table .ant-table-wrapper.data-table .ant-table-thead > tr > th:first-child,
+.dash-card--table .ant-table-wrapper.data-table .ant-table-tbody > tr > td:first-child {
+  padding-left: 24px;
+}
+
+.dash-card--table .ant-table-wrapper.data-table .ant-table-thead > tr > th:last-child,
+.dash-card--table .ant-table-wrapper.data-table .ant-table-tbody > tr > td:last-child {
+  padding-right: 24px;
+}
+
+.dash-card--table .ant-table-wrapper.data-table .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+.dash-card__meta {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text2);
+}
+
+.dash-row-click {
+  cursor: pointer;
+}
+
+.dash-empty {
+  padding: 56px 0;
+  text-align: center;
+  font-size: 15px;
+  color: var(--c-text2);
+}
+
+.dash-tip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-pop);
+  font-size: 13px;
+  color: var(--c-text2);
+}
+
+.dash-tip b {
+  font-weight: 600;
+  color: var(--c-text1);
+}
+
+/* Thanh tỉ lệ học sinh giữa các phân hiệu, so với phân hiệu đông nhất. */
+.dash-share {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.dash-share__track {
+  width: 96px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--c-neutralBg);
+}
+
+.dash-share__track i {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--c-green600);
+}
+
+/* Bảng nằm trong panel: giữ dạng dòng phẳng có đường kẻ, không lồng thẻ-hàng vào trong card. */
+.dash-card--table .ant-table-wrapper.data-table .ant-table-container table {
+  border-spacing: 0;
+  margin-top: 0;
+}
+
+.dash-card--table .ant-table-wrapper.data-table .ant-table-tbody > tr > td {
+  border: none;
+  border-bottom: 1px solid var(--c-border);
+  border-radius: 0;
+}
+
+.dash-card--table .ant-table-wrapper.data-table .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+.dash-card--table .ant-table-wrapper.data-table .ant-table-pagination.ant-pagination {
+  display: none;
+}
