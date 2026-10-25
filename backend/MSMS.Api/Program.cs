@@ -13,6 +13,7 @@ using MSMS.Api.Modules.Iam;
 using MSMS.Api.Modules.Ppl;
 using MSMS.Api.Modules.Sch;
 using MSMS.Api.Modules.Scd;
+using MSMS.Api.Modules.Par;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -63,7 +64,11 @@ builder.Services.AddIamModule();
 builder.Services.AddSchModule();
 builder.Services.AddPplModule();
 builder.Services.AddScdModule();
+
+builder.Services.AddParModule();
+
 builder.Services.AddAdmModule();
+
 builder.Services.AddControllers();
 
 var app = builder.Build();
