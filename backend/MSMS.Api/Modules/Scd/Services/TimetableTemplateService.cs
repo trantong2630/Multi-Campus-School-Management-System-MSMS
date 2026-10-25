@@ -1,4 +1,4 @@
-using ClosedXML.Excel;
+﻿using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MSMS.Api.Common.Auth;
@@ -96,7 +96,7 @@ public sealed class TimetableTemplateService(MsmsDbContext db, ScopeResolver sco
 
         ws.WriteNote(5,
             "Mỗi ô ghi dạng  MÔN-GV  (viết tắt môn, gạch ngang, viết tắt giáo viên), ví dụ TOAN-NVA; tiết trống để ô trống. "
-            + "File phải phủ ĐỦ MỌI LỚP của phân hiệu — thiếu lớp là lỗi (BR-12). Không sửa hàng tiêu đề, ba ô meta, cột Thứ, Buổi và Tiết.",
+            + "File chỉ cần gồm các lớp muốn đổi: xóa các cột lớp không đổi; lớp có trong file được ghi đè, lớp không có trong file giữ nguyên (BR-12). Không sửa hàng tiêu đề, ba ô meta, cột Thứ, Buổi và Tiết.",
             wide, 32);
 
         ws.Cell(TimetableLayout.HeaderRow, 1).Value = TimetableLayout.DayHeader;

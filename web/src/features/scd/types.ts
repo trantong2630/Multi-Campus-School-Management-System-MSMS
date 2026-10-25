@@ -36,14 +36,21 @@ export interface GridClass {
 }
 
 export interface GridCell {
+  subjectId: number;
   subjectAbbr: string;
   subjectName: string;
+  teacherId: number;
   teacherAbbr: string;
   teacherName: string;
+  /** Ô trùng giáo viên (BR-13); chỉ có nghĩa ở bản Nháp. */
+  inConflict: boolean;
+  /** Ô khác nội dung file import; chỉ có nghĩa ở bản Nháp. */
+  edited: boolean;
 }
 
 export interface GridRow {
   dayOfWeek: number;
+  periodSlotId: number;
   sessionOfDay: 'Morning' | 'Afternoon';
   periodNo: number;
   cells: (GridCell | null)[];
@@ -56,6 +63,20 @@ export interface VersionGrid {
   semesterName: string;
   classes: GridClass[];
   rows: GridRow[];
+  conflicts: TeacherConflict[];
+  /** Bản Nháp còn lưu nội dung file import nên khôi phục được. */
+  canReset: boolean;
+}
+
+export interface SubjectOption {
+  subjectId: number;
+  abbr: string;
+  name: string;
+}
+
+export interface DraftOptions {
+  subjects: SubjectOption[];
+  teachers: TeacherOption[];
 }
 
 export interface TeacherConflict {
@@ -86,6 +107,7 @@ export interface PublishPreview {
   warnings: { manualEditedCount: number; makeUpCount: number; pendingCount: number; needsConfirmation: boolean };
   conflicts: TeacherConflict[];
   blockingIssues: string[];
+  classesWithoutLessons: string[];
   canPublish: boolean;
 }
 
@@ -93,7 +115,7 @@ export interface PublishResult {
   versionId: number;
   deletedCount: number;
   createdCount: number;
-  notifiedTeachers: number;
+  notifiedCount: number;
 }
 
 export interface SessionCell {

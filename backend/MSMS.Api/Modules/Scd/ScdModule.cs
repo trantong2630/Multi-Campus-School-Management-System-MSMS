@@ -1,4 +1,4 @@
-using MSMS.Api.Modules.Scd.Services;
+﻿using MSMS.Api.Modules.Scd.Services;
 
 namespace MSMS.Api.Modules.Scd;
 
@@ -8,5 +8,6 @@ public static class ScdModule
         => s.AddScoped<TimetableTemplateService>()
             .AddScoped<TimetableImportService>()
             .AddScoped<TimetablePublishService>()
+            .AddScoped<TimetableDraftService>()
             .AddScoped<ScheduleQueryService>();
 }

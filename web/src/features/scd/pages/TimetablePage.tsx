@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Modal, Select } from 'antd';
 import { InlineAlert } from '@/shared/components/InlineAlert';
 import { message } from '@/shared/lib/antdStatic';
-import { Eye, FileDown, FileUp, Rocket } from 'lucide-react';
+import { Eye, FileDown, FileUp, Pencil, Rocket } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getErrorMessage } from '@/app/apiClient';
 import { useCurrentYear, useYears } from '@/features/sch/hooks/useCatalogs';
@@ -18,11 +18,12 @@ import { showError } from '@/shared/lib/feedback';
 import { formatDateTime } from '@/shared/lib/format';
 import dayjs from 'dayjs';
 import { scdApi } from '../api';
+import { DraftEditorModal } from '../components/DraftEditorModal';
 import { PublishPreviewModal } from '../components/PublishPreviewModal';
 import { TimetableGrid } from '../components/TimetableGrid';
 import type { TimetableImportResult, TimetableVersion } from '../types';
 
-/** SCD-01: tải mẫu → sửa → tải lên → xem trước → Phát hành. Mỗi phiên bản là hồ sơ của một lần import, đọc lại được như lịch sử. */
+/** SCD-01: tải mẫu → sửa → tải lên → sửa bản Nháp trên lưới → Phát hành. Mỗi phiên bản là hồ sơ của một lần import, đọc lại được như lịch sử. */
 export function TimetablePage() {
   const qc = useQueryClient();
   const campuses = useQuery({ queryKey: ['scd', 'campuses'], queryFn: scdApi.campuses });
@@ -53,6 +54,7 @@ export function TimetablePage() {
   const [rejected, setRejected] = useState<TimetableImportResult | null>(null);
   const [gridOf, setGridOf] = useState<TimetableVersion | null>(null);
   const [previewId, setPreviewId] = useState<number | null>(null);
+  const [draftOf, setDraftOf] = useState<TimetableVersion | null>(null);
   const grid = useQuery({ queryKey: ['scd', 'grid', gridOf?.versionId], queryFn: () => scdApi.versionGrid(gridOf!.versionId), enabled: gridOf !== null });
 
   const template = async () => {
@@ -70,8 +72,9 @@ export function TimetablePage() {
       const res = await scdApi.import(file);
       if (res.accepted) {
         await qc.invalidateQueries({ queryKey: ['scd', 'versions'] });
-        message.success(`File hợp lệ, đã lưu thành phiên bản Nháp (${res.entryCount} ô).`);
-        setPreviewId(res.versionId);
+        message.success(`File hợp lệ, đã lưu thành phiên bản Nháp (${res.entryCount} ô). Sửa trên lưới rồi Phát hành.`);
+        const created = await scdApi.versions(effectiveCampus!, effectiveSemester!);
+        setDraftOf(created.find((v) => v.versionId === res.versionId) ?? null);
       } else {
         setRejected(res);
       }
@@ -88,7 +91,7 @@ export function TimetablePage() {
     <>
       <PageHeader
         title="Thời khóa biểu"
-        description="Tải mẫu điền sẵn theo phiên bản đã phát hành gần nhất, sửa vài ô, tải lên rồi xem trước và phát hành."
+        description="Tải mẫu điền sẵn theo phiên bản đã phát hành gần nhất, sửa vài ô và giữ các lớp cần đổi, tải lên, sửa bản Nháp trên lưới rồi phát hành."
         extra={
           <>
             <Button icon={<FileDown size={16} />} disabled={!ready} onClick={template}>Tải file mẫu</Button>
@@ -143,7 +146,8 @@ export function TimetablePage() {
               title: 'Thao tác', key: 'actions', width: 110, align: 'center', fixed: 'right',
               render: (_: unknown, v: TimetableVersion) => (
                 <RowActions actions={[
-                  { key: 'grid', label: 'Xem lưới', icon: <Eye size={16} />, onClick: () => setGridOf(v) },
+                  { key: 'grid', label: 'Xem lưới', icon: <Eye size={16} />, hidden: v.status === 'Draft', onClick: () => setGridOf(v) },
+                  { key: 'edit', label: 'Sửa bản Nháp', icon: <Pencil size={16} />, hidden: v.status !== 'Draft', onClick: () => setDraftOf(v) },
                   { key: 'publish', label: 'Xem trước và phát hành', icon: <Rocket size={16} />, hidden: v.status !== 'Draft', onClick: () => setPreviewId(v.versionId) },
                 ]} />
               ),
@@ -153,6 +157,7 @@ export function TimetablePage() {
       </Card>
 
       <PublishPreviewModal versionId={previewId} onClose={() => setPreviewId(null)} />
+      <DraftEditorModal version={draftOf} onClose={() => setDraftOf(null)} />
 
       <Modal
         open={gridOf !== null} width={1100} onCancel={() => setGridOf(null)} mask={{ closable: false }}

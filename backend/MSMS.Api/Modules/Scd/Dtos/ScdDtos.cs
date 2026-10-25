@@ -1,4 +1,4 @@
-using MSMS.Api.Common.Excel;
+﻿using MSMS.Api.Common.Excel;
 
 namespace MSMS.Api.Modules.Scd.Dtos;
 
@@ -13,10 +13,19 @@ public record TimetableVersionDto(
 public record TimetableImportResult(bool Accepted, int? VersionId, int EntryCount, IReadOnlyList<ImportError> Errors, int TotalErrors);
 
 public record GridClassDto(int ClassId, string Name);
-public record GridCellDto(string SubjectAbbr, string SubjectName, string TeacherAbbr, string TeacherName);
-public record GridRowDto(int DayOfWeek, string SessionOfDay, byte PeriodNo, IReadOnlyList<GridCellDto?> Cells);
+/// <summary>InConflict: ô trùng giáo viên (BR-13). Edited: ô khác với nội dung file import. Cả hai chỉ có nghĩa ở bản Nháp.</summary>
+public record GridCellDto(int SubjectId, string SubjectAbbr, string SubjectName, int TeacherId, string TeacherAbbr, string TeacherName,
+    bool InConflict, bool Edited);
+public record GridRowDto(int DayOfWeek, int PeriodSlotId, string SessionOfDay, byte PeriodNo, IReadOnlyList<GridCellDto?> Cells);
 public record VersionGridDto(int VersionId, string Status, string CampusName, string SemesterName,
-    IReadOnlyList<GridClassDto> Classes, IReadOnlyList<GridRowDto> Rows);
+    IReadOnlyList<GridClassDto> Classes, IReadOnlyList<GridRowDto> Rows, IReadOnlyList<TeacherConflictDto> Conflicts, bool CanReset);
+
+// ---- Sửa bản Nháp ----
+public record SubjectOptionDto(int SubjectId, string Abbr, string Name);
+public record DraftOptionsDto(IReadOnlyList<SubjectOptionDto> Subjects, IReadOnlyList<TeacherOptionDto> Teachers);
+public record MoveEntryRequest(int ClassId, int FromDayOfWeek, int FromPeriodSlotId, int ToDayOfWeek, int ToPeriodSlotId);
+public record AddEntryRequest(int ClassId, int DayOfWeek, int PeriodSlotId, int SubjectId, int TeacherId);
+public record ChangeTeacherRequest(int ClassId, int DayOfWeek, int PeriodSlotId, int TeacherId);
 
 // ---- Xem trước & phát hành ----
 public record PreviewClassRow(string ClassName, int DeleteCount, int CreateCount);
@@ -32,10 +41,11 @@ public record TeacherConflictDto(
 public record PublishPreviewDto(
     int VersionId, string CampusName, string SemesterName, DateOnly FromDate, DateOnly ToDate,
     int DeleteCount, int CreateCount, IReadOnlyList<PreviewClassRow> ByClass, PublishWarnings Warnings,
-    IReadOnlyList<TeacherConflictDto> Conflicts, IReadOnlyList<string> BlockingIssues, bool CanPublish);
+    IReadOnlyList<TeacherConflictDto> Conflicts, IReadOnlyList<string> BlockingIssues, IReadOnlyList<string> ClassesWithoutLessons,
+    bool CanPublish);
 
 public record PublishRequest(bool ConfirmWarnings);
-public record PublishResultDto(int VersionId, int DeletedCount, int CreatedCount, int NotifiedTeachers);
+public record PublishResultDto(int VersionId, int DeletedCount, int CreatedCount, int NotifiedCount);
 
 // ---- Lịch dạy ----
 public record SessionCellDto(long SessionId, string SubjectName, string SubjectAbbr, string? TeacherName, string? TeacherAbbr, string Status, string Source);

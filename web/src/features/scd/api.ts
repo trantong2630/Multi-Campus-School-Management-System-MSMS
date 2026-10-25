@@ -1,6 +1,6 @@
 import { apiClient } from '@/app/apiClient';
 import type {
-  CampusOption, DaySchedule, GridClass, MySession, PublishPreview, PublishResult, TeacherOption, TimetableImportResult, TimetableVersion,
+  CampusOption, DaySchedule, DraftOptions, GridClass, MySession, PublishPreview, PublishResult, TeacherOption, TimetableImportResult, TimetableVersion,
   VersionGrid, ViewSession,
 } from './types';
 
@@ -12,6 +12,17 @@ export const scdApi = {
   preview: (id: number) => apiClient.get<PublishPreview>(`/scd/timetable/versions/${id}/preview`).then((r) => r.data),
   publish: (id: number, confirmWarnings: boolean) =>
     apiClient.post<PublishResult>(`/scd/timetable/versions/${id}/publish`, { confirmWarnings }).then((r) => r.data),
+  draftOptions: (campusId: number) =>
+    apiClient.get<DraftOptions>('/scd/timetable/draft-options', { params: { campusId } }).then((r) => r.data),
+  moveEntry: (id: number, body: { classId: number; fromDayOfWeek: number; fromPeriodSlotId: number; toDayOfWeek: number; toPeriodSlotId: number }) =>
+    apiClient.post<VersionGrid>(`/scd/timetable/versions/${id}/entries/move`, body).then((r) => r.data),
+  addEntry: (id: number, body: { classId: number; dayOfWeek: number; periodSlotId: number; subjectId: number; teacherId: number }) =>
+    apiClient.post<VersionGrid>(`/scd/timetable/versions/${id}/entries`, body).then((r) => r.data),
+  changeEntryTeacher: (id: number, body: { classId: number; dayOfWeek: number; periodSlotId: number; teacherId: number }) =>
+    apiClient.put<VersionGrid>(`/scd/timetable/versions/${id}/entries/teacher`, body).then((r) => r.data),
+  removeEntry: (id: number, params: { classId: number; dayOfWeek: number; periodSlotId: number }) =>
+    apiClient.delete<VersionGrid>(`/scd/timetable/versions/${id}/entries`, { params }).then((r) => r.data),
+  resetDraft: (id: number) => apiClient.post<VersionGrid>(`/scd/timetable/versions/${id}/reset`).then((r) => r.data),
   import: (file: File) => {
     const fd = new FormData();
     fd.append('file', file);

@@ -193,3 +193,104 @@
   gap: 4px;
   height: 100%;
 }
+
+/* Sửa bản Nháp (Design_Web §9.1): ô nhận thả, ô trùng giáo viên, ô đã khác file import. */
+.tt-cell--editable {
+  position: relative;
+  cursor: pointer;
+}
+
+.tt-draggable {
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+}
+
+.tt-draggable:active {
+  cursor: grabbing;
+}
+
+.tt-chip--dragging {
+  opacity: 0.4;
+  outline: 1.5px dashed var(--c-borderStrong);
+  outline-offset: -1.5px;
+}
+
+.tt-chip--overlay {
+  width: 104px;
+  opacity: 0.9;
+  box-shadow: inset 3px 0 0 var(--tt-fg, var(--c-green500)), var(--shadow-pop);
+  cursor: grabbing;
+}
+
+.tt-cell--over {
+  background: var(--c-hoverBg);
+  outline: 2px dashed var(--c-green500);
+  outline-offset: -3px;
+}
+
+.tt-cell--nodrop {
+  cursor: not-allowed;
+}
+
+/* Ô trùng giáo viên: viền đỏ 2px và chấm đỏ ở góc phải trên. */
+.tt-cell--conflict .tt-chip {
+  outline: 2px solid var(--c-danger);
+  outline-offset: -2px;
+}
+
+.tt-cell--conflict::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--c-danger);
+}
+
+/* Ô khác nội dung file import: chấm hổ phách ở góc trái trên. */
+.tt-cell--edited::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-amber);
+}
+
+/* Màn sửa bản Nháp: lưới bên trái, danh sách xung đột bên phải. */
+.tt-editor {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.tt-editor__grid {
+  flex: 1;
+  min-width: 0;
+}
+
+.tt-editor__side {
+  width: 300px;
+  flex-shrink: 0;
+  max-height: 68vh;
+  overflow: auto;
+}
+
+.tt-conflict-item {
+  padding: 10px 12px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  background: var(--c-surface);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.tt-conflict-item + .tt-conflict-item {
+  margin-top: 8px;
+}

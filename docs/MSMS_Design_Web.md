@@ -486,6 +486,16 @@ Sticky header row **and** sticky first columns, inside a white card (1px `border
 - Lịch dạy view modes (Principal, Vice Principal): a segmented switch **Theo ngày / Theo lớp / Theo giáo viên** beside the campus select. *Theo ngày* is the daily grid above. *Theo lớp* and *Theo giáo viên* pick one class or one teacher (searchable select) and show the same week grid as My teaching schedule; the second chip line is the teacher name in the class view, and `class · campus` in the teacher view. Read-only — no edit actions on this screen.
 - Conflicting cell: 2px `danger` border + red dot top-right.
 
+#### Draft editing (Vice Principal, before Publish)
+
+The draft version opens in the same grid, now editable. Editing applies only while the version is Nháp; a published version is read-only.
+
+- **Drag.** A filled chip is draggable (`@dnd-kit/core`). While dragging, the chip follows the pointer at 90% opacity with shadow `pop`; the source cell shows a dashed `borderStrong` outline. A cell in another class column does not accept the drop (no highlight, cursor `not-allowed`). Dropping on an empty cell moves the lesson; dropping on a filled cell swaps the two. A drop that creates a conflict is still kept and the conflicting cells take the conflicting-cell style above — no blocking dialog.
+- **Edited marker.** A cell that differs from the imported file carries a 6px `amber` dot top-left. A "Khôi phục về file import" button in the page header (`Button` secondary, confirm dialog) reverts the whole draft.
+- **Cell click.** An empty cell opens the standard form dialog (§8.4) "Thêm tiết" with two searchable selects, **Môn** and **Giáo viên**. A filled cell opens the same dialog with **Giáo viên** (searchable select) and a `danger` text button "Xóa tiết khỏi bản Nháp" that asks for confirmation. Every change saves immediately; the draft has no Save button.
+- **Conflict list.** A side panel beside the grid lists the remaining conflicts, one row per conflict with the occupying lesson's campus and its Vice Principal (Business Spec BR-14). Clicking a row scrolls the grid to the cell. Publish is disabled while the list is not empty.
+- **Publish confirmation.** "Phát hành" opens a dialog, not a separate screen: lessons to delete and create grouped by class and date, an amber warning with the count of Chỉnh tay, make-up and pending lessons that will be deleted, an amber notice listing classes that still have no lessons, and a confirm button.
+
 ### 9.2 Import error table (BR-11, BR-12)
 
 Top panel in `danger` tint: `"Từ chối 1 file · 7 lỗi"`. Error table has 4 columns: **Ô/Dòng · Cột · Giá trị gốc · Nguyên nhân**. Cell addresses render in monospace (`D12`). Clicking an error row scrolls the file preview to that cell.
