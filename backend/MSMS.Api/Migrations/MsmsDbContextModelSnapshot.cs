@@ -1950,6 +1950,9 @@ namespace MSMS.Api.Migrations
                     b.Property<int?>("DeletedSessionCount")
                         .HasColumnType("int");
 
+                    b.Property<string>("ImportSnapshot")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("ImportedAt")
                         .ValueGeneratedOnAdd()
                         .HasPrecision(0)
@@ -1992,6 +1995,22 @@ namespace MSMS.Api.Migrations
                     b.HasIndex(new[] { "CampusId", "SemesterId", "Status" }, "IX_Version_Scope");
 
                     b.ToTable("TimetableVersion");
+                });
+
+            modelBuilder.Entity("MSMS.Api.Data.Entities.TimetableVersionClass", b =>
+                {
+                    b.Property<int>("VersionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ClassId")
+                        .HasColumnType("int");
+
+                    b.HasKey("VersionId", "ClassId")
+                        .HasName("PK_TimetableVersionClass");
+
+                    b.HasIndex("ClassId");
+
+                    b.ToTable("TimetableVersionClass");
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.Account", b =>
@@ -2820,6 +2839,25 @@ namespace MSMS.Api.Migrations
                     b.Navigation("Semester");
                 });
 
+            modelBuilder.Entity("MSMS.Api.Data.Entities.TimetableVersionClass", b =>
+                {
+                    b.HasOne("MSMS.Api.Data.Entities.Class", "Class")
+                        .WithMany("TimetableVersionClass")
+                        .HasForeignKey("ClassId")
+                        .IsRequired()
+                        .HasConstraintName("FK_TimetableVersionClass_Class");
+
+                    b.HasOne("MSMS.Api.Data.Entities.TimetableVersion", "Version")
+                        .WithMany("TimetableVersionClass")
+                        .HasForeignKey("VersionId")
+                        .IsRequired()
+                        .HasConstraintName("FK_TimetableVersionClass_Version");
+
+                    b.Navigation("Class");
+
+                    b.Navigation("Version");
+                });
+
             modelBuilder.Entity("MSMS.Api.Data.Entities.AcademicYear", b =>
                 {
                     b.Navigation("Class");
@@ -2875,6 +2913,8 @@ namespace MSMS.Api.Migrations
                     b.Navigation("TeachingSession");
 
                     b.Navigation("TimetableEntry");
+
+                    b.Navigation("TimetableVersionClass");
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.Conversation", b =>
@@ -3070,6 +3110,8 @@ namespace MSMS.Api.Migrations
                     b.Navigation("TeachingSession");
 
                     b.Navigation("TimetableEntry");
+
+                    b.Navigation("TimetableVersionClass");
                 });
 #pragma warning restore 612, 618
         }
