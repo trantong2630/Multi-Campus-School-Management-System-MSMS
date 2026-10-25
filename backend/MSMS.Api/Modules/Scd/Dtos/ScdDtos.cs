@@ -48,11 +48,16 @@ public record PublishRequest(bool ConfirmWarnings);
 public record PublishResultDto(int VersionId, int DeletedCount, int CreatedCount, int NotifiedCount);
 
 // ---- Lịch dạy ----
-public record SessionCellDto(long SessionId, string SubjectName, string SubjectAbbr, string? TeacherName, string? TeacherAbbr, string Status, string Source);
+public record SessionCellDto(long SessionId, int SubjectId, string SubjectName, string SubjectAbbr, string? TeacherName, string? TeacherAbbr, string Status, string Source);
 public record DaySlotRow(int PeriodSlotId, string SessionOfDay, byte PeriodNo, TimeOnly StartTime, TimeOnly EndTime, IReadOnlyList<SessionCellDto?> Cells);
 public record DayScheduleDto(DateOnly Date, string? HolidayReason, bool IsHoliday, IReadOnlyList<GridClassDto> Classes, IReadOnlyList<DaySlotRow> Rows);
 public record MySessionDto(long SessionId, DateOnly Date, int PeriodSlotId, string SessionOfDay, byte PeriodNo, TimeOnly StartTime, TimeOnly EndTime,
-    string ClassName, string CampusName, string SubjectName, string SubjectAbbr, string Status, string Source);
+    string ClassName, string CampusName, int SubjectId, string SubjectName, string SubjectAbbr, string Status, string Source);
 public record TeacherOptionDto(int TeacherId, string Name, string? Abbr);
 public record ViewSessionDto(long SessionId, DateOnly Date, int PeriodSlotId, string SessionOfDay, byte PeriodNo, TimeOnly StartTime, TimeOnly EndTime,
-    string ClassName, string CampusName, string SubjectName, string SubjectAbbr, string? TeacherName, string Status, string Source);
+    string ClassName, string CampusName, int SubjectId, string SubjectName, string SubjectAbbr, string? TeacherName, string Status, string Source);
+
+// ---- SCD-04: Phụ trách chuyên môn (tính từ thời khóa biểu đã phát hành, BR-14) ----
+public record ResponsibilityItemDto(int SubjectId, string SubjectAbbr, string SubjectName, int ClassId, string ClassName, int PeriodsPerWeek);
+public record ResponsibilityTeacherDto(int TeacherId, string TeacherName, string? TeacherAbbr, int TotalPeriods, IReadOnlyList<ResponsibilityItemDto> Items);
+public record ResponsibilityDto(string? SemesterName, IReadOnlyList<ResponsibilityTeacherDto> Teachers);

@@ -9,5 +9,6 @@ public static class ScdModule
             .AddScoped<TimetableImportService>()
             .AddScoped<TimetablePublishService>()
             .AddScoped<TimetableDraftService>()
-            .AddScoped<ScheduleQueryService>();
+            .AddScoped<ScheduleQueryService>()
+            .AddScoped<SubjectResponsibilityService>();
 }

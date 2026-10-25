@@ -120,6 +120,7 @@ export interface PublishResult {
 
 export interface SessionCell {
   sessionId: number;
+  subjectId: number;
   subjectName: string;
   subjectAbbr: string;
   teacherName: string | null;
@@ -155,6 +156,7 @@ export interface MySession {
   endTime: string;
   className: string;
   campusName: string;
+  subjectId: number;
   subjectName: string;
   subjectAbbr: string;
   status: 'Scheduled' | 'Pending' | 'Cancelled';
@@ -170,4 +172,27 @@ export interface TeacherOption {
 export interface ViewSession extends Omit<MySession, 'status'> {
   teacherName: string | null;
   status: MySession['status'];
+}
+
+// ---- SCD-04: Phụ trách chuyên môn (tính từ thời khóa biểu đã phát hành) ----
+export interface ResponsibilityItem {
+  subjectId: number;
+  subjectAbbr: string;
+  subjectName: string;
+  classId: number;
+  className: string;
+  periodsPerWeek: number;
+}
+
+export interface ResponsibilityTeacher {
+  teacherId: number;
+  teacherName: string;
+  teacherAbbr: string | null;
+  totalPeriods: number;
+  items: ResponsibilityItem[];
+}
+
+export interface ResponsibilityList {
+  semesterName: string | null;
+  teachers: ResponsibilityTeacher[];
 }

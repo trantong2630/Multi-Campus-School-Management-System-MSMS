@@ -3,7 +3,7 @@ import { Button, Checkbox, Modal, Skeleton } from 'antd';
 import { InlineAlert } from '@/shared/components/InlineAlert';
 import { message } from '@/shared/lib/antdStatic';
 import { Rocket } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DataTable } from '@/shared/components/DataTable';
 import { confirmAction, showError } from '@/shared/lib/feedback';
 import { formatDate, sessionOfDayLabel, weekdayLabel } from '@/shared/lib/format';
@@ -27,14 +27,18 @@ export function PublishPreviewModal({ versionId, onClose, onPublished }: Props) 
   const qc = useQueryClient();
   const [confirmed, setConfirmed] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [publishedRef, setPublishedRef] = useState(false);
 
   const preview = useQuery({
     queryKey: ['scd', 'preview', versionId],
     queryFn: () => scdApi.preview(versionId!),
-    enabled: versionId !== null,
+    enabled: versionId !== null && !publishedRef,
     gcTime: 0,
   });
   const p = preview.data;
+
+  // Mở lại cho bản khác thì bật xem trước trở lại.
+  useEffect(() => { if (versionId === null) setPublishedRef(false); }, [versionId]);
 
   const close = () => { setConfirmed(false); onClose(); };
 
@@ -43,6 +47,9 @@ export function PublishPreviewModal({ versionId, onClose, onPublished }: Props) 
     setPublishing(true);
     try {
       const res = await scdApi.publish(p.versionId, confirmed);
+      // Bản xem trước chỉ dựng được cho bản Nháp; bỏ nó đi trước, kẻo làm mới lại gọi vào bản đã phát hành và báo lỗi.
+      setPublishedRef(true);
+      qc.removeQueries({ queryKey: ['scd', 'preview'] });
       await qc.invalidateQueries({ queryKey: ['scd'] });
       message.success(`Đã phát hành: xóa ${res.deletedCount} tiết, tạo ${res.createdCount} tiết, thông báo cho ${res.notifiedCount} người.`);
       close();

@@ -9,11 +9,10 @@ import { useAuth } from '@/app/AuthProvider';
 import { DataTable } from '@/shared/components/DataTable';
 import { FilterBar } from '@/shared/components/FilterBar';
 import { PageHeader } from '@/shared/components/PageHeader';
-import { accent } from '@/shared/lib/tokens';
-import { toneOf } from '../components/TimetableGrid';
 import { schApi } from '@/features/sch/api';
 import { formatTime, sessionOfDayLabel, toDateString, weekdayOfDate } from '@/shared/lib/format';
 import { scdApi } from '../api';
+import { subjectColorStyle } from '../subjectColor';
 import type { DaySchedule, MySession, SessionCell } from '../types';
 import '../components/scd.css';
 
@@ -128,10 +127,9 @@ function DayGrid({ day }: { day: DaySchedule }) {
 function SessionTd({ cell }: { cell: SessionCell | null }) {
   if (!cell) return <td className="tt-cell tt-cell--empty" />;
   const state = cell.status === 'Cancelled' ? 'tt-chip--cancelled' : cell.status === 'Pending' ? 'tt-chip--pending' : '';
-  const a = accent[toneOf(cell.subjectAbbr)];
   return (
     <td className="tt-cell" title={`${cell.subjectName} — ${cell.teacherName ?? 'Chờ phân công giáo viên'}`}>
-      <div className={`tt-chip ${state}`} style={{ '--tt-bg': a.bg, '--tt-fg': a.fg } as React.CSSProperties}>
+      <div className={`tt-chip ${state}`} style={subjectColorStyle(cell.subjectId)}>
         <div className="tt-subject">{cell.subjectAbbr}</div>
         <div className="tt-teacher">{cell.teacherAbbr ?? 'Chờ GV'}</div>
       </div>
@@ -300,13 +298,9 @@ function WeekTd({ sessions, detail }: { sessions: WeekSession[]; detail: (s: Wee
       <div className="tt-stack">
         {ordered.map((s) => {
           const state = s.status === 'Cancelled' ? 'tt-chip--cancelled' : s.status === 'Pending' ? 'tt-chip--pending' : '';
-          const a = accent[toneOf(s.subjectAbbr)];
           const note = STATUS_NOTE[s.status];
           return (
-            <div
-              key={s.sessionId} className={`tt-chip ${state}`} title={`${s.subjectName} — ${s.className} — ${s.campusName}`}
-              style={{ '--tt-bg': a.bg, '--tt-fg': a.fg } as React.CSSProperties}
-            >
+            <div key={s.sessionId} className={`tt-chip ${state}`} style={subjectColorStyle(s.subjectId)} title={`${s.subjectName} — ${s.className} — ${s.campusName}`}>
               <div className="tt-subject">{s.subjectName}</div>
               <div className="tt-teacher">{detail(s)}{note && ` · ${note}`}</div>
             </div>

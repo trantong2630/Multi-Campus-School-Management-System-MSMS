@@ -235,7 +235,6 @@ Chốt chữ nào hiện trên màn hình. Mọi màn hình, mọi file xuất E
 | Enrollment | Ghi danh |
 | AccountSession | Phiên đăng nhập (theo thiết bị) |
 | **Responsibility** | **Trách nhiệm** |
-| **TeachingAssignment** | **Phụ trách chuyên môn** |
 | TimetableVersion | Phiên bản thời khóa biểu |
 | TeachingSession | Tiết học |
 | Attendance | Điểm danh |
@@ -251,10 +250,11 @@ Chốt chữ nào hiện trên màn hình. Mọi màn hình, mọi file xuất E
 | Post | Bài đăng |
 | AuditLog | Nhật ký |
 
-Hai dòng in đậm là quy ước riêng của MSMS, không dịch sát nghĩa:
+Dòng in đậm là quy ước riêng của MSMS, không dịch sát nghĩa:
 
 - **Trách nhiệm** = gán cho tài khoản Teacher hoặc Vice Principal: chủ nhiệm lớp, tổ trưởng, phụ trách phân hiệu (spec mục 2.2).
-- **Phụ trách chuyên môn** = gán giáo viên dạy một môn ở một lớp. Spec gọi là **"phân công giảng dạy"**; UI hiển thị **"Phụ trách chuyên môn"**. Hai tên, một thứ.
+
+**Phụ trách chuyên môn** (giáo viên dạy một môn ở một lớp) không có thực thể riêng: tính từ `TimetableEntry` của phiên bản Đã phát hành mới nhất của lớp (spec BR-14). UI hiển thị **"Phụ trách chuyên môn"**.
 
 ### 4.3. Cặp từ dễ gọi lẫn — chốt cứng
 
@@ -315,8 +315,8 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Trang chủ | — |
 | Dashboard | — |
 | Thiết lập | Thông tin trường · Phân hiệu · Tổ chuyên môn & Môn học · Năm học & Học kỳ · Ngày nghỉ · Khung giờ tiết · Lớp & Ghi danh · Kết chuyển năm học |
-| Hồ sơ | Cán bộ · Học sinh · Phụ huynh · Trách nhiệm · Phụ trách chuyên môn |
-| Thời khóa biểu | Thời khóa biểu · Lịch dạy · Giáo viên vắng |
+| Hồ sơ | Cán bộ · Học sinh · Phụ huynh · Trách nhiệm |
+| Thời khóa biểu | Thời khóa biểu · Phụ trách chuyên môn · Lịch dạy · Giáo viên vắng |
 | Điểm danh | — |
 | Học tập | Ngân hàng câu hỏi · Đề · Bài tập · Nhận xét AI · Giám sát tổ |
 | Phụ huynh | Đơn xin nghỉ · Sổ liên lạc · Hộp thư |
@@ -338,9 +338,9 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Dashboard | HT, HP |
 | Thiết lập › Thông tin trường | SA, HT |
 | Thiết lập › mọi mục còn lại | SA |
-| Hồ sơ › Cán bộ · Học sinh · Phụ huynh · Phụ trách chuyên môn | SA, HT, HP |
+| Hồ sơ › Cán bộ · Học sinh · Phụ huynh | SA, HT, HP |
 | Hồ sơ › Trách nhiệm | SA, HT |
-| Thời khóa biểu › Thời khóa biểu · Giáo viên vắng | HP |
+| Thời khóa biểu › Thời khóa biểu · Phụ trách chuyên môn · Giáo viên vắng | HP |
 | Thời khóa biểu › Lịch dạy | HT, HP, GV |
 | Điểm danh | SA, HT, HP, GV, HS, PH |
 | Học tập › Ngân hàng câu hỏi · Đề · Nhận xét AI · Giám sát tổ | GV |
