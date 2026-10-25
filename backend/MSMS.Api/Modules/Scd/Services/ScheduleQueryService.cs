@@ -108,7 +108,7 @@ public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, Sco
             .Where(s => s.Class.CampusId == campusId && s.SessionDate == date)
             .Select(s => new
             {
-                s.SessionId, s.ClassId, s.PeriodSlotId, s.Status, s.Source,
+                s.SessionId, s.ClassId, s.PeriodSlotId, s.Status, s.Source, s.SubjectId,
                 SubjectName = s.Subject.Name, SubjectAbbr = s.Subject.Abbreviation,
                 TeacherName = s.Teacher == null ? null : s.Teacher.Staff.FullName, TeacherAbbr = s.Teacher == null ? null : s.Teacher.TeacherAbbr,
             }).ToListAsync();
@@ -119,7 +119,7 @@ public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, Sco
                 // Một khung có thể có tiết Đã hủy kèm tiết khác: ưu tiên tiết còn hiệu lực.
                 var s = sessions.Where(x => x.ClassId == c.ClassId && x.PeriodSlotId == slot.PeriodSlotId)
                     .OrderBy(x => x.Status == "Cancelled" ? 1 : 0).FirstOrDefault();
-                return s is null ? null : new SessionCellDto(s.SessionId, s.SubjectName, s.SubjectAbbr, s.TeacherName, s.TeacherAbbr, s.Status, s.Source);
+                return s is null ? null : new SessionCellDto(s.SessionId, s.SubjectId, s.SubjectName, s.SubjectAbbr, s.TeacherName, s.TeacherAbbr, s.Status, s.Source);
             }).ToList())).ToList();
 
         return new DayScheduleDto(date, holiday, holiday is not null, classes, rows);
@@ -134,7 +134,7 @@ public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, Sco
             .Where(s => s.TeacherId == user.PersonId && s.SessionDate >= from && s.SessionDate <= to)
             .OrderBy(s => s.SessionDate).ThenBy(s => s.PeriodSlot.StartTime)
             .Select(s => new MySessionDto(s.SessionId, s.SessionDate, s.PeriodSlotId, s.PeriodSlot.SessionOfDay, s.PeriodSlot.PeriodNo,
-                s.PeriodSlot.StartTime, s.PeriodSlot.EndTime, s.Class.Name, s.Class.Campus.Name, s.Subject.Name, s.Subject.Abbreviation, s.Status, s.Source))
+                s.PeriodSlot.StartTime, s.PeriodSlot.EndTime, s.Class.Name, s.Class.Campus.Name, s.SubjectId, s.Subject.Name, s.Subject.Abbreviation, s.Status, s.Source))
             .ToListAsync();
     }
 
@@ -190,7 +190,7 @@ public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, Sco
     private static Task<List<ViewSessionDto>> ProjectSessions(IQueryable<Data.Entities.TeachingSession> query) =>
         query.OrderBy(s => s.SessionDate).ThenBy(s => s.PeriodSlot.StartTime)
             .Select(s => new ViewSessionDto(s.SessionId, s.SessionDate, s.PeriodSlotId, s.PeriodSlot.SessionOfDay, s.PeriodSlot.PeriodNo,
-                s.PeriodSlot.StartTime, s.PeriodSlot.EndTime, s.Class.Name, s.Class.Campus.Name, s.Subject.Name, s.Subject.Abbreviation,
+                s.PeriodSlot.StartTime, s.PeriodSlot.EndTime, s.Class.Name, s.Class.Campus.Name, s.SubjectId, s.Subject.Name, s.Subject.Abbreviation,
                 s.Teacher == null ? null : s.Teacher.Staff.FullName, s.Status, s.Source))
             .ToListAsync();
 }

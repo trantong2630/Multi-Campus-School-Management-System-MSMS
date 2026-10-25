@@ -88,8 +88,6 @@ public partial class MsmsDbContext : DbContext
 
     public virtual DbSet<TeacherAbsence> TeacherAbsence { get; set; }
 
-    public virtual DbSet<TeachingAssignment> TeachingAssignment { get; set; }
-
     public virtual DbSet<TeachingSession> TeachingSession { get; set; }
 
     public virtual DbSet<TimetableEntry> TimetableEntry { get; set; }
@@ -980,38 +978,6 @@ public partial class MsmsDbContext : DbContext
                 .HasForeignKey(d => d.TeacherId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__TeacherAb__Teach__4B7734FF");
-        });
-
-        modelBuilder.Entity<TeachingAssignment>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK__Teaching__3214EC07EC22014A");
-
-            entity.HasIndex(e => new { e.ClassId, e.SubjectId, e.StartDate, e.EndDate }, "IX_TA_ClassSubject");
-
-            entity.HasIndex(e => new { e.TeacherId, e.StartDate, e.EndDate }, "IX_TA_Teacher");
-
-            entity.Property(e => e.CreatedAt)
-                .HasPrecision(0)
-                .HasDefaultValueSql("(CONVERT([datetime2](0),(sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time')))");
-
-            entity.HasOne(d => d.AssignedByPerson).WithMany(p => p.TeachingAssignment)
-                .HasForeignKey(d => d.AssignedByPersonId)
-                .HasConstraintName("FK__TeachingA__Assig__2DE6D218");
-
-            entity.HasOne(d => d.Class).WithMany(p => p.TeachingAssignment)
-                .HasForeignKey(d => d.ClassId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__TeachingA__Class__2B0A656D");
-
-            entity.HasOne(d => d.Subject).WithMany(p => p.TeachingAssignment)
-                .HasForeignKey(d => d.SubjectId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__TeachingA__Subje__2BFE89A6");
-
-            entity.HasOne(d => d.Teacher).WithMany(p => p.TeachingAssignment)
-                .HasForeignKey(d => d.TeacherId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__TeachingA__Teach__2CF2ADDF");
         });
 
         modelBuilder.Entity<TeachingSession>(entity =>

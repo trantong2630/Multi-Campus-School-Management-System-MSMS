@@ -58,13 +58,13 @@ export const menu: MenuGroup[] = [
       { key: 'ppl-student', label: 'Học sinh', path: '/ppl/students', roles: MGMT, ready: false },
       { key: 'ppl-parent', label: 'Phụ huynh', path: '/ppl/parents', roles: MGMT, ready: false },
       { key: 'ppl-resp', label: 'Trách nhiệm', path: '/ppl/responsibilities', roles: ['SchoolAdmin', 'Principal'], ready: true },
-      { key: 'ppl-assign', label: 'Phụ trách chuyên môn', path: '/ppl/teaching-assignments', roles: MGMT, ready: false },
     ],
   },
   {
     key: 'scd', label: 'Thời khóa biểu', icon: CalendarDays, section: 'manage',
     children: [
       { key: 'scd-timetable', label: 'Thời khóa biểu', path: '/scd/timetable', roles: ['VicePrincipal'], ready: true },
+      { key: 'scd-responsibility', label: 'Phụ trách chuyên môn', path: '/scd/responsibilities', roles: ['VicePrincipal'], ready: true },
       { key: 'scd-schedule', label: 'Lịch dạy', path: '/scd/schedule', roles: ['Principal', 'VicePrincipal', 'Teacher'], ready: true },
       { key: 'scd-absence', label: 'Giáo viên vắng', path: '/scd/absences', roles: ['VicePrincipal'], ready: false },
     ],

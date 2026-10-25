@@ -35,8 +35,6 @@ public partial class StaffProfile
 
     public virtual ICollection<TeacherAbsence> TeacherAbsence { get; set; } = new List<TeacherAbsence>();
 
-    public virtual ICollection<TeachingAssignment> TeachingAssignment { get; set; } = new List<TeachingAssignment>();
-
     public virtual ICollection<TeachingSession> TeachingSession { get; set; } = new List<TeachingSession>();
 
     public virtual ICollection<TimetableEntry> TimetableEntry { get; set; } = new List<TimetableEntry>();

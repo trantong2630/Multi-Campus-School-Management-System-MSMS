@@ -1752,52 +1752,6 @@ namespace MSMS.Api.Migrations
                     b.ToTable("TeacherAbsence");
                 });
 
-            modelBuilder.Entity("MSMS.Api.Data.Entities.TeachingAssignment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("AssignedByPersonId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ClassId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasPrecision(0)
-                        .HasColumnType("datetime2(0)")
-                        .HasDefaultValueSql("(CONVERT([datetime2](0),(sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time')))");
-
-                    b.Property<DateOnly?>("EndDate")
-                        .HasColumnType("date");
-
-                    b.Property<DateOnly>("StartDate")
-                        .HasColumnType("date");
-
-                    b.Property<int>("SubjectId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TeacherId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id")
-                        .HasName("PK__Teaching__3214EC07EC22014A");
-
-                    b.HasIndex("AssignedByPersonId");
-
-                    b.HasIndex("SubjectId");
-
-                    b.HasIndex(new[] { "ClassId", "SubjectId", "StartDate", "EndDate" }, "IX_TA_ClassSubject");
-
-                    b.HasIndex(new[] { "TeacherId", "StartDate", "EndDate" }, "IX_TA_Teacher");
-
-                    b.ToTable("TeachingAssignment");
-                });
-
             modelBuilder.Entity("MSMS.Api.Data.Entities.TeachingSession", b =>
                 {
                     b.Property<long>("SessionId")
@@ -2660,40 +2614,6 @@ namespace MSMS.Api.Migrations
                     b.Navigation("Teacher");
                 });
 
-            modelBuilder.Entity("MSMS.Api.Data.Entities.TeachingAssignment", b =>
-                {
-                    b.HasOne("MSMS.Api.Data.Entities.Person", "AssignedByPerson")
-                        .WithMany("TeachingAssignment")
-                        .HasForeignKey("AssignedByPersonId")
-                        .HasConstraintName("FK__TeachingA__Assig__2DE6D218");
-
-                    b.HasOne("MSMS.Api.Data.Entities.Class", "Class")
-                        .WithMany("TeachingAssignment")
-                        .HasForeignKey("ClassId")
-                        .IsRequired()
-                        .HasConstraintName("FK__TeachingA__Class__2B0A656D");
-
-                    b.HasOne("MSMS.Api.Data.Entities.Subject", "Subject")
-                        .WithMany("TeachingAssignment")
-                        .HasForeignKey("SubjectId")
-                        .IsRequired()
-                        .HasConstraintName("FK__TeachingA__Subje__2BFE89A6");
-
-                    b.HasOne("MSMS.Api.Data.Entities.StaffProfile", "Teacher")
-                        .WithMany("TeachingAssignment")
-                        .HasForeignKey("TeacherId")
-                        .IsRequired()
-                        .HasConstraintName("FK__TeachingA__Teach__2CF2ADDF");
-
-                    b.Navigation("AssignedByPerson");
-
-                    b.Navigation("Class");
-
-                    b.Navigation("Subject");
-
-                    b.Navigation("Teacher");
-                });
-
             modelBuilder.Entity("MSMS.Api.Data.Entities.TeachingSession", b =>
                 {
                     b.HasOne("MSMS.Api.Data.Entities.Class", "Class")
@@ -2908,8 +2828,6 @@ namespace MSMS.Api.Migrations
 
                     b.Navigation("LeaveRequest");
 
-                    b.Navigation("TeachingAssignment");
-
                     b.Navigation("TeachingSession");
 
                     b.Navigation("TimetableEntry");
@@ -2995,8 +2913,6 @@ namespace MSMS.Api.Migrations
 
                     b.Navigation("TeacherAbsence");
 
-                    b.Navigation("TeachingAssignment");
-
                     b.Navigation("TeachingSessionCreatedByPerson");
 
                     b.Navigation("TeachingSessionUpdatedByPerson");
@@ -3040,8 +2956,6 @@ namespace MSMS.Api.Migrations
 
                     b.Navigation("TeacherAbsence");
 
-                    b.Navigation("TeachingAssignment");
-
                     b.Navigation("TeachingSession");
 
                     b.Navigation("TimetableEntry");
@@ -3071,8 +2985,6 @@ namespace MSMS.Api.Migrations
                     b.Navigation("Exam");
 
                     b.Navigation("Question");
-
-                    b.Navigation("TeachingAssignment");
 
                     b.Navigation("TeachingSession");
 

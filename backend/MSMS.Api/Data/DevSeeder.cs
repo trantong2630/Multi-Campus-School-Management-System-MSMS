@@ -190,12 +190,6 @@ public static class DevSeeder
             {
                 ClassId = classes[ci].ClassId, StaffId = teachers[ci].Person.PersonId, StartDate = yearStart, CreatedAt = now,
             });
-            foreach (var (person, subjectAbbr) in teachers)
-                db.TeachingAssignment.Add(new TeachingAssignment
-                {
-                    ClassId = classes[ci].ClassId, SubjectId = subjects[subjectAbbr].SubjectId, TeacherId = person.PersonId,
-                    StartDate = yearStart, CreatedAt = now,
-                });
         }
         foreach (var (person, ci) in students)
             db.Enrollment.Add(new Enrollment { StudentId = person.PersonId, ClassId = classes[ci].ClassId, StartDate = yearStart, CreatedAt = now });

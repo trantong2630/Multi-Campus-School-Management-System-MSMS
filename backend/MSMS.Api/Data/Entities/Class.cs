@@ -37,8 +37,6 @@ public partial class Class
 
     public virtual ICollection<LeaveRequest> LeaveRequest { get; set; } = new List<LeaveRequest>();
 
-    public virtual ICollection<TeachingAssignment> TeachingAssignment { get; set; } = new List<TeachingAssignment>();
-
     public virtual ICollection<TeachingSession> TeachingSession { get; set; } = new List<TeachingSession>();
 
     public virtual ICollection<TimetableEntry> TimetableEntry { get; set; } = new List<TimetableEntry>();

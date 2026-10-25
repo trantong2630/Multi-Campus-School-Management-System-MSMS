@@ -77,7 +77,7 @@
   background: var(--c-hoverBg);
 }
 
-/* Viên tiết: nền pastel theo màu môn, chữ môn đậm, vạch màu ở mép trái. */
+/* Viên tiết: nền và  (subjectColor), chữ một màu, tên môn đậm; hủy/chờ ghi đè bằng màu trạng thái. */
 .tt-chip {
   height: 100%;
   min-height: 44px;
@@ -85,9 +85,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  border-radius: var(--radius-md);
-  background: var(--tt-bg, var(--c-green50));
-  box-shadow: inset 3px 0 0 var(--tt-fg, var(--c-green500));
+  background: var(--tt-bg, var(--c-surface));
 }
 
 .tt-subject {
@@ -100,7 +98,7 @@
 .tt-teacher {
   font-size: 11px;
   line-height: 16px;
-  color: var(--c-text2);
+  color: var(--c-text1);
 }
 
 .tt-band td {
@@ -116,7 +114,6 @@
 /* Lịch dạy một ngày: tiết đã hủy xám và gạch ngang, tiết chờ xử lý viền hổ phách. */
 .tt-chip--cancelled {
   background: var(--c-neutralBg);
-  box-shadow: inset 3px 0 0 var(--c-disabled);
 }
 
 .tt-chip--cancelled .tt-subject,
@@ -126,8 +123,8 @@
 }
 
 .tt-chip--pending {
-  background: var(--c-amberBg);
-  box-shadow: inset 3px 0 0 var(--c-amber), 0 0 0 1.5px var(--c-amber);
+  background: var(--c-surface);
+  box-shadow: 0 0 0 1.5px var(--c-amber);
 }
 
 .tt-time {
@@ -219,7 +216,7 @@
 .tt-chip--overlay {
   width: 104px;
   opacity: 0.9;
-  box-shadow: inset 3px 0 0 var(--tt-fg, var(--c-green500)), var(--shadow-pop);
+  box-shadow: var(--shadow-pop);
   cursor: grabbing;
 }
 
@@ -293,4 +290,20 @@
 
 .tt-conflict-item + .tt-conflict-item {
   margin-top: 8px;
+}
+
+/* Phụ trách chuyên môn (SCD-04): mỗi mục một hộp cùng kiểu với ô tiết, tự xuống dòng. */
+.resp-boxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.resp-box {
+  padding: 3px 10px;
+  background: var(--tt-bg, var(--c-surface));
+  color: var(--c-text1);
+  font-size: 13px;
+  line-height: 20px;
+  white-space: nowrap;
 }

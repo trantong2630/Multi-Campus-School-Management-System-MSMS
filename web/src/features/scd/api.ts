@@ -1,6 +1,6 @@
 import { apiClient } from '@/app/apiClient';
 import type {
-  CampusOption, DaySchedule, DraftOptions, GridClass, MySession, PublishPreview, PublishResult, TeacherOption, TimetableImportResult, TimetableVersion,
+  CampusOption, DaySchedule, DraftOptions, GridClass, MySession, PublishPreview, PublishResult, ResponsibilityList, TeacherOption, TimetableImportResult, TimetableVersion,
   VersionGrid, ViewSession,
 } from './types';
 
@@ -36,6 +36,8 @@ export const scdApi = {
   teachers: (campusId: number) => apiClient.get<TeacherOption[]>('/scd/schedule/teachers', { params: { campusId } }).then((r) => r.data),
   byClass: (classId: number, from: string, to: string) =>
     apiClient.get<ViewSession[]>('/scd/schedule/class', { params: { classId, from, to } }).then((r) => r.data),
+  responsibilities: (campusId?: number, subjectId?: number) =>
+    apiClient.get<ResponsibilityList>('/scd/responsibilities', { params: { campusId, subjectId } }).then((r) => r.data),
   byTeacher: (teacherId: number, from: string, to: string) =>
     apiClient.get<ViewSession[]>('/scd/schedule/teacher', { params: { teacherId, from, to } }).then((r) => r.data),
 };

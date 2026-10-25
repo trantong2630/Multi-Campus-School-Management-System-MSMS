@@ -169,9 +169,6 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
         duties.AddRange((await db.HomeroomAssignment.Include(x => x.Class)
             .Where(x => x.StaffId == staffId && (x.EndDate == null || x.EndDate >= today)).ToListAsync())
             .Select(x => new Duty("Homeroom", x.Class.Name, x)));
-        duties.AddRange((await db.TeachingAssignment.Include(x => x.Class).Include(x => x.Subject)
-            .Where(x => x.TeacherId == staffId && (x.EndDate == null || x.EndDate >= today)).ToListAsync())
-            .Select(x => new Duty("Teaching", $"{x.Subject.Name} — {x.Class.Name}", x)));
         return duties;
     }
 

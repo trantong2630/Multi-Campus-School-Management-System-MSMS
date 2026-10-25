@@ -112,8 +112,6 @@ public sealed class StaffService(MsmsDbContext db, IClock clock)
                 duties.Add("tổ trưởng");
             if (await db.HomeroomAssignment.Where(EffectivePeriod.EffectiveAt<HomeroomAssignment>(today)).AnyAsync(x => x.StaffId == id))
                 duties.Add("chủ nhiệm");
-            if (await db.TeachingAssignment.Where(EffectivePeriod.EffectiveAt<TeachingAssignment>(today)).AnyAsync(x => x.TeacherId == id))
-                duties.Add("phụ trách chuyên môn");
             if (duties.Count > 0)
                 throw ApiException.BadRequest($"Cán bộ đang giữ: {string.Join(", ", duties)}. Chuyển giao hoặc kết thúc các trách nhiệm đó trước.");
 

@@ -1,6 +1,6 @@
 # 4. Software Product Development — MSMS
 
-Cấu trúc phân rã: Module → Feature → Task. Mỗi Task là một hành động nghiệp vụ hoàn chỉnh của một actor. Các task thuộc cùng một Feature tô cùng màu ở cột Feature. Căn theo Business Specification V3.1 (Oct 20, 2026) — 9 Module / 33 Feature / 264 Task.
+Cấu trúc phân rã: Module → Feature → Task. Mỗi Task là một hành động nghiệp vụ hoàn chỉnh của một actor. Các task thuộc cùng một Feature tô cùng màu ở cột Feature. Căn theo Business Specification V3.1 (Oct 20, 2026) — 9 Module / 33 Feature / 261 Task.
 
 Cột Platform của mỗi Task: `BE` (không có giao diện), `BE + Web`, hoặc `BE + Web + Mobile`. Mọi Task có giao diện đều có trên web; chỉ một số có thêm trên mobile app (Business Specification V3 mục 8.1–8.2).
 
@@ -81,7 +81,7 @@ Khóa tài khoản khiến người đó không đăng nhập được và phiê
 
 **4.1.15 — Khóa tài khoản giáo viên: chuyển tiết và đóng trách nhiệm / Lock Teacher: Reassign Lessons and Close Duties**  
 `BE + Web` · 1.5 MD · dep: 4.1.14  
-Khóa tài khoản không bị chặn bởi lịch dạy. Cùng một transaction: với tài khoản Teacher, tiết Đã xếp lịch chưa khóa từ hôm nay trở đi ở mọi phân hiệu chuyển Chờ xử lý (Chỉnh tay, để trống giáo viên) và Vice Principal phân hiệu chứa tiết nhận thông báo để xử lý theo 4.4.29–4.4.34; với mọi tài khoản cán bộ, trách nhiệm và phụ trách chuyên môn đang hiệu lực (phụ trách phân hiệu, tổ trưởng, chủ nhiệm, phụ trách chuyên môn) được đặt ngày kết thúc là ngày khóa và quyền mất ngay lúc khóa. Mở khóa lại không khôi phục các trách nhiệm đã đóng. Màn hình cảnh báo số tiết, phân hiệu và danh sách trách nhiệm trước khi xác nhận; Audit ghi số tiết và số trách nhiệm bị ảnh hưởng (BR-05, BR-09).
+Khóa tài khoản không bị chặn bởi lịch dạy. Cùng một transaction: với tài khoản Teacher, tiết Đã xếp lịch chưa khóa từ hôm nay trở đi ở mọi phân hiệu chuyển Chờ xử lý (Chỉnh tay, để trống giáo viên) và Vice Principal phân hiệu chứa tiết nhận thông báo để xử lý theo 4.4.29–4.4.34; với mọi tài khoản cán bộ, trách nhiệm đang hiệu lực (phụ trách phân hiệu, tổ trưởng, chủ nhiệm) được đặt ngày kết thúc là ngày khóa và quyền mất ngay lúc khóa. Mở khóa lại không khôi phục các trách nhiệm đã đóng. Màn hình cảnh báo số tiết, phân hiệu và danh sách trách nhiệm trước khi xác nhận; Audit ghi số tiết và số trách nhiệm bị ảnh hưởng (BR-05, BR-09).
 
 **4.1.16 — Mở khóa tài khoản / Unlock Account**  
 `BE + Web` · 0.5 MD · dep: 4.1.14  
@@ -199,7 +199,7 @@ Sửa tên môn, tổ phụ trách và viết tắt. Đổi viết tắt chỉ �
 
 **4.2.11 — Ngừng hoạt động môn học / Deactivate Subject**  
 `BE + Web` · 0.5 MD · dep: 4.2.9  
-Ngừng dùng môn khi đã có bài tập, phụ trách chuyên môn hay thời khóa biểu tham chiếu tới nó (BR-07).
+Ngừng dùng môn khi đã có bài tập hay thời khóa biểu tham chiếu tới nó (BR-07).
 
 ### SCH-03 Academic Year, Semester & Non-teaching Days (Năm học, Học kỳ & Ngày nghỉ)
 
@@ -307,7 +307,7 @@ Hệ thống dựng danh sách lớp năm mới từ năm cũ, gợi ý tên và
 
 **4.2.36 — Tạo lớp của năm mới từ danh sách gợi ý / Create Classes from Suggestion**  
 `BE + Web` · 1 MD · dep: 4.2.35  
-Tạo lớp đã chốt cho năm mới. KHÔNG sao chép thời khóa biểu, phụ trách chuyên môn hay trách nhiệm — những thứ đó khai lại cho năm mới.
+Tạo lớp đã chốt cho năm mới. KHÔNG sao chép thời khóa biểu hay trách nhiệm — những thứ đó khai lại cho năm mới.
 
 **4.2.37 — Chuyển nguyên lớp sang năm học mới / Move Entire Class to New Year**  
 `BE + Web` · 2 MD · dep: 4.2.36  
@@ -315,7 +315,7 @@ Chuyển toàn bộ học sinh của một lớp năm cũ sang một lớp năm 
 
 **4.2.38 — Kiểm thử kết chuyển năm học / Rollover Tests**  
 `QA` · 1 MD · dep: 4.2.37  
-Chạy lại không sinh ghi danh trùng; dữ liệu năm cũ không bị đụng tới; lớp năm mới không mang theo phụ trách chuyên môn và trách nhiệm của năm cũ.
+Chạy lại không sinh ghi danh trùng; dữ liệu năm cũ không bị đụng tới; lớp năm mới không mang theo trách nhiệm của năm cũ.
 
 ### SCH-07 School Profile (Thông tin trường)
 
@@ -341,7 +341,7 @@ Chỉ Hiệu trưởng và School Admin sửa được; file không phải ảnh
 
 ---
 
-## 4.3 PPL — People & Assignment (Hồ sơ & Phụ trách)
+## 4.3 PPL — People & Responsibility (Hồ sơ & Trách nhiệm)
 
 ### PPL-01 Staff Directory (Danh bạ cán bộ)
 
@@ -371,7 +371,7 @@ Gán viết tắt duy nhất toàn trường, chỉ gồm chữ và số. Không
 
 **4.3.7 — Ngừng hoạt động hồ sơ cán bộ / Deactivate Staff Profile**  
 `BE + Web` · 1 MD · dep: 4.3.4  
-Bị chặn nếu người đó còn trách nhiệm, phụ trách chuyên môn hay tiết dạy sắp tới chưa chuyển giao.
+Bị chặn nếu người đó còn trách nhiệm hay tiết dạy sắp tới chưa chuyển giao.
 
 **4.3.8 — Tải file mẫu import cán bộ / Download Staff Import Template**  
 `BE + Web` · 0.5 MD  
@@ -491,32 +491,6 @@ Liệt kê lớp của năm hiện hành không có trách nhiệm chủ nhiệm
 `QA` · 1.5 MD · dep: 4.3.28, 4.3.30  
 Hết chủ nhiệm thì mất quyền duyệt đơn và xem sổ lớp ngay; chủ nhiệm mới thấy đơn đang chờ; gán trách nhiệm cho sai loại tài khoản bị chặn.
 
-### PPL-05 Teaching Assignment (Phụ trách chuyên môn)
-
-**4.3.36 — Xem lưới phụ trách chuyên môn / View Teaching Assignment Grid**  
-`BE + Web` · 2 MD · dep: 4.2.26, 4.2.9  
-Lưới lớp theo môn của một phân hiệu trong một năm học, mỗi ô hiển thị giáo viên đang phụ trách.
-
-**4.3.37 — Gán giáo viên phụ trách môn ở lớp / Assign Teacher to Class and Subject**  
-`BE + Web` · 2 MD · dep: 4.3.36  
-Vice Principal gán phụ trách chuyên môn cho lớp thuộc phân hiệu mình nhưng chọn giáo viên từ danh sách TOÀN TRƯỜNG, không cần xác nhận chéo. Mỗi (lớp, môn, năm học) có một giáo viên phụ trách chuyên môn đang hiệu lực; người nhận phải có tài khoản Teacher không bị khóa (BR-06, BR-09).
-
-**4.3.38 — Xem nhanh lịch dạy của giáo viên khi chọn / Preview Teacher Schedule While Assigning**  
-`BE + Web` · 1 MD · dep: 4.3.37  
-Khi chọn giáo viên, xem nhanh lịch dạy hiện có của người đó ở mọi phân hiệu để tránh dồn tải.
-
-**4.3.39 — Thay giáo viên đang phụ trách chuyên môn / Replace Assigned Teacher**  
-`BE + Web` · 1.5 MD · dep: 4.3.37  
-Kết thúc bản phụ trách cũ ở ngày liền trước và mở bản mới. Quyền với bài tập của (lớp, môn) luôn theo phụ trách chuyên môn đang hiệu lực, không theo người tạo: người mới tiếp quản, người cũ mất quyền ngay (BR-09).
-
-**4.3.40 — Kết thúc phụ trách chuyên môn / End Teaching Assignment**  
-`BE + Web` · 0.5 MD · dep: 4.3.37  
-Đặt ngày kết thúc là ngày thao tác cho phụ trách chuyên môn; quyền với bài tập của (lớp, môn) mất ngay tại thời điểm thao tác, không đợi hết ngày, cùng quy tắc với 4.3.32 (kết thúc trách nhiệm). Gán lại trong cùng ngày tạo bản mới bắt đầu từ hôm nay. Dữ liệu bài tập đã phát sinh giữ nguyên (BR-09).
-
-**4.3.41 — Kiểm thử chuyển quyền theo phụ trách chuyên môn / Assignment Handover Tests**  
-`QA` · 1.5 MD · dep: 4.3.39  
-Giáo viên mới công bố được điểm bài do người cũ giao; người cũ mất quyền ngay tại thời điểm thay người hoặc kết thúc (không đợi hết ngày); phụ trách chuyên môn không ảnh hưởng quyền điểm danh (quyền đó theo tiết).
-
 ---
 
 ## 4.4 SCD — Timetable & Teaching Schedule (Thời khóa biểu & Lịch dạy)
@@ -603,7 +577,7 @@ Lưới tuần theo lớp và khung giờ của phân hiệu, mỗi ô cho mở 
 
 **4.4.20 — Đổi giáo viên của tiết / Change Lesson Teacher**  
 `BE + Web` · 1.5 MD · dep: 4.4.19  
-Thay giáo viên của một tiết chưa bị khóa. KHÔNG kiểm phụ trách chuyên môn — phụ trách chuyên môn độc lập với thời khóa biểu — nhưng vẫn kiểm xung đột lịch (BR-13, BR-15).
+Thay giáo viên của một tiết chưa bị khóa. KHÔNG đổi phụ trách chuyên môn (tính từ thời khóa biểu đã phát hành, 4.4.38) và vẫn kiểm xung đột lịch (BR-13, BR-14, BR-15).
 
 **4.4.21 — Hủy tiết / Cancel Lesson**  
 `BE + Web` · 1 MD · dep: 4.4.19  
@@ -669,11 +643,25 @@ Xóa khai báo thì các tiết còn Chờ xử lý do khai báo đó được t
 
 **4.4.36 — Xem lịch dạy của mọi giáo viên toàn trường / View School-wide Teacher Calendar**  
 `BE + Web` · 1.5 MD · dep: 4.4.14  
-Màn hình Lịch dạy của Vice Principal chỉ xem phân hiệu mình. Khi chọn người gán phụ trách chuyên môn hoặc dạy thay, danh sách giáo viên và lịch dạy của họ là toàn trường, kiểm trùng lịch cũng toàn trường (BR-13, mục 2.3).
+Màn hình Lịch dạy của Vice Principal chỉ xem phân hiệu mình. Khi chọn giáo viên cho tiết hoặc dạy thay, danh sách giáo viên và lịch dạy của họ là toàn trường, kiểm trùng lịch cũng toàn trường (BR-13, mục 2.3).
 
 **4.4.37 — Kiểm thử xử lý giáo viên vắng / Absence Tests**  
 `QA` · 2 MD · dep: 4.4.28, 4.4.31, 4.4.35  
 Tiết Chờ xử lý để trống giáo viên và không điểm danh được; tiết ở phân hiệu khác cũng bị đưa về Chờ xử lý; gợi ý không trả về người đã có tiết hoặc đang vắng; ba lựa chọn ghi đúng Audit; tiết trống không chiếm chỗ giáo viên khi kiểm xung đột; xóa khai báo trả tiết về đúng giáo viên, bỏ qua tiết đã xử lý và tiết trùng lịch, không khôi phục tiết trống do khóa tài khoản.
+
+### SCD-04 Teaching Responsibility View (Phụ trách chuyên môn)
+
+**4.4.38 — Tính phụ trách chuyên môn từ thời khóa biểu / Derive Subject Responsibility from Timetable**  
+`BE` · 2 MD · dep: 4.4.11  
+Không có bảng riêng, không nhập tay: tính mỗi khi cần. Với mỗi lớp, lấy phiên bản Đã phát hành mới nhất của lớp trong học kỳ hiện hành; lớp không có trong lần Phát hành sau vẫn theo phiên bản trước đó của nó. Giáo viên có tiết của một môn trong phiên bản ấy đang phụ trách chuyên môn môn đó ở lớp đó; số tiết mỗi tuần là số ô của (lớp, môn, giáo viên). Một (lớp, môn) có thể có nhiều giáo viên. Điều chỉnh lịch và dạy thay chỉ đổi lịch dạy nên không đổi kết quả. Là nguồn quyền cho giao bài, công bố điểm, nhận xét AI và hộp thư (BR-14, BR-21, BR-22, BR-23, BR-25).
+
+**4.4.39 — Xem phụ trách chuyên môn toàn trường / View Subject Responsibility**  
+`BE + Web` · 2.5 MD · dep: 4.4.38  
+Màn hình chỉ đọc của Vice Principal, nằm dưới menu Thời khóa biểu. Bảng ba cột: Giáo viên, Phụ trách, Tổng tiết. Mỗi giáo viên một dòng; cột Phụ trách là các hộp, mỗi hộp một mục `Môn Lớp — số tiết`, tự xuống dòng, sắp theo môn rồi lớp, không hiện phân hiệu của lớp. Tổng tiết là tổng số tiết mỗi tuần của giáo viên qua mọi phân hiệu. Bộ lọc Phân hiệu (mặc định là phân hiệu của Vice Principal) và Môn; lọc phân hiệu chỉ chọn giáo viên có tiết ở phân hiệu đó, còn mỗi dòng vẫn hiện đủ mục của giáo viên ở mọi phân hiệu. Không có cảnh báo tải, không tìm theo tên, không xuất Excel (BR-14, mục 2.3).
+
+**4.4.40 — Kiểm thử phụ trách chuyên môn / Subject Responsibility Tests**  
+`QA` · 1.5 MD · dep: 4.4.38, 4.4.39  
+Chưa Phát hành thì chưa có phụ trách; Phát hành đổi giáo viên của một (lớp, môn) thì người mới có quyền ngay và người cũ mất quyền ngay; lớp không có trong lần Phát hành sau vẫn theo phiên bản trước; đổi giáo viên của tiết hoặc dạy thay không đổi phụ trách chuyên môn; giáo viên dạy nhiều phân hiệu có tổng tiết đúng và Vice Principal phân hiệu khác vẫn thấy đủ mục; một (lớp, môn) nhiều giáo viên hiện đủ từng người.
 
 ---
 
@@ -806,7 +794,7 @@ Người khác không sửa được câu và đề của mình; đề đã giao
 ### LRN-02 Assignment & Submission (Giao bài & Nộp bài)
 
 **4.6.16 — Giao đề cho lớp / Assign Quiz to Class**  
-`BE + Web` · 2 MD · dep: 4.6.10, 4.3.37  
+`BE + Web` · 2 MD · dep: 4.6.10, 4.4.38  
 Teacher ĐANG PHỤ TRÁCH CHUYÊN MÔN ở (lớp, môn của đề) giao ĐỀ MÌNH SỞ HỮU cho lớp đó, chọn thời điểm mở (mặc định ngay) và hạn nộp lớn hơn hiện tại. Khi bài chuyển sang Đã giao, hệ thống lưu danh sách học sinh có ghi danh hiệu lực ở lớp lúc đó làm DANH SÁCH ĐƯỢC GIAO; danh sách này không đổi khi học sinh chuyển lớp về sau (BR-21).
 
 **4.6.17 — Cập nhật bài đang ở Nháp / Update Draft Assignment**  
@@ -1010,7 +998,7 @@ Nhập bù điểm danh và đơn duyệt muộn được phản ánh ngay lần
 ### PAR-03 Parent–Teacher Messaging (Hộp thư phụ huynh – giáo viên)
 
 **4.7.15 — Tạo hội thoại với giáo viên / Create Conversation**  
-`BE + Web + Mobile` · 2 MD · dep: 4.3.37, 4.3.30  
+`BE + Web + Mobile` · 2 MD · dep: 4.4.38, 4.3.30  
 Chỉ Parent TẠO hội thoại, về một con được liên kết, với chủ nhiệm lớp con đang học hoặc giáo viên đang phụ trách chuyên môn ở lớp đó. Mỗi bộ (phụ huynh, cán bộ, học sinh) có một hội thoại (BR-25).
 
 **4.7.16 — Xem danh sách hội thoại / View Conversation List**  
@@ -1155,7 +1143,7 @@ Xem nội dung đầy đủ của một bản ghi, gồm danh sách ID của tha
 
 **4.9.9 — Kiểm thử tính chỉ ghi thêm / Append-only Tests**  
 `QA` · 1 MD · dep: 4.9.5  
-Không có API sửa hay xóa nhật ký; quyền CSDL chặn UPDATE và DELETE; việc ngoài ba nhóm (đăng nhập, nộp bài, điểm danh, trách nhiệm, phụ trách chuyên môn, kết chuyển) không vào nhật ký.
+Không có API sửa hay xóa nhật ký; quyền CSDL chặn UPDATE và DELETE; việc ngoài ba nhóm (đăng nhập, nộp bài, điểm danh, trách nhiệm, kết chuyển) không vào nhật ký.
 
 ### ADM-03 Data Export (Xuất dữ liệu)
 
@@ -1177,4 +1165,4 @@ Mỗi mục chỉ xuất đúng phạm vi của người gọi; danh sách tài 
 
 ---
 
-**Tổng:** 264 task · 355 MD
+**Tổng:** 261 task · 352.5 MD
