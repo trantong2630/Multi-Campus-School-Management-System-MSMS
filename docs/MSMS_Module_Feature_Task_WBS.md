@@ -529,23 +529,23 @@ Vice Principal chọn phân hiệu và học kỳ, Backend dựng file ngay lúc
 
 **4.4.2 — Tải lên file thời khóa biểu / Upload Timetable File**  
 `BE + Web` · 2.5 MD · dep: 4.4.1  
-Một file phủ ĐỦ MỌI LỚP của phân hiệu trong một học kỳ. Hàng là Thứ × Buổi × Tiết (Thứ 2–7), cột là lớp đọc từ cột D sang phải tới ô tiêu đề trống đầu tiên; mỗi ô ghi MÔN-GV, ô trống là tiết trống. Thiếu lớp nào là lỗi (BR-12).
+Một file gồm các lớp muốn đổi của phân hiệu trong một học kỳ. Hàng là Thứ × Buổi × Tiết (Thứ 2–7), cột là lớp đọc từ cột D sang phải tới ô tiêu đề trống đầu tiên; mỗi ô ghi MÔN-GV, ô trống là tiết trống. Mỗi lớp có trong file được ghi đè khi Phát hành, lớp không có trong file giữ nguyên (BR-12).
 
 **4.4.3 — Đối chiếu viết tắt môn và giáo viên / Resolve Subject and Teacher Short Codes**  
 `BE` · 1.5 MD · dep: 4.4.2  
 Tách ô theo dấu gạch ngang ĐẦU TIÊN, đối chiếu không phân biệt hoa thường và bỏ khoảng trắng thừa. Giáo viên phải có viết tắt và tài khoản Teacher không bị khóa — Chờ đổi mật khẩu vẫn hợp lệ (BR-06, BR-12).
 
 **4.4.4 — Xem bảng lỗi theo ô của file / View Cell-level Import Errors**  
-`BE + Web` · 2 MD · dep: 4.4.3  
-Mọi lỗi kèm địa chỉ ô và giá trị gốc: viết tắt không khớp, giáo viên không đủ điều kiện dạy, tên lớp không thuộc phạm vi, hai cột cùng tên lớp, thiếu lớp, hàng tiêu đề bị sửa, (Buổi, Tiết) không có trong khung giờ, một giáo viên ở hai lớp cùng (Thứ, Buổi, Tiết). Có một lỗi là từ chối CẢ FILE (BR-12).
+`BE + Web` · 1.5 MD · dep: 4.4.3  
+Mọi lỗi kèm địa chỉ ô và giá trị gốc: viết tắt không khớp, giáo viên không đủ điều kiện dạy, tên lớp không thuộc phạm vi, hai cột cùng tên lớp, hàng tiêu đề bị sửa, (Buổi, Tiết) không có trong khung giờ, một giáo viên ở hai lớp cùng (Thứ, Buổi, Tiết). Có một lỗi là từ chối CẢ FILE (BR-12).
 
 **4.4.5 — Lưu file hợp lệ thành phiên bản nháp / Save Draft Timetable Version**  
 `BE` · 1 MD · dep: 4.4.4  
-File hợp lệ được lưu thành một phiên bản Nháp của (phân hiệu, học kỳ). Mỗi phiên bản là hồ sơ của một lần import (BR-12, BR-14).
+File hợp lệ được lưu thành một phiên bản Nháp của (phân hiệu, học kỳ), chỉ chứa các lớp có trong file. Mỗi phiên bản là hồ sơ của một lần import (BR-12, BR-14).
 
-**4.4.6 — Xem lưới phiên bản nháp / View Draft Timetable Version**  
-`BE + Web` · 1.5 MD · dep: 4.4.5  
-Xem lại nội dung đã import dưới dạng lưới trước khi chạy xem trước.
+**4.4.6 — Xem và kéo thả sửa lưới bản nháp / View and Drag-edit Draft Timetable**  
+`BE + Web` · 4 MD · dep: 4.4.5, 4.4.8  
+Xem bản Nháp dạng lưới và sửa ngay trên lưới. Kéo một tiết sang ô khác trong cùng cột lớp: ô trống thì chuyển, ô có tiết thì đổi chỗ; không kéo sang lớp khác. Thao tác gây xung đột vẫn lưu, ô xung đột viền đỏ. Lưu ngay mỗi lần thả, đánh dấu ô khác file import, có nút khôi phục bản Nháp về nội dung file import. Chỉ sửa được phiên bản đang Nháp (BR-12, BR-13).
 
 **4.4.7 — Xem danh sách phiên bản thời khóa biểu / View Timetable Versions**  
 `BE + Web` · 1 MD · dep: 4.4.5  
@@ -553,11 +553,11 @@ Xem các phiên bản Nháp và Đã phát hành của một phân hiệu và h�
 
 **4.4.8 — Kiểm xung đột lịch toàn trường / Check School-wide Schedule Conflicts**  
 `BE` · 2 MD · dep: 4.4.5  
-Quy tắc dùng chung: trùng lịch là cùng NGÀY và cùng KHUNG GIỜ. Mỗi lớp có tối đa một tiết Đã xếp lịch hoặc Chờ xử lý, và mỗi giáo viên có tối đa một tiết Đã xếp lịch (tiết Chờ xử lý để trống giáo viên), tại một (ngày, khung giờ), kiểm trên toàn trường vì giáo viên dạy nhiều phân hiệu (BR-13).
+Quy tắc dùng chung: trùng lịch là cùng NGÀY và cùng KHUNG GIỜ. Mỗi lớp có tối đa một tiết Đã xếp lịch hoặc Chờ xử lý, và mỗi giáo viên có tối đa một tiết Đã xếp lịch (tiết Chờ xử lý để trống giáo viên), tại một (ngày, khung giờ), kiểm trên toàn trường vì giáo viên dạy nhiều phân hiệu (BR-13). Tính cả tiết của các lớp không có trong bản Nháp (còn nguyên lịch hiện hành). Một hàm kiểm dùng chung cho bản Nháp, mọi thao tác sửa nháp và Phát hành; tính lại sau mỗi lần sửa nháp.
 
 **4.4.9 — Xem trước kết quả phát hành / Preview Publish Result**  
 `BE + Web` · 2 MD · dep: 4.4.8  
-Hiển thị số tiết sẽ xóa và sẽ tạo, nhóm theo lớp và ngày, kèm CẢNH BÁO số tiết Chỉnh tay, tiết bù và tiết Chờ xử lý sẽ bị xóa — người dùng phải xác nhận. Xem trước không được lưu lại; lúc bấm Phát hành hệ thống tính lại (BR-14).
+Hộp xác nhận hiện khi bấm Phát hành: số tiết sẽ xóa và sẽ tạo, nhóm theo lớp và ngày, kèm CẢNH BÁO số tiết Chỉnh tay, tiết bù và tiết Chờ xử lý sẽ bị xóa — người dùng phải xác nhận — và danh sách lớp vẫn không có tiết nào sau Phát hành (cảnh báo, không chặn). Chỉ tính các lớp có trong bản Nháp. Xem trước không được lưu lại; lúc xác nhận hệ thống tính lại (BR-14).
 
 **4.4.10 — Xem danh sách xung đột giáo viên / View Teacher Conflicts**  
 `BE + Web` · 1.5 MD · dep: 4.4.8  
@@ -565,15 +565,15 @@ Mỗi dòng xung đột ghi rõ tiết đang chiếm chỗ thuộc phân hiệu 
 
 **4.4.11 — Phát hành thời khóa biểu / Publish Timetable**  
 `BE + Web` · 2.5 MD · dep: 4.4.9, 4.4.10  
-Một transaction, hai bước: xóa mọi tiết của phân hiệu trong học kỳ TỪ NGÀY MAI TRỞ ĐI — ghi đè sạch, không giữ tiết đã chỉnh tay — rồi sinh lại từ file trong khoảng max(ngày mai, ngày bắt đầu học kỳ) đến hết học kỳ, bỏ qua ngày nghỉ. Tiết đã qua và tiết đã có điểm danh không bao giờ bị đụng tới (BR-14).
+Một transaction, hai bước: xóa mọi tiết của các lớp có trong bản Nháp, trong học kỳ, TỪ NGÀY MAI TRỞ ĐI — ghi đè sạch, không giữ tiết đã chỉnh tay; lớp không có trong bản Nháp không bị đụng tới — rồi sinh lại từ bản Nháp trong khoảng max(ngày mai, ngày bắt đầu học kỳ) đến hết học kỳ, bỏ qua ngày nghỉ. Tiết đã qua và tiết đã có điểm danh không bao giờ bị đụng tới. Phát hành lại là import file mới cho cùng (phân hiệu, học kỳ) rồi Phát hành đúng hai bước này. Nguồn sự thật của thời khóa biểu hiện hành là LỊCH DẠY, không phải phiên bản (BR-14).
 
-**4.4.12 — Phát hành lại thời khóa biểu / Republish Timetable**  
-`BE + Web` · 1.5 MD · dep: 4.4.11  
-Import file mới cho cùng (phân hiệu, học kỳ) rồi Phát hành lần nữa; chạy đúng hai bước trên. Nguồn sự thật của thời khóa biểu hiện hành là LỊCH DẠY, không phải phiên bản (BR-14).
+**4.4.12 — Thêm, đổi giáo viên, xóa tiết trên bản nháp / Add, Reassign, Remove Lesson in Draft**  
+`BE + Web` · 2.5 MD · dep: 4.4.6  
+Nhấp vào ô của lưới nháp: ô trống thì chọn môn (môn đang dùng của trường) và giáo viên để thêm tiết; ô có tiết thì đổi giáo viên hoặc xóa tiết. Giáo viên phải có viết tắt và là Teacher không bị khóa. Thao tác gây xung đột vẫn lưu và viền đỏ ô (BR-12, BR-13).
 
-**4.4.13 — Gửi thông báo gộp sau khi sinh lại tiết / Notify Affected Teachers**  
-`BE` · 1.5 MD · dep: 4.4.11  
-Sau khi sinh lại, gửi MỘT thông báo gộp cho mỗi giáo viên có tiết thực sự thay đổi; giáo viên có lịch không đổi thì không nhận thông báo. Ghi Audit kèm số tiết xóa và tạo (BR-14, BR-26, BR-28).
+**4.4.13 — Gửi thông báo chung sau Phát hành / Notify After Publish**  
+`BE` · 0.5 MD · dep: 4.4.11  
+Gửi MỘT thông báo chung "đã có thời khóa biểu mới" cho giáo viên có tiết trong bản Nháp và học sinh của các lớp trong bản Nháp. Không so sánh lịch cũ và mới. Ghi Audit kèm số tiết xóa và tạo (BR-14, BR-26, BR-28).
 
 **4.4.14 — Xem lưới thời khóa biểu của phân hiệu / View Campus Timetable Grid**  
 `BE + Web` · 2 MD · dep: 4.4.11  
@@ -592,8 +592,8 @@ Học sinh xem lịch học của lớp mình theo ngày và theo tuần.
 Phụ huynh xem lịch học của từng con được liên kết.
 
 **4.4.18 — Kiểm thử phát hành và phát hành lại / Publish Tests**  
-`QA` · 2.5 MD · dep: 4.4.11, 4.4.12  
-Tiết đã qua và tiết đã điểm danh không bị xóa; tiết Chỉnh tay tương lai bị xóa đúng như cảnh báo; còn xung đột thì không Phát hành được; ngày nghỉ không sinh tiết; chỉ giáo viên có tiết đổi mới nhận thông báo.
+`QA` · 3.5 MD · dep: 4.4.6, 4.4.11, 4.4.12  
+Tiết đã qua và tiết đã điểm danh không bị xóa; tiết Chỉnh tay tương lai bị xóa đúng như cảnh báo; còn xung đột thì không Phát hành được; ngày nghỉ không sinh tiết; Phát hành chỉ ghi đè các lớp có trong bản Nháp, lớp ngoài file giữ nguyên; kéo thả (chuyển, đổi chỗ, không kéo sang lớp khác), thêm, đổi giáo viên, xóa tiết và khôi phục bản Nháp; xung đột với tiết của lớp ngoài file và của phân hiệu khác; thông báo chung chỉ tới đúng giáo viên và học sinh của các lớp trong bản Nháp.
 
 ### SCD-02 Schedule Adjustment (Điều chỉnh lịch dạy)
 
@@ -1177,4 +1177,4 @@ Mỗi mục chỉ xuất đúng phạm vi của người gọi; danh sách tài 
 
 ---
 
-**Tổng:** 264 task · 352 MD
+**Tổng:** 264 task · 355 MD

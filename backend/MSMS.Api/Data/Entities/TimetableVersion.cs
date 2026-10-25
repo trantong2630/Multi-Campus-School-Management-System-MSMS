@@ -27,6 +27,9 @@ public partial class TimetableVersion
 
     public int? CreatedSessionCount { get; set; }
 
+    /// <summary>Nội dung file import dạng JSON, để đánh dấu ô đã sửa và khôi phục bản Nháp về file import.</summary>
+    public string? ImportSnapshot { get; set; }
+
     public virtual Campus Campus { get; set; } = null!;
 
     public virtual Person? ImportedByPerson { get; set; }
@@ -38,4 +41,6 @@ public partial class TimetableVersion
     public virtual ICollection<TeachingSession> TeachingSession { get; set; } = new List<TeachingSession>();
 
     public virtual ICollection<TimetableEntry> TimetableEntry { get; set; } = new List<TimetableEntry>();
+
+    public virtual ICollection<TimetableVersionClass> TimetableVersionClass { get; set; } = new List<TimetableVersionClass>();
 }

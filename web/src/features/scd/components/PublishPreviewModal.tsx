@@ -14,13 +14,16 @@ import './scd.css';
 interface Props {
   versionId: number | null;
   onClose: () => void;
+  /** Gọi sau khi Phát hành thành công, để màn mở hộp thoại này đóng theo. */
+  onPublished?: () => void;
 }
 
 /**
- * Xem trước trước khi Phát hành (BR-14): số tiết xóa và tạo, cảnh báo tiết Chỉnh tay / tiết bù / tiết Chờ xử lý sẽ bị xóa,
- * danh sách xung đột giáo viên. Còn xung đột là chặn Phát hành. Xem trước không lưu gì; lúc phát hành hệ thống tính lại.
+ * Hộp xác nhận khi Phát hành (BR-14): số tiết xóa và tạo của các lớp trong bản Nháp, cảnh báo tiết Chỉnh tay / tiết bù / tiết Chờ xử lý
+ * sẽ bị xóa, lớp vẫn chưa có tiết nào, danh sách xung đột giáo viên. Còn xung đột là chặn Phát hành.
+ * Xem trước không lưu gì; lúc phát hành hệ thống tính lại.
  */
-export function PublishPreviewModal({ versionId, onClose }: Props) {
+export function PublishPreviewModal({ versionId, onClose, onPublished }: Props) {
   const qc = useQueryClient();
   const [confirmed, setConfirmed] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -41,8 +44,9 @@ export function PublishPreviewModal({ versionId, onClose }: Props) {
     try {
       const res = await scdApi.publish(p.versionId, confirmed);
       await qc.invalidateQueries({ queryKey: ['scd'] });
-      message.success(`Đã phát hành: xóa ${res.deletedCount} tiết, tạo ${res.createdCount} tiết, thông báo cho ${res.notifiedTeachers} giáo viên.`);
+      message.success(`Đã phát hành: xóa ${res.deletedCount} tiết, tạo ${res.createdCount} tiết, thông báo cho ${res.notifiedCount} người.`);
       close();
+      onPublished?.();
     } catch (e) {
       showError(e, 'Không phát hành được');
       void preview.refetch();
@@ -98,7 +102,7 @@ export function PublishPreviewModal({ versionId, onClose }: Props) {
               <InlineAlert
                 type="error"
                 title={`Còn ${p.conflicts.length} xung đột giáo viên — chặn phát hành`}
-                description="Giáo viên đang có tiết ở phân hiệu khác cùng khung giờ. Hiệu phó phân hiệu kia sửa lịch, hoặc quản trị hệ thống gỡ, rồi xem trước lại."
+                description="Giáo viên đang có tiết khác cùng khung giờ, trong chính bản Nháp hoặc ở lớp và phân hiệu khác. Sửa bản Nháp, hoặc nhờ hiệu phó phân hiệu kia sửa lịch, rồi xem trước lại."
               />
               <DataTable<TeacherConflict>
                 rowKey={(c) => `${c.teacherAbbr}|${c.dayOfWeek}|${c.sessionOfDay}|${c.periodNo}|${c.occupiedClassName}`}
@@ -106,13 +110,21 @@ export function PublishPreviewModal({ versionId, onClose }: Props) {
                 columns={[
                   { title: 'Giáo viên', key: 't', width: 160, render: (_: unknown, c: TeacherConflict) => <>{c.teacherName} <code className="mono">{c.teacherAbbr}</code></> },
                   { title: 'Khung giờ', key: 'slot', width: 150, render: (_: unknown, c: TeacherConflict) => `${weekdayLabel(c.dayOfWeek)}, ${sessionOfDayLabel(c.sessionOfDay)} tiết ${c.periodNo}` },
-                  { title: 'Lớp trong file', dataIndex: 'newClassName', width: 110 },
+                  { title: 'Lớp trong bản Nháp', dataIndex: 'newClassName', width: 130 },
                   { title: 'Đang chiếm chỗ', key: 'occ', render: (_: unknown, c: TeacherConflict) => `${c.occupiedSubject} ${c.occupiedClassName} · ${c.occupiedCampusName}` },
                   { title: 'Hiệu phó phụ trách', dataIndex: 'occupiedViceName', width: 160, render: (v: string | null) => v ?? <span className="muted">Chưa có</span> },
                   { title: 'Số buổi', dataIndex: 'sessionCount', width: 90, align: 'right', className: 'tabular' },
                 ]}
               />
             </div>
+          )}
+
+          {p.classesWithoutLessons.length > 0 && (
+            <InlineAlert
+              type="warning"
+              title={`${p.classesWithoutLessons.length} lớp vẫn chưa có tiết nào trong học kỳ`}
+              description={`${p.classesWithoutLessons.join(', ')}. Không chặn phát hành; kiểm tra xem có quên lớp nào trong file không.`}
+            />
           )}
 
           {needsConfirm && (

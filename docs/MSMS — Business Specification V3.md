@@ -146,11 +146,12 @@ Mọi tính năng phục vụ một trong bốn luồng. Tính năng không nằ
 
 ### Luồng A — Vận hành giảng dạy
 
-1. **Vice Principal** tải file mẫu thời khóa biểu — hệ thống sinh theo cấu hình và điền sẵn bản phát hành gần nhất — sửa rồi import theo học kỳ. Hệ thống đối chiếu viết tắt, báo ô lỗi, kiểm xung đột toàn trường (BR-12, BR-13).
-2. **Vice Principal** xem trước kết quả, xác nhận cảnh báo về tiết sẽ bị xóa, rồi Phát hành. Hệ thống sinh tiết học tới hết học kỳ, trừ ngày nghỉ (BR-14).
-3. Khi có việc phát sinh, **Vice Principal** đổi giáo viên, hủy tiết, thêm tiết bù, hoặc khai ngày nghỉ đột xuất (BR-15).
-4. Giáo viên vắng: **Vice Principal** khai báo, hệ thống đưa các tiết bị ảnh hưởng về Chờ xử lý và gợi ý giáo viên rảnh; Vice Principal quyết định từng tiết (BR-16).
-5. **Giáo viên của tiết** điểm danh trong ngày của tiết. Sau ngày đó chỉ **School Admin** nhập bù hoặc sửa (BR-17).
+1. **Vice Principal** tải file mẫu thời khóa biểu — hệ thống sinh theo cấu hình và điền sẵn bản phát hành gần nhất — sửa rồi import theo học kỳ; file chỉ cần gồm các lớp muốn đổi. Hệ thống đối chiếu viết tắt, báo ô lỗi; file hợp lệ thành bản Nháp (BR-12).
+2. **Vice Principal** sửa bản Nháp ngay trên lưới — kéo tiết, thêm tiết, đổi giáo viên, xóa tiết — và xem các xung đột lịch toàn trường được đánh dấu tại ô (BR-12, BR-13).
+3. **Vice Principal** xem trước kết quả, xác nhận cảnh báo về tiết sẽ bị xóa, rồi Phát hành. Hệ thống sinh tiết học tới hết học kỳ cho các lớp trong bản Nháp, trừ ngày nghỉ (BR-14).
+4. Khi có việc phát sinh, **Vice Principal** đổi giáo viên, hủy tiết, thêm tiết bù, hoặc khai ngày nghỉ đột xuất (BR-15).
+5. Giáo viên vắng: **Vice Principal** khai báo, hệ thống đưa các tiết bị ảnh hưởng về Chờ xử lý và gợi ý giáo viên rảnh; Vice Principal quyết định từng tiết (BR-16).
+6. **Giáo viên của tiết** điểm danh trong ngày của tiết. Sau ngày đó chỉ **School Admin** nhập bù hoặc sửa (BR-17).
 
 ### Luồng B — Học tập
 
@@ -232,7 +233,7 @@ Màn hình Thiết lập chỉ dành cho SA; HT chỉ có màn hình Thông tin 
 
 | ID | Feature | Nội dung chính | Ghi | Đọc | BR |
 | --- | --- | --- | --- | --- | --- |
-| SCD-01 | Import & Phát hành thời khóa biểu | Tải mẫu điền sẵn, import cả phân hiệu theo học kỳ, đối chiếu viết tắt, bảng lỗi theo ô, kiểm xung đột toàn trường, xem trước, Phát hành và Phát hành lại | HP | lưới TKB: HP · lịch cá nhân: GV 📱, HS 📱, PH 📱 | BR-06, 12, 13, 14 |
+| SCD-01 | Import & Phát hành thời khóa biểu | Tải mẫu điền sẵn, import theo học kỳ (file gồm các lớp cần đổi), đối chiếu viết tắt, bảng lỗi theo ô, sửa bản Nháp bằng kéo thả, kiểm xung đột toàn trường, xem trước, Phát hành và Phát hành lại | HP | lưới TKB: HP · lịch cá nhân: GV 📱, HS 📱, PH 📱 | BR-06, 12, 13, 14 |
 | SCD-02 | Điều chỉnh lịch dạy | Đổi giáo viên của tiết, hủy tiết, thêm tiết bù, khai ngày nghỉ đột xuất, xem trước số tiết sẽ bị hủy | HP | GV 📱, HS 📱, PH 📱 | BR-13, 15 |
 | SCD-03 | Xử lý giáo viên vắng | Khai báo và xóa khai báo giáo viên vắng, danh sách tiết Chờ xử lý, gợi ý giáo viên rảnh, xử lý từng tiết theo ba lựa chọn | HP | HP | BR-13, 16 |
 
@@ -408,26 +409,35 @@ Danh sách cột bắt buộc và tùy chọn của từng file nằm trong `MSM
 
 **BR-12 — File thời khóa biểu.** Một bố cục Excel lưới duy nhất: hàng là Thứ × Buổi × Tiết (Thứ 2–7), cột là lớp. Ba ô meta bắt buộc: Phân hiệu, Năm học, Học kỳ. Mỗi ô ghi **`MÔN-GV`** (viết tắt môn – viết tắt giáo viên); ô trống là tiết trống. Đối chiếu không phân biệt hoa thường, bỏ khoảng trắng thừa; dấu `-` đầu tiên là dấu tách.
 
-**File mẫu do hệ thống sinh, không phải file tĩnh.** Vice Principal chọn phân hiệu + học kỳ và bấm "Tải mẫu"; Backend dựng file ngay lúc đó: số hàng theo **khung giờ đã khai**, số cột theo **lớp của (phân hiệu, năm học)**, ba ô meta điền sẵn, và **nội dung điền sẵn theo phiên bản Đã phát hành gần nhất** của (phân hiệu, học kỳ) đó — chưa có phiên bản nào thì để trống. Nhờ vậy sửa lịch vài lớp là tải về, sửa vài ô, tải lên.
+**File mẫu do hệ thống sinh, không phải file tĩnh.** Vice Principal chọn phân hiệu + học kỳ và bấm "Tải mẫu"; Backend dựng file ngay lúc đó: số hàng theo **khung giờ đã khai**, số cột theo **lớp của (phân hiệu, năm học)**, ba ô meta điền sẵn, và **nội dung điền sẵn theo phiên bản Đã phát hành gần nhất** của (phân hiệu, học kỳ) đó — chưa có phiên bản nào thì để trống. Nhờ vậy sửa lịch vài lớp là tải về, sửa vài ô, xóa các cột lớp không đổi, tải lên.
 
-**Một file phủ đủ mọi lớp của phân hiệu.** Đọc các cột lớp từ cột D sang phải tới ô tiêu đề trống đầu tiên; thiếu lớp nào là lỗi.
+**File chỉ cần gồm các lớp muốn đổi.** Đọc các cột lớp từ cột D sang phải tới ô tiêu đề trống đầu tiên. Mỗi lớp có trong file được ghi đè hoàn toàn khi Phát hành — cột lớp để trống toàn bộ nghĩa là lớp không có tiết nào; lớp không có trong file giữ nguyên lịch hiện hành.
 
-Lỗi kèm địa chỉ ô: viết tắt môn hoặc viết tắt giáo viên không khớp; giáo viên không đủ điều kiện dạy (BR-06); tên lớp không thuộc (phân hiệu, năm học); hai cột cùng một tên lớp; thiếu lớp của phân hiệu; hàng tiêu đề bị sửa; hàng có (Buổi, Tiết) không nằm trong khung giờ đã khai; một giáo viên xuất hiện ở hai lớp trong cùng (Thứ, Buổi, Tiết). **Có một lỗi là từ chối cả file**, không import một phần. File hợp lệ được lưu thành một phiên bản **Nháp**.
+Lỗi kèm địa chỉ ô: viết tắt môn hoặc viết tắt giáo viên không khớp; giáo viên không đủ điều kiện dạy (BR-06); tên lớp không thuộc (phân hiệu, năm học); hai cột cùng một tên lớp; hàng tiêu đề bị sửa; hàng có (Buổi, Tiết) không nằm trong khung giờ đã khai; một giáo viên xuất hiện ở hai lớp trong cùng (Thứ, Buổi, Tiết). **Có một lỗi là từ chối cả file**, không import một phần. File hợp lệ được lưu thành một phiên bản **Nháp** chỉ chứa các lớp có trong file.
 
-**BR-13 — Xung đột lịch.** Trùng lịch = cùng **ngày** và cùng **khung giờ**. Trong toàn trường, mỗi lớp có tối đa một tiết Đã xếp lịch hoặc Chờ xử lý, và mỗi giáo viên có tối đa một tiết Đã xếp lịch, tại một (ngày, khung giờ). Tiết Chờ xử lý để trống giáo viên nên không chiếm chỗ của ai (BR-16). Áp dụng cho Phát hành, mọi điều chỉnh tay, và lọc gợi ý giáo viên rảnh. Giáo viên dạy nhiều phân hiệu được kiểm chung.
+**Sửa bản Nháp.** Trước khi Phát hành, Vice Principal sửa bản Nháp ngay trên lưới, không cần import lại. Chỉ sửa được phiên bản đang Nháp, và chỉ trong các lớp của phiên bản đó. Bốn thao tác:
 
-**BR-14 — Phát hành và Phát hành lại.** Vice Principal Phát hành một phiên bản Nháp. Trước đó hệ thống chạy **xem trước** và hiển thị: số tiết sẽ xóa và sẽ tạo, nhóm theo lớp và ngày; **cảnh báo số tiết Chỉnh tay, tiết bù và tiết Chờ xử lý sẽ bị xóa**, người dùng phải xác nhận; và danh sách xung đột giáo viên. Mỗi dòng xung đột ghi rõ **tiết đang chiếm chỗ thuộc phân hiệu nào và ai là Vice Principal phụ trách phân hiệu đó**, vì Vice Principal chỉ sửa được tiết của phân hiệu mình nên xung đột liên phân hiệu phải do Vice Principal phía kia sửa.
+- **Kéo tiết** sang ô khác trong cùng cột lớp: thả vào ô trống thì chuyển tiết, thả vào ô có tiết thì đổi chỗ hai tiết. Không kéo sang lớp khác.
+- **Thêm tiết** vào ô trống: chọn một môn đang dùng của trường và một giáo viên.
+- **Đổi giáo viên** của tiết.
+- **Xóa tiết.**
+
+Giáo viên được chọn phải đủ điều kiện như file import (BR-06, BR-12). Thao tác gây xung đột (BR-13) **vẫn được lưu** và ô xung đột được đánh dấu tại ô, để Vice Principal đi qua trạng thái trung gian khi đổi nhiều tiết; còn xung đột thì Phát hành bị chặn (BR-14). Mỗi thao tác lưu ngay vào bản Nháp; ô khác với nội dung file import được đánh dấu, và khôi phục được toàn bộ bản Nháp về nội dung file import. Sửa bản Nháp không đụng tới lịch dạy, không tạo thông báo và không ghi Audit.
+
+**BR-13 — Xung đột lịch.** Trùng lịch = cùng **ngày** và cùng **khung giờ**. Trong toàn trường, mỗi lớp có tối đa một tiết Đã xếp lịch hoặc Chờ xử lý, và mỗi giáo viên có tối đa một tiết Đã xếp lịch, tại một (ngày, khung giờ). Tiết Chờ xử lý để trống giáo viên nên không chiếm chỗ của ai (BR-16). Áp dụng cho bản Nháp (BR-12), Phát hành, mọi điều chỉnh tay, và lọc gợi ý giáo viên rảnh. Giáo viên dạy nhiều phân hiệu được kiểm chung. Khi kiểm bản Nháp, các lớp không có trong phiên bản vẫn được tính theo lịch hiện hành, vì chúng không bị ghi đè.
+
+**BR-14 — Phát hành và Phát hành lại.** Vice Principal Phát hành một phiên bản Nháp. Khi bấm Phát hành, hệ thống chạy **xem trước** trong hộp xác nhận và hiển thị: số tiết sẽ xóa và sẽ tạo, nhóm theo lớp và ngày; **cảnh báo số tiết Chỉnh tay, tiết bù và tiết Chờ xử lý sẽ bị xóa**, người dùng phải xác nhận; **danh sách lớp của (phân hiệu, năm học) vẫn không có tiết nào** trong học kỳ sau Phát hành (cảnh báo, không chặn); và danh sách xung đột giáo viên. Mỗi dòng xung đột ghi rõ **tiết đang chiếm chỗ thuộc phân hiệu nào và ai là Vice Principal phụ trách phân hiệu đó**, vì Vice Principal chỉ sửa được tiết của phân hiệu mình nên xung đột liên phân hiệu phải do Vice Principal phía kia sửa.
 
 **Còn xung đột giáo viên là chặn Phát hành.**
 
 Phát hành chạy trong **một transaction**, hai bước:
 
-1. **Xóa** mọi tiết của phân hiệu, trong học kỳ đó, **từ ngày mai trở đi** — **ghi đè sạch**, không giữ lại tiết đã chỉnh tay.
-2. **Sinh lại** từ file, khoảng từ **max(ngày mai, ngày bắt đầu học kỳ)** đến hết học kỳ, chỉ các ngày không phải ngày nghỉ của toàn trường hoặc của phân hiệu đó.
+1. **Xóa** mọi tiết của **các lớp có trong phiên bản**, trong học kỳ đó, **từ ngày mai trở đi** — **ghi đè sạch**, không giữ lại tiết đã chỉnh tay. Lớp không có trong phiên bản không bị đụng tới.
+2. **Sinh lại** từ phiên bản, khoảng từ **max(ngày mai, ngày bắt đầu học kỳ)** đến hết học kỳ, chỉ các ngày không phải ngày nghỉ của toàn trường hoặc của phân hiệu đó.
 
 **Tiết đã qua và tiết đã có điểm danh không bao giờ bị đụng tới.**
 
-Xem trước **không được lưu lại**; lúc bấm Phát hành hệ thống tính lại và thực hiện, nên con số cuối cùng mới là con số ghi vào phiên bản. Phát hành thành công: phiên bản thành Đã phát hành; **phiên bản trước không bị đổi trạng thái** — mỗi phiên bản là hồ sơ của một lần import, đọc lại được như lịch sử.
+Xem trước **không được lưu lại**; lúc bấm Phát hành hệ thống tính lại và thực hiện, nên con số cuối cùng mới là con số ghi vào phiên bản. Phát hành thành công: phiên bản thành Đã phát hành; **phiên bản trước không bị đổi trạng thái** — mỗi phiên bản là hồ sơ của một lần import, đọc lại được như lịch sử. Hệ thống gửi **một thông báo chung** (BR-26) và ghi Audit (BR-28). **Phát hành lại** là import file mới cho cùng (phân hiệu, học kỳ) rồi Phát hành theo đúng hai bước trên.
 
 **Nguồn sự thật của thời khóa biểu hiện hành là lịch dạy**, không phải phiên bản — vì chỉ lịch dạy mới phản ánh các điều chỉnh tay ở BR-15 và BR-16. Mọi màn hình xem lịch và mục xuất Excel đều đọc từ lịch dạy.
 
@@ -512,7 +522,7 @@ Không xếp hạng, không điểm trung bình lớp, không hạnh kiểm. M�
 
 | Sự kiện | Người nhận |
 | --- | --- |
-| Phát hành thời khóa biểu | Giáo viên có tiết thực sự thay đổi — gộp một thông báo mỗi người |
+| Phát hành thời khóa biểu | Giáo viên có tiết trong phiên bản và học sinh của các lớp trong phiên bản — một thông báo chung "đã có thời khóa biểu mới" mỗi người |
 | Tiết bị đổi giáo viên, hủy, thêm bù, ngày nghỉ đột xuất, trả lại giáo viên khi xóa khai báo vắng | Giáo viên liên quan; học sinh của lớp |
 | Tiết chuyển Chờ xử lý | Vice Principal của phân hiệu chứa tiết |
 | Đơn nghỉ mới | Chủ nhiệm (BR-19) |

@@ -42,4 +42,6 @@ public partial class Class
     public virtual ICollection<TeachingSession> TeachingSession { get; set; } = new List<TeachingSession>();
 
     public virtual ICollection<TimetableEntry> TimetableEntry { get; set; } = new List<TimetableEntry>();
+
+    public virtual ICollection<TimetableVersionClass> TimetableVersionClass { get; set; } = new List<TimetableVersionClass>();
 }
