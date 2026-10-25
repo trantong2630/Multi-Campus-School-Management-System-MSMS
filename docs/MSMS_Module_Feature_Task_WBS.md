@@ -2,6 +2,8 @@
 
 Cấu trúc phân rã: Module → Feature → Task. Mỗi Task là một hành động nghiệp vụ hoàn chỉnh của một actor. Các task thuộc cùng một Feature tô cùng màu ở cột Feature. Căn theo Business Specification V3.1 (Oct 20, 2026) — 9 Module / 33 Feature / 264 Task.
 
+Cột Platform của mỗi Task: `BE` (không có giao diện), `BE + Web`, hoặc `BE + Web + Mobile`. Mọi Task có giao diện đều có trên web; chỉ một số có thêm trên mobile app (Business Specification V3 mục 8.1–8.2).
+
 ## Mục lục
 - 4.1 IAM — Identity & Access (Định danh & Truy cập)
 - 4.2 SCH — School Setup (Thiết lập trường)

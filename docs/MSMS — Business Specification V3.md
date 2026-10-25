@@ -557,6 +557,8 @@ Mỗi điều dưới đây nếu thêm vào sẽ làm lược đồ khó thiế
 
 ### 8.1. Phạm vi mobile
 
+**Web là nền tảng đầy đủ: mọi chức năng có giao diện đều có trên web, cho mọi loại tài khoản. Mobile chỉ là một phần trong đó.**
+
 > **Mobile chỉ có việc làm được bằng một tay, giữa hai tiết, tại lớp. Mọi màn hình dạng bảng, lưới, import, cấu hình chỉ có trên web.**
 
 | Actor | Mobile |
@@ -574,6 +576,8 @@ Chỉ có trên web: soạn câu hỏi và đề, giao bài, xem kết quả bà
 | `BE` | Chỉ Backend: lược đồ, service dùng chung, quy tắc không có giao diện riêng |
 | `BE + Web` | Có giao diện web, không có mobile |
 | `BE + Web + Mobile` | Có cả hai |
+
+Mọi Task có giao diện đều mang `Web`; `Mobile` chỉ thêm vào khi Task thuộc phạm vi mục 8.1. Không có Task nào chỉ có Mobile mà không có Web.
 | `QA` | Kiểm thử phân quyền và ràng buộc trên môi trường kiểm thử (mục 2.5) |
 
 ### 8.3. Việc kỹ thuật còn để mở
