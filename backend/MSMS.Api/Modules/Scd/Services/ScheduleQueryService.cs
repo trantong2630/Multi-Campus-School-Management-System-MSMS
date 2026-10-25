@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
 using MSMS.Api.Data;
@@ -8,7 +8,7 @@ using MSMS.Api.Modules.Scd.Dtos;
 namespace MSMS.Api.Modules.Scd.Services;
 
 /// <summary>Phần đọc của SCD-01: danh sách phiên bản, lưới phiên bản, lịch dạy theo ngày, lịch dạy của giáo viên.</summary>
-public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, ScopeResolver scope)
+public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, ScopeResolver scope, TimetablePublishService publish)
 {
     /// <summary>Phân hiệu người dùng được thao tác: School Admin và Principal thấy tất cả, Vice Principal chỉ phân hiệu đang phụ trách.</summary>
     public async Task<List<CampusOptionDto>> MyCampusesAsync()
@@ -35,6 +35,10 @@ public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, Sco
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Lưới của một phiên bản, chỉ gồm các lớp có trong phiên bản. Bản Nháp (người có quyền sửa) kèm ô xung đột, ô đã khác file import
+    /// và danh sách xung đột để Vice Principal sửa ngay trên lưới (BR-12, BR-13).
+    /// </summary>
     public async Task<VersionGridDto> GetVersionGridAsync(int versionId)
     {
         var version = await db.TimetableVersion.AsNoTracking().Include(v => v.Campus).Include(v => v.Semester)
@@ -44,18 +48,27 @@ public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, Sco
         var entries = await db.TimetableEntry.AsNoTracking().Where(e => e.VersionId == versionId)
             .Select(e => new
             {
-                e.ClassId, ClassName = e.Class.Name, e.Class.GradeLevel, e.DayOfWeek, e.PeriodSlotId,
-                e.PeriodSlot.SessionOfDay, e.PeriodSlot.PeriodNo,
+                e.ClassId, e.DayOfWeek, e.PeriodSlotId, e.SubjectId, e.TeacherId,
                 SubjectAbbr = e.Subject.Abbreviation, SubjectName = e.Subject.Name,
                 TeacherAbbr = e.Teacher.TeacherAbbr, TeacherName = e.Teacher.Staff.FullName,
             }).ToListAsync();
 
-        var classes = await db.Class.AsNoTracking()
-            .Where(c => c.CampusId == version.CampusId && c.AcademicYearId == version.Semester.AcademicYearId && c.IsActive)
-            .OrderBy(c => c.GradeLevel).ThenBy(c => c.Name).Select(c => new GridClassDto(c.ClassId, c.Name)).ToListAsync();
+        var classes = await db.TimetableVersionClass.AsNoTracking().Where(vc => vc.VersionId == versionId)
+            .OrderBy(vc => vc.Class.GradeLevel).ThenBy(vc => vc.Class.Name)
+            .Select(vc => new GridClassDto(vc.ClassId, vc.Class.Name)).ToListAsync();
         var slots = await db.PeriodSlot.AsNoTracking().Where(p => p.IsActive)
             .OrderBy(p => p.SessionOfDay == SessionOfDay.Morning ? 0 : 1).ThenBy(p => p.PeriodNo).ToListAsync();
 
+        var isDraft = version.Status == "Draft";
+        IReadOnlyList<TeacherConflictDto> conflicts = [];
+        HashSet<(int ClassId, int Day, int SlotId)> conflictCells = [];
+        if (isDraft && await scope.CanManageCampusAsync(version.CampusId))
+            (conflicts, conflictCells) = await publish.DraftConflictsAsync(versionId);
+
+        var snapshot = isDraft ? DraftSnapshot.Parse(version.ImportSnapshot) : null;
+        var original = snapshot?.Select(x => (x.ClassId, x.DayOfWeek, x.PeriodSlotId, x.SubjectId, x.TeacherId)).ToHashSet();
+
+        var byKey = entries.ToDictionary(e => (e.ClassId, (int)e.DayOfWeek, e.PeriodSlotId));
         var rows = new List<GridRowDto>();
         for (var day = 2; day <= 7; day++)
         {
@@ -63,13 +76,15 @@ public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, Sco
             {
                 var cells = classes.Select(c =>
                 {
-                    var e = entries.FirstOrDefault(x => x.ClassId == c.ClassId && x.DayOfWeek == day && x.PeriodSlotId == slot.PeriodSlotId);
-                    return e is null ? null : new GridCellDto(e.SubjectAbbr, e.SubjectName, e.TeacherAbbr ?? "", e.TeacherName);
+                    if (!byKey.TryGetValue((c.ClassId, day, slot.PeriodSlotId), out var e)) return null;
+                    var edited = original is not null && !original.Contains((e.ClassId, day, e.PeriodSlotId, e.SubjectId, e.TeacherId));
+                    return new GridCellDto(e.SubjectId, e.SubjectAbbr, e.SubjectName, e.TeacherId, e.TeacherAbbr ?? "", e.TeacherName,
+                        conflictCells.Contains((c.ClassId, day, slot.PeriodSlotId)), edited);
                 }).ToList();
-                rows.Add(new GridRowDto(day, slot.SessionOfDay, slot.PeriodNo, cells));
+                rows.Add(new GridRowDto(day, slot.PeriodSlotId, slot.SessionOfDay, slot.PeriodNo, cells));
             }
         }
-        return new VersionGridDto(versionId, version.Status, version.Campus.Name, version.Semester.Name, classes, rows);
+        return new VersionGridDto(versionId, version.Status, version.Campus.Name, version.Semester.Name, classes, rows, conflicts, snapshot is not null);
     }
 
     /// <summary>Lịch dạy một ngày của phân hiệu — đọc từ lịch dạy (TeachingSession), nguồn sự thật của thời khóa biểu hiện hành (BR-14).</summary>

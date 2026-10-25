@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 using MSMS.Api.Common.Auth;
@@ -14,7 +14,8 @@ namespace MSMS.Api.Modules.Scd.Services;
 
 /// <summary>
 /// BR-12: đọc file lưới, đối chiếu viết tắt, báo lỗi theo địa chỉ ô. Có một lỗi là từ chối cả file,
-/// không import một phần. File hợp lệ được lưu thành một phiên bản Nháp.
+/// không import một phần. File chỉ cần gồm các lớp muốn đổi; file hợp lệ được lưu thành một phiên bản Nháp
+/// chỉ chứa các lớp có trong file.
 /// </summary>
 public sealed partial class TimetableImportService(MsmsDbContext db, CurrentUser user, ScopeResolver scope, IClock clock)
 {
@@ -91,9 +92,6 @@ public sealed partial class TimetableImportService(MsmsDbContext db, CurrentUser
                     Err(header, "Lớp", $"Lớp \"{name}\" không thuộc {campus.Name}, năm học {year.Name}. Sửa tên lớp hoặc tạo lớp ở Thiết lập.");
                 else classColumns.Add((col, cls));
             }
-            foreach (var cls in classes.Where(c => !seenClassCols.ContainsKey(c.Name)).OrderBy(c => c.GradeLevel).ThenBy(c => c.Name))
-                errors.Add(new ImportError($"Dòng {TimetableLayout.HeaderRow}", "Lớp", cls.Name,
-                    $"Thiếu lớp {cls.Name} của {campus.Name}. Một file phải phủ đủ mọi lớp của phân hiệu."));
 
             // ---- Danh mục tra cứu ----
             var slots = await db.PeriodSlot.AsNoTracking().Where(p => p.IsActive).ToListAsync();
@@ -188,8 +186,8 @@ public sealed partial class TimetableImportService(MsmsDbContext db, CurrentUser
                 }
             }
 
-            if (errors.Count == 0 && entries.Count == 0)
-                errors.Add(new ImportError("Cả file", "Nội dung", "", "File chưa có tiết nào. Điền ít nhất một ô MÔN-GV rồi tải lên."));
+            if (errors.Count == 0 && classColumns.Count == 0)
+                errors.Add(new ImportError("Cả file", "Nội dung", "", "File chưa có cột lớp nào. Giữ ít nhất một cột lớp từ tệp mẫu rồi tải lên."));
             if (errors.Count > 0) return Rejected(errors);
 
             var version = new TimetableVersion
@@ -198,6 +196,8 @@ public sealed partial class TimetableImportService(MsmsDbContext db, CurrentUser
                 SourceFileName = fileName.Length > 255 ? fileName[..255] : fileName,
                 ImportedByPersonId = user.PersonId, ImportedAt = clock.Now,
                 TimetableEntry = entries,
+                TimetableVersionClass = classColumns.Select(cc => new TimetableVersionClass { ClassId = cc.Class.ClassId }).ToList(),
+                ImportSnapshot = DraftSnapshot.Serialize(entries),
             };
             db.TimetableVersion.Add(version);
             await db.SaveChangesAsync();

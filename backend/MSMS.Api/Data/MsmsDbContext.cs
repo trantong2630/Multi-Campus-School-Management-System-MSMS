@@ -94,6 +94,8 @@ public partial class MsmsDbContext : DbContext
 
     public virtual DbSet<TimetableEntry> TimetableEntry { get; set; }
 
+    public virtual DbSet<TimetableVersionClass> TimetableVersionClass { get; set; }
+
     public virtual DbSet<TimetableVersion> TimetableVersion { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -1105,6 +1107,21 @@ public partial class MsmsDbContext : DbContext
                 .HasForeignKey(d => d.VersionId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Timetable__Versi__3A4CA8FD");
+        });
+
+        modelBuilder.Entity<TimetableVersionClass>(entity =>
+        {
+            entity.HasKey(e => new { e.VersionId, e.ClassId }).HasName("PK_TimetableVersionClass");
+
+            entity.HasOne(d => d.Class).WithMany(p => p.TimetableVersionClass)
+                .HasForeignKey(d => d.ClassId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TimetableVersionClass_Class");
+
+            entity.HasOne(d => d.Version).WithMany(p => p.TimetableVersionClass)
+                .HasForeignKey(d => d.VersionId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TimetableVersionClass_Version");
         });
 
         modelBuilder.Entity<TimetableVersion>(entity =>
