@@ -20,7 +20,6 @@ namespace MSMS.Api.Data.Entities
     public partial class CampusLeadership : IResponsibilityRecord { }
     public partial class DepartmentHead : IResponsibilityRecord { }
     public partial class HomeroomAssignment : IResponsibilityRecord { }
-    public partial class TeachingAssignment : IEffectivePeriod { }
     public partial class Enrollment : IEffectivePeriod { }
 }
 

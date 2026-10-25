@@ -81,8 +81,6 @@ public partial class Person
 
     public virtual ICollection<TeacherAbsence> TeacherAbsence { get; set; } = new List<TeacherAbsence>();
 
-    public virtual ICollection<TeachingAssignment> TeachingAssignment { get; set; } = new List<TeachingAssignment>();
-
     public virtual ICollection<TeachingSession> TeachingSessionCreatedByPerson { get; set; } = new List<TeachingSession>();
 
     public virtual ICollection<TeachingSession> TeachingSessionUpdatedByPerson { get; set; } = new List<TeachingSession>();

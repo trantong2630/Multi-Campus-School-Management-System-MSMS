@@ -1,10 +1,9 @@
 import { DndContext, DragOverlay, PointerSensor, useDndContext, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { Fragment, useRef, useState } from 'react';
-import { accent } from '@/shared/lib/tokens';
-import type { AccentName } from '@/shared/lib/tokens';
 import { sessionOfDayLabel, weekdayLabel } from '@/shared/lib/format';
 import type { GridCell, VersionGrid } from '../types';
+import { subjectColorStyle } from '../subjectColor';
 import './scd.css';
 
 export interface CellPos {
@@ -118,19 +117,9 @@ export function TimetableGrid({ grid, edit }: { grid: VersionGrid; edit?: GridEd
   );
 }
 
-export const SUBJECT_TONES: AccentName[] = ['green', 'sky', 'violet', 'amber', 'coral', 'teal'];
-
-/** Cùng một môn luôn ra cùng một màu: băm viết tắt môn vào bảng màu nhấn. */
-export function toneOf(abbr: string): AccentName {
-  let h = 0;
-  for (const ch of abbr) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  return SUBJECT_TONES[h % SUBJECT_TONES.length];
-}
-
 function Chip({ cell, className = '' }: { cell: GridCell; className?: string }) {
-  const a = accent[toneOf(cell.subjectAbbr)];
   return (
-    <div className={`tt-chip ${className}`} style={{ '--tt-bg': a.bg, '--tt-fg': a.fg } as React.CSSProperties}>
+    <div className={`tt-chip ${className}`} style={subjectColorStyle(cell.subjectId)}>
       <div className="tt-subject">{cell.subjectAbbr}</div>
       <div className="tt-teacher">{cell.teacherAbbr}</div>
     </div>
