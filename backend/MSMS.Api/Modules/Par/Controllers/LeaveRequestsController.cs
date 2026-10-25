@@ -16,6 +16,9 @@ public class LeaveRequestsController(LeaveRequestService parentService, Homeroom
     [HttpGet("student/{studentId:int}"), Authorize(Policy = Policies.Parent)]
     public Task<IEnumerable<ParentLeaveItemDto>> GetParentLeaves(int studentId) => parentService.GetParentLeavesAsync(studentId);
 
+    [HttpGet("my-children"), Authorize(Policy = Policies.Parent)]
+    public Task<IEnumerable<MyChildDto>> GetMyChildren() => parentService.GetMyChildrenAsync();
+
     [HttpPut("{id:int}/withdraw"), Authorize(Policy = Policies.Parent)]
     public async Task<IActionResult> Withdraw(int id) { await parentService.WithdrawAsync(id); return NoContent(); }
 
