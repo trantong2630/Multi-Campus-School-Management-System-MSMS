@@ -41,3 +41,5 @@ public record HomeroomLeaveItemDto(
     DateTime? DecidedAt,
     string? DecisionNote);
 
+public record MyChildDto(int StudentId, string StudentCode, string FullName, string? ClassName, int? ClassId);
+
