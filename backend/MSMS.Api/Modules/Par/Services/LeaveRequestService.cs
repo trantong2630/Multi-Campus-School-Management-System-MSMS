@@ -119,4 +119,26 @@ public sealed class LeaveRequestService(MsmsDbContext db, IClock clock, CurrentU
         leaveRequest.Status = "Withdrawn";
         await db.SaveChangesAsync();
     }
+
+    public async Task<IEnumerable<MyChildDto>> GetMyChildrenAsync()
+    {
+        return await db.ParentStudentLink
+            .Where(l => l.ParentId == currentUser.PersonId)
+            .Select(l => new MyChildDto(
+                l.Student.StudentId,
+                l.Student.Student.PersonCode,
+                l.Student.Student.FullName,
+                l.Student.Enrollment
+                    .Where(e => e.EndDate == null || e.EndDate >= clock.Today)
+                    .OrderByDescending(e => e.StartDate)
+                    .Select(e => e.Class.Name)
+                    .FirstOrDefault(),
+                l.Student.Enrollment
+                    .Where(e => e.EndDate == null || e.EndDate >= clock.Today)
+                    .OrderByDescending(e => e.StartDate)
+                    .Select(e => (int?)e.ClassId)
+                    .FirstOrDefault()
+            ))
+            .ToListAsync();
+    }
 }

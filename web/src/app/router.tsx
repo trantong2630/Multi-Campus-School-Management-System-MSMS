@@ -4,6 +4,7 @@ import { iamRoutes } from '@/features/iam/routes';
 import { pplRoutes } from '@/features/ppl/routes';
 import { schRoutes } from '@/features/sch/routes';
 import { scdRoutes } from '@/features/scd/routes';
+import { parRoutes } from '@/features/par/routes';
 import { ForgotPasswordPage } from '@/features/iam/pages/ForgotPasswordPage';
 import { LoginPage } from '@/features/iam/pages/LoginPage';
 import { AppLayout } from './AppLayout';
@@ -19,7 +20,7 @@ export const router = createBrowserRouter([
       {
         path: '/',
         element: <AppLayout />,
-        children: [...admRoutes, ...iamRoutes, ...schRoutes, ...pplRoutes, ...scdRoutes],
+        children: [...admRoutes, ...iamRoutes, ...schRoutes, ...pplRoutes, ...scdRoutes, ...parRoutes],
       },
     ],
   },
