@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using MSMS.Api.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace MSMS.Api.Data;
 
+//database context
 public partial class MsmsDbContext : DbContext
 {
     public MsmsDbContext(DbContextOptions<MsmsDbContext> options)
