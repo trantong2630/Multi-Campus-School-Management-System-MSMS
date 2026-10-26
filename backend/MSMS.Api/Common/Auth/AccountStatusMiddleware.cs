@@ -6,6 +6,7 @@ using MSMS.Api.Modules.Iam.Services;
 namespace MSMS.Api.Common.Auth;
 
 /// <summary>BR-05: đọc trạng thái tài khoản mỗi request. Khóa giữa phiên bị từ chối ngay; tài khoản chờ đổi mật khẩu chỉ gọi được vài đường.</summary>
+///  đọc trạng thái, sử dụng api auth
 public sealed class AccountStatusMiddleware(RequestDelegate next)
 {
     private static readonly string[] AllowedWhenPending = ["/api/auth/change-password", "/api/auth/me", "/api/auth/logout"];
