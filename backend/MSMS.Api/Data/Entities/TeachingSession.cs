@@ -23,8 +23,6 @@ public partial class TeachingSession
 
     public int? VersionId { get; set; }
 
-    public long? OriginalSessionId { get; set; }
-
     public int? TeacherAbsenceId { get; set; }
 
     public string? ChangeNote { get; set; }
@@ -42,10 +40,6 @@ public partial class TeachingSession
     public virtual Class Class { get; set; } = null!;
 
     public virtual Person? CreatedByPerson { get; set; }
-
-    public virtual ICollection<TeachingSession> InverseOriginalSession { get; set; } = new List<TeachingSession>();
-
-    public virtual TeachingSession? OriginalSession { get; set; }
 
     public virtual PeriodSlot PeriodSlot { get; set; } = null!;
 

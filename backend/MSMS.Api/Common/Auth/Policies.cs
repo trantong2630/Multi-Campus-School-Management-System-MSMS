@@ -15,6 +15,8 @@ public static class Policies
     public const string DashboardReader = nameof(DashboardReader);     // Dashboard: Principal (toàn trường hoặc lọc phân hiệu), VicePrincipal (phân hiệu mình)
     public const string CampusReader = nameof(CampusReader);           // đọc dữ liệu phân hiệu: SchoolAdmin, Principal, VicePrincipal
     public const string Teacher = nameof(Teacher);
+    public const string StaffOrFamily = nameof(StaffOrFamily);   // cán bộ, học sinh, phụ huynh: đọc dữ liệu cấu hình dùng chung (khung giờ tiết)
+    public const string Student = nameof(Student);
     public const string Parent = nameof(Parent);
 
 
@@ -36,7 +38,10 @@ public static class Policies
             AccountTypes.Principal, AccountTypes.VicePrincipal));
         o.AddPolicy(Staff, p => p.RequireClaim(CurrentUser.TypeClaim,
             AccountTypes.SchoolAdmin, AccountTypes.Principal, AccountTypes.VicePrincipal, AccountTypes.Teacher));
+        o.AddPolicy(StaffOrFamily, p => p.RequireClaim(CurrentUser.TypeClaim,
+            AccountTypes.SchoolAdmin, AccountTypes.Principal, AccountTypes.VicePrincipal, AccountTypes.Teacher, AccountTypes.Student, AccountTypes.Parent));
         o.AddPolicy(Teacher, p => p.RequireClaim(CurrentUser.TypeClaim, AccountTypes.Teacher));
+        o.AddPolicy(Student, p => p.RequireClaim(CurrentUser.TypeClaim, AccountTypes.Student));
         o.AddPolicy(Parent, p => p.RequireClaim(CurrentUser.TypeClaim, AccountTypes.Parent));
 
     }

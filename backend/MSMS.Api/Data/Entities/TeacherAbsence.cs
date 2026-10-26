@@ -13,7 +13,8 @@ public partial class TeacherAbsence
 
     public DateOnly ToDate { get; set; }
 
-    public string SessionOfDay { get; set; } = null!;
+    /// <summary>Các tiết vắng, cách nhau bằng dấu phẩy (mã khung giờ). Trống nghĩa là vắng cả ngày.</summary>
+    public string? SlotIds { get; set; }
 
     public string? Reason { get; set; }
 
