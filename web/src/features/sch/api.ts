@@ -1,5 +1,5 @@
 import { apiClient } from '@/app/apiClient';
-import type { AcademicYear, Campus, Department, Holiday, PeriodSlot, SchoolClass, SchoolProfile, Subject } from './types';
+import type { AcademicYear, Campus, Department, Holiday, PeriodSlot, Roster, SchoolClass, SchoolProfile, StudentCandidate, Subject } from './types';
 
 /** Đường dẫn ảnh logo; tham số v đổi theo lần cập nhật để trình duyệt không giữ logo cũ. */
 export const schoolLogoUrl = (version: number | null) => `/api/school/logo?v=${version ?? 0}`;
@@ -60,5 +60,12 @@ export const schApi = {
     create: (b: object) => post<SchoolClass>('/sch/classes', b),
     update: (id: number, b: object) => put(`/sch/classes/${id}`, b),
     setActive: (id: number, isActive: boolean) => put(`/sch/classes/${id}/active`, { isActive }),
+  },
+  enrollments: {
+    roster: (classId: number, date: string) => get<Roster>(`/sch/classes/${classId}/roster`, { date }),
+    candidates: (yearId: number, search: string) => get<StudentCandidate[]>('/sch/enrollments/candidates', { yearId, search }),
+    enroll: (classId: number, b: object) => post(`/sch/classes/${classId}/enrollments`, b),
+    transfer: (id: number, b: object) => post(`/sch/enrollments/${id}/transfer`, b),
+    close: (id: number, b: object) => post(`/sch/enrollments/${id}/close`, b),
   },
 };

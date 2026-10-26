@@ -35,3 +35,12 @@ public record ClassUpdateRequest(string Name, byte GradeLevel);
 // SCH-07 Thông tin trường
 public record SchoolProfileDto(string? Name, string? Address, string? PhoneNumber, string? Email, string? Website, bool HasLogo, long? LogoVersion);
 public record SchoolProfileRequest(string Name, string? Address, string? PhoneNumber, string? Email, string? Website);
+
+// SCH-05 Ghi danh
+public record RosterItemDto(int EnrollmentId, int StudentId, string PersonCode, string FullName, DateOnly? DateOfBirth,
+    string? Gender, DateOnly StartDate, DateOnly? EndDate, string? Reason);
+public record RosterDto(int ClassId, string ClassName, DateOnly Date, IReadOnlyList<RosterItemDto> Students);
+public record StudentCandidateDto(int StudentId, string PersonCode, string FullName, DateOnly? DateOfBirth);
+public record EnrollRequest(int StudentId, DateOnly StartDate);
+public record TransferRequest(int ToClassId, DateOnly EffectiveDate);
+public record CloseEnrollmentRequest(string Reason);
