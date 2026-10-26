@@ -427,7 +427,7 @@ Any table or list whose rows are people (staff, students, parents, accounts) lea
 - Error: border `danger`, 12px message below the field. The message must state **cause and remedy**, not just failure (Conventions §4.6).
 - Modal: radius `lg`, 18/600 `text1` title, width 520 (standard) / 720 (contains a table). Footer right-aligned, Đóng left of Lưu.
 - Long forms (about 8 fields or more, e.g. a staff profile) use `FormModal` with `variant="drawer"`: slides in from the right, width 640, two-column `form-grid`, footer pinned to the bottom with Đóng · Lưu right-aligned. Same validation, error and close rules as the modal.
-- **Irreversible actions** (cancel session, publish timetable, declare ad-hoc holiday, lock account) require a confirm modal containing a **numeric impact summary**, e.g. `"Sẽ hủy 23 tiết của 6 lớp."`
+- **Irreversible actions** (cancel session, publish timetable, lock account) require a confirm modal containing a **numeric impact summary**, e.g. `"Sẽ hủy 23 tiết của 6 lớp."`
 
 ### 8.5 Status
 
