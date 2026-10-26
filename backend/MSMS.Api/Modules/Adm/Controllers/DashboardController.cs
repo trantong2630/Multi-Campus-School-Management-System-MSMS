@@ -5,7 +5,7 @@ using MSMS.Api.Modules.Adm.Dtos;
 using MSMS.Api.Modules.Adm.Services;
 
 namespace MSMS.Api.Modules.Adm.Controllers;
-
+// check 
 [ApiController, Route("api/adm/dashboard"), Authorize(Policy = Policies.DashboardReader)]
 public class DashboardController(DashboardService dashboard) : ControllerBase
 {
