@@ -303,7 +303,7 @@ Màu badge: xanh lá = đang hiệu lực · vàng = chờ · xám = nháp hoặ
 
 - Không xưng "bạn". Viết câu không chủ ngữ: *"Tiết đã qua, không sửa được."*
 - Lỗi phải nêu nguyên nhân kèm cách xử lý, không chỉ báo sai: *"Trùng lịch với tiết Toán 7A1 (Thứ 3, Tiết 2). Chọn khung giờ khác."*
-- Hỏi xác nhận trước hành động không lùi được: hủy tiết, phát hành thời khóa biểu, khai ngày nghỉ đột xuất, khóa tài khoản.
+- Hỏi xác nhận trước hành động không lùi được: hủy tiết, phát hành thời khóa biểu, khóa tài khoản.
 - Nhãn cột bảng viết ngắn: Lớp · Môn · Giáo viên · Ngày · Tiết · Trạng thái.
 
 ### 4.7. Menu cấp 2

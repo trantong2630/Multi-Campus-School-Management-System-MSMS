@@ -307,3 +307,88 @@
   line-height: 20px;
   white-space: nowrap;
 }
+
+/* SCD-02: điều chỉnh lịch dạy — tiết nhấp được, ô nghỉ gạch chéo, nút thêm tiết bù hiện khi rê chuột. */
+.tt-chip--click {
+  cursor: pointer;
+}
+
+.tt-chip--click:hover {
+  outline: 1.5px solid var(--c-green500);
+  outline-offset: -1.5px;
+}
+
+.tt-tag {
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 16px;
+  color: var(--c-green700);
+  background: var(--c-green50);
+}
+
+.tt-lock {
+  margin-left: 4px;
+  vertical-align: -1px;
+  color: var(--c-text3);
+}
+
+.tt-cell--holiday {
+  background-image: repeating-linear-gradient(135deg, transparent 0 6px, var(--c-sunken) 6px 12px);
+}
+
+.tt-holiday-tag {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-danger);
+}
+
+.tt-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  min-height: 28px;
+  padding: 2px 6px;
+  border: 1px dashed var(--c-borderStrong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--c-text2);
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.tt-cell--addable:hover .tt-add,
+.tt-add:focus-visible {
+  opacity: 1;
+}
+
+.tt-add:hover {
+  background: var(--c-hoverBg);
+  color: var(--c-text1);
+}
+
+/* Hộp thoại thao tác trên một tiết */
+.tt-detail {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 6px 12px;
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+
+.tt-detail dt {
+  color: var(--c-text2);
+}
+
+.tt-detail dd {
+  margin: 0;
+  color: var(--c-text1);
+}

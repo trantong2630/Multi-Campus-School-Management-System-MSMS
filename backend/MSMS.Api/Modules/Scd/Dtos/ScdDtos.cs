@@ -35,7 +35,7 @@ public record PublishWarnings(int ManualEditedCount, int MakeUpCount, int Pendin
 }
 public record TeacherConflictDto(
     string TeacherName, string TeacherAbbr, int DayOfWeek, string SessionOfDay, byte PeriodNo, string NewClassName,
-    string OccupiedCampusName, string OccupiedClassName, string OccupiedSubject, string? OccupiedViceName,
+    string OccupiedCampusName, string OccupiedClassName, string OccupiedSubject,
     int SessionCount, DateOnly FirstDate, DateOnly LastDate);
 
 public record PublishPreviewDto(
@@ -61,3 +61,35 @@ public record ViewSessionDto(long SessionId, DateOnly Date, int PeriodSlotId, st
 public record ResponsibilityItemDto(int SubjectId, string SubjectAbbr, string SubjectName, int ClassId, string ClassName, int PeriodsPerWeek);
 public record ResponsibilityTeacherDto(int TeacherId, string TeacherName, string? TeacherAbbr, int TotalPeriods, IReadOnlyList<ResponsibilityItemDto> Items);
 public record ResponsibilityDto(string? SemesterName, IReadOnlyList<ResponsibilityTeacherDto> Teachers);
+
+// ---- SCD-02: Điều chỉnh lịch dạy (BR-15) ----
+/// <summary>Locked: tiết bị khóa (ngày đã qua hoặc đã có điểm danh, mục 6.2) nên không đổi giáo viên, không hủy.</summary>
+public record AdjustSessionDto(
+    long SessionId, DateOnly Date, int PeriodSlotId, int SubjectId, string SubjectName, string SubjectAbbr,
+    int? TeacherId, string? TeacherName, string? TeacherAbbr, string Status, string Source, bool Locked, bool IsMakeUp, string? ChangeNote);
+public record AdjustHolidayDto(DateOnly Date, string? Reason);
+public record AdjustWeekDto(int ClassId, string ClassName, int CampusId, DateOnly From, DateOnly To, bool CanManage,
+    IReadOnlyList<AdjustSessionDto> Sessions, IReadOnlyList<AdjustHolidayDto> Holidays);
+
+public record ChangeSessionTeacherRequest(int TeacherId);
+public record MakeUpRequest(int ClassId, DateOnly Date, int PeriodSlotId, int SubjectId, int TeacherId);
+public record AdjustResultDto(long SessionId, int NotifiedCount);
+
+/// <summary>Busy: đã có tiết Đã xếp lịch cùng khung giờ (BR-13). Absent: có khai báo vắng phủ ngày và tiết đó (BR-16).</summary>
+public record TeacherAvailabilityDto(int TeacherId, string Name, string? Abbr, string CampusName, bool Busy, string? BusyNote, bool Absent);
+
+// ---- SCD-03: Giáo viên vắng (BR-16) ----
+/// <summary>SlotIds trống nghĩa là vắng cả ngày; có thì chỉ vắng các tiết đó và FromDate = ToDate.</summary>
+public record AbsenceDto(
+    int AbsenceId, int TeacherId, string TeacherName, string? TeacherAbbr, DateOnly FromDate, DateOnly ToDate, IReadOnlyList<int> SlotIds,
+    string? Reason, string? DeclaredByName, DateTime CreatedAt, int PendingCount, int HandledCount, bool CanDelete);
+public record DeclareAbsenceRequest(int TeacherId, DateOnly FromDate, DateOnly ToDate, IReadOnlyList<int>? SlotIds, string? Reason);
+public record DeclareAbsenceResultDto(int AbsenceId, int PendingCount);
+public record DeleteAbsenceResultDto(int RestoredCount);
+
+public record PendingSessionDto(
+    long SessionId, DateOnly Date, int PeriodSlotId, string SessionOfDay, byte PeriodNo, TimeOnly StartTime, TimeOnly EndTime,
+    int ClassId, string ClassName, int SubjectId, string SubjectName, string SubjectAbbr,
+    int? AbsenceId, string? AbsentTeacherName, string? Note);
+/// <summary>Action: Substitute (chọn giáo viên dạy thay) hoặc Cancel (hủy).</summary>
+public record ResolvePendingRequest(string Action, int? TeacherId);

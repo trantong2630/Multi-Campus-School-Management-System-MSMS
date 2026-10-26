@@ -1,19 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
-import { Button, Card, DatePicker, Segmented, Select } from 'antd';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Card, DatePicker, Segmented, Select } from 'antd';
 import { InlineAlert } from '@/shared/components/InlineAlert';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/app/AuthProvider';
 import { DataTable } from '@/shared/components/DataTable';
 import { FilterBar } from '@/shared/components/FilterBar';
 import { PageHeader } from '@/shared/components/PageHeader';
-import { schApi } from '@/features/sch/api';
 import { formatTime, sessionOfDayLabel, toDateString, weekdayOfDate } from '@/shared/lib/format';
 import { scdApi } from '../api';
 import { subjectColorStyle } from '../subjectColor';
 import type { DaySchedule, MySession, SessionCell } from '../types';
+import { AdjustView } from '../components/AdjustView';
+import { WeekFrame, WeekNav } from '../components/WeekFrame';
 import '../components/scd.css';
 
 /** Lịch dạy là tiết thực tế theo ngày, có điều chỉnh tay — nguồn sự thật của thời khóa biểu hiện hành (BR-14). */
@@ -22,10 +22,12 @@ export function SchedulePage() {
   return user?.accountType === 'Teacher' ? <MySchedule /> : <CampusSchedule />;
 }
 
-type ViewMode = 'day' | 'class' | 'teacher';
+type ViewMode = 'day' | 'class' | 'teacher' | 'adjust';
 
 /** Hiệu trưởng và hiệu phó: xem cả phân hiệu theo ngày, hoặc xem tuần của một lớp / một giáo viên. */
 function CampusSchedule() {
+  const { user } = useAuth();
+  const isVice = user?.accountType === 'VicePrincipal';
   const campuses = useQuery({ queryKey: ['scd', 'campuses'], queryFn: scdApi.campuses });
   const [campusId, setCampusId] = useState<number | undefined>();
   const [mode, setMode] = useState<ViewMode>('day');
@@ -34,7 +36,10 @@ function CampusSchedule() {
   const modeSwitch = (
     <Segmented
       value={mode} onChange={(v) => setMode(v as ViewMode)}
-      options={[{ value: 'day', label: 'Theo ngày' }, { value: 'class', label: 'Theo lớp' }, { value: 'teacher', label: 'Theo giáo viên' }]}
+      options={[
+        { value: 'day', label: 'Theo ngày' }, { value: 'class', label: 'Theo lớp' }, { value: 'teacher', label: 'Theo giáo viên' },
+        ...(isVice ? [{ value: 'adjust', label: 'Điều chỉnh' }] : []),
+      ]}
     />
   );
   const campusSelect = (
@@ -51,14 +56,18 @@ function CampusSchedule() {
         title="Lịch dạy"
         description={mode === 'day'
           ? 'Lịch dạy thực tế của phân hiệu theo ngày. Tiết đã hủy gạch ngang, tiết chờ xử lý nền vàng.'
-          : 'Lịch dạy theo tuần của một lớp hoặc một giáo viên. Tiết đã hủy gạch ngang, tiết chờ xử lý nền vàng.'}
+          : mode === 'adjust'
+            ? 'Nhấp vào tiết để đổi giáo viên hoặc hủy, nhấp vào ô trống để thêm tiết bù. Tiết đã qua hoặc đã điểm danh bị khóa.'
+            : 'Lịch dạy theo tuần của một lớp hoặc một giáo viên. Tiết đã hủy gạch ngang, tiết chờ xử lý nền vàng.'}
       />
       {campuses.isSuccess && campuses.data.length === 0 && (
         <InlineAlert type="warning" title="Chưa có phân hiệu nào để xem" description="Hiệu phó cần được gán phụ trách phân hiệu ở Hồ sơ → Trách nhiệm." />
       )}
       {effectiveCampus !== undefined && (mode === 'day'
         ? <CampusDayView campusId={effectiveCampus} lead={lead} />
-        : <EntityWeekView key={`${mode}-${effectiveCampus}`} mode={mode} campusId={effectiveCampus} lead={lead} />)}
+        : mode === 'adjust'
+          ? <AdjustView key={effectiveCampus} campusId={effectiveCampus} lead={lead} />
+          : <EntityWeekView key={`${mode}-${effectiveCampus}`} mode={mode} campusId={effectiveCampus} lead={lead} />)}
     </>
   );
 }
@@ -141,81 +150,20 @@ const STATUS_NOTE: Record<MySession['status'], string | null> = { Scheduled: nul
 
 type WeekSession = MySession & { teacherName?: string | null };
 
-/** Lưới tuần dùng chung: hàng là Buổi × Tiết, cột là Thứ 2 → Thứ 7 của tuần đang chọn. `detail` quyết định dòng phụ của mỗi ô. */
+/** Lưới tuần dùng chung. `detail` quyết định dòng phụ của mỗi ô. */
 function WeekGrid({ monday, sessions, loading, detail }: {
   monday: Dayjs; sessions: WeekSession[] | undefined; loading: boolean; detail: (s: WeekSession) => string;
 }) {
-  const days = Array.from({ length: 6 }, (_, i) => monday.add(i, 'day'));
-  const slots = useQuery({ queryKey: ['sch', 'slots'], queryFn: schApi.periodSlots.list });
-  // Khung đã ngừng dùng vẫn hiện nếu tuần này còn tiết nằm ở khung đó.
-  const used = new Set(sessions?.map((s) => s.periodSlotId));
-  const rows = (slots.data ?? [])
-    .filter((p) => p.isActive || used.has(p.periodSlotId))
-    .sort((a, b) => (a.sessionOfDay === b.sessionOfDay ? a.periodNo - b.periodNo : a.sessionOfDay === 'Morning' ? -1 : 1));
-  const today = dayjs();
-
-  if (slots.isLoading || loading) return <DataTable<object> rowKey="x" loading dataSource={[]} columns={[]} />;
   return (
-    <div className="tt-scroll">
-      <table className="tt-grid tt-week">
-        <thead>
-          <tr>
-            <th className="tt-sticky tt-col-session" style={{ left: 0 }}>Buổi</th>
-            <th className="tt-sticky" style={{ left: 64, minWidth: 110 }}>Tiết</th>
-            {days.map((d) => (
-              <th key={d.valueOf()} className={`tt-class${d.isSame(today, 'day') ? ' tt-today' : ''}`}>
-                {weekdayOfDate(d)}
-                <span className="tt-time">{d.format('DD/MM')}</span>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((slot, i) => {
-            const newSession = i > 0 && rows[i - 1].sessionOfDay !== slot.sessionOfDay;
-            const firstOfSession = i === 0 || newSession;
-            return (
-              <Fragment key={slot.periodSlotId}>
-                {newSession && <tr className="tt-band"><td colSpan={2 + days.length} /></tr>}
-                <tr>
-                  {firstOfSession && (
-                    <td className="tt-sticky tt-col-session" style={{ left: 0 }} rowSpan={rows.filter((r) => r.sessionOfDay === slot.sessionOfDay).length}>
-                      {sessionOfDayLabel(slot.sessionOfDay)}
-                    </td>
-                  )}
-                  <td className="tt-sticky tabular" style={{ left: 64, minWidth: 110 }}>
-                    {slot.periodNo}
-                    <span className="tt-time">{formatTime(slot.startTime)}–{formatTime(slot.endTime)}</span>
-                  </td>
-                  {days.map((d) => (
-                    <WeekTd
-                      key={d.valueOf()} detail={detail}
-                      sessions={(sessions ?? []).filter((s) => s.periodSlotId === slot.periodSlotId && s.date === toDateString(d))}
-                    />
-                  ))}
-                </tr>
-              </Fragment>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function WeekNav({ monday, onChange }: { monday: Dayjs; onChange: (m: Dayjs) => void }) {
-  const end = monday.add(5, 'day');
-  return (
-    <>
-      <Button icon={<ChevronLeft size={16} />} aria-label="Tuần trước" onClick={() => onChange(monday.subtract(1, 'week'))} />
-      <DatePicker
-        picker="week" allowClear={false} value={monday}
-        format={() => `${monday.format('DD/MM')} – ${end.format('DD/MM/YYYY')}`}
-        onChange={(d) => d && onChange(d.startOf('week'))}
-      />
-      <Button icon={<ChevronRight size={16} />} aria-label="Tuần sau" onClick={() => onChange(monday.add(1, 'week'))} />
-      <Button disabled={monday.isSame(dayjs().startOf('week'), 'day')} onClick={() => onChange(dayjs().startOf('week'))}>Tuần này</Button>
-    </>
+    <WeekFrame
+      monday={monday} loading={loading} usedSlotIds={new Set(sessions?.map((s) => s.periodSlotId))}
+      renderCell={(slot, d) => (
+        <WeekTd
+          detail={detail}
+          sessions={(sessions ?? []).filter((s) => s.periodSlotId === slot.periodSlotId && s.date === toDateString(d))}
+        />
+      )}
+    />
   );
 }
 

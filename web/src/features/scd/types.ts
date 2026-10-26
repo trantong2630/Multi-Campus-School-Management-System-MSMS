@@ -89,7 +89,6 @@ export interface TeacherConflict {
   occupiedCampusName: string;
   occupiedClassName: string;
   occupiedSubject: string;
-  occupiedViceName: string | null;
   sessionCount: number;
   firstDate: string;
   lastDate: string;
@@ -195,4 +194,111 @@ export interface ResponsibilityTeacher {
 export interface ResponsibilityList {
   semesterName: string | null;
   teachers: ResponsibilityTeacher[];
+}
+
+// ---- SCD-02: Điều chỉnh lịch dạy (BR-15) ----
+export type SessionStatus = 'Scheduled' | 'Pending' | 'Cancelled';
+
+export interface AdjustSession {
+  sessionId: number;
+  date: string;
+  periodSlotId: number;
+  subjectId: number;
+  subjectName: string;
+  subjectAbbr: string;
+  teacherId: number | null;
+  teacherName: string | null;
+  teacherAbbr: string | null;
+  status: SessionStatus;
+  source: 'Generated' | 'Manual';
+  /** Tiết bị khóa (mục 6.2): ngày đã qua hoặc đã có điểm danh — không đổi giáo viên, không hủy. */
+  locked: boolean;
+  isMakeUp: boolean;
+  changeNote: string | null;
+}
+
+export interface AdjustWeek {
+  classId: number;
+  className: string;
+  campusId: number;
+  from: string;
+  to: string;
+  canManage: boolean;
+  sessions: AdjustSession[];
+  holidays: { date: string; reason: string | null }[];
+}
+
+export interface TeacherAvailability {
+  teacherId: number;
+  name: string;
+  abbr: string | null;
+  campusName: string;
+  busy: boolean;
+  busyNote: string | null;
+  absent: boolean;
+}
+
+export interface MakeUpBody {
+  classId: number;
+  date: string;
+  periodSlotId: number;
+  subjectId: number;
+  teacherId: number;
+}
+
+export interface AdjustResult {
+  sessionId: number;
+  notifiedCount: number;
+}
+
+// ---- SCD-03: Giáo viên vắng (BR-16) ----
+export interface Absence {
+  absenceId: number;
+  teacherId: number;
+  teacherName: string;
+  teacherAbbr: string | null;
+  fromDate: string;
+  toDate: string;
+  /** Rỗng nghĩa là vắng cả ngày. */
+  slotIds: number[];
+  reason: string | null;
+  declaredByName: string | null;
+  createdAt: string;
+  pendingCount: number;
+  handledCount: number;
+  /** Chỉ xóa được khi chưa có tiết nào của khai báo bị xử lý. */
+  canDelete: boolean;
+}
+
+export interface DeclareAbsenceBody {
+  teacherId: number;
+  fromDate: string;
+  toDate: string;
+  slotIds?: number[];
+  reason?: string;
+}
+
+export interface PendingSession {
+  sessionId: number;
+  date: string;
+  periodSlotId: number;
+  sessionOfDay: 'Morning' | 'Afternoon';
+  periodNo: number;
+  startTime: string;
+  endTime: string;
+  classId: number;
+  className: string;
+  subjectId: number;
+  subjectName: string;
+  subjectAbbr: string;
+  absenceId: number | null;
+  absentTeacherName: string | null;
+  note: string | null;
+}
+
+export type ResolveAction = 'Substitute' | 'Cancel';
+
+export interface ResolveBody {
+  action: ResolveAction;
+  teacherId?: number;
 }
