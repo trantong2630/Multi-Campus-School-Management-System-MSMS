@@ -11,5 +11,6 @@ public static class SchModule
             .AddScoped<PeriodSlotService>()
             .AddScoped<ClassService>()
             .AddScoped<EnrollmentService>()
+            .AddScoped<SchoolDayService>()
             .AddScoped<SchoolProfileService>();
 }

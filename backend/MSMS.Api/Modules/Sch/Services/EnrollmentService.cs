@@ -106,7 +106,9 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
 
         var today = clock.Today;
         await using var tx = await db.Database.BeginTransactionAsync();
-        e.EndDate = e.StartDate > today ? e.StartDate : today;   // ghi danh chưa hiệu lực thì rút về đúng ngày bắt đầu
+        var endDate = e.StartDate > today ? e.StartDate : today;   // ghi danh chưa hiệu lực thì rút về đúng ngày bắt đầu
+        var yearEnd = e.Class.AcademicYear.EndDate;
+        e.EndDate = endDate > yearEnd ? yearEnd : endDate;          // đóng sau khi hết năm học thì ghi đúng ngày cuối năm học
         e.Reason = r.Reason;
 
         int? lockedAccountId = null;
@@ -128,7 +130,7 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
     }
 
     private async Task<Enrollment> FindEnrollmentAsync(int id) =>
-        await db.Enrollment.Include(e => e.Class).Include(e => e.Student).FirstOrDefaultAsync(e => e.EnrollmentId == id)
+        await db.Enrollment.Include(e => e.Class).ThenInclude(c => c.AcademicYear).Include(e => e.Student).FirstOrDefaultAsync(e => e.EnrollmentId == id)
         ?? throw ApiException.NotFound("Không tìm thấy ghi danh.");
 
     private static void EnsureInYear(AcademicYear year, DateOnly date)
