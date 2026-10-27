@@ -969,7 +969,7 @@ public partial class MsmsDbContext : DbContext
                 .HasPrecision(0)
                 .HasDefaultValueSql("(CONVERT([datetime2](0),(sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time')))");
             entity.Property(e => e.Reason).HasMaxLength(255);
-            entity.Property(e => e.SessionOfDay).HasMaxLength(10);
+            entity.Property(e => e.SlotIds).HasMaxLength(200);
 
             entity.HasOne(d => d.DeclaredByPerson).WithMany(p => p.TeacherAbsence)
                 .HasForeignKey(d => d.DeclaredByPersonId)
@@ -1011,10 +1011,6 @@ public partial class MsmsDbContext : DbContext
             entity.HasOne(d => d.CreatedByPerson).WithMany(p => p.TeachingSessionCreatedByPerson)
                 .HasForeignKey(d => d.CreatedByPersonId)
                 .HasConstraintName("FK__TeachingS__Creat__46B27FE2");
-
-            entity.HasOne(d => d.OriginalSession).WithMany(p => p.InverseOriginalSession)
-                .HasForeignKey(d => d.OriginalSessionId)
-                .HasConstraintName("FK_Session_Original");
 
             entity.HasOne(d => d.PeriodSlot).WithMany(p => p.TeachingSession)
                 .HasForeignKey(d => d.PeriodSlotId)
