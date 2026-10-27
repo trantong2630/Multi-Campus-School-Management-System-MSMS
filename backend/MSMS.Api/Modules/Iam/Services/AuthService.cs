@@ -1,4 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
@@ -27,6 +27,8 @@ public interface IAuthService
 public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOptions> jwt, SessionService sessions) : IAuthService
 {
     private static readonly PasswordHasher<Account> Hasher = new();
+    private static readonly Account UnknownAccount = new();
+    private static readonly string UnknownPasswordHash = Hasher.HashPassword(UnknownAccount, Guid.NewGuid().ToString("N"));
     private const int MinPasswordLength = 8;
 
     public async Task<LoginResponse> LoginAsync(LoginRequest request, string? userAgent)
@@ -35,16 +37,17 @@ public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOpti
         var account = await db.Account.Include(a => a.Person)
             .FirstOrDefaultAsync(a => a.Username == username);
 
-        // Không tiết lộ tài khoản có tồn tại hay không (BR-01, BR-05).
-        if (account is null || Hasher.VerifyHashedPassword(account, account.PasswordHash, request.Password ?? "") == PasswordVerificationResult.Failed)
+        // Luôn kiểm tra một bản băm, kể cả khi không tìm thấy tên đăng nhập.
+        var verification = Hasher.VerifyHashedPassword(
+            account ?? UnknownAccount, account?.PasswordHash ?? UnknownPasswordHash, request.Password ?? "");
+
+        // Sai thông tin và tài khoản bị khóa cùng trả một lỗi trung tính (BR-01, BR-05).
+        if (account is null || verification == PasswordVerificationResult.Failed || account.Status == AccountStatuses.Locked)
             throw ApiException.Unauthorized("Tên đăng nhập hoặc mật khẩu không đúng. Kiểm tra lại rồi thử đăng nhập tiếp.", ErrorCodes.InvalidCredentials);
 
-        if (account.Status == AccountStatuses.Locked)
-            throw ApiException.Unauthorized("Tài khoản đã bị khóa. Liên hệ quản trị để được hỗ trợ.", ErrorCodes.AccountLocked);
-
         account.LastLoginAt = clock.Now;
-        await db.SaveChangesAsync();
 
+        // Lưu thời điểm đăng nhập cùng phiên mới trong một lần SaveChanges.
         var (session, refreshToken) = await sessions.CreateAsync(account.AccountId, userAgent);
         return Issue(account, session.SessionId, refreshToken);
     }
@@ -95,11 +98,11 @@ public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOpti
 
     private LoginResponse Issue(Account account, Guid sessionId, string? refreshToken)
     {
-        var expires = clock.Now.AddMinutes(jwt.Value.ExpiryMinutes);
-        return new LoginResponse(IssueToken(account, sessionId), expires, refreshToken, ToInfo(account));
+        var expires = DateTime.UtcNow.AddMinutes(jwt.Value.ExpiryMinutes);
+        return new LoginResponse(IssueToken(account, sessionId, expires), expires, refreshToken, ToInfo(account));
     }
 
-    private string IssueToken(Account account, Guid sessionId)
+    private string IssueToken(Account account, Guid sessionId, DateTime expires)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Value.Key));
         var token = new JwtSecurityToken(
@@ -112,7 +115,7 @@ public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOpti
                 new Claim(CurrentUser.TypeClaim, account.AccountType),
                 new Claim(CurrentUser.SessionIdClaim, sessionId.ToString()),
             ],
-            expires: DateTime.UtcNow.AddMinutes(jwt.Value.ExpiryMinutes),
+            expires: expires,
             signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256));
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
