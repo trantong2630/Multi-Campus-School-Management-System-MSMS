@@ -42,6 +42,7 @@ export const schApi = {
     create: (b: object) => post<AcademicYear>('/sch/academic-years', b),
     update: (id: number, b: object) => put(`/sch/academic-years/${id}`, b),
     setCurrent: (id: number) => put(`/sch/academic-years/${id}/current`),
+    remove: (id: number) => apiClient.delete(`/sch/academic-years/${id}`),
     configureSemesters: (id: number, b: object) => put<AcademicYear>(`/sch/academic-years/${id}/semesters`, b),
   },
   holidays: {
