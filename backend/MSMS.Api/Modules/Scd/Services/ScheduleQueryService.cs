@@ -181,6 +181,26 @@ public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, Sco
         return await ProjectSessions(query);
     }
 
+    /// <summary>Học sinh xem lịch học của mình: các tiết của lớp em có ghi danh hiệu lực vào ngày của tiết (BR-17).</summary>
+    public async Task<List<ViewSessionDto>> GetStudentSessionsAsync(DateOnly from, DateOnly to)
+    {
+        CheckRange(from, to);
+        return await ProjectSessions(EnrolledSessions(user.PersonId, from, to));
+    }
+
+    /// <summary>Phụ huynh xem lịch học của con được liên kết; con không thuộc phụ huynh này thì bị từ chối.</summary>
+    public async Task<List<ViewSessionDto>> GetChildSessionsAsync(int studentId, DateOnly from, DateOnly to)
+    {
+        CheckRange(from, to);
+        if (!await db.ParentStudentLink.AnyAsync(l => l.ParentId == user.PersonId && l.StudentId == studentId))
+            throw ApiException.Forbidden("Học sinh này không được liên kết với tài khoản của bạn.");
+        return await ProjectSessions(EnrolledSessions(studentId, from, to));
+    }
+
+    private IQueryable<Data.Entities.TeachingSession> EnrolledSessions(int studentId, DateOnly from, DateOnly to) =>
+        db.TeachingSession.AsNoTracking().Where(s => s.SessionDate >= from && s.SessionDate <= to
+            && s.Class.Enrollment.Any(e => e.StudentId == studentId && e.StartDate <= s.SessionDate && (e.EndDate == null || e.EndDate >= s.SessionDate)));
+
     private static void CheckRange(DateOnly from, DateOnly to)
     {
         if (to < from) throw ApiException.BadRequest("Ngày kết thúc phải sau ngày bắt đầu.");

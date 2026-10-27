@@ -1,6 +1,6 @@
 # 4. Software Product Development — MSMS
 
-Cấu trúc phân rã: Module → Feature → Task. Mỗi Task là một hành động nghiệp vụ hoàn chỉnh của một actor. Các task thuộc cùng một Feature tô cùng màu ở cột Feature. Căn theo Business Specification V3.1 (Oct 20, 2026) — 9 Module / 33 Feature / 261 Task.
+Cấu trúc phân rã: Module → Feature → Task. Mỗi Task là một hành động nghiệp vụ hoàn chỉnh của một actor. Các task thuộc cùng một Feature tô cùng màu ở cột Feature. Căn theo Business Specification V3.1 (Oct 20, 2026) — 9 Module / 33 Feature / 258 Task.
 
 Cột Platform của mỗi Task: `BE` (không có giao diện), `BE + Web`, hoặc `BE + Web + Mobile`. Mọi Task có giao diện đều có trên web; chỉ một số có thêm trên mobile app (Business Specification V3 mục 8.1–8.2).
 
@@ -81,7 +81,7 @@ Khóa tài khoản khiến người đó không đăng nhập được và phiê
 
 **4.1.15 — Khóa tài khoản giáo viên: chuyển tiết và đóng trách nhiệm / Lock Teacher: Reassign Lessons and Close Duties**  
 `BE + Web` · 1.5 MD · dep: 4.1.14  
-Khóa tài khoản không bị chặn bởi lịch dạy. Cùng một transaction: với tài khoản Teacher, tiết Đã xếp lịch chưa khóa từ hôm nay trở đi ở mọi phân hiệu chuyển Chờ xử lý (Chỉnh tay, để trống giáo viên) và Vice Principal phân hiệu chứa tiết nhận thông báo để xử lý theo 4.4.29–4.4.34; với mọi tài khoản cán bộ, trách nhiệm đang hiệu lực (phụ trách phân hiệu, tổ trưởng, chủ nhiệm) được đặt ngày kết thúc là ngày khóa và quyền mất ngay lúc khóa. Mở khóa lại không khôi phục các trách nhiệm đã đóng. Màn hình cảnh báo số tiết, phân hiệu và danh sách trách nhiệm trước khi xác nhận; Audit ghi số tiết và số trách nhiệm bị ảnh hưởng (BR-05, BR-09).
+Khóa tài khoản không bị chặn bởi lịch dạy. Cùng một transaction: với tài khoản Teacher, tiết Đã xếp lịch chưa khóa từ hôm nay trở đi ở mọi phân hiệu chuyển Chờ xử lý (Chỉnh tay, để trống giáo viên) và Vice Principal phân hiệu chứa tiết nhận thông báo để xử lý theo 4.4.27–4.4.31; với mọi tài khoản cán bộ, trách nhiệm đang hiệu lực (phụ trách phân hiệu, tổ trưởng, chủ nhiệm) được đặt ngày kết thúc là ngày khóa và quyền mất ngay lúc khóa. Mở khóa lại không khôi phục các trách nhiệm đã đóng. Màn hình cảnh báo số tiết, phân hiệu và danh sách trách nhiệm trước khi xác nhận; Audit ghi số tiết và số trách nhiệm bị ảnh hưởng (BR-05, BR-09).
 
 **4.1.16 — Mở khóa tài khoản / Unlock Account**  
 `BE + Web` · 0.5 MD · dep: 4.1.14  
@@ -225,7 +225,7 @@ Sửa ngày bắt đầu và số tuần của học kỳ (ngày kết thúc tí
 
 **4.2.17 — Khai báo ngày nghỉ theo kế hoạch / Declare Planned Non-teaching Day**  
 `BE + Web` · 1 MD · dep: 4.2.13  
-Khai ngày nghỉ gắn năm học, cấp toàn trường hoặc cấp một phân hiệu. Khai trước khi Phát hành thì Phát hành bỏ qua ngày đó; khai sau thì theo luồng ngày nghỉ đột xuất (BR-08, BR-15).
+Khai ngày nghỉ gắn năm học, cấp toàn trường hoặc cấp một phân hiệu. Khai trước khi Phát hành thì Phát hành bỏ qua ngày đó; khai sau thì tiết đã sinh không tự đổi, Vice Principal hủy từng tiết (BR-08, BR-15).
 
 **4.2.18 — Xem lịch ngày nghỉ theo phân hiệu / View Non-teaching Day Calendar**  
 `BE + Web` · 1 MD · dep: 4.2.17  
@@ -535,7 +535,7 @@ Hộp xác nhận hiện khi bấm Phát hành: số tiết sẽ xóa và sẽ t
 
 **4.4.10 — Xem danh sách xung đột giáo viên / View Teacher Conflicts**  
 `BE + Web` · 1.5 MD · dep: 4.4.8  
-Mỗi dòng xung đột ghi rõ tiết đang chiếm chỗ thuộc phân hiệu nào và ai là Vice Principal phụ trách phân hiệu đó, vì xung đột liên phân hiệu phải do Vice Principal phía kia sửa. Còn xung đột là CHẶN Phát hành (BR-14).
+Mỗi dòng xung đột ghi rõ lớp và phân hiệu đang chiếm chỗ giáo viên; Vice Principal đổi sang giáo viên khác cho ô trùng trong bản Nháp. Còn xung đột là CHẶN Phát hành (BR-14).
 
 **4.4.11 — Phát hành thời khóa biểu / Publish Timetable**  
 `BE + Web` · 2.5 MD · dep: 4.4.9, 4.4.10  
@@ -577,7 +577,7 @@ Lưới tuần theo lớp và khung giờ của phân hiệu, mỗi ô cho mở 
 
 **4.4.20 — Đổi giáo viên của tiết / Change Lesson Teacher**  
 `BE + Web` · 1.5 MD · dep: 4.4.19  
-Thay giáo viên của một tiết chưa bị khóa. KHÔNG đổi phụ trách chuyên môn (tính từ thời khóa biểu đã phát hành, 4.4.38) và vẫn kiểm xung đột lịch (BR-13, BR-14, BR-15).
+Thay giáo viên của một tiết chưa bị khóa. KHÔNG đổi phụ trách chuyên môn (tính từ thời khóa biểu đã phát hành, 4.4.35) và vẫn kiểm xung đột lịch (BR-13, BR-14, BR-15).
 
 **4.4.21 — Hủy tiết / Cancel Lesson**  
 `BE + Web` · 1 MD · dep: 4.4.19  
@@ -585,82 +585,70 @@ Thay giáo viên của một tiết chưa bị khóa. KHÔNG đổi phụ trách
 
 **4.4.22 — Thêm tiết bù / Add Make-up Lesson**  
 `BE + Web` · 1.5 MD · dep: 4.4.19  
-Tạo tiết mới ở một (ngày, khung giờ) trống; ngày phải là ngày học của phân hiệu, ≥ hôm nay và trong cùng học kỳ. Bù cho tiết đã hủy thì ghi lại tiết gốc để truy vết. Đổi giờ một tiết = hủy tiết cũ + thêm tiết bù (BR-15).
+Tạo tiết mới ở một (ngày, khung giờ) trống của lớp, chọn môn và giáo viên; ngày phải là ngày học của phân hiệu, ≥ hôm nay và trong một học kỳ của năm học. Tiết bù là một tiết thêm mới, không liên kết với tiết đã hủy nào. Đổi giờ một tiết = hủy tiết cũ + thêm tiết bù (BR-15).
 
-**4.4.23 — Khai ngày nghỉ đột xuất / Declare Ad-hoc Day Off**  
-`BE + Web` · 2 MD · dep: 4.4.19  
-Vice Principal khai cho phân hiệu mình, ngày ≥ hôm nay; nghỉ toàn trường thì Vice Principal mỗi phân hiệu khai cho phân hiệu mình. Mọi tiết Đã xếp lịch hoặc Chờ xử lý CHƯA CÓ ĐIỂM DANH của ngày đó chuyển sang Đã hủy; Phát hành sau đó cũng bỏ qua ngày này (BR-15).
-
-**4.4.24 — Xem trước số tiết sẽ bị hủy / Preview Lessons to Be Cancelled**  
-`BE + Web` · 1 MD · dep: 4.4.23  
-Trước khi xác nhận ngày nghỉ đột xuất, hiển thị danh sách tiết sẽ bị hủy theo lớp và giáo viên.
-
-**4.4.25 — Đặt nguồn tiết thành Chỉnh tay / Mark Lesson as Manually Adjusted**  
+**4.4.23 — Đặt nguồn tiết thành Chỉnh tay / Mark Lesson as Manually Adjusted**  
 `BE` · 0.5 MD · dep: 4.4.20, 4.4.21, 4.4.22  
 Mọi thao tác tay đổi nguồn tiết từ Sinh tự động sang Chỉnh tay, tạo thông báo cho giáo viên liên quan và học sinh của lớp, và ghi Audit (BR-15, BR-26, BR-28).
 
-**4.4.26 — Kiểm thử điều chỉnh lịch / Adjustment Tests**  
-`QA` · 2 MD · dep: 4.4.20, 4.4.21, 4.4.22, 4.4.23  
-Không thao tác được trên tiết bị khóa; tiết bù trùng khung giờ bị chặn; xóa ngày nghỉ không khôi phục tiết đã hủy; mọi thao tác đều sinh Audit và thông báo.
+**4.4.24 — Kiểm thử điều chỉnh lịch / Adjustment Tests**  
+`QA` · 2 MD · dep: 4.4.20, 4.4.21, 4.4.22  
+Không thao tác được trên tiết bị khóa; tiết bù trùng khung giờ bị chặn; mọi thao tác đều sinh Audit và thông báo.
 
 ### SCD-03 Teacher Absence (Xử lý giáo viên vắng)
 
-**4.4.27 — Khai báo giáo viên vắng / Declare Teacher Absence**  
+**4.4.25 — Khai báo giáo viên vắng / Declare Teacher Absence**  
 `BE + Web` · 2 MD  
-Khai giáo viên, từ ngày – đến ngày, buổi (sáng / chiều / cả ngày) và lý do. Đây KHÔNG phải đơn xin nghỉ của cán bộ — MSMS chỉ ghi nhận hệ quả lên lịch dạy (BR-16).
+Vice Principal khai giáo viên có tiết ở phân hiệu mình theo một trong hai cách: theo ngày (từ ngày – đến ngày, vắng cả ngày) hoặc theo tiết (một ngày, chọn các tiết vắng, liền hay rời đều được), kèm lý do. Đây KHÔNG phải đơn xin nghỉ của cán bộ — MSMS chỉ ghi nhận hệ quả lên lịch dạy (BR-16).
 
-**4.4.28 — Đưa tiết bị ảnh hưởng về Chờ xử lý / Move Affected Lessons to Pending**  
-`BE` · 1.5 MD · dep: 4.4.27  
-Khai báo không tự đổi lịch: mọi tiết Đã xếp lịch chưa bị khóa của giáo viên đó trong khoảng, ở MỌI PHÂN HIỆU, chuyển sang Chờ xử lý (Chỉnh tay) và để trống giáo viên; tiết trống không chiếm chỗ của giáo viên nào khi kiểm xung đột. Mỗi tiết ghi lại khai báo đã đưa nó về Chờ xử lý. Vice Principal của phân hiệu chứa tiết nhận thông báo. Khóa hoặc đổi loại tài khoản Teacher (4.1.15, 4.1.17) cũng đưa tiết về Chờ xử lý và để trống giáo viên theo cách này, nhưng không gắn với khai báo nào (BR-05, BR-13, BR-16, BR-26).
+**4.4.26 — Đưa tiết bị ảnh hưởng về Chờ xử lý / Move Affected Lessons to Pending**  
+`BE` · 1.5 MD · dep: 4.4.25  
+Khai báo không tự đổi lịch và chỉ tác động tiết ở phân hiệu của người khai: mọi tiết Đã xếp lịch chưa bị khóa của giáo viên đó trong phạm vi khai báo, ở phân hiệu mình phụ trách, chuyển sang Chờ xử lý (Chỉnh tay) và để trống giáo viên; giáo viên dạy nhiều phân hiệu thì Vice Principal mỗi phân hiệu khai phần của mình. Tiết trống không chiếm chỗ của giáo viên nào khi kiểm xung đột. Mỗi tiết ghi lại khai báo đã đưa nó về Chờ xử lý. Khóa hoặc đổi loại tài khoản Teacher (4.1.15, 4.1.17) cũng đưa tiết về Chờ xử lý và để trống giáo viên theo cách này, nhưng không gắn với khai báo nào; Vice Principal của phân hiệu chứa tiết nhận thông báo (BR-05, BR-13, BR-16, BR-26).
 
-**4.4.29 — Xem danh sách tiết Chờ xử lý / View Pending Lessons**  
-`BE + Web` · 1.5 MD · dep: 4.4.28  
+**4.4.27 — Xem danh sách tiết Chờ xử lý / View Pending Lessons**  
+`BE + Web` · 1.5 MD · dep: 4.4.26  
 Danh sách tiết Chờ xử lý theo phân hiệu, lọc theo ngày và lớp, mở được màn hình quyết định từng tiết.
 
-**4.4.30 — Xem gợi ý giáo viên rảnh / View Free Teacher Suggestions**  
-`BE + Web` · 2 MD · dep: 4.4.29  
-Teacher đủ điều kiện dạy, không có tiết Đã xếp lịch tại (ngày, khung giờ) đó ở bất kỳ phân hiệu nào và không có khai báo vắng phủ ngày và buổi đó. Danh sách sắp theo tên, tối đa 10 người, KHÔNG xếp hạng ưu tiên — Vice Principal tự chọn (BR-06, BR-13, BR-16).
+**4.4.28 — Xem gợi ý giáo viên rảnh / View Free Teacher Suggestions**  
+`BE + Web` · 2 MD · dep: 4.4.27  
+Teacher đủ điều kiện dạy, không có tiết Đã xếp lịch tại (ngày, khung giờ) đó ở bất kỳ phân hiệu nào và không có khai báo vắng phủ ngày và tiết đó. Danh sách sắp theo tên, tối đa 10 người, KHÔNG xếp hạng ưu tiên — Vice Principal tự chọn (BR-06, BR-13, BR-16).
 
-**4.4.31 — Xử lý tiết chờ bằng cách chọn giáo viên dạy thay / Resolve by Substitute Teacher**  
-`BE + Web` · 1.5 MD · dep: 4.4.30  
+**4.4.29 — Xử lý tiết chờ bằng cách chọn giáo viên dạy thay / Resolve by Substitute Teacher**  
+`BE + Web` · 1.5 MD · dep: 4.4.28  
 Lựa chọn 1: gán giáo viên được chọn, tiết quay lại Đã xếp lịch. Backend kiểm lại điều kiện dạy và xung đột lịch toàn trường lúc lưu (BR-06, BR-13, BR-16).
 
-**4.4.32 — Xử lý tiết chờ bằng cách hủy / Resolve by Cancelling**  
-`BE + Web` · 0.5 MD · dep: 4.4.29  
+**4.4.30 — Xử lý tiết chờ bằng cách hủy / Resolve by Cancelling**  
+`BE + Web` · 0.5 MD · dep: 4.4.27  
 Lựa chọn 2: tiết chuyển sang Đã hủy.
 
-**4.4.33 — Hủy tiết chờ và tạo tiết bù / Cancel Pending and Add Make-up**  
-`BE + Web` · 1.5 MD · dep: 4.4.29  
-Lựa chọn 3: hủy tiết rồi tạo tiết bù ở (ngày, khung giờ) trống theo quy tắc tiết bù, ghi lại tiết gốc (BR-15, BR-16).
+**4.4.31 — Khóa tiết chờ đã qua ngày / Lock Past Pending Lesson**  
+`BE + Web` · 0.5 MD · dep: 4.4.27, 4.4.29  
+Tiết Chờ xử lý đã qua ngày bị khóa (mục 6.2): không còn trong danh sách ở 4.4.27, không dạy thay, không hủy được nữa (BR-16).
 
-**4.4.34 — Xử lý tiết chờ đã quá ngày / Resolve Overdue Pending Lesson**  
-`BE + Web` · 1 MD · dep: 4.4.29, 4.4.31  
-Tiết Chờ xử lý đã qua ngày mà chưa quyết vẫn nằm trong danh sách ở 4.4.29 và xử lý theo cùng ba lựa chọn; nếu chọn giáo viên thì School Admin nhập bù điểm danh trên màn hình điểm danh (BR-16, BR-17).
+**4.4.32 — Xóa khai báo giáo viên vắng / Delete Teacher Absence**  
+`BE + Web` · 1.5 MD · dep: 4.4.26  
+Xóa khai báo theo kiểu tất cả hoặc không: chỉ xóa được khi chưa có tiết nào của khai báo bị xử lý (dạy thay, hủy), giáo viên vẫn đủ điều kiện dạy (tài khoản Teacher không bị khóa, BR-06) và không trùng lịch ở tiết nào (BR-13). Khi đó mọi tiết của khai báo từ hôm nay trở đi trở về giáo viên, trạng thái Đã xếp lịch, tiết đã qua ngày giữ nguyên; không đạt thì báo lỗi nêu nguyên nhân và không xóa gì. Tiết trống do khóa hoặc đổi loại tài khoản không tự khôi phục. Ghi Audit, thông báo giáo viên và học sinh của lớp (BR-06, BR-13, BR-16, BR-26, BR-28).
 
-**4.4.35 — Xóa khai báo giáo viên vắng / Delete Teacher Absence**  
-`BE + Web` · 1.5 MD · dep: 4.4.28  
-Xóa khai báo thì các tiết còn Chờ xử lý do khai báo đó được trả về giáo viên của khai báo, trở lại Đã xếp lịch, với điều kiện giáo viên không trùng lịch tại tiết đó và vẫn đủ điều kiện dạy (tài khoản Teacher không bị khóa, BR-06). Tiết trùng lịch hoặc giáo viên không còn đủ điều kiện giữ nguyên Chờ xử lý và được báo cho Vice Principal; tiết đã xử lý không bị đụng tới; tiết trống do khóa hoặc đổi loại tài khoản không tự khôi phục. Ghi Audit, thông báo giáo viên và học sinh của lớp (BR-06, BR-13, BR-16, BR-26, BR-28).
-
-**4.4.36 — Xem lịch dạy của mọi giáo viên toàn trường / View School-wide Teacher Calendar**  
+**4.4.33 — Chọn giáo viên toàn trường kèm trạng thái rảnh hoặc bận / Pick School-wide Teacher with Availability**  
 `BE + Web` · 1.5 MD · dep: 4.4.14  
-Màn hình Lịch dạy của Vice Principal chỉ xem phân hiệu mình. Khi chọn giáo viên cho tiết hoặc dạy thay, danh sách giáo viên và lịch dạy của họ là toàn trường, kiểm trùng lịch cũng toàn trường (BR-13, mục 2.3).
+Màn hình Lịch dạy của Vice Principal chỉ xem phân hiệu mình. Khi chọn giáo viên cho tiết, tiết bù hoặc dạy thay, danh sách giáo viên là toàn trường, mỗi người kèm trạng thái rảnh hoặc bận (đang dạy hoặc đang vắng) tại (ngày, khung giờ) đó; người bận hoặc vắng không chọn được; kiểm trùng lịch cũng toàn trường (BR-13, mục 2.3).
 
-**4.4.37 — Kiểm thử xử lý giáo viên vắng / Absence Tests**  
-`QA` · 2 MD · dep: 4.4.28, 4.4.31, 4.4.35  
-Tiết Chờ xử lý để trống giáo viên và không điểm danh được; tiết ở phân hiệu khác cũng bị đưa về Chờ xử lý; gợi ý không trả về người đã có tiết hoặc đang vắng; ba lựa chọn ghi đúng Audit; tiết trống không chiếm chỗ giáo viên khi kiểm xung đột; xóa khai báo trả tiết về đúng giáo viên, bỏ qua tiết đã xử lý và tiết trùng lịch, không khôi phục tiết trống do khóa tài khoản.
+**4.4.34 — Kiểm thử xử lý giáo viên vắng / Absence Tests**  
+`QA` · 2 MD · dep: 4.4.26, 4.4.29, 4.4.32  
+Tiết Chờ xử lý để trống giáo viên và không điểm danh được; khai báo chỉ đưa về Chờ xử lý tiết ở phân hiệu của người khai; khai theo ngày và khai theo tiết (tiết liền và tiết rời); gợi ý không trả về người đã có tiết hoặc đang vắng; hai cách xử lý ghi đúng Audit; tiết trống không chiếm chỗ giáo viên khi kiểm xung đột; xóa khai báo trả mọi tiết về đúng giáo viên, không xóa khi đã có tiết được xử lý hoặc có tiết trùng lịch, không khôi phục tiết trống do khóa tài khoản.
 
 ### SCD-04 Teaching Responsibility View (Phụ trách chuyên môn)
 
-**4.4.38 — Tính phụ trách chuyên môn từ thời khóa biểu / Derive Subject Responsibility from Timetable**  
+**4.4.35 — Tính phụ trách chuyên môn từ thời khóa biểu / Derive Subject Responsibility from Timetable**  
 `BE` · 2 MD · dep: 4.4.11  
 Không có bảng riêng, không nhập tay: tính mỗi khi cần. Với mỗi lớp, lấy phiên bản Đã phát hành mới nhất của lớp trong học kỳ hiện hành; lớp không có trong lần Phát hành sau vẫn theo phiên bản trước đó của nó. Giáo viên có tiết của một môn trong phiên bản ấy đang phụ trách chuyên môn môn đó ở lớp đó; số tiết mỗi tuần là số ô của (lớp, môn, giáo viên). Một (lớp, môn) có thể có nhiều giáo viên. Điều chỉnh lịch và dạy thay chỉ đổi lịch dạy nên không đổi kết quả. Là nguồn quyền cho giao bài, công bố điểm, nhận xét AI và hộp thư (BR-14, BR-21, BR-22, BR-23, BR-25).
 
-**4.4.39 — Xem phụ trách chuyên môn toàn trường / View Subject Responsibility**  
-`BE + Web` · 2.5 MD · dep: 4.4.38  
+**4.4.36 — Xem phụ trách chuyên môn toàn trường / View Subject Responsibility**  
+`BE + Web` · 2.5 MD · dep: 4.4.35  
 Màn hình chỉ đọc của Vice Principal, nằm dưới menu Thời khóa biểu. Bảng ba cột: Giáo viên, Phụ trách, Tổng tiết. Mỗi giáo viên một dòng; cột Phụ trách là các hộp, mỗi hộp một mục `Môn Lớp — số tiết`, tự xuống dòng, sắp theo môn rồi lớp, không hiện phân hiệu của lớp. Tổng tiết là tổng số tiết mỗi tuần của giáo viên qua mọi phân hiệu. Bộ lọc Phân hiệu (mặc định là phân hiệu của Vice Principal) và Môn; lọc phân hiệu chỉ chọn giáo viên có tiết ở phân hiệu đó, còn mỗi dòng vẫn hiện đủ mục của giáo viên ở mọi phân hiệu. Không có cảnh báo tải, không tìm theo tên, không xuất Excel (BR-14, mục 2.3).
 
-**4.4.40 — Kiểm thử phụ trách chuyên môn / Subject Responsibility Tests**  
-`QA` · 1.5 MD · dep: 4.4.38, 4.4.39  
+**4.4.37 — Kiểm thử phụ trách chuyên môn / Subject Responsibility Tests**  
+`QA` · 1.5 MD · dep: 4.4.35, 4.4.36  
 Chưa Phát hành thì chưa có phụ trách; Phát hành đổi giáo viên của một (lớp, môn) thì người mới có quyền ngay và người cũ mất quyền ngay; lớp không có trong lần Phát hành sau vẫn theo phiên bản trước; đổi giáo viên của tiết hoặc dạy thay không đổi phụ trách chuyên môn; giáo viên dạy nhiều phân hiệu có tổng tiết đúng và Vice Principal phân hiệu khác vẫn thấy đủ mục; một (lớp, môn) nhiều giáo viên hiện đủ từng người.
 
 ---
@@ -794,7 +782,7 @@ Người khác không sửa được câu và đề của mình; đề đã giao
 ### LRN-02 Assignment & Submission (Giao bài & Nộp bài)
 
 **4.6.16 — Giao đề cho lớp / Assign Quiz to Class**  
-`BE + Web` · 2 MD · dep: 4.6.10, 4.4.38  
+`BE + Web` · 2 MD · dep: 4.6.10, 4.4.35  
 Teacher ĐANG PHỤ TRÁCH CHUYÊN MÔN ở (lớp, môn của đề) giao ĐỀ MÌNH SỞ HỮU cho lớp đó, chọn thời điểm mở (mặc định ngay) và hạn nộp lớn hơn hiện tại. Khi bài chuyển sang Đã giao, hệ thống lưu danh sách học sinh có ghi danh hiệu lực ở lớp lúc đó làm DANH SÁCH ĐƯỢC GIAO; danh sách này không đổi khi học sinh chuyển lớp về sau (BR-21).
 
 **4.6.17 — Cập nhật bài đang ở Nháp / Update Draft Assignment**  
@@ -998,7 +986,7 @@ Nhập bù điểm danh và đơn duyệt muộn được phản ánh ngay lần
 ### PAR-03 Parent–Teacher Messaging (Hộp thư phụ huynh – giáo viên)
 
 **4.7.15 — Tạo hội thoại với giáo viên / Create Conversation**  
-`BE + Web + Mobile` · 2 MD · dep: 4.4.38, 4.3.30  
+`BE + Web + Mobile` · 2 MD · dep: 4.4.35, 4.3.30  
 Chỉ Parent TẠO hội thoại, về một con được liên kết, với chủ nhiệm lớp con đang học hoặc giáo viên đang phụ trách chuyên môn ở lớp đó. Mỗi bộ (phụ huynh, cán bộ, học sinh) có một hội thoại (BR-25).
 
 **4.7.16 — Xem danh sách hội thoại / View Conversation List**  
@@ -1033,7 +1021,7 @@ Phụ huynh không tạo được hội thoại với giáo viên không dạy c
 
 **4.8.1 — Phát thông báo theo danh sách sự kiện đóng / Dispatch Event Notifications**  
 `BE` · 2 MD · dep: 4.1.4  
-Chỉ trong ứng dụng, không gửi email. Danh sách sự kiện là DANH SÁCH ĐÓNG: phát hành thời khóa biểu, tiết bị đổi — hủy — thêm bù — ngày nghỉ đột xuất — trả lại giáo viên khi xóa khai báo vắng, tiết chuyển Chờ xử lý, đơn nghỉ mới, đơn được duyệt hoặc từ chối, bài mới được giao, điểm và nhận xét được công bố, tin nhắn mới (BR-26).
+Chỉ trong ứng dụng, không gửi email. Danh sách sự kiện là DANH SÁCH ĐÓNG: phát hành thời khóa biểu, tiết bị đổi — hủy — thêm bù — có giáo viên dạy thay — trả lại giáo viên khi xóa khai báo vắng, tiết chuyển Chờ xử lý, đơn nghỉ mới, đơn được duyệt hoặc từ chối, bài mới được giao, điểm và nhận xét được công bố, tin nhắn mới (BR-26).
 
 **4.8.2 — Xem trung tâm thông báo / View Notification Center**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.8.1  
@@ -1109,7 +1097,7 @@ Học sinh và phụ huynh không thấy bài Nội bộ; giáo viên đăng đ�
 
 **4.9.1 — Tính chỉ số theo phạm vi / Compute Dashboard Metrics**  
 `BE` · 2.5 MD · dep: —  
-Bốn số quy mô (lớp đang hoạt động, học sinh đang học, cán bộ đang công tác, tiết dạy hôm nay) và học sinh theo khối. Tiết Chờ xử lý và lớp chưa có chủ nhiệm không nằm trên Dashboard (xem 4.4.29 và 4.3.34). Một tiết, đơn hay bài thuộc phân hiệu nào là theo PHÂN HIỆU CỦA LỚP liên quan (mục 5.1).
+Bốn số quy mô (lớp đang hoạt động, học sinh đang học, cán bộ đang công tác, tiết dạy hôm nay) và học sinh theo khối. Tiết Chờ xử lý và lớp chưa có chủ nhiệm không nằm trên Dashboard (xem 4.4.27 và 4.3.34). Một tiết, đơn hay bài thuộc phân hiệu nào là theo PHÂN HIỆU CỦA LỚP liên quan (mục 5.1).
 
 **4.9.2 — Xem Dashboard / View Dashboard**  
 `BE + Web` · 2 MD · dep: 4.9.1  
@@ -1127,7 +1115,7 @@ Vice Principal không xem được số liệu phân hiệu khác (gọi kèm ph
 
 **4.9.5 — Ghi nhật ký cho ba nhóm sự kiện / Record Audit Entry**  
 `BE` · 2 MD · dep: 4.1.12, 4.4.11  
-Đúng ba nhóm: tài khoản (tạo đơn lẻ và hàng loạt, khóa, mở, đổi loại tài khoản, School Admin reset mật khẩu — không ghi mật khẩu); phát hành thời khóa biểu (phiên bản, số tiết xóa và tạo); điều chỉnh lịch (đổi giáo viên, hủy, tiết bù, ngày nghỉ đột xuất, khai báo, xóa khai báo và xử lý giáo viên vắng). Thao tác hàng loạt ghi MỘT bản ghi kèm danh sách ID (BR-28).
+Đúng ba nhóm: tài khoản (tạo đơn lẻ và hàng loạt, khóa, mở, đổi loại tài khoản, School Admin reset mật khẩu — không ghi mật khẩu); phát hành thời khóa biểu (phiên bản, số tiết xóa và tạo); điều chỉnh lịch (đổi giáo viên, hủy, tiết bù, khai báo, xóa khai báo và xử lý giáo viên vắng). Thao tác hàng loạt ghi MỘT bản ghi kèm danh sách ID (BR-28).
 
 **4.9.6 — Tra cứu nhật ký kiểm toán / Browse Audit Log**  
 `BE + Web` · 1.5 MD · dep: 4.9.5  
@@ -1165,4 +1153,4 @@ Mỗi mục chỉ xuất đúng phạm vi của người gọi; danh sách tài 
 
 ---
 
-**Tổng:** 261 task · 352.5 MD
+**Tổng:** 258 task · 348 MD

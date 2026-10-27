@@ -109,7 +109,7 @@ export function PublishPreviewModal({ versionId, onClose, onPublished }: Props) 
               <InlineAlert
                 type="error"
                 title={`Còn ${p.conflicts.length} xung đột giáo viên — chặn phát hành`}
-                description="Giáo viên đang có tiết khác cùng khung giờ, trong chính bản Nháp hoặc ở lớp và phân hiệu khác. Sửa bản Nháp, hoặc nhờ hiệu phó phân hiệu kia sửa lịch, rồi xem trước lại."
+                description="Giáo viên đang có tiết khác cùng khung giờ, trong chính bản Nháp hoặc ở lớp và phân hiệu khác. Đổi giáo viên khác cho các ô trùng trong bản Nháp rồi xem trước lại."
               />
               <DataTable<TeacherConflict>
                 rowKey={(c) => `${c.teacherAbbr}|${c.dayOfWeek}|${c.sessionOfDay}|${c.periodNo}|${c.occupiedClassName}`}
@@ -119,7 +119,6 @@ export function PublishPreviewModal({ versionId, onClose, onPublished }: Props) 
                   { title: 'Khung giờ', key: 'slot', width: 150, render: (_: unknown, c: TeacherConflict) => `${weekdayLabel(c.dayOfWeek)}, ${sessionOfDayLabel(c.sessionOfDay)} tiết ${c.periodNo}` },
                   { title: 'Lớp trong bản Nháp', dataIndex: 'newClassName', width: 130 },
                   { title: 'Đang chiếm chỗ', key: 'occ', render: (_: unknown, c: TeacherConflict) => `${c.occupiedSubject} ${c.occupiedClassName} · ${c.occupiedCampusName}` },
-                  { title: 'Hiệu phó phụ trách', dataIndex: 'occupiedViceName', width: 160, render: (v: string | null) => v ?? <span className="muted">Chưa có</span> },
                   { title: 'Số buổi', dataIndex: 'sessionCount', width: 90, align: 'right', className: 'tabular' },
                 ]}
               />

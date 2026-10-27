@@ -9,7 +9,7 @@ namespace MSMS.Api.Modules.Sch.Controllers;
 [ApiController, Route("api/sch/period-slots")]
 public class PeriodSlotsController(PeriodSlotService service) : ControllerBase
 {
-    [HttpGet, Authorize(Policy = Policies.Staff)]
+    [HttpGet, Authorize(Policy = Policies.StaffOrFamily)]
     public Task<List<PeriodSlotDto>> List() => service.ListAsync();
 
     [HttpPost, Authorize(Policy = Policies.SchoolAdmin)]

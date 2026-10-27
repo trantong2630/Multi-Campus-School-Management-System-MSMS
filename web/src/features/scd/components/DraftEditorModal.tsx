@@ -120,7 +120,6 @@ function ConflictItem({ c }: { c: TeacherConflict }) {
       <div><strong>{c.teacherName}</strong> <code className="mono">{c.teacherAbbr}</code></div>
       <div>{weekdayLabel(c.dayOfWeek)}, {sessionOfDayLabel(c.sessionOfDay)} tiết {c.periodNo} — lớp {c.newClassName}</div>
       <div className="muted">Đang chiếm chỗ: {c.occupiedSubject} {c.occupiedClassName} · {c.occupiedCampusName}</div>
-      <div className="muted">Hiệu phó phụ trách: {c.occupiedViceName ?? 'Chưa có'}</div>
       {c.sessionCount > 0 && <div className="muted tabular">{c.sessionCount} buổi, {formatDate(c.firstDate)} – {formatDate(c.lastDate)}</div>}
     </div>
   );
