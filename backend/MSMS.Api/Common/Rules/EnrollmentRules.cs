@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using MSMS.Api.Data.Entities;
 
 namespace MSMS.Api.Common.Rules;
@@ -18,9 +19,16 @@ public static class EnrollmentCloseReasons
 /// </summary>
 public static class EnrollmentRules
 {
-    /// <summary>Học sinh đang học của lớp tại ngày D: ngày bắt đầu ≤ D và (ngày kết thúc trống hoặc ≥ D).</summary>
+    /// <summary>
+    /// Ghi danh hiệu lực tại ngày D: ngày bắt đầu ≤ D và ngày kết thúc ≥ D, trong đó ngày kết thúc để trống nghĩa là
+    /// tới hết năm học của lớp (BR-09). Khác `EffectivePeriod.EffectiveAt` ở chỗ có chặn theo cuối năm học.
+    /// </summary>
+    public static Expression<Func<Enrollment, bool>> ActiveAt(DateOnly date) =>
+        e => e.StartDate <= date && (e.EndDate ?? e.Class.AcademicYear.EndDate) >= date;
+
+    /// <summary>Học sinh đang học của lớp tại ngày D (xem <see cref="ActiveAt"/>).</summary>
     public static IQueryable<Enrollment> RosterAt(this IQueryable<Enrollment> enrollments, int classId, DateOnly date) =>
-        enrollments.Where(e => e.ClassId == classId).Where(EffectivePeriod.EffectiveAt<Enrollment>(date));
+        enrollments.Where(e => e.ClassId == classId).Where(ActiveAt(date));
 
     /// <summary>Ngày kết thúc thực tế của ghi danh: để trống nghĩa là tới hết năm học.</summary>
     public static DateOnly EffectiveEnd(DateOnly? endDate, DateOnly yearEnd) => endDate ?? yearEnd;
