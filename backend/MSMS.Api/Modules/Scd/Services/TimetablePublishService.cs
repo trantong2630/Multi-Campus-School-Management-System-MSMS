@@ -93,7 +93,7 @@ public sealed class TimetablePublishService(
         if (plan.BlockingIssues.Count > 0)
             throw ApiException.BadRequest(string.Join(" ", plan.BlockingIssues));
         if (plan.Conflicts.Count > 0)
-            throw ApiException.BadRequest($"Còn {plan.Conflicts.Count} xung đột giáo viên. Xung đột chặn Phát hành: sửa bản Nháp, hoặc nhờ Hiệu phó phân hiệu kia sửa lịch, rồi phát hành lại.");
+            throw ApiException.BadRequest($"Còn {plan.Conflicts.Count} xung đột giáo viên. Xung đột chặn Phát hành: sửa bản Nháp, đổi giáo viên khác cho các ô trùng rồi phát hành lại.");
 
         var campusId = plan.Version.CampusId;
         var deletable = DeletableSessions(plan.ClassIds, plan.From, plan.To);
@@ -103,10 +103,6 @@ public sealed class TimetablePublishService(
             throw ApiException.BadRequest("Phát hành sẽ xóa tiết Chỉnh tay, tiết bù hoặc tiết Chờ xử lý. Xem số lượng ở màn hình xem trước và xác nhận để tiếp tục.");
 
         var deleteIds = deletable.Select(s => s.SessionId);
-        // Tiết được giữ lại (đã qua) có thể trỏ tới tiết gốc sắp bị xóa; gỡ liên kết trước để không vướng khóa ngoại.
-        await db.TeachingSession
-            .Where(s => s.OriginalSessionId != null && deleteIds.Contains(s.OriginalSessionId.Value) && !deleteIds.Contains(s.SessionId))
-            .ExecuteUpdateAsync(set => set.SetProperty(s => s.OriginalSessionId, (long?)null));
         var deleted = await deletable.ExecuteDeleteAsync();
 
         var now = clock.Now;
@@ -188,6 +184,12 @@ public sealed class TimetablePublishService(
             NewSessions = newSessions, Entries = entries, ClassIds = classIds,
         };
 
+        // Lớp có thể đã ngừng hoạt động sau lúc import.
+        var inactiveClasses = await db.Class.AsNoTracking().Where(c => classIds.Contains(c.ClassId) && !c.IsActive)
+            .OrderBy(c => c.Name).Select(c => c.Name).ToListAsync();
+        if (inactiveClasses.Count > 0)
+            plan.BlockingIssues.Add($"Lớp {string.Join(", ", inactiveClasses)} đã ngừng hoạt động. Mở lại lớp ở Thiết lập, hoặc import lại file không có lớp này.");
+
         // Giáo viên có thể đã bị khóa hoặc ngừng hoạt động sau lúc import.
         foreach (var teacher in entries.Select(e => e.Teacher).DistinctBy(t => t.StaffId))
         {
@@ -240,12 +242,7 @@ public sealed class TimetablePublishService(
             foreach (var e in g) plan.ConflictCells.Add((e.ClassId, e.DayOfWeek, e.PeriodSlotId));
         if (hits.Count == 0 && internalHits.Count == 0) return;
 
-        // Mỗi dòng xung đột ghi rõ phân hiệu đang chiếm chỗ và ai là hiệu phó phụ trách phân hiệu đó (BR-14).
-        var occCampusIds = hits.Keys.Select(k => k.OccCampus).Append(campusId).Distinct().ToList();
-        var today = clock.Today;
-        var vices = await db.CampusLeadership.AsNoTracking().Where(EffectivePeriod.EffectiveAt<CampusLeadership>(today))
-            .Where(l => occCampusIds.Contains(l.CampusId))
-            .Select(l => new { l.CampusId, Name = l.Staff.Staff.FullName }).ToListAsync();
+        // Mỗi dòng xung đột ghi rõ lớp và phân hiệu đang chiếm chỗ để Vice Principal chọn giáo viên khác (BR-14).
         var campusNames = occupied.GroupBy(o => o.CampusId).ToDictionary(g => g.Key, g => g.First().CampusName);
         var teachers = plan.Entries.Select(e => e.Teacher).DistinctBy(t => t.StaffId).ToDictionary(t => t.StaffId);
         var slots = plan.Entries.Select(e => e.PeriodSlot).DistinctBy(p => p.PeriodSlotId).ToDictionary(p => p.PeriodSlotId);
@@ -260,7 +257,6 @@ public sealed class TimetablePublishService(
                 plan.Conflicts.Add(new TeacherConflictDto(
                     e.Teacher.Staff.FullName, e.Teacher.TeacherAbbr ?? "", e.DayOfWeek, e.PeriodSlot.SessionOfDay, e.PeriodSlot.PeriodNo, e.Class.Name,
                     plan.CampusName, first.Class.Name, first.Subject.Abbreviation,
-                    vices.FirstOrDefault(v => v.CampusId == campusId)?.Name,
                     dates.Count, dates.Count > 0 ? dates[0] : plan.From, dates.Count > 0 ? dates[^1] : plan.From));
             }
         }
@@ -273,7 +269,7 @@ public sealed class TimetablePublishService(
             plan.Conflicts.Add(new TeacherConflictDto(
                 t.Staff.FullName, t.TeacherAbbr ?? "", key.Day, slot.SessionOfDay, slot.PeriodNo, hit.NewClass,
                 campusNames[key.OccCampus], key.OccClass, key.OccSubject,
-                vices.FirstOrDefault(v => v.CampusId == key.OccCampus)?.Name, dates.Count, dates[0], dates[^1]));
+                dates.Count, dates[0], dates[^1]));
         }
     }
 

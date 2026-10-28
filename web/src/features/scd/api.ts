@@ -1,7 +1,8 @@
 import { apiClient } from '@/app/apiClient';
 import type {
-  CampusOption, DaySchedule, DraftOptions, GridClass, MySession, PublishPreview, PublishResult, ResponsibilityList, TeacherOption, TimetableImportResult, TimetableVersion,
-  VersionGrid, ViewSession,
+  Absence, AdjustResult, AdjustWeek, CampusOption, DaySchedule, DeclareAbsenceBody, DraftOptions,
+  GridClass, MakeUpBody, MySession, PendingSession, PublishPreview, PublishResult, ResolveBody, ResponsibilityList, TeacherAvailability, TeacherOption,
+  TimetableImportResult, TimetableVersion, VersionGrid, ViewSession,
 } from './types';
 
 export const scdApi = {
@@ -36,8 +37,36 @@ export const scdApi = {
   teachers: (campusId: number) => apiClient.get<TeacherOption[]>('/scd/schedule/teachers', { params: { campusId } }).then((r) => r.data),
   byClass: (classId: number, from: string, to: string) =>
     apiClient.get<ViewSession[]>('/scd/schedule/class', { params: { classId, from, to } }).then((r) => r.data),
+  studentWeek: (from: string, to: string) =>
+    apiClient.get<ViewSession[]>('/scd/schedule/student', { params: { from, to } }).then((r) => r.data),
+  childWeek: (studentId: number, from: string, to: string) =>
+    apiClient.get<ViewSession[]>('/scd/schedule/child', { params: { studentId, from, to } }).then((r) => r.data),
   responsibilities: (campusId?: number, subjectId?: number) =>
     apiClient.get<ResponsibilityList>('/scd/responsibilities', { params: { campusId, subjectId } }).then((r) => r.data),
   byTeacher: (teacherId: number, from: string, to: string) =>
     apiClient.get<ViewSession[]>('/scd/schedule/teacher', { params: { teacherId, from, to } }).then((r) => r.data),
+
+  // ---- SCD-02: điều chỉnh lịch dạy ----
+  adjustWeek: (classId: number, weekStart: string) =>
+    apiClient.get<AdjustWeek>('/scd/adjust/week', { params: { classId, weekStart } }).then((r) => r.data),
+  adjustTeachers: (date: string, periodSlotId: number, excludeSessionId?: number) =>
+    apiClient.get<TeacherAvailability[]>('/scd/adjust/teachers', { params: { date, periodSlotId, excludeSessionId } }).then((r) => r.data),
+  changeSessionTeacher: (sessionId: number, teacherId: number) =>
+    apiClient.put<AdjustResult>(`/scd/adjust/sessions/${sessionId}/teacher`, { teacherId }).then((r) => r.data),
+  cancelSession: (sessionId: number) =>
+    apiClient.post<AdjustResult>(`/scd/adjust/sessions/${sessionId}/cancel`).then((r) => r.data),
+  addMakeUp: (body: MakeUpBody) => apiClient.post<AdjustResult>('/scd/adjust/makeup', body).then((r) => r.data),
+
+  // ---- SCD-03: giáo viên vắng ----
+  absences: (campusId: number) => apiClient.get<Absence[]>('/scd/absences', { params: { campusId } }).then((r) => r.data),
+  absenceTeachers: (campusId: number) => apiClient.get<TeacherOption[]>('/scd/absences/teachers', { params: { campusId } }).then((r) => r.data),
+  declareAbsence: (body: DeclareAbsenceBody) =>
+    apiClient.post<{ absenceId: number; pendingCount: number }>('/scd/absences', body).then((r) => r.data),
+  deleteAbsence: (id: number) => apiClient.delete<{ restoredCount: number }>(`/scd/absences/${id}`).then((r) => r.data),
+  pending: (campusId: number, params: { from?: string; to?: string; classId?: number }) =>
+    apiClient.get<PendingSession[]>('/scd/absences/pending', { params: { campusId, ...params } }).then((r) => r.data),
+  pendingSuggestions: (sessionId: number) =>
+    apiClient.get<TeacherAvailability[]>(`/scd/absences/pending/${sessionId}/suggestions`).then((r) => r.data),
+  resolvePending: (sessionId: number, body: ResolveBody) =>
+    apiClient.post<AdjustResult>(`/scd/absences/pending/${sessionId}/resolve`, body).then((r) => r.data),
 };
