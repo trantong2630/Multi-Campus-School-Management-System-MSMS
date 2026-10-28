@@ -4,6 +4,7 @@ import { message } from '@/shared/lib/antdStatic';
 import { Pencil, Plus, Power } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/app/AuthProvider';
+import { AddressInput } from '@/shared/components/AddressInput';
 import { DataTable } from '@/shared/components/DataTable';
 import { FormModal } from '@/shared/components/FormModal';
 import { PageHeader } from '@/shared/components/PageHeader';
@@ -106,7 +107,9 @@ export function CampusPage() {
         <Form.Item label="Tên phân hiệu" name="name" rules={[{ required: true, whitespace: true, message: 'Nhập tên phân hiệu.' }]}>
           <Input maxLength={150} />
         </Form.Item>
-        <Form.Item label="Địa chỉ" name="address"><Input maxLength={255} /></Form.Item>
+        <Form.Item label="Địa chỉ" name="address" rules={[{ max: 255, message: 'Địa chỉ tối đa 255 ký tự. Rút gọn số nhà, đường.' }]}>
+          <AddressInput />
+        </Form.Item>
         <Form.Item label="Số điện thoại" name="phoneNumber"><Input maxLength={20} /></Form.Item>
       </FormModal>
     </>

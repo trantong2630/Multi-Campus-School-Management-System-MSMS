@@ -392,3 +392,18 @@
   margin: 0;
   color: var(--c-text1);
 }
+
+.tt-class-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 18px 24px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--c-green200) 0%, var(--c-green100) 55%, var(--c-green50) 100%);
+}
+.tt-class-head__text { display: flex; flex-direction: column; gap: 2px; }
+.tt-class-head__name { font-size: 24px; font-weight: 700; line-height: 1.25; color: var(--c-ink); }
+.tt-class-head__campus { font-size: 14px; color: var(--c-green800); font-weight: 500; }
+.tt-class-head__week { font-size: 15px; font-weight: 600; color: var(--c-green800); }

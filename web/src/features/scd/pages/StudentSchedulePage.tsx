@@ -21,6 +21,7 @@ const STATUS_NOTE: Record<ViewSession['status'], string | null> = { Scheduled: n
 export function StudentSchedulePage() {
   const { user } = useAuth();
   const isParent = user?.accountType === 'Parent';
+  const isStudent = user?.accountType === 'Student';
   const [monday, setMonday] = useState<Dayjs>(() => dayjs().startOf('week'));
   const [childId, setChildId] = useState<number | undefined>();
   const from = toDateString(monday);
@@ -31,12 +32,15 @@ export function StudentSchedulePage() {
     if (isParent && childId === undefined && children.data?.length) setChildId(children.data[0].studentId);
   }, [isParent, childId, children.data]);
 
-  const ready = !isParent || childId !== undefined;
+  const ready = (isParent && childId !== undefined) || isStudent;
   const sessions = useQuery({
     queryKey: ['scd', 'student-week', isParent ? childId : 'me', from, to],
     queryFn: () => (isParent ? scdApi.childWeek(childId!, from, to) : scdApi.studentWeek(from, to)),
     enabled: ready,
   });
+
+  const first = sessions.data?.[0];
+  const className = first?.className ?? (isParent ? children.data?.find((c) => c.studentId === childId)?.className : undefined);
 
   return (
     <>
@@ -44,6 +48,15 @@ export function StudentSchedulePage() {
         title={isParent ? 'Lịch học của con' : 'Lịch học'}
         description="Lịch học của lớp theo tuần. Tiết đã hủy gạch ngang, tiết chờ xử lý nền vàng."
       />
+      {className && (
+        <div className="tt-class-head">
+          <div className="tt-class-head__text">
+            <span className="tt-class-head__name">Lớp {className}</span>
+            {first && <span className="tt-class-head__campus">{first.campusName}</span>}
+          </div>
+          <span className="tt-class-head__week">Tuần {monday.format('DD/MM')} – {monday.add(5, 'day').format('DD/MM')}</span>
+        </div>
+      )}
       <FilterBar>
         {isParent && (
           <Select
