@@ -25,6 +25,7 @@ public sealed class CalendarService(MsmsDbContext db, CurrentUser user, IClock c
         if (r.EndDate <= r.StartDate) throw ApiException.BadRequest("Ngày kết thúc phải sau ngày bắt đầu năm học.");
         if (await db.AcademicYear.AnyAsync(y => y.Name == name))
             throw ApiException.BadRequest($"Năm học \"{name}\" đã có. Chọn tên khác.");
+        await EnsureNoOverlapAsync(r.StartDate, r.EndDate, exceptYearId: null);
 
         var year = new AcademicYear { Name = name, StartDate = r.StartDate, EndDate = r.EndDate, IsCurrent = false };
         // Năm học đầu tiên tự thành hiện hành để các màn hình vận hành có năm mặc định.
@@ -42,6 +43,7 @@ public sealed class CalendarService(MsmsDbContext db, CurrentUser user, IClock c
         if (r.EndDate <= r.StartDate) throw ApiException.BadRequest("Ngày kết thúc phải sau ngày bắt đầu năm học.");
         if (await db.AcademicYear.AnyAsync(y => y.AcademicYearId != id && y.Name == name))
             throw ApiException.BadRequest($"Năm học \"{name}\" đã có. Chọn tên khác.");
+        await EnsureNoOverlapAsync(r.StartDate, r.EndDate, exceptYearId: id);
         foreach (var s in year.Semester)
         {
             if (s.StartDate < r.StartDate || s.EndDate > r.EndDate)
@@ -53,12 +55,54 @@ public sealed class CalendarService(MsmsDbContext db, CurrentUser user, IClock c
         await db.SaveChangesAsync();
     }
 
+    /// <summary>Hai năm học không được chồng khoảng thời gian: ghi danh, lớp và thời khóa biểu đều gắn theo năm học.</summary>
+    private async Task EnsureNoOverlapAsync(DateOnly start, DateOnly end, int? exceptYearId)
+    {
+        var clash = await db.AcademicYear.AsNoTracking()
+            .Where(y => y.AcademicYearId != exceptYearId && y.StartDate <= end && start <= y.EndDate)
+            .OrderBy(y => y.StartDate).FirstOrDefaultAsync();
+        if (clash is not null)
+            throw ApiException.BadRequest(
+                $"Khoảng thời gian này chồng với năm học {clash.Name} ({clash.StartDate:dd/MM/yyyy} – {clash.EndDate:dd/MM/yyyy}). " +
+                "Chọn ngày bắt đầu sau ngày kết thúc của năm học đó, hoặc sửa lại năm học kia trước.");
+    }
+
     /// <summary>Đúng một năm học hiện hành tại một thời điểm (BR-08).</summary>
     public async Task SetCurrentYearAsync(int id)
     {
         var years = await db.AcademicYear.ToListAsync();
         if (years.All(y => y.AcademicYearId != id)) throw ApiException.NotFound("Không tìm thấy năm học.");
         foreach (var y in years) y.IsCurrent = y.AcademicYearId == id;
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Xóa năm học nhập nhầm. Chỉ xóa được khi chưa có lớp, ngày nghỉ hay thời khóa biểu nào gắn vào; hai học kỳ đã khai xóa theo.
+    /// Năm học đã có dữ liệu tham chiếu thì giữ nguyên, không có cách ngừng hoạt động nên phải xử lý dữ liệu đó trước (BR-07).
+    /// </summary>
+    public async Task DeleteYearAsync(int id)
+    {
+        var year = await db.AcademicYear.Include(y => y.Semester).FirstOrDefaultAsync(y => y.AcademicYearId == id)
+            ?? throw ApiException.NotFound("Không tìm thấy năm học.");
+        if (year.IsCurrent && await db.AcademicYear.AnyAsync(y => y.AcademicYearId != id))
+            throw ApiException.BadRequest($"{year.Name} đang là năm học hiện hành. Đặt năm học khác làm hiện hành trước rồi mới xóa.");
+
+        var semesterIds = year.Semester.Select(s => s.SemesterId).ToList();
+        var classes = await db.Class.CountAsync(c => c.AcademicYearId == id);
+        var holidays = await db.Holiday.CountAsync(h => h.AcademicYearId == id);
+        var timetables = await db.TimetableVersion.CountAsync(v => semesterIds.Contains(v.SemesterId));
+        if (classes + holidays + timetables > 0)
+        {
+            var used = new List<string>();
+            if (classes > 0) used.Add($"{classes} lớp");
+            if (holidays > 0) used.Add($"{holidays} ngày nghỉ");
+            if (timetables > 0) used.Add($"{timetables} bản thời khóa biểu");
+            throw ApiException.BadRequest(
+                $"Năm học {year.Name} đã có {string.Join(", ", used)} nên không xóa được. Nếu chỉ nhập sai ngày hoặc tên thì dùng Sửa năm học.");
+        }
+
+        db.Semester.RemoveRange(year.Semester);
+        db.AcademicYear.Remove(year);
         await db.SaveChangesAsync();
     }
 
@@ -73,6 +117,9 @@ public sealed class CalendarService(MsmsDbContext db, CurrentUser user, IClock c
         {
             if (range.EndDate <= range.StartDate)
                 throw ApiException.BadRequest($"Học kỳ {no}: ngày kết thúc phải sau ngày bắt đầu.");
+            var latestEnd = new DateOnly(year.EndDate.Year, no == 1 ? 1 : 5, no == 1 ? 18 : 31);   // muộn nhất: học kỳ 1 là 18/01, học kỳ 2 là 31/05 của năm kết thúc năm học
+            if (range.EndDate > latestEnd && range.EndDate <= year.EndDate)
+                throw ApiException.BadRequest($"Học kỳ {no} phải kết thúc muộn nhất ngày {latestEnd:dd/MM/yyyy}. Chọn ngày kết thúc sớm hơn.");
             if (range.StartDate < year.StartDate || range.EndDate > year.EndDate)
                 throw ApiException.BadRequest(
                     $"Học kỳ {no} phải nằm trong năm học {year.Name} ({year.StartDate:dd/MM/yyyy} – {year.EndDate:dd/MM/yyyy}).");
