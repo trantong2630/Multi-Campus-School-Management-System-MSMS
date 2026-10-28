@@ -83,3 +83,29 @@ export interface SchoolClass {
   studentCount: number;
   homeroomName: string | null;
 }
+
+export interface RosterItem {
+  enrollmentId: number;
+  studentId: number;
+  personCode: string;
+  fullName: string;
+  dateOfBirth: string | null;
+  gender: string | null;
+  startDate: string;
+  endDate: string | null;
+  reason: string | null;
+}
+
+export interface Roster {
+  classId: number;
+  className: string;
+  date: string;
+  students: RosterItem[];
+}
+
+export interface StudentCandidate {
+  studentId: number;
+  personCode: string;
+  fullName: string;
+  dateOfBirth: string | null;
+}
