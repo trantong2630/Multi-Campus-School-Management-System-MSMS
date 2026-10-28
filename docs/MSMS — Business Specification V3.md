@@ -259,7 +259,7 @@ Màn hình Thiết lập chỉ dành cho SA; HT chỉ có màn hình Thông tin 
 | --- | --- | --- | --- | --- | --- |
 | PAR-01 | Đơn xin nghỉ | Gửi, rút, duyệt, từ chối | PH 📱, CN 📱 | PH 📱, CN 📱, HP, SA | BR-19 |
 | PAR-02 | Sổ liên lạc tuần | Chuyên cần, bài tập có hạn trong tuần, điểm và nhận xét đã công bố — tính trực tiếp, chỉ đọc | — | HS 📱, PH 📱, CN 📱 | BR-24 |
-| PAR-03 | Hộp thư phụ huynh – giáo viên | Hội thoại 1–1 về một học sinh, chỉ văn bản | PH 📱 tạo và gửi · GV 📱 gửi | — | BR-25 |
+| PAR-03 | Hộp thư phụ huynh – giáo viên | Hội thoại 1–1 về một học sinh, chỉ văn bản | PH 📱, GV 📱 tạo và gửi | — | BR-25 |
 
 ### COM — Communication (2)
 
@@ -514,7 +514,7 @@ Kết quả về ở **Nháp**. Giáo viên chỉnh, **duyệt**, rồi **công 
 
 Không xếp hạng, không điểm trung bình lớp, không hạnh kiểm. Mục không có dữ liệu để trống. Số liệu luôn theo dữ liệu hiện tại — nhập bù điểm danh hay đơn duyệt muộn đều được phản ánh ngay lần mở sau.
 
-**BR-25 — Hộp thư.** Chỉ Parent **tạo** hội thoại, về một con được liên kết, với **chủ nhiệm** lớp con đang học hoặc **giáo viên đang phụ trách chuyên môn** ở lớp đó. Mỗi bộ (phụ huynh, cán bộ, học sinh) có một hội thoại. Hai bên nhắn văn bản tối đa 2.000 ký tự; không file, không gọi, không nhóm. Quan hệ được kiểm **mỗi lần gửi**: quan hệ đã kết thúc thì hội thoại thành **chỉ đọc**, lịch sử giữ nguyên. School Admin **không đọc và không nhắn** trong hội thoại. Tin nhắn mới hiện ngay ở bên nhận đang mở ứng dụng (web và mobile, qua SignalR), kèm chỉ báo **đang nhập**, **đã xem** (khi người nhận mở hội thoại) và **online/offline** của bên kia trong cùng hội thoại; School Admin không tham gia hội thoại nên không có trạng thái này. Realtime chỉ là kênh đẩy: việc gửi và kiểm quan hệ vẫn qua Backend như trên, mất kết nối thì tải lại phần đã lỡ.
+**BR-25 — Hộp thư.** Cả Parent và Teacher đều có thể **tạo** hội thoại về một học sinh: Phụ huynh tạo với **chủ nhiệm** lớp con đang học hoặc **giáo viên đang phụ trách chuyên môn** ở lớp đó; Giáo viên (chủ nhiệm hoặc đang phụ trách chuyên môn) tạo với phụ huynh của học sinh thuộc lớp mình đang dạy. Mỗi bộ (phụ huynh, cán bộ, học sinh) có đúng một hội thoại. Hai bên nhắn văn bản tối đa 2.000 ký tự; không file, không gọi, không nhóm. Quan hệ được kiểm **mỗi lần gửi**: quan hệ đã kết thúc thì hội thoại thành **chỉ đọc**, lịch sử giữ nguyên. School Admin **không đọc và không nhắn** trong hội thoại. Tin nhắn mới hiện ngay ở bên nhận đang mở ứng dụng (web và mobile, qua SignalR), kèm chỉ báo **đang nhập**, **đã xem** (khi người nhận mở hội thoại) và **online/offline** của bên kia trong cùng hội thoại; School Admin không tham gia hội thoại nên không có trạng thái này. Realtime chỉ là kênh đẩy: việc gửi và kiểm quan hệ vẫn qua Backend như trên, mất kết nối thì tải lại phần đã lỡ.
 
 **BR-26 — Thông báo.** Chỉ trong ứng dụng; không gửi email (ngoại lệ duy nhất là OTP quên mật khẩu ở BR-04, không phải thông báo). Thông báo mới hiện ngay trên web và mobile đang mở (SignalR); không có push khi app đóng. Có thông báo **không đồng nghĩa có quyền** — Backend kiểm lại khi người dùng bấm vào. Danh sách sự kiện là **danh sách đóng**:
 
