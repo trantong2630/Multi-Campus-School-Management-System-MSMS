@@ -21,6 +21,7 @@ const STATUS_NOTE: Record<ViewSession['status'], string | null> = { Scheduled: n
 export function StudentSchedulePage() {
   const { user } = useAuth();
   const isParent = user?.accountType === 'Parent';
+  const isStudent = user?.accountType === 'Student';
   const [monday, setMonday] = useState<Dayjs>(() => dayjs().startOf('week'));
   const [childId, setChildId] = useState<number | undefined>();
   const from = toDateString(monday);
@@ -31,7 +32,7 @@ export function StudentSchedulePage() {
     if (isParent && childId === undefined && children.data?.length) setChildId(children.data[0].studentId);
   }, [isParent, childId, children.data]);
 
-  const ready = !isParent || childId !== undefined;
+  const ready = (isParent && childId !== undefined) || isStudent;
   const sessions = useQuery({
     queryKey: ['scd', 'student-week', isParent ? childId : 'me', from, to],
     queryFn: () => (isParent ? scdApi.childWeek(childId!, from, to) : scdApi.studentWeek(from, to)),
