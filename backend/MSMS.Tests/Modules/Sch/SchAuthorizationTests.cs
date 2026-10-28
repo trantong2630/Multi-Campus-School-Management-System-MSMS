@@ -112,7 +112,9 @@ public class SchAuthorizationTests
         foreach (var m in Endpoints().Where(IsRead).Where(m => m.GetCustomAttribute<AllowAnonymousAttribute>() is null))
         {
             var policy = m.GetCustomAttribute<AuthorizeAttribute>()?.Policy;
-            var allowed = m.Name == "Candidates" ? Policies.SchoolAdmin : Policies.Staff;   // danh sách học sinh để ghi danh chỉ School Admin dùng
+            var allowed = m.Name == "Candidates" ? Policies.SchoolAdmin   // danh sách học sinh để ghi danh chỉ School Admin dùng
+                : m.DeclaringType!.Name == "PeriodSlotsController" ? Policies.StaffOrFamily   // khung giờ tiết: học sinh/phụ huynh cần để xem TKB
+                : Policies.Staff;
             if (policy != allowed) wrong.Add($"{m.DeclaringType!.Name}.{m.Name} = {policy ?? "(none)"}");
         }
 
