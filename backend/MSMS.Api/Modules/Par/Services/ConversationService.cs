@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
@@ -5,6 +6,7 @@ using MSMS.Api.Common.Notifications;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
 using MSMS.Api.Data.Entities;
+using MSMS.Api.Modules.Com;
 using MSMS.Api.Modules.Par.Dtos;
 
 namespace MSMS.Api.Modules.Par.Services;
@@ -13,7 +15,8 @@ public sealed class ConversationService(
     MsmsDbContext db,
     IClock clock,
     CurrentUser currentUser,
-    NotificationSender notifier)
+    NotificationSender notifier,
+    IHubContext<CommunicationHub> hubContext)
 {
     public async Task<List<AvailableTeacherDto>> GetAvailableTeachersAsync(int studentId)
     {
@@ -167,18 +170,31 @@ public sealed class ConversationService(
         if (activeClassIds.Count == 0)
             return [];
 
-        return await db.Enrollment.AsNoTracking()
+        var rawStudents = await db.Enrollment.AsNoTracking()
             .Where(e => activeClassIds.Contains(e.ClassId) && e.StartDate <= today && (e.EndDate == null || e.EndDate >= today))
-            .Select(e => new TeachingStudentDto(
+            .Select(e => new
+            {
                 e.StudentId,
-                e.Student.Student.FullName,
-                e.Student.Student.PersonCode,
+                FullName = e.Student.Student.FullName,
+                PersonCode = e.Student.Student.PersonCode,
                 e.ClassId,
-                e.Class.Name
+                ClassName = e.Class.Name
+            })
+            .ToListAsync();
+
+        return rawStudents
+            .GroupBy(s => new { s.StudentId, s.ClassId })
+            .Select(g => g.First())
+            .Select(s => new TeachingStudentDto(
+                s.StudentId,
+                s.FullName,
+                s.PersonCode,
+                s.ClassId,
+                s.ClassName
             ))
             .OrderBy(s => s.ClassName)
             .ThenBy(s => s.FullName)
-            .ToListAsync();
+            .ToList();
     }
 
     public async Task<List<AvailableParentDto>> GetAvailableParentsAsync(int studentId)
@@ -205,16 +221,26 @@ public sealed class ConversationService(
         if (!isTeaching)
             throw ApiException.Forbidden("Bạn không giảng dạy học sinh này.");
 
-        return await db.ParentStudentLink.AsNoTracking()
+        var rawParents = await db.ParentStudentLink.AsNoTracking()
             .Where(l => l.StudentId == studentId)
-            .Select(l => new AvailableParentDto(
+            .Select(l => new
+            {
                 l.ParentId,
-                l.Parent.FullName,
+                FullName = l.Parent.FullName,
                 l.Relationship,
-                l.Parent.PhoneNumber
+                PhoneNumber = l.Parent.PhoneNumber
+            })
+            .ToListAsync();
+
+        return rawParents
+            .Select(p => new AvailableParentDto(
+                p.ParentId,
+                p.FullName,
+                p.Relationship,
+                p.PhoneNumber
             ))
             .OrderBy(p => p.FullName)
-            .ToListAsync();
+            .ToList();
     }
 
     public async Task<int> CreateOrGetConversationAsync(CreateConversationDto dto)
@@ -451,6 +477,13 @@ public sealed class ConversationService(
                 msg.ReadAt = now;
             }
             await db.SaveChangesAsync();
+
+            // BR-25, COM-4.8.8: Gửi sự kiện MessagesRead tới người gửi tin cũ sau SaveChanges thành công
+            // Thông báo người gửi biết tin đã được xem (Seen indicator)
+            // Broadcast tới conversation group để người gửi nhận được
+            await hubContext.Clients
+                .Group($"conversation_{conversationId}")
+                .SendAsync("MessagesRead", conversationId, now);
         }
 
         return messages.Select(m => new MessageItemDto(
@@ -531,6 +564,44 @@ public sealed class ConversationService(
             conversationId);
 
         await db.SaveChangesAsync();
+
+        // BR-25, COM-4.8.7, COM-4.8.8: Gửi sự kiện realtime sau SaveChanges thành công
+        // Sự kiện MessageReceived: Đẩy tin nhắn mới tức thì tới nhóm hội thoại
+        // Sự kiện NotificationCreated: Đẩy thông báo chuông tới người nhận
+        
+        var messagePayload = new
+        {
+            messageId = message.MessageId,
+            conversationId = message.ConversationId,
+            senderPersonId = message.SenderPersonId,
+            senderName = senderName,
+            content = message.Content,
+            sentAt = message.SentAt,
+            readAt = message.ReadAt
+        };
+
+        // Gửi MessageReceived tới conversation group (cả hai bên đều nhận nếu đang ở trong hội thoại)
+        await hubContext.Clients
+            .Group($"conversation_{conversationId}")
+            .SendAsync("MessageReceived", messagePayload);
+
+        // Đồng thời gửi tới nhóm cá nhân người nhận (để cập nhật preview/unread dù họ đang ở hội thoại khác)
+        await hubContext.Clients
+            .Group($"user_{receiverPersonId}")
+            .SendAsync("MessageReceived", messagePayload);
+
+        // Gửi NotificationCreated tới người nhận qua nhóm cá nhân
+        await hubContext.Clients
+            .Group($"user_{receiverPersonId}")
+            .SendAsync("NotificationCreated", new
+            {
+                type = "MessageReceived",
+                title = $"Tin nhắn mới từ {senderName}",
+                preview = preview,
+                module = "PAR",
+                targetId = conversationId,
+                createdAt = now
+            });
 
         return new MessageItemDto(
             message.MessageId,
