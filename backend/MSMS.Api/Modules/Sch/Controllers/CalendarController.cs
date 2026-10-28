@@ -24,6 +24,9 @@ public class CalendarController(CalendarService service) : ControllerBase
     [HttpPut("academic-years/{id:int}/semesters"), Authorize(Policy = Policies.SchoolAdmin)]
     public Task<AcademicYearDto> ConfigureSemesters(int id, SemestersRequest r) => service.ConfigureSemestersAsync(id, r);
 
+    [HttpDelete("academic-years/{id:int}"), Authorize(Policy = Policies.SchoolAdmin)]
+    public async Task<IActionResult> DeleteYear(int id) { await service.DeleteYearAsync(id); return NoContent(); }
+
     [HttpGet("holidays"), Authorize(Policy = Policies.Staff)]
     public Task<List<HolidayDto>> ListHolidays([FromQuery] int? yearId, [FromQuery] int? campusId) => service.ListHolidaysAsync(yearId, campusId);
 

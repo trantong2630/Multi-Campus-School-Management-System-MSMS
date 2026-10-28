@@ -169,7 +169,7 @@ public sealed class TimetablePublishService(
                 .Where(h => h.AcademicYearId == semester.AcademicYearId && (h.CampusId == null || h.CampusId == version.CampusId)
                             && h.HolidayDate >= from && h.HolidayDate <= to)
                 .Select(h => h.HolidayDate).ToListAsync()).ToHashSet();
-        var datesByDow = SchoolCalendarRules.SchoolDays(from, to, holidays).GroupBy(d => d.DayOfWeek).ToDictionary(g => g.Key, g => g.ToList());
+        var datesByDow = SchoolCalendarRules.SchoolDays(from, to, [(semester.StartDate, semester.EndDate)], holidays).GroupBy(d => d.DayOfWeek).ToDictionary(g => g.Key, g => g.ToList());
 
         var newSessions = new List<NewSession>();
         foreach (var e in entries)
@@ -183,6 +183,12 @@ public sealed class TimetablePublishService(
             Version = version, Semester = semester, CampusName = version.Campus.Name, From = from, To = to,
             NewSessions = newSessions, Entries = entries, ClassIds = classIds,
         };
+
+        // Lớp có thể đã ngừng hoạt động sau lúc import.
+        var inactiveClasses = await db.Class.AsNoTracking().Where(c => classIds.Contains(c.ClassId) && !c.IsActive)
+            .OrderBy(c => c.Name).Select(c => c.Name).ToListAsync();
+        if (inactiveClasses.Count > 0)
+            plan.BlockingIssues.Add($"Lớp {string.Join(", ", inactiveClasses)} đã ngừng hoạt động. Mở lại lớp ở Thiết lập, hoặc import lại file không có lớp này.");
 
         // Giáo viên có thể đã bị khóa hoặc ngừng hoạt động sau lúc import.
         foreach (var teacher in entries.Select(e => e.Teacher).DistinctBy(t => t.StaffId))

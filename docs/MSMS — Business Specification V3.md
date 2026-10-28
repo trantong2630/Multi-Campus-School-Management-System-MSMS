@@ -427,7 +427,7 @@ Giáo viên được chọn phải đủ điều kiện như file import (BR-06,
 
 **BR-14 — Phát hành và Phát hành lại.** Vice Principal Phát hành một phiên bản Nháp. Khi bấm Phát hành, hệ thống chạy **xem trước** trong hộp xác nhận và hiển thị: số tiết sẽ xóa và sẽ tạo, nhóm theo lớp và ngày; **cảnh báo số tiết Chỉnh tay, tiết bù và tiết Chờ xử lý sẽ bị xóa**, người dùng phải xác nhận; **danh sách lớp của (phân hiệu, năm học) vẫn không có tiết nào** trong học kỳ sau Phát hành (cảnh báo, không chặn); và danh sách xung đột giáo viên. Mỗi dòng xung đột ghi rõ **lớp và phân hiệu đang chiếm chỗ giáo viên**; Vice Principal xử lý bằng cách đổi sang giáo viên khác cho ô trùng trong bản Nháp.
 
-**Còn xung đột giáo viên là chặn Phát hành.**
+**Còn xung đột giáo viên là chặn Phát hành.** Phát hành cũng bị chặn khi bản Nháp có lớp đã ngừng hoạt động hoặc giáo viên không còn đủ điều kiện dạy (BR-06); thông báo nêu rõ lớp hoặc giáo viên để xử lý.
 
 Phát hành chạy trong **một transaction**, hai bước:
 

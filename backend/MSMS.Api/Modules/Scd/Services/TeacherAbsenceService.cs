@@ -102,10 +102,11 @@ public sealed class TeacherAbsenceService(
                 DeclaredBy = a.DeclaredByPerson == null ? null : a.DeclaredByPerson.FullName, a.CreatedAt,
                 Pending = a.TeachingSession.Count(s => s.Class.CampusId == campusId && s.Status == "Pending"),
                 Handled = a.TeachingSession.Count(s => s.Class.CampusId == campusId && s.Status != "Pending"),
+                HandledAnywhere = a.TeachingSession.Count(s => s.Status != "Pending"),   // DeleteAsync đếm mọi phân hiệu
             }).ToListAsync();
         return rows.Select(a => new AbsenceDto(
             a.AbsenceId, a.TeacherId, a.TeacherName, a.TeacherAbbr, a.FromDate, a.ToDate, AbsenceQueries.ParseSlots(a.SlotIds), a.Reason,
-            a.DeclaredBy, a.CreatedAt, a.Pending, a.Handled, a.Handled == 0)).ToList();
+            a.DeclaredBy, a.CreatedAt, a.Pending, a.Handled, a.HandledAnywhere == 0)).ToList();
     }
 
     /// <summary>
