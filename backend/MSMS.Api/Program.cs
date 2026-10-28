@@ -9,6 +9,7 @@ using MSMS.Api.Common.Notifications;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
 using MSMS.Api.Modules.Adm;
+using MSMS.Api.Modules.Com;
 using MSMS.Api.Modules.Iam;
 using MSMS.Api.Modules.Ppl;
 using MSMS.Api.Modules.Sch;
@@ -46,8 +47,23 @@ builder.Services
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key)),
             ClockSkew = TimeSpan.FromMinutes(1),
         };
+        
+        // COM-4.8.6: Cấu hình lấy token từ query string cho SignalR (cả negotiate và websocket)
         o.Events = new JwtBearerEvents
         {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                
+                // Nếu request đi vào endpoint /signalr và có access_token trên query string
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/signalr"))
+                {
+                    context.Token = accessToken;
+                }
+                
+                return Task.CompletedTask;
+            },
             OnChallenge = ctx =>
             {
                 ctx.HandleResponse();
@@ -64,10 +80,14 @@ builder.Services.AddIamModule();
 builder.Services.AddSchModule();
 builder.Services.AddPplModule();
 builder.Services.AddScdModule();
-
+builder.Services.AddComModule();
 builder.Services.AddParModule();
 
 builder.Services.AddAdmModule();
+
+// Đăng ký SignalR Hub cho thông báo và tin nhắn realtime
+// COM-4.8.6: Hub xác thực bằng access_token qua query string
+builder.Services.AddSignalR();
 
 builder.Services.AddControllers();
 
@@ -78,6 +98,10 @@ app.UseAuthentication();
 app.UseMiddleware<AccountStatusMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
+
+// Đăng ký SignalR Hub route
+// COM-4.8.6: Token được truyền qua query string: /signalr?access_token=...
+app.MapHub<CommunicationHub>("/signalr");
 
 if (app.Environment.IsDevelopment())
 {
