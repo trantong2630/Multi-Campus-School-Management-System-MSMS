@@ -38,12 +38,24 @@ export function StudentSchedulePage() {
     enabled: ready,
   });
 
+  const first = sessions.data?.[0];
+  const className = first?.className ?? (isParent ? children.data?.find((c) => c.studentId === childId)?.className : undefined);
+
   return (
     <>
       <PageHeader
         title={isParent ? 'Lịch học của con' : 'Lịch học'}
         description="Lịch học của lớp theo tuần. Tiết đã hủy gạch ngang, tiết chờ xử lý nền vàng."
       />
+      {className && (
+        <div className="tt-class-head">
+          <div className="tt-class-head__text">
+            <span className="tt-class-head__name">Lớp {className}</span>
+            {first && <span className="tt-class-head__campus">{first.campusName}</span>}
+          </div>
+          <span className="tt-class-head__week">Tuần {monday.format('DD/MM')} – {monday.add(5, 'day').format('DD/MM')}</span>
+        </div>
+      )}
       <FilterBar>
         {isParent && (
           <Select
