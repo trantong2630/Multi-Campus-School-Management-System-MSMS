@@ -51,34 +51,191 @@
 /* Form học kỳ: ngày bắt đầu + số tuần, ngày kết thúc tự tính. */
 .semester-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 96px 112px;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
-  align-items: start;
 }
 
-.semester-row__end {
+.roster-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.roster-toolbar .muted {
+  margin-left: auto;
+}
+
+.roster-reasons {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding-top: 2px;
+  gap: 8px;
 }
 
-.semester-row__end span {
-  font-size: 14px;
-  line-height: 22px;
+.roster-reason {
+  font-size: 12px;
+  color: var(--c-text3);
+}
+
+.cell-link.ant-btn {
+  height: auto;
+  padding: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Lịch tháng của ngày nghỉ — Design_Web §9.1: thẻ trắng bo tròn, tiêu đề nền lõm, viên pastel bo góc. */
+.hol-cal {
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-xl);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.hol-cal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.hol-cal__nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hol-cal__title {
+  min-width: 150px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--c-text1);
 }
 
-.semester-row__end b {
-  height: 36px;
+.hol-cal__legend {
   display: flex;
-  align-items: center;
-  font-weight: 600;
-  color: var(--c-ink);
+  gap: 8px;
 }
 
-.semester-total {
-  margin: 0;
-  font-size: 13px;
+.hol-grid {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.hol-grid th {
+  height: 40px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   color: var(--c-text2);
+  background: var(--c-sunken);
+  border-bottom: 1px solid var(--c-borderStrong);
+  border-right: 1px solid var(--c-border);
+}
+
+.hol-grid th:last-child,
+.hol-cell:last-child {
+  border-right: none;
+}
+
+.hol-cell {
+  height: 104px;
+  vertical-align: top;
+  padding: 6px 8px;
+  border-right: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface);
+}
+
+.hol-grid tbody tr:last-child .hol-cell {
+  border-bottom: none;
+}
+
+.hol-cell--blank,
+.hol-cell--out {
+  background: var(--c-sunken);
+}
+
+.hol-cell--out .hol-cell__day {
+  color: var(--c-disabled);
+}
+
+.hol-cell--sunday .hol-cell__day {
+  color: var(--c-text3);
+}
+
+.hol-cell--clickable {
+  cursor: pointer;
+}
+
+.hol-cell--clickable:hover,
+.hol-cell--clickable:focus-visible {
+  background: var(--c-hoverBg);
+  outline: none;
+}
+
+.hol-cell__day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text1);
+}
+
+.hol-cell__day--today {
+  color: var(--c-green700);
+  background: var(--c-green50);
+}
+
+.hol-cell__chips {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.hol-chip {
+  display: block;
+  max-width: 100%;
+  padding: 2px 8px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  text-align: left;
+  color: var(--c-text1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+button.hol-chip {
+  cursor: pointer;
+}
+
+.hol-chip--school {
+  background: var(--c-amberBg);
+  box-shadow: inset 3px 0 0 var(--c-amberFg);
+}
+
+.hol-chip--campus {
+  background: var(--c-skyBg);
+  box-shadow: inset 3px 0 0 var(--c-skyFg);
+}
+
+.hol-more {
+  font-size: 12px;
+  color: var(--c-text3);
 }

@@ -21,7 +21,7 @@ public sealed class ClassService(MsmsDbContext db, IClock clock)
             .OrderBy(c => c.Campus.Name).ThenBy(c => c.GradeLevel).ThenBy(c => c.Name)
             .Select(c => new ClassDto(c.ClassId, c.CampusId, c.Campus.Name, c.AcademicYearId, c.AcademicYear.Name,
                 c.Name, c.GradeLevel, c.IsActive,
-                c.Enrollment.Count(e => e.StartDate <= today && (e.EndDate == null || e.EndDate >= today)),
+                c.Enrollment.AsQueryable().Count(EnrollmentRules.ActiveAt(today)),
                 c.HomeroomAssignment
                     .Where(h => h.StartDate <= today && (h.EndDate == null || h.EndDate >= today))
                     .Select(h => h.Staff.Staff.FullName).FirstOrDefault()))
@@ -66,7 +66,7 @@ public sealed class ClassService(MsmsDbContext db, IClock clock)
         if (!isActive)
         {
             var today = clock.Today;
-            var open = await db.Enrollment.Where(EffectivePeriod.EffectiveAt<Enrollment>(today)).CountAsync(e => e.ClassId == id);
+            var open = await db.Enrollment.Where(EnrollmentRules.ActiveAt(today)).CountAsync(e => e.ClassId == id);
             if (open > 0)
                 throw ApiException.BadRequest($"Lớp còn {open} học sinh có ghi danh đang mở. Chuyển hoặc kết thúc ghi danh trước.");
         }
