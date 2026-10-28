@@ -1,5 +1,5 @@
 import axios, { isAxiosError } from 'axios';
-import type { UserInfo } from '@/features/iam/types';
+import type { LoginResponse } from '@/features/iam/types';
 
 // Access token chỉ giữ trong bộ nhớ trang. Refresh token nằm trong cookie HttpOnly do backend đặt: các tab dùng chung,
 // đóng trình duyệt là mất, JavaScript không đọc được (BR-05).
@@ -26,25 +26,32 @@ apiClient.interceptors.request.use((config) => {
 // Access token ngắn hạn hết hạn thì đổi bằng refresh token rồi gọi lại; không đổi được (hết hạn, đã đăng xuất,
 // tài khoản bị khóa) thì bỏ token, AuthProvider đưa về trang đăng nhập (BR-05).
 export const AUTH_LOST_EVENT = 'msms:auth-lost';
+export const AUTH_REQUEST_TIMEOUT_MS = 10_000;
 
-let refreshing: Promise<RefreshedSession> | null = null;
-
-interface RefreshedSession {
-  token: string;
-  user: UserInfo;
-}
+let refreshing: Promise<LoginResponse> | null = null;
 
 /** Đổi cookie refresh lấy access token mới. Nhiều nơi gọi cùng lúc thì dùng chung một lần gọi. */
-export function refreshSession(): Promise<RefreshedSession> {
-  refreshing ??= axios
-    .post<RefreshedSession>('/api/auth/refresh', {})
+export function refreshSession(): Promise<LoginResponse> {
+  if (refreshing) return refreshing;
+  const exchange = () => axios
+    .post<LoginResponse>('/api/auth/refresh', {}, { withCredentials: true, timeout: AUTH_REQUEST_TIMEOUT_MS })
     .then((r) => {
       tokenStore.set(r.data.token);
       return r.data;
-    })
-    .finally(() => {
-      refreshing = null;
     });
+  // Các tab dùng chung cookie: lần đổi tiếp theo phải đọc cookie vừa xoay vòng.
+  // Web Locks có trên HTTPS/localhost; trình duyệt cũ vẫn dùng một request mỗi tab.
+  const locks = typeof navigator === 'undefined' ? undefined : navigator.locks;
+  const exchangeWithLock = () => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), AUTH_REQUEST_TIMEOUT_MS);
+    return locks!.request('msms:refresh-session', { signal: controller.signal }, () => {
+      clearTimeout(timer);
+      return exchange();
+    }).finally(() => clearTimeout(timer));
+  };
+  refreshing = (locks ? exchangeWithLock() : exchange())
+    .finally(() => { refreshing = null; });
   return refreshing;
 }
 
@@ -78,6 +85,8 @@ export function getErrorMessage(error: unknown): string {
   if (isAxiosError(error)) {
     const message = (error.response?.data as { message?: string } | undefined)?.message;
     if (message) return message;
+    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT')
+      return 'Máy chủ phản hồi quá lâu. Vui lòng thử lại.';
     if (!error.response) return 'Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.';
   }
   return 'Có lỗi xảy ra. Thử lại sau, nếu vẫn lỗi thì liên hệ quản trị.';
