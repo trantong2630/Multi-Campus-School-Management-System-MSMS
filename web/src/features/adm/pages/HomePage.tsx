@@ -48,7 +48,7 @@ export function HomePage() {
   const holidays = useQuery({
     queryKey: ['sch', 'holidays', year?.academicYearId, undefined],
     queryFn: () => schApi.holidays.list({ yearId: year!.academicYearId }),
-    enabled: !!year,
+    enabled: isStaff && !!year,
   });
   const slots = useQuery({ queryKey: ['sch', 'slots'], queryFn: schApi.periodSlots.list, enabled: isStaff });
   const mine = useQuery({ queryKey: ['scd', 'mine', today, today], queryFn: () => scdApi.mine(today, today), enabled: isStaff });

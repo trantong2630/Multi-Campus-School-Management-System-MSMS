@@ -1,12 +1,14 @@
-import { Avatar, Button, Dropdown, Layout, Menu, Tooltip } from 'antd';
+import { Avatar, Badge, Button, Dropdown, Layout, Menu, Tooltip } from 'antd';
 import type { MenuProps } from 'antd';
 import { ChevronDown, ChevronRight, ChevronsLeft, ChevronsRight, KeyRound, LogOut, Search, UserRound } from 'lucide-react';
 import { BrandLogo } from '@/shared/components/BrandLogo';
 import { useSchool } from '@/features/sch/hooks/useSchool';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { accountTypeLabel } from '@/shared/lib/labels';
+import { accountTypeLabel, logoutErrorTitle, logoutLabel } from '@/shared/lib/labels';
+import { showError } from '@/shared/lib/feedback';
 import { color } from '@/shared/lib/tokens';
+import { conversationApi } from '@/features/par/api';
 import { useAuth } from './AuthProvider';
 import { CommandPalette } from './CommandPalette';
 import { isPathAllowed, resolveCrumbs, sectionLabel, visibleMenu } from './menu';
@@ -24,7 +26,7 @@ function initialsOf(fullName: string) {
 interface Indicator { top: number; height: number; visible: boolean }
 
 export function AppLayout() {
-  const { user, logout } = useAuth();
+  const { user, logout, loggingOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const school = useSchool();
@@ -70,6 +72,16 @@ export function AppLayout() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  const [unreadInboxCount, setUnreadInboxCount] = useState<number>(0);
+
+  useEffect(() => {
+    if (user?.accountType === 'Parent' || user?.accountType === 'Teacher') {
+      conversationApi.getTotalUnreadCount()
+        .then(setUnreadInboxCount)
+        .catch(() => {});
+    }
+  }, [user, location.pathname]);
+
   // Menu chia cụm (Tổng quan / Quản lý / Hệ thống); cụm chỉ hiện khi còn ít nhất một nhóm.
   const items: MenuProps['items'] = useMemo(() => {
     const toItem = (g: (typeof groups)[number]) => {
@@ -90,6 +102,9 @@ export function AppLayout() {
           label: (
             <span className="nav-sub" title={c.label}>
               <span className="nav-sub__label">{c.label}</span>
+              {c.key === 'par-inbox' && unreadInboxCount > 0 && (
+                <Badge count={unreadInboxCount} size="small" style={{ marginLeft: 8 }} />
+              )}
             </span>
           ),
         })),
@@ -100,7 +115,7 @@ export function AppLayout() {
       .map((sec) => ({ sec, list: groups.filter((g) => g.section === sec) }))
       .filter((x) => x.list.length > 0)
       .map(({ sec, list }) => ({ type: 'group' as const, key: `sec-${sec}`, label: sectionLabel[sec], children: list.map(toItem) }));
-  }, [groups, openKeys, selectedKey]);
+  }, [groups, openKeys, selectedKey, unreadInboxCount]);
 
   // Viên trắng của mục đang chọn là một lớp riêng nằm dưới menu, trượt mềm tới vị trí mới khi đổi trang hoặc mở/đóng nhóm.
   const navRef = useRef<HTMLDivElement>(null);
@@ -144,7 +159,10 @@ export function AppLayout() {
     { key: 'profile', icon: <UserRound size={16} />, label: 'Hồ sơ cá nhân', onClick: () => navigate('/profile') },
     { key: 'password', icon: <KeyRound size={16} />, label: 'Đổi mật khẩu', onClick: () => navigate('/change-password') },
     { type: 'divider' },
-    { key: 'logout', icon: <LogOut size={16} />, label: 'Đăng xuất', onClick: () => void logout() },
+    {
+      key: 'logout', icon: <LogOut size={16} />, label: logoutLabel(loggingOut), disabled: loggingOut,
+      onClick: () => { void logout().catch((error: unknown) => showError(error, logoutErrorTitle)); },
+    },
   ];
 
   const crumbs = resolveCrumbs(location.pathname);
