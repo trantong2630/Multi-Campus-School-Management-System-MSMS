@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, Card, DatePicker, Select, Tabs, Tag } from 'antd';
+import { Button, Card, DatePicker, Select, Tabs, Tag, Tooltip } from 'antd';
 import type { Dayjs } from 'dayjs';
 import { ClipboardCheck, Trash2, UserRoundX } from 'lucide-react';
 import { useState } from 'react';
@@ -176,10 +176,14 @@ function AbsenceTab({ campusId, lead, onChanged }: { campusId: number; lead: Rea
             {
               title: 'Thao tác', key: 'actions', width: 90, align: 'center', fixed: 'right',
               render: (_: unknown, a: Absence) => (
-                <RowActions actions={[{
-                  key: 'delete', danger: true, icon: <Trash2 size={16} />, hidden: !a.canDelete,
-                  label: 'Xóa khai báo', onClick: () => remove(a),
-                }]} />
+                <div className="row-actions">
+                  <Tooltip title={a.canDelete ? 'Xóa khai báo' : 'Đã có tiết được xử lý (dạy thay hoặc hủy), không xóa được'}>
+                    <Button
+                      type="text" className="icon-btn" danger disabled={!a.canDelete} aria-label="Xóa khai báo"
+                      icon={<Trash2 size={16} />} onClick={() => remove(a)}
+                    />
+                  </Tooltip>
+                </div>
               ),
             },
           ]}
