@@ -985,9 +985,9 @@ Nhập bù điểm danh và đơn duyệt muộn được phản ánh ngay lần
 
 ### PAR-03 Parent–Teacher Messaging (Hộp thư phụ huynh – giáo viên)
 
-**4.7.15 — Tạo hội thoại với giáo viên / Create Conversation**  
+**4.7.15 — Tạo hội thoại giữa phụ huynh và giáo viên / Create Conversation**  
 `BE + Web + Mobile` · 2 MD · dep: 4.4.35, 4.3.30  
-Chỉ Parent TẠO hội thoại, về một con được liên kết, với chủ nhiệm lớp con đang học hoặc giáo viên đang phụ trách chuyên môn ở lớp đó. Mỗi bộ (phụ huynh, cán bộ, học sinh) có một hội thoại (BR-25).
+Cả Parent và Teacher đều có thể TẠO hội thoại: Phụ huynh tạo về một con được liên kết với chủ nhiệm lớp con đang học hoặc giáo viên đang phụ trách chuyên môn ở lớp đó; Giáo viên (chủ nhiệm hoặc đang phụ trách chuyên môn) tạo với phụ huynh của học sinh thuộc lớp mình đang dạy. Mỗi bộ (phụ huynh, cán bộ, học sinh) có đúng một hội thoại duy nhất (BR-25).
 
 **4.7.16 — Xem danh sách hội thoại / View Conversation List**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.7.15  
@@ -1011,7 +1011,7 @@ Hội thoại chỉ đọc vẫn mở xem được, nút gửi bị tắt và Ba
 
 **4.7.21 — Kiểm thử hộp thư / Messaging Tests**  
 `QA` · 1.5 MD · dep: 4.7.18  
-Phụ huynh không tạo được hội thoại với giáo viên không dạy con mình; hết phụ trách chuyên môn thì hội thoại thành chỉ đọc; School Admin không đọc được hội thoại và không có đường gửi tin.
+Phụ huynh không tạo được hội thoại với giáo viên không dạy con mình; giáo viên không tạo được hội thoại với phụ huynh của học sinh ngoài lớp mình phụ trách; hết phụ trách chuyên môn thì hội thoại thành chỉ đọc; School Admin không đọc được hội thoại và không có đường gửi tin.
 
 ---
 

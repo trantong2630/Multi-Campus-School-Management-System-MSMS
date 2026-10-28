@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { iamApi } from '@/features/iam/api';
 import type { UserInfo } from '@/features/iam/types';
 import { AUTH_LOST_EVENT, refreshSession, tokenStore } from './apiClient';
+import { queryClient } from './queryClient';
 
 interface AuthContextValue {
   user: UserInfo | null;
@@ -23,19 +24,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let active = true;
     refreshSession()
       .then((s) => { if (active) setUser(s.user); })
-      .catch(() => { if (active) tokenStore.clear(); })
+      .catch(() => {
+        if (active) {
+          tokenStore.clear();
+          queryClient.clear();
+        }
+      })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, []);
 
   useEffect(() => {
-    const onLost = () => setUser(null);
+    const onLost = () => {
+      queryClient.clear();
+      setUser(null);
+    };
     window.addEventListener(AUTH_LOST_EVENT, onLost);
     return () => window.removeEventListener(AUTH_LOST_EVENT, onLost);
   }, []);
 
   const login = useCallback(async (username: string, password: string) => {
     const res = await iamApi.login(username, password);
+    queryClient.clear();
     tokenStore.set(res.token);
     setUser(res.user);
     return res.user;
@@ -47,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       // Backend thu hồi phiên của thiết bị hiện tại (BR-05); dù gọi lỗi vẫn bỏ token ở client.
       tokenStore.clear();
+      queryClient.clear();
       setUser(null);
     }
   }, []);
