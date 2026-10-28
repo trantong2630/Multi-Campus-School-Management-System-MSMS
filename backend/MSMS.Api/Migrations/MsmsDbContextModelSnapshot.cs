@@ -1731,10 +1731,9 @@ namespace MSMS.Api.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<string>("SessionOfDay")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
+                    b.Property<string>("SlotIds")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<int>("TeacherId")
                         .HasColumnType("int");
@@ -1775,9 +1774,6 @@ namespace MSMS.Api.Migrations
 
                     b.Property<int?>("CreatedByPersonId")
                         .HasColumnType("int");
-
-                    b.Property<long?>("OriginalSessionId")
-                        .HasColumnType("bigint");
 
                     b.Property<int>("PeriodSlotId")
                         .HasColumnType("int");
@@ -1822,8 +1818,6 @@ namespace MSMS.Api.Migrations
                         .HasName("PK__Teaching__C9F49290E9E86E45");
 
                     b.HasIndex("CreatedByPersonId");
-
-                    b.HasIndex("OriginalSessionId");
 
                     b.HasIndex("PeriodSlotId");
 
@@ -2627,11 +2621,6 @@ namespace MSMS.Api.Migrations
                         .HasForeignKey("CreatedByPersonId")
                         .HasConstraintName("FK__TeachingS__Creat__46B27FE2");
 
-                    b.HasOne("MSMS.Api.Data.Entities.TeachingSession", "OriginalSession")
-                        .WithMany("InverseOriginalSession")
-                        .HasForeignKey("OriginalSessionId")
-                        .HasConstraintName("FK_Session_Original");
-
                     b.HasOne("MSMS.Api.Data.Entities.PeriodSlot", "PeriodSlot")
                         .WithMany("TeachingSession")
                         .HasForeignKey("PeriodSlotId")
@@ -2667,8 +2656,6 @@ namespace MSMS.Api.Migrations
                     b.Navigation("Class");
 
                     b.Navigation("CreatedByPerson");
-
-                    b.Navigation("OriginalSession");
 
                     b.Navigation("PeriodSlot");
 
@@ -3013,8 +3000,6 @@ namespace MSMS.Api.Migrations
             modelBuilder.Entity("MSMS.Api.Data.Entities.TeachingSession", b =>
                 {
                     b.Navigation("AttendanceRecord");
-
-                    b.Navigation("InverseOriginalSession");
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.TimetableVersion", b =>
