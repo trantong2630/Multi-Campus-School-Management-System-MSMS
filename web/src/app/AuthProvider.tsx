@@ -20,7 +20,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Mở tab mới hoặc F5: access token trong bộ nhớ đã mất, lấy lại bằng cookie phiên nếu còn.
-    refreshSession().then((s) => setUser(s.user)).catch(() => tokenStore.clear()).finally(() => setLoading(false));
+    let active = true;
+    refreshSession()
+      .then((s) => { if (active) setUser(s.user); })
+      .catch(() => { if (active) tokenStore.clear(); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, []);
 
   useEffect(() => {
