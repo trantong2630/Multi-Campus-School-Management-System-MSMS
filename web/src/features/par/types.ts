@@ -63,3 +63,77 @@ export interface HomeroomLeaveItem {
   decidedAt?: string;
   decisionNote?: string;
 }
+
+/**
+ * Available teacher for parent to chat with
+ */
+export interface AvailableTeacherItem {
+  staffId: number;
+  fullName: string;
+  teacherAbbr: string | null;
+  roleDescription: string;
+}
+
+/**
+ * Available parent for teacher to chat with
+ */
+export interface AvailableParentItem {
+  parentId: number;
+  fullName: string;
+  relationship: string | null;
+  phone: string | null;
+}
+
+/**
+ * Student taught by teacher
+ */
+export interface TeachingStudentItem {
+  studentId: number;
+  fullName: string;
+  studentCode: string;
+  classId: number;
+  className: string;
+}
+
+/**
+ * Input to create or get conversation
+ */
+export interface CreateConversationInput {
+  studentId: number;
+  staffId?: number;
+  parentId?: number;
+}
+
+/**
+ * Conversation item in conversation list
+ */
+export interface ConversationItem {
+  conversationId: number;
+  studentId: number;
+  studentName: string;
+  studentCode: string;
+  className: string;
+  staffId: number;
+  staffName: string;
+  staffAbbr: string | null;
+  roleDescription: string;
+  lastMessageContent: string | null;
+  lastMessageAt: string | null;
+  unreadCount: number;
+  isReadOnly: boolean;
+}
+
+/**
+ * Message item inside conversation
+ */
+export interface MessageItem {
+  messageId: number;
+  conversationId: number;
+  senderPersonId: number;
+  senderName: string;
+  isMine: boolean;
+  content: string;
+  sentAt: string;
+  readAt: string | null;
+}
+

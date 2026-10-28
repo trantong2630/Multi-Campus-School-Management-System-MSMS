@@ -1,12 +1,15 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
 using MSMS.Api.Common.Notifications;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
 using MSMS.Api.Data.Entities;
+using MSMS.Api.Modules.Com;
 using MSMS.Api.Modules.Par.Dtos;
 using MSMS.Api.Modules.Par.Services;
 
@@ -46,6 +49,38 @@ public class ConversationTests
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
         return new MsmsDbContext(options);
+    }
+
+    /// <summary>
+    /// Tạo mock IHubContext&lt;CommunicationHub&gt; cho testing.
+    /// Không thực hiện thao tác realtime, chỉ trả về mock không làm gì.
+    /// </summary>
+    private static IHubContext<CommunicationHub> CreateMockHubContext()
+    {
+        var mockHubContext = new Mock<IHubContext<CommunicationHub>>();
+        var mockClients = new Mock<IHubClients>();
+        var mockClientProxy = new Mock<IClientProxy>();
+
+        // Mock Clients.Group(...).SendAsync(...)
+        mockClients
+            .Setup(c => c.Group(It.IsAny<string>()))
+            .Returns(mockClientProxy.Object);
+
+        // Mock Clients.User(...).SendAsync(...)
+        mockClients
+            .Setup(c => c.User(It.IsAny<string>()))
+            .Returns(mockClientProxy.Object);
+
+        // Mock SendCoreAsync (phương thức thực của interface IClientProxy, vì SendAsync là extension method)
+        mockClientProxy
+            .Setup(c => c.SendCoreAsync(It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        mockHubContext
+            .Setup(h => h.Clients)
+            .Returns(mockClients.Object);
+
+        return mockHubContext.Object;
     }
 
     private const int Campus1 = 1;
@@ -182,7 +217,8 @@ public class ConversationTests
         // Parent 1 cố gắng tạo hội thoại về Student 1 với Teacher 3 (chỉ dạy 10B, không dạy 10A)
         var parentUser = CreateCurrentUser(Parent1PersonId, AccountTypes.Parent);
         var notifier = new NotificationSender(db, clock);
-        var service = new ConversationService(db, clock, parentUser, notifier);
+        var hubContext = CreateMockHubContext();
+        var service = new ConversationService(db, clock, parentUser, notifier, hubContext);
 
         var ex = await Assert.ThrowsAsync<ApiException>(() =>
             service.CreateOrGetConversationAsync(new CreateConversationDto(Student1PersonId, Teacher3StaffId, null)));
@@ -202,7 +238,8 @@ public class ConversationTests
         // Teacher 3 (chỉ dạy 10B) cố tạo hội thoại với Parent 1 của Student 1 (lớp 10A)
         var teacherUser = CreateCurrentUser(Teacher3StaffId, AccountTypes.Teacher);
         var notifier = new NotificationSender(db, clock);
-        var service = new ConversationService(db, clock, teacherUser, notifier);
+        var hubContext = CreateMockHubContext();
+        var service = new ConversationService(db, clock, teacherUser, notifier, hubContext);
 
         var ex = await Assert.ThrowsAsync<ApiException>(() =>
             service.CreateOrGetConversationAsync(new CreateConversationDto(Student1PersonId, null, Parent1PersonId)));
@@ -222,9 +259,10 @@ public class ConversationTests
         var parentUser = CreateCurrentUser(Parent1PersonId, AccountTypes.Parent);
         var teacherUser = CreateCurrentUser(Teacher1StaffId, AccountTypes.Teacher);
         var notifier = new NotificationSender(db, clock);
+        var hubContext = CreateMockHubContext();
 
-        var parentService = new ConversationService(db, clock, parentUser, notifier);
-        var teacherService = new ConversationService(db, clock, teacherUser, notifier);
+        var parentService = new ConversationService(db, clock, parentUser, notifier, hubContext);
+        var teacherService = new ConversationService(db, clock, teacherUser, notifier, hubContext);
 
         // Phụ huynh bấm tạo trước
         var convIdFromParent = await parentService.CreateOrGetConversationAsync(
@@ -255,9 +293,10 @@ public class ConversationTests
         var parentUser = CreateCurrentUser(Parent1PersonId, AccountTypes.Parent);
         var teacherUser = CreateCurrentUser(Teacher1StaffId, AccountTypes.Teacher);
         var notifier = new NotificationSender(db, clock);
+        var hubContext = CreateMockHubContext();
 
-        var parentService = new ConversationService(db, clock, parentUser, notifier);
-        var teacherService = new ConversationService(db, clock, teacherUser, notifier);
+        var parentService = new ConversationService(db, clock, parentUser, notifier, hubContext);
+        var teacherService = new ConversationService(db, clock, teacherUser, notifier, hubContext);
 
         var convId = await parentService.CreateOrGetConversationAsync(
             new CreateConversationDto(Student1PersonId, Teacher1StaffId, null));
@@ -305,12 +344,13 @@ public class ConversationTests
         // Tạo sẵn 1 hội thoại giữa PH1 và GV1
         var parentUser = CreateCurrentUser(Parent1PersonId, AccountTypes.Parent);
         var notifier = new NotificationSender(db, clock);
-        var parentService = new ConversationService(db, clock, parentUser, notifier);
+        var hubContext = CreateMockHubContext();
+        var parentService = new ConversationService(db, clock, parentUser, notifier, hubContext);
         var convId = await parentService.CreateOrGetConversationAsync(new CreateConversationDto(Student1PersonId, Teacher1StaffId, null));
 
         // School Admin cố gắng truy cập mọi API
         var adminUser = CreateCurrentUser(SchoolAdminPersonId, AccountTypes.SchoolAdmin);
-        var adminService = new ConversationService(db, clock, adminUser, notifier);
+        var adminService = new ConversationService(db, clock, adminUser, notifier, hubContext);
 
         var ex1 = await Assert.ThrowsAsync<ApiException>(() => adminService.GetAvailableTeachersAsync(Student1PersonId));
         Assert.Equal(403, ex1.StatusCode);
@@ -347,12 +387,13 @@ public class ConversationTests
 
         var parent1User = CreateCurrentUser(Parent1PersonId, AccountTypes.Parent);
         var notifier = new NotificationSender(db, clock);
-        var parent1Service = new ConversationService(db, clock, parent1User, notifier);
+        var hubContext = CreateMockHubContext();
+        var parent1Service = new ConversationService(db, clock, parent1User, notifier, hubContext);
         var convId = await parent1Service.CreateOrGetConversationAsync(new CreateConversationDto(Student1PersonId, Teacher1StaffId, null));
 
         // Người ngoài cuộc: Parent 2 (không thuộc hội thoại này)
         var outsiderUser = CreateCurrentUser(Parent2PersonId, AccountTypes.Parent);
-        var outsiderService = new ConversationService(db, clock, outsiderUser, notifier);
+        var outsiderService = new ConversationService(db, clock, outsiderUser, notifier, hubContext);
 
         // 1. Xem tin nhắn của người khác -> 403 Forbidden
         var exView = await Assert.ThrowsAsync<ApiException>(() => outsiderService.GetMessagesAsync(convId));
@@ -379,9 +420,10 @@ public class ConversationTests
         var parentUser = CreateCurrentUser(Parent1PersonId, AccountTypes.Parent);
         var teacherUser = CreateCurrentUser(Teacher1StaffId, AccountTypes.Teacher);
         var notifier = new NotificationSender(db, clock);
+        var hubContext = CreateMockHubContext();
 
-        var parentService = new ConversationService(db, clock, parentUser, notifier);
-        var teacherService = new ConversationService(db, clock, teacherUser, notifier);
+        var parentService = new ConversationService(db, clock, parentUser, notifier, hubContext);
+        var teacherService = new ConversationService(db, clock, teacherUser, notifier, hubContext);
 
         var convId = await parentService.CreateOrGetConversationAsync(new CreateConversationDto(Student1PersonId, Teacher1StaffId, null));
 
@@ -425,5 +467,30 @@ public class ConversationTests
         // 7. Unread count của Giáo viên giảm về 0
         var unreadCountAfter = await teacherService.GetTotalUnreadCountAsync();
         Assert.Equal(0, unreadCountAfter);
+    }
+
+    [Fact]
+    public async Task Test8_Teacher_CanGetMyTeachingStudents_And_GetAvailableParents()
+    {
+        using var db = CreateDbContext();
+        var today = new DateOnly(2026, 10, 24);
+        var clock = new FakeClock(today, new DateTime(2026, 10, 24, 8, 0, 0));
+        SeedBaseData(db, today);
+
+        // Teacher 1 là GVCN lớp 10A (chứa Student 1)
+        var teacherUser = CreateCurrentUser(Teacher1StaffId, AccountTypes.Teacher);
+        var notifier = new NotificationSender(db, clock);
+        var hubContext = CreateMockHubContext();
+        var service = new ConversationService(db, clock, teacherUser, notifier, hubContext);
+
+        // 1. Lấy danh sách học sinh mình đang dạy
+        var students = await service.GetMyTeachingStudentsAsync();
+        Assert.NotEmpty(students);
+        Assert.Contains(students, s => s.StudentId == Student1PersonId && s.ClassName == "10A");
+
+        // 2. Lấy danh sách phụ huynh của Student 1
+        var parents = await service.GetAvailableParentsAsync(Student1PersonId);
+        Assert.NotEmpty(parents);
+        Assert.Contains(parents, p => p.ParentId == Parent1PersonId);
     }
 }
