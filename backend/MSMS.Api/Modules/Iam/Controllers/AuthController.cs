@@ -83,7 +83,11 @@ public class AuthController(IAuthService auth, CurrentUser user) : ControllerBas
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
-        if (user.SessionId is { } sid) await auth.LogoutAsync(sid);
+        PreventTokenCaching();
+        if (user.SessionId is not { } sid || sid == Guid.Empty)
+            return Unauthorized(new { code = ErrorCodes.Unauthorized, message = "Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Đăng nhập lại để tiếp tục." });
+
+        await auth.LogoutAsync(sid);
         Response.Cookies.Delete(RefreshCookie, RefreshCookieOptions());
         return NoContent();
     }

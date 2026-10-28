@@ -5,7 +5,8 @@ import { BrandLogo } from '@/shared/components/BrandLogo';
 import { useSchool } from '@/features/sch/hooks/useSchool';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { accountTypeLabel } from '@/shared/lib/labels';
+import { accountTypeLabel, logoutErrorTitle, logoutLabel } from '@/shared/lib/labels';
+import { showError } from '@/shared/lib/feedback';
 import { color } from '@/shared/lib/tokens';
 import { conversationApi } from '@/features/par/api';
 import { useAuth } from './AuthProvider';
@@ -25,7 +26,7 @@ function initialsOf(fullName: string) {
 interface Indicator { top: number; height: number; visible: boolean }
 
 export function AppLayout() {
-  const { user, logout } = useAuth();
+  const { user, logout, loggingOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const school = useSchool();
@@ -158,7 +159,10 @@ export function AppLayout() {
     { key: 'profile', icon: <UserRound size={16} />, label: 'Hồ sơ cá nhân', onClick: () => navigate('/profile') },
     { key: 'password', icon: <KeyRound size={16} />, label: 'Đổi mật khẩu', onClick: () => navigate('/change-password') },
     { type: 'divider' },
-    { key: 'logout', icon: <LogOut size={16} />, label: 'Đăng xuất', onClick: () => void logout() },
+    {
+      key: 'logout', icon: <LogOut size={16} />, label: logoutLabel(loggingOut), disabled: loggingOut,
+      onClick: () => { void logout().catch((error: unknown) => showError(error, logoutErrorTitle)); },
+    },
   ];
 
   const crumbs = resolveCrumbs(location.pathname);
