@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Form, Input } from 'antd';
+import { AddressInput } from '@/shared/components/AddressInput';
 import { InlineAlert } from '@/shared/components/InlineAlert';
 import { ImageUp, Save, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -84,7 +85,9 @@ export function SchoolProfilePage() {
             <Form.Item label="Tên trường" name="name" rules={[{ required: true, whitespace: true, message: 'Nhập tên trường.' }]}>
               <Input maxLength={200} />
             </Form.Item>
-            <Form.Item label="Địa chỉ" name="address"><Input maxLength={255} /></Form.Item>
+            <Form.Item label="Địa chỉ" name="address" rules={[{ max: 255, message: 'Địa chỉ tối đa 255 ký tự. Rút gọn số nhà, đường.' }]}>
+              <AddressInput />
+            </Form.Item>
             <div className="form-grid">
               <Form.Item label="Số điện thoại" name="phoneNumber"><Input maxLength={20} /></Form.Item>
               <Form.Item label="Email" name="email" rules={[{ type: 'email', message: 'Email chưa đúng định dạng.' }]}>
