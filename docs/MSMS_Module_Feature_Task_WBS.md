@@ -535,7 +535,7 @@ Hộp xác nhận hiện khi bấm Phát hành: số tiết sẽ xóa và sẽ t
 
 **4.4.10 — Xem danh sách xung đột giáo viên / View Teacher Conflicts**  
 `BE + Web` · 1.5 MD · dep: 4.4.8  
-Mỗi dòng xung đột ghi rõ lớp và phân hiệu đang chiếm chỗ giáo viên; Vice Principal đổi sang giáo viên khác cho ô trùng trong bản Nháp. Còn xung đột là CHẶN Phát hành (BR-14).
+Mỗi dòng xung đột ghi rõ lớp và phân hiệu đang chiếm chỗ giáo viên; Vice Principal đổi sang giáo viên khác cho ô trùng trong bản Nháp. Còn xung đột là CHẶN Phát hành (BR-14); lớp trong bản Nháp đã ngừng hoạt động hoặc giáo viên không còn đủ điều kiện dạy (BR-06) cũng chặn, kèm thông báo nêu rõ lớp hoặc giáo viên.
 
 **4.4.11 — Phát hành thời khóa biểu / Publish Timetable**  
 `BE + Web` · 2.5 MD · dep: 4.4.9, 4.4.10  
