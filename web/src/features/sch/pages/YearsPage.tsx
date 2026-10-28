@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button, Card, DatePicker, Form, Input, InputNumber } from 'antd';
+import { Button, Card, DatePicker, Form, Input } from 'antd';
 import { message } from '@/shared/lib/antdStatic';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import { CalendarRange, Pencil, Plus, Star } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Pencil, Plus, Star, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { useAuth } from '@/app/AuthProvider';
 import { DataTable } from '@/shared/components/DataTable';
 import { FormModal } from '@/shared/components/FormModal';
@@ -19,13 +19,7 @@ import type { AcademicYear, Semester } from '../types';
 import '../components/school.css';
 
 interface YearValues { name: string; range: [Dayjs, Dayjs] }
-interface SemesterValues { start1: Dayjs; weeks1: number; start2: Dayjs; weeks2: number }
-
-// Số tuần thực học mặc định của THCS theo khung kế hoạch năm học của Bộ: HK1 18 tuần, HK2 17 tuần.
-const DEFAULT_WEEKS = { 1: 18, 2: 17 } as const;
-/** Ngày kết thúc = ngày bắt đầu + số tuần × 7 − 1. */
-const endOf = (start?: Dayjs | null, weeks?: number | null) => (start && weeks ? start.add(weeks * 7 - 1, 'day') : undefined);
-const weeksOf = (s: Semester) => Math.max(1, Math.round((dayjs(s.endDate).diff(dayjs(s.startDate), 'day') + 1) / 7));
+interface SemesterValues { start1: Dayjs; end1: Dayjs; start2: Dayjs; end2: Dayjs }
 
 const DATE_FORMAT = 'DD/MM/YYYY';
 const semesterText = (s?: Semester) => (s ? `${formatDate(s.startDate)} – ${formatDate(s.endDate)}` : null);
@@ -47,6 +41,34 @@ export function YearsPage() {
     onError: (e) => showError(e),
   });
 
+  const remove = useMutation({
+    mutationFn: (y: AcademicYear) => schApi.years.remove(y.academicYearId),
+    onSuccess: () => { void refresh(); message.success('Đã xóa năm học.'); },
+    onError: (e) => showError(e),
+  });
+
+  const askRemove = (y: AcademicYear) => confirmAction({
+    title: `Xóa năm học ${y.name}?`,
+    content: `Sẽ xóa năm học này và ${y.semesters.length} học kỳ đã khai. Chỉ xóa được khi chưa có lớp, ngày nghỉ hay thời khóa biểu nào gắn vào; không khôi phục được.`,
+    okText: 'Xóa năm học', danger: true,
+    onOk: () => remove.mutateAsync(y).catch(() => undefined),
+  });
+
+  const askSetCurrent = (y: AcademicYear) => {
+    const previous = data?.find((x) => x.isCurrent);
+    confirmAction({
+      title: `Đặt ${y.name} làm năm học hiện hành?`,
+      content: (
+        <>
+          {previous ? <p>Năm học hiện hành sẽ đổi từ <b>{previous.name}</b> sang <b>{y.name}</b>.</p> : null}
+          <p>Các màn hình vận hành sẽ mặc định lọc theo năm học này.</p>
+        </>
+      ),
+      okText: 'Đặt hiện hành',
+      onOk: () => setCurrent.mutateAsync(y).catch(() => undefined),
+    });
+  };
+
   const saveYear = async (v: YearValues) => {
     const body = { name: v.name, startDate: toDateString(v.range[0]), endDate: toDateString(v.range[1]) };
     if (editing === 'new') await schApi.years.create(body);
@@ -55,28 +77,32 @@ export function YearsPage() {
     message.success('Đã lưu năm học.');
   };
 
-  const start1 = Form.useWatch('start1', semForm);
-  const weeks1 = Form.useWatch('weeks1', semForm);
-  const start2 = Form.useWatch('start2', semForm);
-  const weeks2 = Form.useWatch('weeks2', semForm);
-  const end1 = endOf(start1, weeks1);
-  const end2 = endOf(start2, weeks2);
-
-  // Chưa chọn ngày bắt đầu HK2 thì gợi ý ngày liền sau HK1; đã chọn rồi thì không tự đổi nữa.
-  useEffect(() => {
-    if (end1 && !semForm.getFieldValue('start2')) semForm.setFieldValue('start2', end1.add(1, 'day'));
-  }, [end1, semForm]);
+  // Mốc kết thúc muộn nhất: học kỳ 1 là 18/01, học kỳ 2 là 31/05 của năm kết thúc năm học (không quá ngày kết thúc năm học).
+  const latestOf = (no: 1 | 2) => {
+    if (!semesterOf) return undefined;
+    const yearEnd = dayjs(semesterOf.endDate);
+    const mark = dayjs(`${yearEnd.year()}-${no === 1 ? '01-18' : '05-31'}`);
+    return mark.isBefore(yearEnd) ? mark : yearEnd;
+  };
+  const outsideYear = (d: Dayjs, no: 1 | 2) => !semesterOf || d.isBefore(semesterOf.startDate, 'day') || d.isAfter(latestOf(no), 'day');
 
   const saveSemesters = async (v: SemesterValues) => {
     await schApi.years.configureSemesters(semesterOf!.academicYearId, {
-      semester1: { startDate: toDateString(v.start1), endDate: toDateString(endOf(v.start1, v.weeks1)!) },
-      semester2: { startDate: toDateString(v.start2), endDate: toDateString(endOf(v.start2, v.weeks2)!) },
+      semester1: { startDate: toDateString(v.start1), endDate: toDateString(v.end1) },
+      semester2: { startDate: toDateString(v.start2), endDate: toDateString(v.end2) },
     });
     await refresh();
     message.success('Đã lưu hai học kỳ.');
   };
 
   const sem = (y: AcademicYear, no: number) => y.semesters.find((s) => s.semesterNo === no);
+  const semesterCell = (y: AcademicYear, no: number) => {
+    const text = semesterText(sem(y, no));
+    if (!canWrite) return text ?? <span className="muted">Chưa khai</span>;
+    return text
+      ? <Button type="link" className="cell-link" title="Sửa học kỳ" onClick={() => setSemesterOf(y)}>{text}</Button>
+      : <Button size="small" icon={<Plus size={14} />} onClick={() => setSemesterOf(y)}>Khai báo học kỳ</Button>;
+  };
   const range = (a: string, b: string): [Dayjs, Dayjs] => [dayjs(a), dayjs(b)];
 
   return (
@@ -93,22 +119,24 @@ export function YearsPage() {
           columns={[
             { title: 'Năm học', dataIndex: 'name', width: 130, render: (v: string) => <strong className="tabular">{v}</strong> },
             { title: 'Khoảng thời gian', key: 'range', width: 220, className: 'tabular', render: (_: unknown, y: AcademicYear) => `${formatDate(y.startDate)} – ${formatDate(y.endDate)}` },
-            { title: 'Học kỳ 1', key: 's1', className: 'tabular', render: (_: unknown, y: AcademicYear) => semesterText(sem(y, 1)) ?? <span className="muted">Chưa khai</span> },
-            { title: 'Học kỳ 2', key: 's2', className: 'tabular', render: (_: unknown, y: AcademicYear) => semesterText(sem(y, 2)) ?? <span className="muted">Chưa khai</span> },
-            { title: 'Hiện hành', dataIndex: 'isCurrent', width: 130, align: 'center', render: (v: boolean) => v ? <StatusBadge domain="catalog" value="Active" /> : <span className="muted">—</span> },
+            { title: 'Học kỳ 1', key: 's1', className: 'tabular', render: (_: unknown, y: AcademicYear) => semesterCell(y, 1) },
+            { title: 'Học kỳ 2', key: 's2', className: 'tabular', render: (_: unknown, y: AcademicYear) => semesterCell(y, 2) },
+            {
+              title: 'Hiện hành', dataIndex: 'isCurrent', width: 170, align: 'center',
+              render: (v: boolean, y: AcademicYear) => v
+                ? <StatusBadge domain="catalog" value="Active" />
+                : canWrite
+                  ? <Button size="small" icon={<Star size={14} />} onClick={() => askSetCurrent(y)}>Đặt hiện hành</Button>
+                  : <span className="muted">—</span>,
+            },
             ...(canWrite ? [{
-              title: 'Thao tác', key: 'actions', width: 130, align: 'center' as const, fixed: 'right' as const,
+              title: 'Thao tác', key: 'actions', width: 110, align: 'center' as const, fixed: 'right' as const,
               render: (_: unknown, y: AcademicYear) => (
                 <RowActions actions={[
                   { key: 'edit', label: 'Sửa năm học', icon: <Pencil size={16} />, onClick: () => setEditing(y) },
-                  { key: 'sem', label: 'Khai báo hai học kỳ', icon: <CalendarRange size={16} />, onClick: () => setSemesterOf(y) },
                   {
-                    key: 'current', label: 'Đặt làm năm học hiện hành', icon: <Star size={16} />, hidden: y.isCurrent,
-                    onClick: () => confirmAction({
-                      title: `Đặt ${y.name} làm năm học hiện hành?`,
-                      content: 'Các màn hình vận hành sẽ mặc định lọc theo năm học này. Năm học hiện hành trước đó sẽ bỏ đánh dấu.',
-                      onOk: () => setCurrent.mutateAsync(y).catch(() => undefined),
-                    }),
+                    key: 'delete', label: 'Xóa năm học', icon: <Trash2 size={16} />, danger: true,
+                    hidden: y.isCurrent && (data?.length ?? 0) > 1, onClick: () => askRemove(y),
                   },
                 ]} />
               ),
@@ -134,32 +162,53 @@ export function YearsPage() {
         open={semesterOf !== null} title={`Học kỳ của năm học ${semesterOf?.name ?? ''}`}
         form={semForm} onClose={() => setSemesterOf(null)} onSubmit={saveSemesters}
         initialValues={semesterOf ? {
-          start1: sem(semesterOf, 1) ? dayjs(sem(semesterOf, 1)!.startDate) : undefined,
-          weeks1: sem(semesterOf, 1) ? weeksOf(sem(semesterOf, 1)!) : DEFAULT_WEEKS[1],
-          start2: sem(semesterOf, 2) ? dayjs(sem(semesterOf, 2)!.startDate) : undefined,
-          weeks2: sem(semesterOf, 2) ? weeksOf(sem(semesterOf, 2)!) : DEFAULT_WEEKS[2],
+          start1: dayjs(sem(semesterOf, 1)?.startDate ?? semesterOf.startDate),
+          end1: sem(semesterOf, 1) ? dayjs(sem(semesterOf, 1)!.endDate) : latestOf(1),
+          start2: sem(semesterOf, 2) ? dayjs(sem(semesterOf, 2)!.startDate) : latestOf(1)?.add(1, 'day'),
+          end2: sem(semesterOf, 2) ? dayjs(sem(semesterOf, 2)!.endDate) : latestOf(2),
         } : undefined}
       >
-        {([1, 2] as const).map((no) => {
-          const end = no === 1 ? end1 : end2;
-          return (
-            <div key={no} className="semester-row">
-              <Form.Item label={`Học kỳ ${no} — ngày bắt đầu`} name={`start${no}`} rules={[{ required: true, message: `Chọn ngày bắt đầu học kỳ ${no}.` }]}>
-                <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} />
-              </Form.Item>
-              <Form.Item label="Số tuần" name={`weeks${no}`} rules={[{ required: true, message: 'Nhập số tuần.' }]}>
-                <InputNumber min={1} max={30} precision={0} style={{ width: '100%' }} />
-              </Form.Item>
-              <div className="semester-row__end">
-                <span>Kết thúc</span>
-                <b className="tabular">{end ? end.format(DATE_FORMAT) : '—'}</b>
-              </div>
-            </div>
-          );
-        })}
-        <p className="semester-total">
-          Tổng <b className="tabular">{(weeks1 ?? 0) + (weeks2 ?? 0)}</b> tuần. THCS thường là 18 + 17 = 35 tuần; nghỉ Tết giữa kỳ thì lùi ngày bắt đầu hoặc tăng số tuần.
-        </p>
+        {([1, 2] as const).map((no) => (
+          <div key={no} className="semester-row">
+            <Form.Item
+              label={`Học kỳ ${no} — ngày bắt đầu`} name={`start${no}`}
+              dependencies={no === 2 ? ['end1'] : undefined}
+              rules={[
+                { required: true, message: `Chọn ngày bắt đầu học kỳ ${no}.` },
+                ...(no === 2 ? [({ getFieldValue }: { getFieldValue: (name: string) => Dayjs | undefined }) => ({
+                  validator: (_: unknown, value?: Dayjs) => {
+                    const end1 = getFieldValue('end1');
+                    return !value || !end1 || value.isAfter(end1, 'day')
+                      ? Promise.resolve()
+                      : Promise.reject(new Error('Học kỳ 2 phải bắt đầu sau ngày kết thúc học kỳ 1.'));
+                  },
+                })] : []),
+              ]}
+            >
+              <DatePicker format={DATE_FORMAT} style={{ width: '100%' }} disabledDate={(d) => outsideYear(d, no)} />
+            </Form.Item>
+            <Form.Item
+              label={`Học kỳ ${no} — ngày kết thúc`} name={`end${no}`} dependencies={[`start${no}`]}
+              extra={<>Muộn nhất: <b className="tabular">{latestOf(no)?.format(DATE_FORMAT)}</b></>}
+              rules={[
+                { required: true, message: `Chọn ngày kết thúc học kỳ ${no}.` },
+                ({ getFieldValue }: { getFieldValue: (name: string) => Dayjs | undefined }) => ({
+                  validator: (_: unknown, value?: Dayjs) => {
+                    const start = getFieldValue(`start${no}`);
+                    return !value || !start || value.isAfter(start, 'day')
+                      ? Promise.resolve()
+                      : Promise.reject(new Error(`Học kỳ ${no} phải kết thúc sau ngày bắt đầu.`));
+                  },
+                }),
+              ]}
+            >
+              <DatePicker
+                format={DATE_FORMAT} style={{ width: '100%' }} disabledDate={(d) => outsideYear(d, no)}
+                onChange={no === 1 ? (d) => { if (d && !semForm.getFieldValue('start2')) semForm.setFieldValue('start2', d.add(1, 'day')); } : undefined}
+              />
+            </Form.Item>
+          </div>
+        ))}
       </FormModal>
     </>
   );

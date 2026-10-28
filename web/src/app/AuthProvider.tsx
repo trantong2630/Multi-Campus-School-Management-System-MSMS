@@ -30,10 +30,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const expectedGeneration = tokenStore.generation();
     refreshSession()
       .then((s) => { if (active && tokenStore.isCurrent(expectedGeneration)) setUser(s.user); })
-      .catch(() => { if (active && tokenStore.isCurrent(expectedGeneration)) tokenStore.clear(); })
+      .catch(() => {
+        if (active && tokenStore.isCurrent(expectedGeneration)) {
+          tokenStore.clear();
+          clearSessionQueries(queryClient);
+        }
+      })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, []);
+  }, [queryClient]);
 
   useEffect(() => {
     const onLost = () => {
@@ -56,12 +61,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const expectedGeneration = tokenStore.generation();
     const res = await pending;
     if (!tokenStore.isCurrent(expectedGeneration)) throw new Error('Phiên đăng nhập đã thay đổi.');
+    clearSessionQueries(queryClient);
     setUser(res.user);
     setLoading(false);
     setLoggingOut(false);
     logoutPending.current = null;
     return res.user;
-  }, []);
+  }, [queryClient]);
 
   const logout = useCallback(() => {
     const pending = iamApi.logout();

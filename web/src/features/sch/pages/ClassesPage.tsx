@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Form, Input, Select, Switch } from 'antd';
 import { message } from '@/shared/lib/antdStatic';
-import { Pencil, Plus, Power } from 'lucide-react';
+import { Pencil, Plus, Power, Users } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/app/AuthProvider';
 import { DataTable } from '@/shared/components/DataTable';
@@ -12,6 +12,7 @@ import { RowActions } from '@/shared/components/RowActions';
 import { StatusBadge } from '@/shared/components/StatusBadge';
 import { confirmAction, showError } from '@/shared/lib/feedback';
 import { schApi } from '../api';
+import { ClassRosterDrawer } from '../components/ClassRosterDrawer';
 import { useCampuses, useCurrentYear, useYears } from '../hooks/useCatalogs';
 import type { SchoolClass } from '../types';
 
@@ -30,6 +31,7 @@ export function ClassesPage() {
   const [campusId, setCampusId] = useState<number | undefined>();
   const [includeInactive, setIncludeInactive] = useState(false);
   const [editing, setEditing] = useState<SchoolClass | 'new' | null>(null);
+  const [rosterOf, setRosterOf] = useState<SchoolClass | null>(null);
   const [form] = Form.useForm<FormValues>();
 
   const effectiveYear = yearId ?? current?.academicYearId;
@@ -83,13 +85,14 @@ export function ClassesPage() {
             { title: 'Sĩ số', dataIndex: 'studentCount', width: 100, align: 'right', className: 'tabular' },
             { title: 'Chủ nhiệm', dataIndex: 'homeroomName', render: (v: string | null) => v ?? <span className="muted">Chưa có</span> },
             { title: 'Trạng thái', dataIndex: 'isActive', width: 160, align: 'center', render: (v: boolean) => <StatusBadge domain="catalog" value={v ? 'Active' : 'Inactive'} /> },
-            ...(canWrite ? [{
-              title: 'Thao tác', key: 'actions', width: 120, align: 'center' as const, fixed: 'right' as const,
+            {
+              title: 'Thao tác', key: 'actions', width: 140, align: 'center' as const, fixed: 'right' as const,
               render: (_: unknown, c: SchoolClass) => (
                 <RowActions actions={[
-                  { key: 'edit', label: 'Sửa', icon: <Pencil size={16} />, onClick: () => setEditing(c) },
+                  { key: 'roster', label: 'Danh sách học sinh', icon: <Users size={16} />, onClick: () => setRosterOf(c) },
+                  { key: 'edit', label: 'Sửa', icon: <Pencil size={16} />, hidden: !canWrite, onClick: () => setEditing(c) },
                   {
-                    key: 'toggle', label: c.isActive ? 'Ngừng hoạt động' : 'Kích hoạt lại', icon: <Power size={16} />, danger: c.isActive,
+                    key: 'toggle', label: c.isActive ? 'Ngừng hoạt động' : 'Kích hoạt lại', icon: <Power size={16} />, danger: c.isActive, hidden: !canWrite,
                     onClick: () => c.isActive
                       ? confirmAction({
                         title: `Ngừng hoạt động lớp ${c.name}?`,
@@ -100,10 +103,12 @@ export function ClassesPage() {
                   },
                 ]} />
               ),
-            }] : []),
+            },
           ]}
         />
       </Card>
+
+      <ClassRosterDrawer key={rosterOf?.classId} cls={rosterOf} canWrite={canWrite} onClose={() => setRosterOf(null)} />
 
       <FormModal<FormValues>
         open={editing !== null} title={editing === 'new' ? 'Thêm lớp' : 'Sửa lớp'}

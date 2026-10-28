@@ -11,6 +11,12 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,   // API khởi động Vite ở cổng này (SpaProxy); bận thì báo lỗi thay vì tự nhảy cổng
-    proxy: { '/api': process.env.API_PROXY ?? 'http://localhost:5063' },
+    proxy: {
+      '/api': process.env.API_PROXY ?? 'http://localhost:5063',
+      '/signalr': {
+        target: process.env.API_PROXY ?? 'http://localhost:5063',
+        ws: true,
+      },
+    },
   },
 })

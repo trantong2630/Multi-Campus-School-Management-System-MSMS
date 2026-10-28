@@ -169,7 +169,7 @@ public sealed class TimetablePublishService(
                 .Where(h => h.AcademicYearId == semester.AcademicYearId && (h.CampusId == null || h.CampusId == version.CampusId)
                             && h.HolidayDate >= from && h.HolidayDate <= to)
                 .Select(h => h.HolidayDate).ToListAsync()).ToHashSet();
-        var datesByDow = SchoolCalendarRules.SchoolDays(from, to, holidays).GroupBy(d => d.DayOfWeek).ToDictionary(g => g.Key, g => g.ToList());
+        var datesByDow = SchoolCalendarRules.SchoolDays(from, to, [(semester.StartDate, semester.EndDate)], holidays).GroupBy(d => d.DayOfWeek).ToDictionary(g => g.Key, g => g.ToList());
 
         var newSessions = new List<NewSession>();
         foreach (var e in entries)
