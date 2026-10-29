@@ -6,7 +6,10 @@ public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
 
 public record UserInfo(
     int AccountId, int PersonId, string PersonCode, string FullName,
-    string AccountType, string Status, bool MustChangePassword, string? AvatarPath);
+    string AccountType, string Status, bool MustChangePassword, string? AvatarPath)
+{
+    public Common.Auth.AccountScope? Scope { get; init; }
+}
 
 /// <summary>Web gửi refresh token qua cookie nên body có thể trống; mobile gửi trong body.</summary>
 public record RefreshRequest(string? RefreshToken);

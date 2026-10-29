@@ -1,9 +1,6 @@
-using Microsoft.EntityFrameworkCore;
 using MSMS.Api.Common.Errors;
-using MSMS.Api.Common.Rules;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
-using MSMS.Api.Data.Entities;
 
 namespace MSMS.Api.Common.Auth;
 
@@ -13,18 +10,13 @@ namespace MSMS.Api.Common.Auth;
 /// </summary>
 public sealed class ScopeResolver(MsmsDbContext db, CurrentUser user, IClock clock)
 {
-    private List<int>? _ledCampuses;
+    private IReadOnlyList<int>? _ledCampuses;
 
     /// <summary>Các phân hiệu mà Vice Principal đang phụ trách tại hôm nay.</summary>
     public async Task<IReadOnlyList<int>> LedCampusIdsAsync()
     {
         if (_ledCampuses is not null) return _ledCampuses;
-        var today = clock.Today;
-        _ledCampuses = await db.CampusLeadership
-            .Where(EffectivePeriod.EffectiveAt<CampusLeadership>(today))
-            .Where(x => x.StaffId == user.PersonId)
-            .Select(x => x.CampusId)
-            .ToListAsync();
+        _ledCampuses = (await new AccountScopeResolver(db, clock).ResolveAsync(user.PersonId, user.AccountType)).LedCampusIds;
         return _ledCampuses;
     }
 

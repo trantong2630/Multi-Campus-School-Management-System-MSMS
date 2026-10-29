@@ -30,6 +30,7 @@ builder.Services.AddDbContext<MsmsDbContext>(o =>
 builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUser>();
+builder.Services.AddScoped<AccountScopeResolver>();
 builder.Services.AddScoped<ScopeResolver>();
 builder.Services.AddScoped<AuditWriter>();
 builder.Services.AddScoped<NotificationSender>();

@@ -24,8 +24,10 @@ public interface IAuthService
     Task ChangePasswordAsync(int accountId, Guid? sessionId, ChangePasswordRequest request);
 }
 
-public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOptions> jwt, SessionService sessions) : IAuthService
+public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOptions> jwt, SessionService sessions,
+    AccountScopeResolver? scope = null) : IAuthService
 {
+    private readonly AccountScopeResolver _scope = scope ?? new AccountScopeResolver(db, clock);
     private static readonly PasswordHasher<Account> Hasher = new();
     private static readonly Account UnknownAccount = new();
     private static readonly string UnknownPasswordHash = Hasher.HashPassword(UnknownAccount, Guid.NewGuid().ToString("N"));
@@ -49,7 +51,7 @@ public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOpti
 
         // Lưu thời điểm đăng nhập cùng phiên mới trong một lần SaveChanges.
         var (session, refreshToken) = await sessions.CreateAsync(account.AccountId, userAgent);
-        return Issue(account, session.SessionId, refreshToken);
+        return await IssueAsync(account, session.SessionId, refreshToken);
     }
 
     public async Task<LoginResponse> RefreshAsync(RefreshRequest request)
@@ -65,7 +67,7 @@ public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOpti
             await sessions.RevokeAsync(result.Session!.SessionId);
             throw ApiException.Unauthorized("Tài khoản đã bị khóa. Liên hệ quản trị để được hỗ trợ.", ErrorCodes.AccountLocked);
         }
-        return Issue(account, result.Session!.SessionId, result.RefreshToken);
+        return await IssueAsync(account, result.Session!.SessionId, result.RefreshToken);
     }
 
     public Task LogoutAsync(Guid sessionId) => sessions.RevokeAsync(sessionId);
@@ -73,7 +75,7 @@ public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOpti
     public async Task<UserInfo> GetMeAsync(int accountId)
     {
         var account = await db.Account.Include(a => a.Person).AsNoTracking().FirstAsync(a => a.AccountId == accountId);
-        return ToInfo(account);
+        return await ToInfoAsync(account);
     }
 
     public async Task ChangePasswordAsync(int accountId, Guid? sessionId, ChangePasswordRequest request)
@@ -96,10 +98,10 @@ public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOpti
 
     public static string HashPassword(Account account, string password) => Hasher.HashPassword(account, password);
 
-    private LoginResponse Issue(Account account, Guid sessionId, string? refreshToken)
+    private async Task<LoginResponse> IssueAsync(Account account, Guid sessionId, string? refreshToken)
     {
         var expires = DateTime.UtcNow.AddMinutes(jwt.Value.ExpiryMinutes);
-        return new LoginResponse(IssueToken(account, sessionId, expires), expires, refreshToken, ToInfo(account));
+        return new LoginResponse(IssueToken(account, sessionId, expires), expires, refreshToken, await ToInfoAsync(account));
     }
 
     private string IssueToken(Account account, Guid sessionId, DateTime expires)
@@ -120,7 +122,11 @@ public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOpti
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    private static UserInfo ToInfo(Account a) => new(
+    private async Task<UserInfo> ToInfoAsync(Account a) => new(
         a.AccountId, a.PersonId, a.Person.PersonCode, a.Person.FullName,
-        a.AccountType, a.Status, a.Status == AccountStatuses.PendingPasswordChange, a.Person.AvatarPath);
+        a.AccountType, a.Status, a.Status == AccountStatuses.PendingPasswordChange, a.Person.AvatarPath)
+    {
+        // Tính lại từ dữ liệu đang hiệu lực, không đóng băng phạm vi trong JWT hoặc phiên đăng nhập.
+        Scope = await _scope.ResolveAsync(a.PersonId, a.AccountType),
+    };
 }
