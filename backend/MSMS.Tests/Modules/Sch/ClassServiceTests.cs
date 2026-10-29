@@ -1,3 +1,4 @@
+using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
 using MSMS.Api.Data;
 using MSMS.Api.Data.Entities;
@@ -19,7 +20,8 @@ public class ClassServiceTests
         AddCampus(db, Campus2, "Phân hiệu 2");
         AddYear(db, Year1, "2026-2027", D(2026, 9, 5), D(2027, 5, 31), current: true);
         AddYear(db, Year2, "2027-2028", D(2027, 9, 5), D(2028, 5, 31));
-        return (db, new ClassService(db, ClockAt()));
+        var user = UserOf(AccountTypes.SchoolAdmin);
+        return (db, new ClassService(db, ClockAt(), user, new ScopeResolver(db, user, ClockAt())));
     }
 
     private static ClassRequest Req(int campus, int year, string name, byte grade = 6) => new(campus, year, name, grade);

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
 using MSMS.Api.Common.Rules;
 using MSMS.Api.Common.Time;
@@ -9,19 +10,42 @@ using MSMS.Api.Modules.Sch.Dtos;
 namespace MSMS.Api.Modules.Sch.Services;
 
 /// <summary>SCH-05: lớp theo phân hiệu và năm học. Ghi danh học sinh làm cùng danh bạ học sinh (PPL-02).</summary>
-public sealed class ClassService(MsmsDbContext db, IClock clock)
+public sealed class ClassService(MsmsDbContext db, IClock clock, CurrentUser user, ScopeResolver scope)
 {
+    /// <summary>
+    /// Danh sách lớp trong phạm vi của người gọi (BR-01, tầng 2): School Admin và Hiệu trưởng thấy mọi lớp, Hiệu phó thấy lớp của phân hiệu mình
+    /// phụ trách, giáo viên chỉ thấy lớp mình đang chủ nhiệm, các loại khác không thấy lớp nào.
+    /// </summary>
     public async Task<List<ClassDto>> ListAsync(int? campusId, int? yearId, bool includeInactive)
     {
         var today = clock.Today;
-        return await db.Class.AsNoTracking()
+        var query = db.Class.AsNoTracking()
             .Where(c => (campusId == null || c.CampusId == campusId)
                         && (yearId == null || c.AcademicYearId == yearId)
-                        && (includeInactive || c.IsActive))
+                        && (includeInactive || c.IsActive));
+        switch (user.AccountType)
+        {
+            case AccountTypes.SchoolAdmin or AccountTypes.Principal:
+                break;
+            case AccountTypes.VicePrincipal:
+                var led = (await scope.LedCampusIdsAsync()).ToList();
+                query = query.Where(c => led.Contains(c.CampusId));
+                break;
+            case AccountTypes.Teacher:
+                var mine = await db.HomeroomAssignment.Where(EffectivePeriod.EffectiveAt<HomeroomAssignment>(today))
+                    .Where(h => h.StaffId == user.PersonId).Select(h => h.ClassId).ToListAsync();
+                query = query.Where(c => mine.Contains(c.ClassId));
+                break;
+            default:
+                query = query.Where(_ => false);
+                break;
+        }
+
+        return await query
             .OrderBy(c => c.Campus.Name).ThenBy(c => c.GradeLevel).ThenBy(c => c.Name)
             .Select(c => new ClassDto(c.ClassId, c.CampusId, c.Campus.Name, c.AcademicYearId, c.AcademicYear.Name,
                 c.Name, c.GradeLevel, c.IsActive,
-                c.Enrollment.AsQueryable().Count(EnrollmentRules.ActiveAt(today)),
+                c.Enrollment.AsQueryable().Count(EnrollmentRules.ActiveAsOf(today)),
                 c.HomeroomAssignment
                     .Where(h => h.StartDate <= today && (h.EndDate == null || h.EndDate >= today))
                     .Select(h => h.Staff.Staff.FullName).FirstOrDefault()))
@@ -66,9 +90,9 @@ public sealed class ClassService(MsmsDbContext db, IClock clock)
         if (!isActive)
         {
             var today = clock.Today;
-            var open = await db.Enrollment.Where(EnrollmentRules.ActiveAt(today)).CountAsync(e => e.ClassId == id);
+            var open = await db.Enrollment.Where(EnrollmentRules.OpenOrUpcoming(today)).CountAsync(e => e.ClassId == id);
             if (open > 0)
-                throw ApiException.BadRequest($"Lớp còn {open} học sinh có ghi danh đang mở. Chuyển hoặc kết thúc ghi danh trước.");
+                throw ApiException.BadRequest($"Lớp còn {open} học sinh có ghi danh đang mở hoặc sắp bắt đầu. Chuyển hoặc kết thúc ghi danh trước.");
         }
         cls.IsActive = isActive;
         await db.SaveChangesAsync();

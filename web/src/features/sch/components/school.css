@@ -237,3 +237,14 @@ button.hol-chip {
 .rollover-grade.ant-select {
   width: 110px;
 }
+
+.school-logo-hint {
+  margin: 0 0 16px;
+  text-align: center;
+  color: var(--c-text2);
+}
+
+.school-logo-note {
+  margin-top: 12px;
+  text-align: center;
+}
