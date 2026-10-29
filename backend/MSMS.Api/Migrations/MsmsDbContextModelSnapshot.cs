@@ -1688,9 +1688,6 @@ namespace MSMS.Api.Migrations
                     b.Property<bool?>("IsCorrect")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("SelectedOptionId")
-                        .HasColumnType("int");
-
                     b.Property<long>("SubmissionId")
                         .HasColumnType("bigint");
 
@@ -1699,12 +1696,25 @@ namespace MSMS.Api.Migrations
 
                     b.HasIndex("ExamQuestionId");
 
-                    b.HasIndex("SelectedOptionId");
-
                     b.HasIndex(new[] { "SubmissionId", "ExamQuestionId" }, "UQ_SubmissionAnswer")
                         .IsUnique();
 
                     b.ToTable("SubmissionAnswer");
+                });
+
+            modelBuilder.Entity("MSMS.Api.Data.Entities.SubmissionAnswerOption", b =>
+                {
+                    b.Property<long>("AnswerId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("OptionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AnswerId", "OptionId");
+
+                    b.HasIndex(new[] { "OptionId" }, "IX_SubmissionAnswerOption_Option");
+
+                    b.ToTable("SubmissionAnswerOption");
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.TeacherAbsence", b =>
@@ -2572,11 +2582,6 @@ namespace MSMS.Api.Migrations
                         .IsRequired()
                         .HasConstraintName("FK__Submissio__ExamQ__03BB8E22");
 
-                    b.HasOne("MSMS.Api.Data.Entities.QuestionOption", "SelectedOption")
-                        .WithMany("SubmissionAnswer")
-                        .HasForeignKey("SelectedOptionId")
-                        .HasConstraintName("FK__Submissio__Selec__04AFB25B");
-
                     b.HasOne("MSMS.Api.Data.Entities.Submission", "Submission")
                         .WithMany("SubmissionAnswer")
                         .HasForeignKey("SubmissionId")
@@ -2585,9 +2590,25 @@ namespace MSMS.Api.Migrations
 
                     b.Navigation("ExamQuestion");
 
-                    b.Navigation("SelectedOption");
-
                     b.Navigation("Submission");
+                });
+
+            modelBuilder.Entity("MSMS.Api.Data.Entities.SubmissionAnswerOption", b =>
+                {
+                    b.HasOne("MSMS.Api.Data.Entities.SubmissionAnswer", "Answer")
+                        .WithMany("SubmissionAnswerOption")
+                        .HasForeignKey("AnswerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MSMS.Api.Data.Entities.QuestionOption", "Option")
+                        .WithMany("SubmissionAnswerOption")
+                        .HasForeignKey("OptionId")
+                        .IsRequired();
+
+                    b.Navigation("Answer");
+
+                    b.Navigation("Option");
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.TeacherAbsence", b =>
@@ -2923,7 +2944,7 @@ namespace MSMS.Api.Migrations
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.QuestionOption", b =>
                 {
-                    b.Navigation("SubmissionAnswer");
+                    b.Navigation("SubmissionAnswerOption");
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.Semester", b =>
@@ -2990,6 +3011,11 @@ namespace MSMS.Api.Migrations
             modelBuilder.Entity("MSMS.Api.Data.Entities.Submission", b =>
                 {
                     b.Navigation("SubmissionAnswer");
+                });
+
+            modelBuilder.Entity("MSMS.Api.Data.Entities.SubmissionAnswer", b =>
+                {
+                    b.Navigation("SubmissionAnswerOption");
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.TeacherAbsence", b =>
