@@ -50,6 +50,9 @@ export interface AcademicYear {
   endDate: string;
   isCurrent: boolean;
   semesters: Semester[];
+  /** Ngày kết thúc muộn nhất của học kỳ 1 và 2, do backend tính (SemesterRules). */
+  semester1LatestEnd: string;
+  semester2LatestEnd: string;
 }
 
 export interface Holiday {

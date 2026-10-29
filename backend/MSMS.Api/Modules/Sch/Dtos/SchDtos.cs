@@ -14,7 +14,8 @@ public record SubjectRequest(int DepartmentId, string Name, string Abbreviation)
 
 // SCH-03 Năm học, Học kỳ, Ngày nghỉ
 public record SemesterDto(int SemesterId, byte SemesterNo, string Name, DateOnly StartDate, DateOnly EndDate);
-public record AcademicYearDto(int AcademicYearId, string Name, DateOnly StartDate, DateOnly EndDate, bool IsCurrent, IReadOnlyList<SemesterDto> Semesters);
+public record AcademicYearDto(int AcademicYearId, string Name, DateOnly StartDate, DateOnly EndDate, bool IsCurrent, IReadOnlyList<SemesterDto> Semesters,
+    DateOnly Semester1LatestEnd, DateOnly Semester2LatestEnd);
 public record AcademicYearRequest(string Name, DateOnly StartDate, DateOnly EndDate);
 public record SemesterRange(DateOnly StartDate, DateOnly EndDate);
 public record SemestersRequest(SemesterRange Semester1, SemesterRange Semester2);

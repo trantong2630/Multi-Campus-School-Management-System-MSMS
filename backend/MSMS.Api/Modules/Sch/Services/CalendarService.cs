@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
+using MSMS.Api.Common.Rules;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
 using MSMS.Api.Data.Entities;
@@ -44,6 +45,12 @@ public sealed class CalendarService(MsmsDbContext db, CurrentUser user, IClock c
         if (await db.AcademicYear.AnyAsync(y => y.AcademicYearId != id && y.Name == name))
             throw ApiException.BadRequest($"Năm học \"{name}\" đã có. Chọn tên khác.");
         await EnsureNoOverlapAsync(r.StartDate, r.EndDate, exceptYearId: id);
+        var strayHolidays = await db.Holiday.AsNoTracking()
+            .Where(h => h.AcademicYearId == id && (h.HolidayDate < r.StartDate || h.HolidayDate > r.EndDate))
+            .OrderBy(h => h.HolidayDate).Select(h => h.HolidayDate).ToListAsync();
+        if (strayHolidays.Count > 0)
+            throw ApiException.BadRequest(
+                $"Có {strayHolidays.Count} ngày nghỉ đã khai nằm ngoài khoảng năm học mới (sớm nhất {strayHolidays[0]:dd/MM/yyyy}). Xóa các ngày nghỉ đó trước hoặc chọn khoảng rộng hơn.");
         foreach (var s in year.Semester)
         {
             if (s.StartDate < r.StartDate || s.EndDate > r.EndDate)
@@ -117,7 +124,7 @@ public sealed class CalendarService(MsmsDbContext db, CurrentUser user, IClock c
         {
             if (range.EndDate <= range.StartDate)
                 throw ApiException.BadRequest($"Học kỳ {no}: ngày kết thúc phải sau ngày bắt đầu.");
-            var latestEnd = new DateOnly(year.EndDate.Year, no == 1 ? 1 : 5, no == 1 ? 18 : 31);   // muộn nhất: học kỳ 1 là 18/01, học kỳ 2 là 31/05 của năm kết thúc năm học
+            var latestEnd = SemesterRules.LatestEnd(no, year.EndDate);   // mốc muộn nhất nằm ở một chỗ duy nhất (SemesterRules)
             if (range.EndDate > latestEnd && range.EndDate <= year.EndDate)
                 throw ApiException.BadRequest($"Học kỳ {no} phải kết thúc muộn nhất ngày {latestEnd:dd/MM/yyyy}. Chọn ngày kết thúc sớm hơn.");
             if (range.StartDate < year.StartDate || range.EndDate > year.EndDate)
@@ -191,5 +198,6 @@ public sealed class CalendarService(MsmsDbContext db, CurrentUser user, IClock c
     private static AcademicYearDto ToDto(AcademicYear y) => new(
         y.AcademicYearId, y.Name, y.StartDate, y.EndDate, y.IsCurrent,
         y.Semester.OrderBy(s => s.SemesterNo)
-            .Select(s => new SemesterDto(s.SemesterId, s.SemesterNo, s.Name, s.StartDate, s.EndDate)).ToList());
+            .Select(s => new SemesterDto(s.SemesterId, s.SemesterNo, s.Name, s.StartDate, s.EndDate)).ToList(),
+        SemesterRules.LatestEnd(1, y.EndDate), SemesterRules.LatestEnd(2, y.EndDate));
 }
