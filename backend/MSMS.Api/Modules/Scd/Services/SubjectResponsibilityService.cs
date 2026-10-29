@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MSMS.Api.Common.Rules;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
 using MSMS.Api.Modules.Scd.Dtos;
@@ -20,19 +21,7 @@ public sealed class SubjectResponsibilityService(MsmsDbContext db, IClock clock)
         var semester = await CurrentSemesterAsync();
         if (semester is null) return new ResponsibilityDto(null, []);
 
-        // Phiên bản Đã phát hành mới nhất của từng lớp; lớp không có trong lần Phát hành sau vẫn theo phiên bản trước đó của nó.
-        var published = await db.TimetableVersionClass.AsNoTracking()
-            .Where(vc => vc.Version.Status == "Published" && vc.Version.SemesterId == semester.SemesterId)
-            .Select(vc => new { vc.ClassId, vc.VersionId, vc.Version.PublishedAt })
-            .ToListAsync();
-        var latest = published.GroupBy(x => x.ClassId)
-            .Select(g => g.OrderByDescending(x => x.PublishedAt).ThenByDescending(x => x.VersionId).First())
-            .ToDictionary(x => x.ClassId, x => x.VersionId);
-        if (latest.Count == 0) return new ResponsibilityDto(semester.Name, []);
-
-        var versionIds = latest.Values.Distinct().ToList();
-        var cells = await db.TimetableEntry.AsNoTracking()
-            .Where(e => versionIds.Contains(e.VersionId))
+        var items = await PublishedTimetable.LatestEntries(db, semester.SemesterId)
             .Select(e => new
             {
                 e.VersionId, e.ClassId, e.SubjectId, e.TeacherId,
@@ -40,8 +29,6 @@ public sealed class SubjectResponsibilityService(MsmsDbContext db, IClock clock)
                 ClassName = e.Class.Name, e.Class.GradeLevel, CampusId = e.Class.CampusId,
                 TeacherName = e.Teacher.Staff.FullName, e.Teacher.TeacherAbbr,
             }).ToListAsync();
-
-        var items = cells.Where(c => latest.TryGetValue(c.ClassId, out var v) && v == c.VersionId).ToList();
 
         var teachers = items.GroupBy(c => c.TeacherId)
             .Where(g => (campusId is null || g.Any(c => c.CampusId == campusId)) && (subjectId is null || g.Any(c => c.SubjectId == subjectId)))
