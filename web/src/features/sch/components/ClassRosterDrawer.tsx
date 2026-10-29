@@ -37,7 +37,7 @@ const CLOSE_REASONS = [
 export function ClassRosterDrawer({ cls, canWrite, onClose }: Props) {
   const qc = useQueryClient();
   const years = useYears();
-  const [date, setDate] = useState<Dayjs>(dayjs());
+  const [picked, setPicked] = useState<Dayjs | null>(null);
   const [enrolling, setEnrolling] = useState(false);
   const [transferring, setTransferring] = useState<RosterItem | null>(null);
   const [closing, setClosing] = useState<RosterItem | null>(null);
@@ -53,6 +53,8 @@ export function ClassRosterDrawer({ cls, canWrite, onClose }: Props) {
     return year && today.isBefore(year.startDate, 'day') ? dayjs(year.startDate) : today;
   };
 
+  // Mặc định xem theo hôm nay; lớp của năm học chưa bắt đầu thì xem theo ngày bắt đầu năm học để thấy các em đã được xếp.
+  const date = picked ?? (year && dayjs().isBefore(year.startDate, 'day') ? dayjs(year.startDate) : dayjs());
   const dateKey = toDateString(date);
   const roster = useQuery({
     queryKey: ['sch', 'roster', cls?.classId, dateKey],
@@ -105,7 +107,7 @@ export function ClassRosterDrawer({ cls, canWrite, onClose }: Props) {
       >
         <div className="roster-toolbar">
           <label htmlFor="roster-date">Xem tại ngày</label>
-          <DatePicker id="roster-date" format="DD/MM/YYYY" allowClear={false} value={date} onChange={(d) => d && setDate(d)} />
+          <DatePicker id="roster-date" format="DD/MM/YYYY" allowClear={false} value={date} onChange={(d) => d && setPicked(d)} />
           <span className="muted tabular">{roster.data ? `${roster.data.students.length} học sinh` : ''}</span>
           {canWrite && cls?.isActive && (
             <Button type="primary" icon={<UserPlus size={16} />} onClick={() => setEnrolling(true)}>Ghi danh học sinh</Button>
