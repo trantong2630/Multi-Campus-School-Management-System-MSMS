@@ -233,3 +233,7 @@ button.hol-chip {
   font-size: 12px;
   color: var(--c-text3);
 }
+
+.rollover-grade.ant-select {
+  width: 110px;
+}

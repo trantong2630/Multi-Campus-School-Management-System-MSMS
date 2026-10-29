@@ -44,3 +44,15 @@ public record StudentCandidateDto(int StudentId, string PersonCode, string FullN
 public record EnrollRequest(int StudentId, DateOnly StartDate);
 public record TransferRequest(int ToClassId, DateOnly EffectiveDate);
 public record CloseEnrollmentRequest(string Reason);
+
+// SCH-06 Kết chuyển năm học
+public record RolloverTargetDto(int ClassId, string Name, byte GradeLevel, bool IsActive);
+public record RolloverRowDto(int SourceClassId, string SourceName, int CampusId, string CampusName, byte GradeLevel,
+    int StudentCount, int AlreadyEnrolled, string SuggestedName, byte? SuggestedGrade, RolloverTargetDto? Target);
+public record RolloverClassItem(int SourceClassId, string Name, byte GradeLevel);
+public record RolloverCreateRequest(int FromYearId, int ToYearId, List<RolloverClassItem> Items);
+public record RolloverCreateResult(int Created, IReadOnlyList<ClassDto> Classes);
+public record RolloverMovePair(int SourceClassId, int TargetClassId);
+public record RolloverMoveRequest(List<RolloverMovePair> Pairs);
+public record RolloverMoveItemResult(int SourceClassId, int TargetClassId, int Moved, int Skipped);
+public record RolloverMoveResult(int Moved, int Skipped, IReadOnlyList<RolloverMoveItemResult> Items);
