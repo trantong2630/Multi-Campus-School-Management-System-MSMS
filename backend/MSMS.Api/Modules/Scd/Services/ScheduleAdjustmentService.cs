@@ -6,6 +6,7 @@ using MSMS.Api.Common.Rules;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
 using MSMS.Api.Data.Entities;
+using MSMS.Api.Modules.Sch.Services;
 using MSMS.Api.Modules.Scd.Dtos;
 
 namespace MSMS.Api.Modules.Scd.Services;
@@ -16,7 +17,7 @@ namespace MSMS.Api.Modules.Scd.Services;
 /// Chỉ đổi lịch dạy, không đổi phụ trách chuyên môn (BR-14).
 /// </summary>
 public sealed class ScheduleAdjustmentService(
-    MsmsDbContext db, CurrentUser user, ScopeResolver scope, IClock clock, AuditWriter audit, ScheduleSupport support)
+    MsmsDbContext db, CurrentUser user, ScopeResolver scope, IClock clock, AuditWriter audit, ScheduleSupport support, SchoolDayService schoolDays)
 {
     // ---------------------------------------------------------------- Xem lịch tuần để điều chỉnh
     /// <summary>Lưới tuần của một lớp (Thứ 2–7) kèm cờ khóa của từng tiết và các ngày nghỉ trong tuần. Principal xem được nhưng không thao tác.</summary>
@@ -117,7 +118,7 @@ public sealed class ScheduleAdjustmentService(
         if (!SchoolCalendarRules.IsTeachingWeekday(r.Date)) throw ApiException.BadRequest("Chủ nhật không có tiết. Chọn ngày học của phân hiệu.");
         if (!await db.Semester.AnyAsync(s => s.AcademicYearId == cls.AcademicYearId && s.StartDate <= r.Date && s.EndDate >= r.Date))
             throw ApiException.BadRequest("Ngày này nằm ngoài học kỳ của năm học. Tiết bù phải nằm trong học kỳ.");
-        if (await db.Holiday.AnyAsync(h => h.AcademicYearId == cls.AcademicYearId && h.HolidayDate == r.Date && (h.CampusId == null || h.CampusId == cls.CampusId)))
+        if (await schoolDays.StatusAsync(cls.CampusId, r.Date) == SchoolDayStatus.Holiday)
             throw ApiException.BadRequest("Ngày này là ngày nghỉ của phân hiệu nên không có tiết. Chọn ngày học khác.");
 
         var subject = await db.Subject.FirstOrDefaultAsync(s => s.SubjectId == r.SubjectId && s.IsActive)
