@@ -140,7 +140,7 @@ public sealed class StaffImportService(MsmsDbContext db, IClock clock)
                 if (phone.Length > 20) Err(4, "Số điện thoại tối đa 20 ký tự.");
 
                 var email = ws.Cell(row, 5).Text();
-                if (email.Length > 0 && (!email.Contains('@') || email.Length > 150)) Err(5, "Email chưa đúng định dạng.");
+                if (email.Length > 0 && (!Guard.IsEmail(email) || email.Length > 150)) Err(5, "Email chưa đúng định dạng.");
 
                 int? deptId = null;
                 var deptName = ws.Cell(row, 6).Text();
