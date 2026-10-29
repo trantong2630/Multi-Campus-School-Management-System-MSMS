@@ -48,7 +48,7 @@ export const menu: MenuGroup[] = [
       { key: 'sch-holiday', label: 'Ngày nghỉ', path: '/sch/holidays', roles: ['SchoolAdmin'], ready: true },
       { key: 'sch-slot', label: 'Khung giờ tiết', path: '/sch/period-slots', roles: ['SchoolAdmin'], ready: true },
       { key: 'sch-class', label: 'Lớp & Ghi danh', path: '/sch/classes', roles: ['SchoolAdmin'], ready: true },
-      { key: 'sch-rollover', label: 'Kết chuyển năm học', path: '/sch/rollover', roles: ['SchoolAdmin'], ready: false },
+      { key: 'sch-rollover', label: 'Kết chuyển năm học', path: '/sch/rollover', roles: ['SchoolAdmin'], ready: true },
     ],
   },
   {

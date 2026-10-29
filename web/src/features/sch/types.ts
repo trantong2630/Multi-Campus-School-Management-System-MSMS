@@ -109,3 +109,34 @@ export interface StudentCandidate {
   fullName: string;
   dateOfBirth: string | null;
 }
+
+export interface RolloverTarget {
+  classId: number;
+  name: string;
+  gradeLevel: number;
+  isActive: boolean;
+}
+
+export interface RolloverRow {
+  sourceClassId: number;
+  sourceName: string;
+  campusId: number;
+  campusName: string;
+  gradeLevel: number;
+  studentCount: number;
+  alreadyEnrolled: number;
+  suggestedName: string;
+  suggestedGrade: number | null;
+  target: RolloverTarget | null;
+}
+
+export interface RolloverCreateResult {
+  created: number;
+  classes: SchoolClass[];
+}
+
+export interface RolloverMoveResult {
+  moved: number;
+  skipped: number;
+  items: { sourceClassId: number; targetClassId: number; moved: number; skipped: number }[];
+}

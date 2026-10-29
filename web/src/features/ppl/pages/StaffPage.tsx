@@ -154,7 +154,11 @@ export function StaffPage() {
             getCheckboxProps: (s) => ({ disabled: s.accountId !== null || !s.isActive }),
           } : undefined}
           columns={[
-            { title: 'Họ và tên', dataIndex: 'fullName', width: 210, render: (v: string, s: Staff) => <PersonCell name={v} sub={s.personCode} muted={!s.isActive} /> },
+            {
+              title: 'Mã hồ sơ', dataIndex: 'personCode', width: 110, className: 'tabular',
+              render: (v: string, s: Staff) => s.isActive ? v : <span className="muted">{v}</span>,
+            },
+            { title: 'Họ và tên', dataIndex: 'fullName', width: 210, render: (v: string, s: Staff) => <PersonCell name={v} muted={!s.isActive} /> },
             { title: 'Ngày sinh', dataIndex: 'dateOfBirth', width: 104, className: 'tabular', render: (v: string | null) => formatDate(v) },
             { title: 'Số định danh', dataIndex: 'nationalId', width: 120, className: 'tabular', render: (v: string | null) => v ?? <span className="muted">—</span> },
             { title: 'Phân hiệu chính', dataIndex: 'primaryCampusName', width: 120, render: (v: string | null) => v ?? <span className="muted">—</span> },
