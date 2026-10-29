@@ -7,5 +7,6 @@ public static class PplModule
     public static IServiceCollection AddPplModule(this IServiceCollection s)
         => s.AddScoped<StaffService>()
             .AddScoped<StaffImportService>()
+            .AddScoped<StudentImportService>()
             .AddScoped<ResponsibilityService>();
 }

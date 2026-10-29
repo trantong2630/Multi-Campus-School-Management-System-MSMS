@@ -26,3 +26,8 @@ public record ResponsibilityRow(
 public record ResponsibilityAssignRequest(string Kind, int TargetId, int StaffId, DateOnly StartDate);
 public record ResponsibilityEndRequest(string Kind, int RecordId, DateOnly EndDate);
 public record ResponsibilityHistoryRow(int RecordId, int StaffId, string StaffName, DateOnly StartDate, DateOnly? EndDate, bool IsEffective);
+
+// Import học sinh kèm ghi danh và phụ huynh (PPL-02, 4.3.16–4.3.18)
+public record StudentImportSkipped(int Row, string FullName, string Reason, string? PersonCode = null);
+public record StudentImportResult(bool Accepted, int Students, int Enrollments, int Parents, IReadOnlyList<StudentImportSkipped> Skipped,
+    IReadOnlyList<ImportError> Errors, int TotalErrors);
