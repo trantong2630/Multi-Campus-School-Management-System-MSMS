@@ -77,12 +77,6 @@
   color: var(--c-text3);
 }
 
-.cell-link.ant-btn {
-  height: auto;
-  padding: 0;
-  font-variant-numeric: tabular-nums;
-}
-
 /* Lịch tháng của ngày nghỉ — Design_Web §9.1: thẻ trắng bo tròn, tiêu đề nền lõm, viên pastel bo góc. */
 .hol-cal {
   border: 1px solid var(--c-border);

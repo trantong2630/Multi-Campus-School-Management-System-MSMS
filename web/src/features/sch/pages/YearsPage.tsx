@@ -100,7 +100,7 @@ export function YearsPage() {
     const text = semesterText(sem(y, no));
     if (!canWrite) return text ?? <span className="muted">Chưa khai</span>;
     return text
-      ? <Button type="link" className="cell-link" title="Sửa học kỳ" onClick={() => setSemesterOf(y)}>{text}</Button>
+      ? <Button type="text" size="small" icon={<Pencil size={14} />} title="Sửa học kỳ" onClick={() => setSemesterOf(y)}>{text}</Button>
       : <Button size="small" icon={<Plus size={14} />} onClick={() => setSemesterOf(y)}>Khai báo học kỳ</Button>;
   };
   const range = (a: string, b: string): [Dayjs, Dayjs] => [dayjs(a), dayjs(b)];

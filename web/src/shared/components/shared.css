@@ -451,6 +451,18 @@
   background: var(--c-sunken);
 }
 
+/* ---------- Hộp thoại import (hướng dẫn và hai nút tải mẫu / tải lên) ---------- */
+.import-modal__hint {
+  margin: 0 0 12px;
+  color: var(--c-text2);
+}
+
+.import-modal__actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
 /* ---------- Ô bento (Dashboard, Trang chủ) ---------- */
 .bento-tile {
   position: relative;
