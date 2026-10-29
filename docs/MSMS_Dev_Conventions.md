@@ -243,7 +243,7 @@ Chốt chữ nào hiện trên màn hình. Mọi màn hình, mọi file xuất E
 | Exam | Đề |
 | Assignment | Bài tập |
 | Attempt | Lượt làm bài |
-| AiComment | Nhận xét AI |
+| AiComment | Phân tích AI |
 | WeeklyReport | Sổ liên lạc tuần |
 | Conversation | Hộp thư |
 | Notification | Thông báo |
@@ -284,7 +284,7 @@ Lấy nguyên từ spec mục 6.1 và 6.2, không chế thêm giá trị mới.
 | Bài tập | Nháp · Đã giao · Đã đóng |
 | Bài làm của học sinh | Không nộp (bài đã đóng mà chưa nộp; không phải 0 điểm) |
 | Danh mục và hồ sơ (phân hiệu, tổ, môn, lớp, khung giờ, cán bộ) | Đang hoạt động · Ngừng hoạt động |
-| Nhận xét AI | Nháp · Đã duyệt · Đã công bố · Lỗi |
+| Phân tích AI | Nháp · Đã duyệt · Đã công bố · Lỗi |
 | Phiên bản TKB | Nháp · Đã phát hành |
 | Bài đăng | Đã đăng · Đã ẩn |
 | Học sinh | Đang học · Đã chuyển trường · Đã tốt nghiệp |
@@ -295,7 +295,7 @@ Màu badge: xanh lá = đang hiệu lực · vàng = chờ · xám = nháp hoặ
 
 **Chung:** Lưu · Đóng · Thêm · Sửa · Xóa · Tìm kiếm · Tải file mẫu · Tải lên · Xuất Excel
 
-**Nghiệp vụ:** Phát hành · Xem trước · Đổi giáo viên · Hủy tiết · Thêm tiết bù · Gửi đơn · Rút đơn · Duyệt · Từ chối · Giao bài · Công bố điểm · Công bố nhận xét · Nhân bản · Ẩn bài · Khóa tài khoản · Cấp lại mật khẩu
+**Nghiệp vụ:** Phát hành · Xem trước · Đổi giáo viên · Hủy tiết · Thêm tiết bù · Gửi đơn · Rút đơn · Duyệt · Từ chối · Giao bài · Công bố điểm · Công bố phân tích · Nhân bản · Ẩn bài · Khóa tài khoản · Cấp lại mật khẩu
 
 **Quy tắc:** nút đóng hộp thoại luôn là **"Đóng"**, không bao giờ "Hủy" — vì "Hủy" trong MSMS nghĩa là hủy tiết. Nhầm chỗ này là bấm nhầm thật.
 
@@ -318,7 +318,7 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Hồ sơ | Cán bộ · Học sinh · Phụ huynh · Trách nhiệm |
 | Thời khóa biểu | Thời khóa biểu · Phụ trách chuyên môn · Lịch dạy · Giáo viên vắng |
 | Điểm danh | — |
-| Học tập | Ngân hàng câu hỏi · Đề · Bài tập · Nhận xét AI · Giám sát tổ |
+| Học tập | Ngân hàng câu hỏi · Đề · Bài tập · Phân tích AI · Giám sát tổ |
 | Phụ huynh | Đơn xin nghỉ · Sổ liên lạc · Hộp thư |
 | Bảng tin | — |
 | Quản trị | Tài khoản · Nhật ký · Xuất dữ liệu |
@@ -343,7 +343,7 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Thời khóa biểu › Thời khóa biểu · Phụ trách chuyên môn · Giáo viên vắng | HP |
 | Thời khóa biểu › Lịch dạy | HT, HP, GV |
 | Điểm danh | SA, HT, HP, GV, HS, PH |
-| Học tập › Ngân hàng câu hỏi · Đề · Nhận xét AI · Giám sát tổ | GV |
+| Học tập › Ngân hàng câu hỏi · Đề · Phân tích AI · Giám sát tổ | GV |
 | Học tập › Bài tập | GV, HS |
 | Phụ huynh › Đơn xin nghỉ | HP, GV, PH |
 | Phụ huynh › Sổ liên lạc | GV, HS, PH |

@@ -86,6 +86,8 @@ public partial class MsmsDbContext : DbContext
 
     public virtual DbSet<SubmissionAnswer> SubmissionAnswer { get; set; }
 
+    public virtual DbSet<SubmissionAnswerOption> SubmissionAnswerOption { get; set; }
+
     public virtual DbSet<TeacherAbsence> TeacherAbsence { get; set; }
 
     public virtual DbSet<TeachingSession> TeachingSession { get; set; }
@@ -948,14 +950,25 @@ public partial class MsmsDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Submissio__ExamQ__03BB8E22");
 
-            entity.HasOne(d => d.SelectedOption).WithMany(p => p.SubmissionAnswer)
-                .HasForeignKey(d => d.SelectedOptionId)
-                .HasConstraintName("FK__Submissio__Selec__04AFB25B");
-
             entity.HasOne(d => d.Submission).WithMany(p => p.SubmissionAnswer)
                 .HasForeignKey(d => d.SubmissionId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Submissio__Submi__02C769E9");
+        });
+
+        modelBuilder.Entity<SubmissionAnswerOption>(entity =>
+        {
+            entity.HasKey(e => new { e.AnswerId, e.OptionId });
+
+            entity.HasIndex(e => e.OptionId, "IX_SubmissionAnswerOption_Option");
+
+            entity.HasOne(d => d.Answer).WithMany(p => p.SubmissionAnswerOption)
+                .HasForeignKey(d => d.AnswerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(d => d.Option).WithMany(p => p.SubmissionAnswerOption)
+                .HasForeignKey(d => d.OptionId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         modelBuilder.Entity<TeacherAbsence>(entity =>
