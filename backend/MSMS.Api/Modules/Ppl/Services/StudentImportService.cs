@@ -211,7 +211,7 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
                 }
 
                 var parentEmail = ws.Cell(row, ColParentEmail).Text();
-                if (parentEmail.Length > 0 && (!parentEmail.Contains('@') || parentEmail.Length > 150)) Err(ColParentEmail, "Email chưa đúng định dạng.");
+                if (parentEmail.Length > 0 && (!Guard.IsEmail(parentEmail) || parentEmail.Length > 150)) Err(ColParentEmail, "Email chưa đúng định dạng.");
 
                 if (errors.Count == rowErrors)
                     valid.Add(new ValidRow(row, name, dob, nationalId, gender, address.Length > 0 ? address : null, classId,
