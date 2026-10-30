@@ -12,6 +12,8 @@ using MSMS.Api.Data.Entities;
 using MSMS.Api.Modules.Com;
 using MSMS.Api.Modules.Par.Dtos;
 using MSMS.Api.Modules.Par.Services;
+using MSMS.Api.Modules.Ppl.Services;
+using MSMS.Api.Modules.Scd.Services;
 
 namespace MSMS.Tests.Modules.Par;
 
@@ -218,7 +220,7 @@ public class ConversationTests
         var parentUser = CreateCurrentUser(Parent1PersonId, AccountTypes.Parent);
         var notifier = new NotificationSender(db, clock);
         var hubContext = CreateMockHubContext();
-        var service = new ConversationService(db, clock, parentUser, notifier, hubContext);
+        var service = new ConversationService(db, clock, parentUser, notifier, hubContext, new SubjectResponsibilityService(db, clock), new HomeroomService(db));
 
         var ex = await Assert.ThrowsAsync<ApiException>(() =>
             service.CreateOrGetConversationAsync(new CreateConversationDto(Student1PersonId, Teacher3StaffId, null)));
@@ -239,7 +241,7 @@ public class ConversationTests
         var teacherUser = CreateCurrentUser(Teacher3StaffId, AccountTypes.Teacher);
         var notifier = new NotificationSender(db, clock);
         var hubContext = CreateMockHubContext();
-        var service = new ConversationService(db, clock, teacherUser, notifier, hubContext);
+        var service = new ConversationService(db, clock, teacherUser, notifier, hubContext, new SubjectResponsibilityService(db, clock), new HomeroomService(db));
 
         var ex = await Assert.ThrowsAsync<ApiException>(() =>
             service.CreateOrGetConversationAsync(new CreateConversationDto(Student1PersonId, null, Parent1PersonId)));
@@ -261,8 +263,8 @@ public class ConversationTests
         var notifier = new NotificationSender(db, clock);
         var hubContext = CreateMockHubContext();
 
-        var parentService = new ConversationService(db, clock, parentUser, notifier, hubContext);
-        var teacherService = new ConversationService(db, clock, teacherUser, notifier, hubContext);
+        var parentService = new ConversationService(db, clock, parentUser, notifier, hubContext, new SubjectResponsibilityService(db, clock), new HomeroomService(db));
+        var teacherService = new ConversationService(db, clock, teacherUser, notifier, hubContext, new SubjectResponsibilityService(db, clock), new HomeroomService(db));
 
         // Phụ huynh bấm tạo trước
         var convIdFromParent = await parentService.CreateOrGetConversationAsync(
@@ -295,8 +297,8 @@ public class ConversationTests
         var notifier = new NotificationSender(db, clock);
         var hubContext = CreateMockHubContext();
 
-        var parentService = new ConversationService(db, clock, parentUser, notifier, hubContext);
-        var teacherService = new ConversationService(db, clock, teacherUser, notifier, hubContext);
+        var parentService = new ConversationService(db, clock, parentUser, notifier, hubContext, new SubjectResponsibilityService(db, clock), new HomeroomService(db));
+        var teacherService = new ConversationService(db, clock, teacherUser, notifier, hubContext, new SubjectResponsibilityService(db, clock), new HomeroomService(db));
 
         var convId = await parentService.CreateOrGetConversationAsync(
             new CreateConversationDto(Student1PersonId, Teacher1StaffId, null));
@@ -345,12 +347,12 @@ public class ConversationTests
         var parentUser = CreateCurrentUser(Parent1PersonId, AccountTypes.Parent);
         var notifier = new NotificationSender(db, clock);
         var hubContext = CreateMockHubContext();
-        var parentService = new ConversationService(db, clock, parentUser, notifier, hubContext);
+        var parentService = new ConversationService(db, clock, parentUser, notifier, hubContext, new SubjectResponsibilityService(db, clock), new HomeroomService(db));
         var convId = await parentService.CreateOrGetConversationAsync(new CreateConversationDto(Student1PersonId, Teacher1StaffId, null));
 
         // School Admin cố gắng truy cập mọi API
         var adminUser = CreateCurrentUser(SchoolAdminPersonId, AccountTypes.SchoolAdmin);
-        var adminService = new ConversationService(db, clock, adminUser, notifier, hubContext);
+        var adminService = new ConversationService(db, clock, adminUser, notifier, hubContext, new SubjectResponsibilityService(db, clock), new HomeroomService(db));
 
         var ex1 = await Assert.ThrowsAsync<ApiException>(() => adminService.GetAvailableTeachersAsync(Student1PersonId));
         Assert.Equal(403, ex1.StatusCode);
@@ -388,12 +390,12 @@ public class ConversationTests
         var parent1User = CreateCurrentUser(Parent1PersonId, AccountTypes.Parent);
         var notifier = new NotificationSender(db, clock);
         var hubContext = CreateMockHubContext();
-        var parent1Service = new ConversationService(db, clock, parent1User, notifier, hubContext);
+        var parent1Service = new ConversationService(db, clock, parent1User, notifier, hubContext, new SubjectResponsibilityService(db, clock), new HomeroomService(db));
         var convId = await parent1Service.CreateOrGetConversationAsync(new CreateConversationDto(Student1PersonId, Teacher1StaffId, null));
 
         // Người ngoài cuộc: Parent 2 (không thuộc hội thoại này)
         var outsiderUser = CreateCurrentUser(Parent2PersonId, AccountTypes.Parent);
-        var outsiderService = new ConversationService(db, clock, outsiderUser, notifier, hubContext);
+        var outsiderService = new ConversationService(db, clock, outsiderUser, notifier, hubContext, new SubjectResponsibilityService(db, clock), new HomeroomService(db));
 
         // 1. Xem tin nhắn của người khác -> 403 Forbidden
         var exView = await Assert.ThrowsAsync<ApiException>(() => outsiderService.GetMessagesAsync(convId));
@@ -422,8 +424,8 @@ public class ConversationTests
         var notifier = new NotificationSender(db, clock);
         var hubContext = CreateMockHubContext();
 
-        var parentService = new ConversationService(db, clock, parentUser, notifier, hubContext);
-        var teacherService = new ConversationService(db, clock, teacherUser, notifier, hubContext);
+        var parentService = new ConversationService(db, clock, parentUser, notifier, hubContext, new SubjectResponsibilityService(db, clock), new HomeroomService(db));
+        var teacherService = new ConversationService(db, clock, teacherUser, notifier, hubContext, new SubjectResponsibilityService(db, clock), new HomeroomService(db));
 
         var convId = await parentService.CreateOrGetConversationAsync(new CreateConversationDto(Student1PersonId, Teacher1StaffId, null));
 
@@ -481,7 +483,7 @@ public class ConversationTests
         var teacherUser = CreateCurrentUser(Teacher1StaffId, AccountTypes.Teacher);
         var notifier = new NotificationSender(db, clock);
         var hubContext = CreateMockHubContext();
-        var service = new ConversationService(db, clock, teacherUser, notifier, hubContext);
+        var service = new ConversationService(db, clock, teacherUser, notifier, hubContext, new SubjectResponsibilityService(db, clock), new HomeroomService(db));
 
         // 1. Lấy danh sách học sinh mình đang dạy
         var students = await service.GetMyTeachingStudentsAsync();
