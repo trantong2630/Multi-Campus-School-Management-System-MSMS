@@ -172,22 +172,7 @@ namespace MSMS.Api.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("FeedbackId"));
 
                     b.Property<string>("AiContent")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<DateTime?>("ApprovedAt")
-                        .HasPrecision(0)
-                        .HasColumnType("datetime2(0)");
-
-                    b.Property<int?>("ApprovedByPersonId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("AssignmentId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("EditedContent")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ErrorMessage")
                         .HasMaxLength(500)
@@ -197,30 +182,21 @@ namespace MSMS.Api.Migrations
                         .HasPrecision(0)
                         .HasColumnType("datetime2(0)");
 
-                    b.Property<DateTime?>("PublishedAt")
-                        .HasPrecision(0)
-                        .HasColumnType("datetime2(0)");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)")
-                        .HasDefaultValue("Draft");
+                        .HasDefaultValue("Pending");
 
-                    b.Property<int?>("StudentId")
-                        .HasColumnType("int");
+                    b.Property<long>("SubmissionId")
+                        .HasColumnType("bigint");
 
                     b.HasKey("FeedbackId")
                         .HasName("PK__AiFeedba__6A4BEDD6EF230D1E");
 
-                    b.HasIndex("ApprovedByPersonId");
-
-                    b.HasIndex("StudentId");
-
-                    b.HasIndex(new[] { "AssignmentId", "StudentId" }, "UQ_AiFeedback")
-                        .IsUnique()
-                        .HasFilter("[StudentId] IS NOT NULL");
+                    b.HasIndex(new[] { "SubmissionId" }, "UQ_AiFeedback")
+                        .IsUnique();
 
                     b.ToTable("AiFeedback");
                 });
@@ -232,10 +208,6 @@ namespace MSMS.Api.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AssignmentId"));
-
-                    b.Property<DateTime?>("AssignedAt")
-                        .HasPrecision(0)
-                        .HasColumnType("datetime2(0)");
 
                     b.Property<int>("AssignedByPersonId")
                         .HasColumnType("int");
@@ -253,8 +225,8 @@ namespace MSMS.Api.Migrations
                         .HasPrecision(0)
                         .HasColumnType("datetime2(0)");
 
-                    b.Property<int>("ExamId")
-                        .HasColumnType("int");
+                    b.Property<short?>("DurationMinutes")
+                        .HasColumnType("smallint");
 
                     b.Property<string>("Instruction")
                         .HasMaxLength(500)
@@ -264,19 +236,8 @@ namespace MSMS.Api.Migrations
                         .HasPrecision(0)
                         .HasColumnType("datetime2(0)");
 
-                    b.Property<DateTime?>("ScorePublishedAt")
-                        .HasPrecision(0)
-                        .HasColumnType("datetime2(0)");
-
-                    b.Property<int?>("ScorePublishedByPersonId")
+                    b.Property<int>("SubjectId")
                         .HasColumnType("int");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)")
-                        .HasDefaultValue("Draft");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -288,13 +249,43 @@ namespace MSMS.Api.Migrations
 
                     b.HasIndex("AssignedByPersonId");
 
-                    b.HasIndex("ScorePublishedByPersonId");
+                    b.HasIndex(new[] { "ClassId", "DueAt" }, "IX_Assignment_Class");
 
-                    b.HasIndex(new[] { "ClassId", "Status", "DueAt" }, "IX_Assignment_Class");
-
-                    b.HasIndex(new[] { "ExamId" }, "IX_Assignment_Exam");
+                    b.HasIndex(new[] { "SubjectId" }, "IX_Assignment_Subject");
 
                     b.ToTable("Assignment");
+                });
+
+            modelBuilder.Entity("MSMS.Api.Data.Entities.AssignmentQuestion", b =>
+                {
+                    b.Property<int>("AssignmentQuestionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AssignmentQuestionId"));
+
+                    b.Property<int>("AssignmentId")
+                        .HasColumnType("int");
+
+                    b.Property<short>("OrderNo")
+                        .HasColumnType("smallint");
+
+                    b.Property<decimal>("Points")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(4, 2)")
+                        .HasDefaultValue(1m);
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AssignmentQuestionId");
+
+                    b.HasIndex("QuestionId");
+
+                    b.HasIndex(new[] { "AssignmentId", "QuestionId" }, "UQ_AssignmentQuestion")
+                        .IsUnique();
+
+                    b.ToTable("AssignmentQuestion");
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.AssignmentRecipient", b =>
@@ -673,90 +664,6 @@ namespace MSMS.Api.Migrations
                     b.HasIndex(new[] { "StudentId", "StartDate" }, "IX_Enrollment_Student");
 
                     b.ToTable("Enrollment");
-                });
-
-            modelBuilder.Entity("MSMS.Api.Data.Entities.Exam", b =>
-                {
-                    b.Property<int>("ExamId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ExamId"));
-
-                    b.Property<int?>("CopiedFromExamId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasPrecision(0)
-                        .HasColumnType("datetime2(0)")
-                        .HasDefaultValueSql("(CONVERT([datetime2](0),(sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time')))");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<bool>("IsLocked")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("OwnerPersonId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SubjectId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasPrecision(0)
-                        .HasColumnType("datetime2(0)");
-
-                    b.HasKey("ExamId")
-                        .HasName("PK__Exam__297521C73FAE556B");
-
-                    b.HasIndex("CopiedFromExamId");
-
-                    b.HasIndex(new[] { "OwnerPersonId" }, "IX_Exam_Owner");
-
-                    b.HasIndex(new[] { "SubjectId" }, "IX_Exam_Subject");
-
-                    b.ToTable("Exam");
-                });
-
-            modelBuilder.Entity("MSMS.Api.Data.Entities.ExamQuestion", b =>
-                {
-                    b.Property<int>("ExamQuestionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ExamQuestionId"));
-
-                    b.Property<int>("ExamId")
-                        .HasColumnType("int");
-
-                    b.Property<short>("OrderNo")
-                        .HasColumnType("smallint");
-
-                    b.Property<decimal>("Points")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("decimal(4, 2)")
-                        .HasDefaultValue(1m);
-
-                    b.Property<int>("QuestionId")
-                        .HasColumnType("int");
-
-                    b.HasKey("ExamQuestionId")
-                        .HasName("PK__ExamQues__EFAED846C9BE138C");
-
-                    b.HasIndex("QuestionId");
-
-                    b.HasIndex(new[] { "ExamId", "QuestionId" }, "UQ_ExamQuestion")
-                        .IsUnique();
-
-                    b.ToTable("ExamQuestion");
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.Holiday", b =>
@@ -1679,11 +1586,11 @@ namespace MSMS.Api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("AnswerId"));
 
+                    b.Property<int>("AssignmentQuestionId")
+                        .HasColumnType("int");
+
                     b.Property<decimal?>("EarnedPoints")
                         .HasColumnType("decimal(4, 2)");
-
-                    b.Property<int>("ExamQuestionId")
-                        .HasColumnType("int");
 
                     b.Property<bool?>("IsCorrect")
                         .HasColumnType("bit");
@@ -1694,9 +1601,9 @@ namespace MSMS.Api.Migrations
                     b.HasKey("AnswerId")
                         .HasName("PK__Submissi__D4825004190B923E");
 
-                    b.HasIndex("ExamQuestionId");
+                    b.HasIndex("AssignmentQuestionId");
 
-                    b.HasIndex(new[] { "SubmissionId", "ExamQuestionId" }, "UQ_SubmissionAnswer")
+                    b.HasIndex(new[] { "SubmissionId", "AssignmentQuestionId" }, "UQ_SubmissionAnswer")
                         .IsUnique();
 
                     b.ToTable("SubmissionAnswer");
@@ -1994,27 +1901,12 @@ namespace MSMS.Api.Migrations
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.AiFeedback", b =>
                 {
-                    b.HasOne("MSMS.Api.Data.Entities.Person", "ApprovedByPerson")
-                        .WithMany("AiFeedback")
-                        .HasForeignKey("ApprovedByPersonId")
-                        .HasConstraintName("FK__AiFeedbac__Appro__0B5CAFEA");
+                    b.HasOne("MSMS.Api.Data.Entities.Submission", "Submission")
+                        .WithOne("AiFeedback")
+                        .HasForeignKey("MSMS.Api.Data.Entities.AiFeedback", "SubmissionId")
+                        .IsRequired();
 
-                    b.HasOne("MSMS.Api.Data.Entities.Assignment", "Assignment")
-                        .WithMany("AiFeedback")
-                        .HasForeignKey("AssignmentId")
-                        .IsRequired()
-                        .HasConstraintName("FK__AiFeedbac__Assig__0880433F");
-
-                    b.HasOne("MSMS.Api.Data.Entities.StudentProfile", "Student")
-                        .WithMany("AiFeedback")
-                        .HasForeignKey("StudentId")
-                        .HasConstraintName("FK__AiFeedbac__Stude__09746778");
-
-                    b.Navigation("ApprovedByPerson");
-
-                    b.Navigation("Assignment");
-
-                    b.Navigation("Student");
+                    b.Navigation("Submission");
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.Assignment", b =>
@@ -2031,24 +1923,33 @@ namespace MSMS.Api.Migrations
                         .IsRequired()
                         .HasConstraintName("FK__Assignmen__Class__756D6ECB");
 
-                    b.HasOne("MSMS.Api.Data.Entities.Exam", "Exam")
+                    b.HasOne("MSMS.Api.Data.Entities.Subject", "Subject")
                         .WithMany("Assignment")
-                        .HasForeignKey("ExamId")
-                        .IsRequired()
-                        .HasConstraintName("FK__Assignmen__ExamI__74794A92");
-
-                    b.HasOne("MSMS.Api.Data.Entities.Person", "ScorePublishedByPerson")
-                        .WithMany("AssignmentScorePublishedByPerson")
-                        .HasForeignKey("ScorePublishedByPersonId")
-                        .HasConstraintName("FK__Assignmen__Score__7849DB76");
+                        .HasForeignKey("SubjectId")
+                        .IsRequired();
 
                     b.Navigation("AssignedByPerson");
 
                     b.Navigation("Class");
 
-                    b.Navigation("Exam");
+                    b.Navigation("Subject");
+                });
 
-                    b.Navigation("ScorePublishedByPerson");
+            modelBuilder.Entity("MSMS.Api.Data.Entities.AssignmentQuestion", b =>
+                {
+                    b.HasOne("MSMS.Api.Data.Entities.Assignment", "Assignment")
+                        .WithMany("AssignmentQuestion")
+                        .HasForeignKey("AssignmentId")
+                        .IsRequired();
+
+                    b.HasOne("MSMS.Api.Data.Entities.Question", "Question")
+                        .WithMany("AssignmentQuestion")
+                        .HasForeignKey("QuestionId")
+                        .IsRequired();
+
+                    b.Navigation("Assignment");
+
+                    b.Navigation("Question");
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.AssignmentRecipient", b =>
@@ -2235,51 +2136,6 @@ namespace MSMS.Api.Migrations
                     b.Navigation("Class");
 
                     b.Navigation("Student");
-                });
-
-            modelBuilder.Entity("MSMS.Api.Data.Entities.Exam", b =>
-                {
-                    b.HasOne("MSMS.Api.Data.Entities.Exam", "CopiedFromExam")
-                        .WithMany("InverseCopiedFromExam")
-                        .HasForeignKey("CopiedFromExamId")
-                        .HasConstraintName("FK__Exam__CopiedFrom__6AEFE058");
-
-                    b.HasOne("MSMS.Api.Data.Entities.Person", "OwnerPerson")
-                        .WithMany("Exam")
-                        .HasForeignKey("OwnerPersonId")
-                        .IsRequired()
-                        .HasConstraintName("FK__Exam__OwnerPerso__690797E6");
-
-                    b.HasOne("MSMS.Api.Data.Entities.Subject", "Subject")
-                        .WithMany("Exam")
-                        .HasForeignKey("SubjectId")
-                        .IsRequired()
-                        .HasConstraintName("FK__Exam__SubjectId__681373AD");
-
-                    b.Navigation("CopiedFromExam");
-
-                    b.Navigation("OwnerPerson");
-
-                    b.Navigation("Subject");
-                });
-
-            modelBuilder.Entity("MSMS.Api.Data.Entities.ExamQuestion", b =>
-                {
-                    b.HasOne("MSMS.Api.Data.Entities.Exam", "Exam")
-                        .WithMany("ExamQuestion")
-                        .HasForeignKey("ExamId")
-                        .IsRequired()
-                        .HasConstraintName("FK__ExamQuest__ExamI__6FB49575");
-
-                    b.HasOne("MSMS.Api.Data.Entities.Question", "Question")
-                        .WithMany("ExamQuestion")
-                        .HasForeignKey("QuestionId")
-                        .IsRequired()
-                        .HasConstraintName("FK__ExamQuest__Quest__70A8B9AE");
-
-                    b.Navigation("Exam");
-
-                    b.Navigation("Question");
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.Holiday", b =>
@@ -2576,11 +2432,10 @@ namespace MSMS.Api.Migrations
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.SubmissionAnswer", b =>
                 {
-                    b.HasOne("MSMS.Api.Data.Entities.ExamQuestion", "ExamQuestion")
+                    b.HasOne("MSMS.Api.Data.Entities.AssignmentQuestion", "AssignmentQuestion")
                         .WithMany("SubmissionAnswer")
-                        .HasForeignKey("ExamQuestionId")
-                        .IsRequired()
-                        .HasConstraintName("FK__Submissio__ExamQ__03BB8E22");
+                        .HasForeignKey("AssignmentQuestionId")
+                        .IsRequired();
 
                     b.HasOne("MSMS.Api.Data.Entities.Submission", "Submission")
                         .WithMany("SubmissionAnswer")
@@ -2588,7 +2443,7 @@ namespace MSMS.Api.Migrations
                         .IsRequired()
                         .HasConstraintName("FK__Submissio__Submi__02C769E9");
 
-                    b.Navigation("ExamQuestion");
+                    b.Navigation("AssignmentQuestion");
 
                     b.Navigation("Submission");
                 });
@@ -2804,11 +2659,16 @@ namespace MSMS.Api.Migrations
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.Assignment", b =>
                 {
-                    b.Navigation("AiFeedback");
+                    b.Navigation("AssignmentQuestion");
 
                     b.Navigation("AssignmentRecipient");
 
                     b.Navigation("Submission");
+                });
+
+            modelBuilder.Entity("MSMS.Api.Data.Entities.AssignmentQuestion", b =>
+                {
+                    b.Navigation("SubmissionAnswer");
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.Campus", b =>
@@ -2848,20 +2708,6 @@ namespace MSMS.Api.Migrations
                     b.Navigation("Message");
                 });
 
-            modelBuilder.Entity("MSMS.Api.Data.Entities.Exam", b =>
-                {
-                    b.Navigation("Assignment");
-
-                    b.Navigation("ExamQuestion");
-
-                    b.Navigation("InverseCopiedFromExam");
-                });
-
-            modelBuilder.Entity("MSMS.Api.Data.Entities.ExamQuestion", b =>
-                {
-                    b.Navigation("SubmissionAnswer");
-                });
-
             modelBuilder.Entity("MSMS.Api.Data.Entities.PeriodSlot", b =>
                 {
                     b.Navigation("TeachingSession");
@@ -2873,11 +2719,7 @@ namespace MSMS.Api.Migrations
                 {
                     b.Navigation("Account");
 
-                    b.Navigation("AiFeedback");
-
                     b.Navigation("AssignmentAssignedByPerson");
-
-                    b.Navigation("AssignmentScorePublishedByPerson");
 
                     b.Navigation("AttendanceRecordRecordedByPerson");
 
@@ -2890,8 +2732,6 @@ namespace MSMS.Api.Migrations
                     b.Navigation("Conversation");
 
                     b.Navigation("DepartmentHead");
-
-                    b.Navigation("Exam");
 
                     b.Navigation("Holiday");
 
@@ -2937,7 +2777,7 @@ namespace MSMS.Api.Migrations
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.Question", b =>
                 {
-                    b.Navigation("ExamQuestion");
+                    b.Navigation("AssignmentQuestion");
 
                     b.Navigation("QuestionOption");
                 });
@@ -2971,8 +2811,6 @@ namespace MSMS.Api.Migrations
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.StudentProfile", b =>
                 {
-                    b.Navigation("AiFeedback");
-
                     b.Navigation("AssignmentRecipient");
 
                     b.Navigation("AttendanceRecord");
@@ -2990,7 +2828,7 @@ namespace MSMS.Api.Migrations
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.Subject", b =>
                 {
-                    b.Navigation("Exam");
+                    b.Navigation("Assignment");
 
                     b.Navigation("Question");
 
@@ -3010,6 +2848,8 @@ namespace MSMS.Api.Migrations
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.Submission", b =>
                 {
+                    b.Navigation("AiFeedback");
+
                     b.Navigation("SubmissionAnswer");
                 });
 
