@@ -20,7 +20,7 @@ Tài liệu kỹ thuật đi kèm Business Specification V3. Chốt bốn thứ:
 | Excel | ClosedXML |
 | Realtime | ASP.NET Core SignalR, một hub cho thông báo và chat. Server → client: `NotificationCreated`, `MessageReceived`, `MessageRead`, `Typing`, `PresenceChanged`; client → server chỉ `Typing` và `JoinConversation`, gửi tin vẫn qua REST. Web dùng `@microsoft/signalr`, mobile dùng `signalr_netcore` (chỉ khi app mở, có polling dự phòng). Token truyền qua query `access_token`, hub đi qua cùng kiểm tài khoản và phiên như REST. Đẩy sau `SaveChanges`. Đang nhập và online chỉ ở bộ nhớ, không thêm bảng; không backplane khi chạy một instance |
 | Email OTP | Gmail SMTP (`smtp.gmail.com:587`, STARTTLS) bằng App Password của hộp thư chung của trường; tài khoản và mật khẩu ứng dụng đặt trong cấu hình môi trường, không commit (spec mục 3.2) |
-| Gọi AI | HttpClient + REST của nhà cung cấp |
+| Gọi AI | HttpClient + REST của nhà cung cấp (Gemini); khóa và model đặt ở mục `Ai` trong `appsettings.json` (`Ai:ApiKey`, `Ai:Model`) |
 | Log | Serilog, ghi ra file |
 | Test | xUnit |
 
@@ -213,7 +213,7 @@ Chốt chữ nào hiện trên màn hình. Mọi màn hình, mọi file xuất E
 | PPL | Hồ sơ |
 | SCD | Thời khóa biểu · Lịch dạy |
 | ATT | Điểm danh |
-| LRN | Học tập |
+| LRN | Bài tập rèn luyện |
 | PAR | Phụ huynh |
 | COM | Thông báo · Bảng tin |
 | ADM | Dashboard · Quản trị (Tài khoản · Nhật ký · Xuất dữ liệu) |
@@ -240,10 +240,10 @@ Chốt chữ nào hiện trên màn hình. Mọi màn hình, mọi file xuất E
 | Attendance | Điểm danh |
 | LeaveRequest | Đơn xin nghỉ |
 | Question | Câu hỏi |
-| Exam | Đề |
+| AssignmentQuestion | Câu hỏi của bài tập |
 | Assignment | Bài tập |
-| Attempt | Lượt làm bài |
-| AiComment | Phân tích AI |
+| Submission | Lượt làm bài |
+| AiFeedback | Phân tích bằng AI |
 | WeeklyReport | Sổ liên lạc tuần |
 | Conversation | Hộp thư |
 | Notification | Thông báo |
@@ -281,10 +281,10 @@ Lấy nguyên từ spec mục 6.1 và 6.2, không chế thêm giá trị mới.
 | Điểm danh | Có mặt · Muộn · Vắng có phép · Vắng không phép · Chưa điểm danh |
 | Đơn xin nghỉ | Chờ duyệt · Đã duyệt · Đã từ chối · Đã rút |
 | Câu hỏi | Nháp · Sẵn dùng |
-| Bài tập | Nháp · Đã giao · Đã đóng |
-| Bài làm của học sinh | Không nộp (bài đã đóng mà chưa nộp; không phải 0 điểm) |
+| Bài tập | Đã giao · Đã đóng |
+| Bài làm của học sinh | Đã nộp · Không nộp (bài đã đóng mà chưa nộp; không phải 0 điểm) |
 | Danh mục và hồ sơ (phân hiệu, tổ, môn, lớp, khung giờ, cán bộ) | Đang hoạt động · Ngừng hoạt động |
-| Phân tích AI | Nháp · Đã duyệt · Đã công bố · Lỗi |
+| Phân tích bằng AI | Đang phân tích · Xong · Lỗi |
 | Phiên bản TKB | Nháp · Đã phát hành |
 | Bài đăng | Đã đăng · Đã ẩn |
 | Học sinh | Đang học · Đã chuyển trường · Đã tốt nghiệp |
@@ -295,7 +295,7 @@ Màu badge: xanh lá = đang hiệu lực · vàng = chờ · xám = nháp hoặ
 
 **Chung:** Lưu · Đóng · Thêm · Sửa · Xóa · Tìm kiếm · Tải file mẫu · Tải lên · Xuất Excel
 
-**Nghiệp vụ:** Phát hành · Xem trước · Đổi giáo viên · Hủy tiết · Thêm tiết bù · Gửi đơn · Rút đơn · Duyệt · Từ chối · Giao bài · Công bố điểm · Công bố phân tích · Nhân bản · Ẩn bài · Khóa tài khoản · Cấp lại mật khẩu
+**Nghiệp vụ:** Phát hành · Xem trước · Đổi giáo viên · Hủy tiết · Thêm tiết bù · Gửi đơn · Rút đơn · Duyệt · Từ chối · Giao bài · Công bố điểm · Công bố phân tích · Nhân bản · Ẩn bài · Khóa tài khoản · Cấp lại mật khẩu · Thêm câu hỏi · Ẩn khỏi ngân hàng · Sinh câu hỏi nháp · Xác nhận câu hỏi · Lưu nháp · Nộp bài · Chạy phân tích · Tạo lại
 
 **Quy tắc:** nút đóng hộp thoại luôn là **"Đóng"**, không bao giờ "Hủy" — vì "Hủy" trong MSMS nghĩa là hủy tiết. Nhầm chỗ này là bấm nhầm thật.
 
@@ -318,7 +318,7 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Hồ sơ | Cán bộ · Học sinh · Phụ huynh · Trách nhiệm |
 | Thời khóa biểu | Thời khóa biểu · Phụ trách chuyên môn · Lịch dạy · Giáo viên vắng |
 | Điểm danh | — |
-| Học tập | Ngân hàng câu hỏi · Đề · Bài tập · Phân tích AI · Giám sát tổ |
+| Bài tập rèn luyện | Kho câu hỏi · Giao bài tập · Bài tập đã giao · Tiến độ giao bài của tổ · Bài tập được giao · Danh sách bài tập · Kết quả của con |
 | Phụ huynh | Đơn xin nghỉ · Sổ liên lạc · Hộp thư |
 | Bảng tin | — |
 | Quản trị | Tài khoản · Nhật ký · Xuất dữ liệu |
@@ -343,8 +343,10 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Thời khóa biểu › Thời khóa biểu · Phụ trách chuyên môn · Giáo viên vắng | HP |
 | Thời khóa biểu › Lịch dạy | HT, HP, GV |
 | Điểm danh | SA, HT, HP, GV, HS, PH |
-| Học tập › Ngân hàng câu hỏi · Đề · Phân tích AI · Giám sát tổ | GV |
-| Học tập › Bài tập | GV, HS |
+| Bài tập rèn luyện › Kho câu hỏi · Giao bài tập · Bài tập đã giao | GV |
+| Bài tập rèn luyện › Tiến độ giao bài của tổ | GV (chỉ tổ trưởng) |
+| Bài tập rèn luyện › Bài tập được giao · Danh sách bài tập | HS |
+| Bài tập rèn luyện › Kết quả của con | PH |
 | Phụ huynh › Đơn xin nghỉ | HP, GV, PH |
 | Phụ huynh › Sổ liên lạc | GV, HS, PH |
 | Phụ huynh › Hộp thư | GV, PH |

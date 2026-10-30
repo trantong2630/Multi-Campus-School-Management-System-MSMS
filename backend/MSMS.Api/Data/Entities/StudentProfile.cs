@@ -15,7 +15,6 @@ public partial class StudentProfile
 
     public string? Note { get; set; }
 
-    public virtual ICollection<AiFeedback> AiFeedback { get; set; } = new List<AiFeedback>();
 
     public virtual ICollection<AttendanceRecord> AttendanceRecord { get; set; } = new List<AttendanceRecord>();
 
