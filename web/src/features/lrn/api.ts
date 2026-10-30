@@ -13,10 +13,12 @@ const del = (url: string) => apiClient.delete(url).then((r) => r.data);
 export const lrnApi = {
   questions: {
     list: (q: QuestionQuery) => get<PagedResult<QuestionItem>>('/lrn/questions', q),
+    mySubjects: () => get<{ subjectId: number; name: string }[]>('/lrn/questions/my-subjects'),
     get: (id: number) => get<QuestionDetail>(`/lrn/questions/${id}`),
     create: (b: SaveQuestionInput) => post<QuestionDetail>('/lrn/questions', b),
     update: (id: number, b: SaveQuestionInput) => put<QuestionDetail>(`/lrn/questions/${id}`, b),
     hide: (id: number) => put(`/lrn/questions/${id}/hide`),
+    unhide: (id: number) => put(`/lrn/questions/${id}/unhide`),
     confirm: (id: number) => put(`/lrn/questions/${id}/confirm`),
     removeDraft: (id: number) => del(`/lrn/questions/${id}`),
     /** AI gọi lâu hơn các API khác nên đặt thời gian chờ riêng. */

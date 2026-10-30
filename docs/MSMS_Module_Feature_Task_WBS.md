@@ -725,19 +725,19 @@ Ngân hàng dùng chung toàn trường: mọi Teacher xem và dùng câu Sẵn 
 
 **4.6.2 — Soạn câu hỏi trắc nghiệm / Create Question**  
 `BE + Web` · 2 MD · dep: 4.6.1  
-Câu hỏi thuộc một môn, có khối 6–9 và chủ đề, 4 lựa chọn A–D, từ 1 đến 3 đáp án đúng, giải thích tùy chọn. Giao diện báo rõ câu có một hay nhiều đáp án đúng (BR-20).
+Câu hỏi thuộc một môn trong tổ chuyên môn của giáo viên (chỉ soạn được môn của tổ mình), có khối 6–9 và chủ đề, 4 lựa chọn A–D, từ 1 đến 3 đáp án đúng, giải thích tùy chọn. Giao diện báo rõ câu có một hay nhiều đáp án đúng (BR-20).
 
 **4.6.3 — Cập nhật câu hỏi của mình / Update Own Question**  
 `BE + Web` · 1 MD · dep: 4.6.2  
 Chỉ người tạo sửa được. Câu đã nằm trong một bài tập thì không sửa được nữa (BR-20). Kiểm thử: người khác không sửa được câu của mình; câu trong bài đã giao bị chặn sửa kể cả với người tạo.
 
-**4.6.4 — Ẩn câu hỏi khỏi ngân hàng / Hide Question**  
+**4.6.4 — Ẩn và bỏ ẩn câu hỏi / Hide and Unhide Question**  
 `BE + Web` · 0.5 MD · dep: 4.6.2  
-Câu đã nằm trong bài tập chỉ còn ẩn khỏi ngân hàng; ẩn không ảnh hưởng bài cũ. Muốn phiên bản khác thì soạn câu mới (BR-20).
+Người tạo ẩn câu Sẵn dùng khỏi ngân hàng chung; ẩn không ảnh hưởng bài cũ, giáo viên khác không đưa câu đã ẩn vào bài mới được. Người tạo xem lại các câu đã ẩn của mình ở tab Đã ẩn và bỏ ẩn để đưa câu trở lại ngân hàng chung. Muốn phiên bản khác thì soạn câu mới (BR-20).
 
 **4.6.5 — Yêu cầu MSMS AI sinh nháp câu hỏi / Request AI Question Drafts**  
 `BE + Web` · 2.5 MD · dep: 4.6.2  
-Giáo viên chọn môn, khối, chủ đề, bộ sách (Kết nối tri thức với cuộc sống, Chân trời sáng tạo hoặc Cánh diều) và số câu; bộ sách chỉ đi kèm yêu cầu để AI bám đúng chương trình, không lưu trên câu hỏi. AI trả về các câu ở trạng thái Nháp gắn cờ AI; Backend loại câu không đủ 4 lựa chọn hoặc không có đáp án đúng. AI hỏng thì giáo viên soạn thủ công, không ảnh hưởng luồng nào khác (mục 3.1, BR-20).
+Giáo viên chọn môn thuộc tổ chuyên môn của mình, khối, chủ đề và số câu; bộ sách cố định là Kết nối tri thức với cuộc sống (bộ dùng thống nhất toàn quốc), giao diện không cho đổi và Backend vẫn nhận thêm Chân trời sáng tạo hoặc Cánh diều; bộ sách chỉ đi kèm yêu cầu để AI bám đúng chương trình, không lưu trên câu hỏi. AI trả về các câu ở trạng thái Nháp gắn cờ AI; Backend loại câu không đủ 4 lựa chọn hoặc không có đáp án đúng. AI hỏng thì giáo viên soạn thủ công, không ảnh hưởng luồng nào khác (mục 3.1, BR-20).
 
 **4.6.6 — Xem và sửa nháp AI / Review and Edit AI Drafts**  
 `BE + Web` · 1.5 MD · dep: 4.6.5  
