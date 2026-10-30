@@ -61,6 +61,8 @@ public record ViewSessionDto(long SessionId, DateOnly Date, int PeriodSlotId, st
 public record ResponsibilityItemDto(int SubjectId, string SubjectAbbr, string SubjectName, int ClassId, string ClassName, int PeriodsPerWeek);
 public record ResponsibilityTeacherDto(int TeacherId, string TeacherName, string? TeacherAbbr, int TotalPeriods, IReadOnlyList<ResponsibilityItemDto> Items);
 public record ResponsibilityDto(string? SemesterName, IReadOnlyList<ResponsibilityTeacherDto> Teachers);
+/// <summary>Một cặp (lớp, môn) giáo viên đang phụ trách chuyên môn; các module khác (LRN) dùng để kiểm quyền.</summary>
+public record TeacherClassSubject(int ClassId, string ClassName, byte GradeLevel, int CampusId, int SubjectId, string SubjectName);
 
 // ---- SCD-02: Điều chỉnh lịch dạy (BR-15) ----
 /// <summary>Locked: tiết bị khóa (ngày đã qua hoặc đã có điểm danh, mục 6.2) nên không đổi giáo viên, không hủy.</summary>
