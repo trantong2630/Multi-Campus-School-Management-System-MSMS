@@ -44,15 +44,13 @@ const registry: Record<StatusDomain, Record<string, Entry>> = {
     Inactive: ['Ngừng hoạt động', 'neutral'],
   },
   assignment: {
-    Draft: ['Nháp', 'neutral'],
-    Assigned: ['Đã giao', 'active'],
+    Open: ['Đang mở', 'active'],
     Closed: ['Đã đóng', 'neutral'],
   },
   aiFeedback: {
-    Draft: ['Nháp', 'neutral'],
-    Approved: ['Đã duyệt', 'active'],
-    Published: ['Đã công bố', 'active'],
-    Error: ['Lỗi', 'danger'],
+    Pending: ['Đang phân tích', 'pending'],
+    Done: ['Xong', 'active'],
+    Failed: ['Lỗi', 'neutral'],
   },
   timetableVersion: {
     Draft: ['Nháp', 'neutral'],
@@ -68,6 +66,7 @@ const registry: Record<StatusDomain, Record<string, Entry>> = {
     Graduated: ['Đã tốt nghiệp', 'info'],
   },
   submission: {
+    Submitted: ['Đã nộp', 'info'],
     NotSubmitted: ['Không nộp', 'neutral'],
   },
 };
