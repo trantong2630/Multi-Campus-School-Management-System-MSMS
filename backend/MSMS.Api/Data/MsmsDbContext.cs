@@ -23,6 +23,8 @@ public partial class MsmsDbContext : DbContext
 
     public virtual DbSet<Assignment> Assignment { get; set; }
 
+    public virtual DbSet<AssignmentQuestion> AssignmentQuestion { get; set; }
+
     public virtual DbSet<AssignmentRecipient> AssignmentRecipient { get; set; }
 
     public virtual DbSet<AttendanceRecord> AttendanceRecord { get; set; }
@@ -40,10 +42,6 @@ public partial class MsmsDbContext : DbContext
     public virtual DbSet<DepartmentHead> DepartmentHead { get; set; }
 
     public virtual DbSet<Enrollment> Enrollment { get; set; }
-
-    public virtual DbSet<Exam> Exam { get; set; }
-
-    public virtual DbSet<ExamQuestion> ExamQuestion { get; set; }
 
     public virtual DbSet<Holiday> Holiday { get; set; }
 
@@ -86,6 +84,8 @@ public partial class MsmsDbContext : DbContext
     public virtual DbSet<Submission> Submission { get; set; }
 
     public virtual DbSet<SubmissionAnswer> SubmissionAnswer { get; set; }
+
+    public virtual DbSet<SubmissionAnswerOption> SubmissionAnswerOption { get; set; }
 
     public virtual DbSet<TeacherAbsence> TeacherAbsence { get; set; }
 
@@ -161,51 +161,33 @@ public partial class MsmsDbContext : DbContext
         {
             entity.HasKey(e => e.FeedbackId).HasName("PK__AiFeedba__6A4BEDD6EF230D1E");
 
-            entity.HasIndex(e => new { e.AssignmentId, e.StudentId }, "UQ_AiFeedback").IsUnique();
+            entity.HasIndex(e => e.SubmissionId, "UQ_AiFeedback").IsUnique();
 
-            entity.Property(e => e.AiContent).HasMaxLength(2000);
-            entity.Property(e => e.ApprovedAt).HasPrecision(0);
-            entity.Property(e => e.EditedContent).HasMaxLength(2000);
             entity.Property(e => e.ErrorMessage).HasMaxLength(500);
             entity.Property(e => e.GeneratedAt).HasPrecision(0);
-            entity.Property(e => e.PublishedAt).HasPrecision(0);
             entity.Property(e => e.Status)
                 .HasMaxLength(10)
-                .HasDefaultValue("Draft");
+                .HasDefaultValue("Pending");
 
-            entity.HasOne(d => d.ApprovedByPerson).WithMany(p => p.AiFeedback)
-                .HasForeignKey(d => d.ApprovedByPersonId)
-                .HasConstraintName("FK__AiFeedbac__Appro__0B5CAFEA");
-
-            entity.HasOne(d => d.Assignment).WithMany(p => p.AiFeedback)
-                .HasForeignKey(d => d.AssignmentId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__AiFeedbac__Assig__0880433F");
-
-            entity.HasOne(d => d.Student).WithMany(p => p.AiFeedback)
-                .HasForeignKey(d => d.StudentId)
-                .HasConstraintName("FK__AiFeedbac__Stude__09746778");
+            entity.HasOne(d => d.Submission).WithOne(p => p.AiFeedback)
+                .HasForeignKey<AiFeedback>(d => d.SubmissionId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         modelBuilder.Entity<Assignment>(entity =>
         {
             entity.HasKey(e => e.AssignmentId).HasName("PK__Assignme__32499E77EF005FDB");
 
-            entity.HasIndex(e => new { e.ClassId, e.Status, e.DueAt }, "IX_Assignment_Class");
+            entity.HasIndex(e => new { e.ClassId, e.DueAt }, "IX_Assignment_Class");
 
-            entity.HasIndex(e => e.ExamId, "IX_Assignment_Exam");
+            entity.HasIndex(e => e.SubjectId, "IX_Assignment_Subject");
 
-            entity.Property(e => e.AssignedAt).HasPrecision(0);
             entity.Property(e => e.CreatedAt)
                 .HasPrecision(0)
                 .HasDefaultValueSql("(CONVERT([datetime2](0),(sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time')))");
             entity.Property(e => e.DueAt).HasPrecision(0);
             entity.Property(e => e.Instruction).HasMaxLength(500);
             entity.Property(e => e.OpenAt).HasPrecision(0);
-            entity.Property(e => e.ScorePublishedAt).HasPrecision(0);
-            entity.Property(e => e.Status)
-                .HasMaxLength(10)
-                .HasDefaultValue("Draft");
             entity.Property(e => e.Title).HasMaxLength(200);
 
             entity.HasOne(d => d.AssignedByPerson).WithMany(p => p.AssignmentAssignedByPerson)
@@ -218,14 +200,28 @@ public partial class MsmsDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Assignmen__Class__756D6ECB");
 
-            entity.HasOne(d => d.Exam).WithMany(p => p.Assignment)
-                .HasForeignKey(d => d.ExamId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Assignmen__ExamI__74794A92");
+            entity.HasOne(d => d.Subject).WithMany(p => p.Assignment)
+                .HasForeignKey(d => d.SubjectId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+        });
 
-            entity.HasOne(d => d.ScorePublishedByPerson).WithMany(p => p.AssignmentScorePublishedByPerson)
-                .HasForeignKey(d => d.ScorePublishedByPersonId)
-                .HasConstraintName("FK__Assignmen__Score__7849DB76");
+        modelBuilder.Entity<AssignmentQuestion>(entity =>
+        {
+            entity.HasKey(e => e.AssignmentQuestionId);
+
+            entity.HasIndex(e => new { e.AssignmentId, e.QuestionId }, "UQ_AssignmentQuestion").IsUnique();
+
+            entity.Property(e => e.Points)
+                .HasDefaultValue(1m)
+                .HasColumnType("decimal(4, 2)");
+
+            entity.HasOne(d => d.Assignment).WithMany(p => p.AssignmentQuestion)
+                .HasForeignKey(d => d.AssignmentId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+
+            entity.HasOne(d => d.Question).WithMany(p => p.AssignmentQuestion)
+                .HasForeignKey(d => d.QuestionId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         modelBuilder.Entity<AttendanceRecord>(entity =>
@@ -429,57 +425,6 @@ public partial class MsmsDbContext : DbContext
                 .HasForeignKey(d => d.StudentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Enrollmen__Stude__09A971A2");
-        });
-
-        modelBuilder.Entity<Exam>(entity =>
-        {
-            entity.HasKey(e => e.ExamId).HasName("PK__Exam__297521C73FAE556B");
-
-            entity.HasIndex(e => e.OwnerPersonId, "IX_Exam_Owner");
-
-            entity.HasIndex(e => e.SubjectId, "IX_Exam_Subject");
-
-            entity.Property(e => e.CreatedAt)
-                .HasPrecision(0)
-                .HasDefaultValueSql("(CONVERT([datetime2](0),(sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time')))");
-            entity.Property(e => e.Description).HasMaxLength(500);
-            entity.Property(e => e.Title).HasMaxLength(200);
-            entity.Property(e => e.UpdatedAt).HasPrecision(0);
-
-            entity.HasOne(d => d.CopiedFromExam).WithMany(p => p.InverseCopiedFromExam)
-                .HasForeignKey(d => d.CopiedFromExamId)
-                .HasConstraintName("FK__Exam__CopiedFrom__6AEFE058");
-
-            entity.HasOne(d => d.OwnerPerson).WithMany(p => p.Exam)
-                .HasForeignKey(d => d.OwnerPersonId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Exam__OwnerPerso__690797E6");
-
-            entity.HasOne(d => d.Subject).WithMany(p => p.Exam)
-                .HasForeignKey(d => d.SubjectId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Exam__SubjectId__681373AD");
-        });
-
-        modelBuilder.Entity<ExamQuestion>(entity =>
-        {
-            entity.HasKey(e => e.ExamQuestionId).HasName("PK__ExamQues__EFAED846C9BE138C");
-
-            entity.HasIndex(e => new { e.ExamId, e.QuestionId }, "UQ_ExamQuestion").IsUnique();
-
-            entity.Property(e => e.Points)
-                .HasDefaultValue(1m)
-                .HasColumnType("decimal(4, 2)");
-
-            entity.HasOne(d => d.Exam).WithMany(p => p.ExamQuestion)
-                .HasForeignKey(d => d.ExamId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ExamQuest__ExamI__6FB49575");
-
-            entity.HasOne(d => d.Question).WithMany(p => p.ExamQuestion)
-                .HasForeignKey(d => d.QuestionId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ExamQuest__Quest__70A8B9AE");
         });
 
         modelBuilder.Entity<Holiday>(entity =>
@@ -940,23 +885,33 @@ public partial class MsmsDbContext : DbContext
         {
             entity.HasKey(e => e.AnswerId).HasName("PK__Submissi__D4825004190B923E");
 
-            entity.HasIndex(e => new { e.SubmissionId, e.ExamQuestionId }, "UQ_SubmissionAnswer").IsUnique();
+            entity.HasIndex(e => new { e.SubmissionId, e.AssignmentQuestionId }, "UQ_SubmissionAnswer").IsUnique();
 
             entity.Property(e => e.EarnedPoints).HasColumnType("decimal(4, 2)");
 
-            entity.HasOne(d => d.ExamQuestion).WithMany(p => p.SubmissionAnswer)
-                .HasForeignKey(d => d.ExamQuestionId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Submissio__ExamQ__03BB8E22");
-
-            entity.HasOne(d => d.SelectedOption).WithMany(p => p.SubmissionAnswer)
-                .HasForeignKey(d => d.SelectedOptionId)
-                .HasConstraintName("FK__Submissio__Selec__04AFB25B");
+            entity.HasOne(d => d.AssignmentQuestion).WithMany(p => p.SubmissionAnswer)
+                .HasForeignKey(d => d.AssignmentQuestionId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
 
             entity.HasOne(d => d.Submission).WithMany(p => p.SubmissionAnswer)
                 .HasForeignKey(d => d.SubmissionId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Submissio__Submi__02C769E9");
+        });
+
+        modelBuilder.Entity<SubmissionAnswerOption>(entity =>
+        {
+            entity.HasKey(e => new { e.AnswerId, e.OptionId });
+
+            entity.HasIndex(e => e.OptionId, "IX_SubmissionAnswerOption_Option");
+
+            entity.HasOne(d => d.Answer).WithMany(p => p.SubmissionAnswerOption)
+                .HasForeignKey(d => d.AnswerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(d => d.Option).WithMany(p => p.SubmissionAnswerOption)
+                .HasForeignKey(d => d.OptionId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         modelBuilder.Entity<TeacherAbsence>(entity =>

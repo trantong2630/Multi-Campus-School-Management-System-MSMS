@@ -18,6 +18,7 @@ public static class Policies
     public const string StaffOrFamily = nameof(StaffOrFamily);   // cán bộ, học sinh, phụ huynh: đọc dữ liệu cấu hình dùng chung (khung giờ tiết)
     public const string Student = nameof(Student);
     public const string Parent = nameof(Parent);
+    public const string StudentOrParent = nameof(StudentOrParent);   // xem điểm và phân tích đã công bố (LRN-03, LRN-04)
 
 
     public static void Register(AuthorizationOptions o)
@@ -43,6 +44,7 @@ public static class Policies
         o.AddPolicy(Teacher, p => p.RequireClaim(CurrentUser.TypeClaim, AccountTypes.Teacher));
         o.AddPolicy(Student, p => p.RequireClaim(CurrentUser.TypeClaim, AccountTypes.Student));
         o.AddPolicy(Parent, p => p.RequireClaim(CurrentUser.TypeClaim, AccountTypes.Parent));
+        o.AddPolicy(StudentOrParent, p => p.RequireClaim(CurrentUser.TypeClaim, AccountTypes.Student, AccountTypes.Parent));
 
     }
 }

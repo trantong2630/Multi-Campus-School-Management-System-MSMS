@@ -42,6 +42,8 @@ public record ConversationItemDto(
     string StaffName,
     string? StaffAbbr,
     string RoleDescription,
+    int ParentId,
+    string ParentName,
     string? LastMessageContent,
     DateTime? LastMessageAt,
     int UnreadCount,

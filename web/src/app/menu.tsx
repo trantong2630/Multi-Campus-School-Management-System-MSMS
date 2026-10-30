@@ -1,5 +1,5 @@
 import {
-  BookOpen, CalendarDays, ClipboardCheck, HeartHandshake, House, LayoutDashboard, Newspaper, Settings2, ShieldCheck, Users,
+  BookOpen, CalendarDays, ClipboardCheck, FileText, HeartHandshake, House, LayoutDashboard, Mail, Newspaper, Settings2, ShieldCheck, Users,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { AccountType } from '@/shared/lib/labels';
@@ -12,6 +12,7 @@ export interface MenuLeaf {
   roles: AccountType[];
   /** false = màn hình chưa làm, chưa đưa lên menu. Đổi thành true khi trang có thật. */
   ready: boolean;
+  icon?: LucideIcon;
 }
 
 export interface MenuGroup {
@@ -72,21 +73,23 @@ export const menu: MenuGroup[] = [
   },
   { key: 'att', label: 'Điểm danh', icon: ClipboardCheck, section: 'manage', path: '/att', roles: [...STAFF, 'Student', 'Parent'], ready: false },
   {
-    key: 'lrn', label: 'Học tập', icon: BookOpen, section: 'manage',
+    key: 'lrn', label: 'Bài tập rèn luyện', icon: BookOpen, section: 'manage',
     children: [
-      { key: 'lrn-bank', label: 'Ngân hàng câu hỏi', path: '/lrn/questions', roles: ['Teacher'], ready: false },
-      { key: 'lrn-exam', label: 'Đề', path: '/lrn/exams', roles: ['Teacher'], ready: false },
-      { key: 'lrn-assign', label: 'Bài tập', path: '/lrn/assignments', roles: ['Teacher', 'Student'], ready: false },
-      { key: 'lrn-ai', label: 'Nhận xét AI', path: '/lrn/ai-feedback', roles: ['Teacher'], ready: false },
-      { key: 'lrn-dept', label: 'Giám sát tổ', path: '/lrn/department', roles: ['Teacher'], ready: false },
+      { key: 'lrn-bank', label: 'Kho câu hỏi', path: '/lrn/questions', roles: ['Teacher'], ready: true },
+      { key: 'lrn-assign', label: 'Giao bài tập', path: '/lrn/assign', roles: ['Teacher'], ready: true },
+      { key: 'lrn-assigned', label: 'Bài tập đã giao', path: '/lrn/assigned', roles: ['Teacher'], ready: true },
+      { key: 'lrn-dept', label: 'Tiến độ giao bài của tổ', path: '/lrn/department', roles: ['Teacher'], ready: true },
+      { key: 'lrn-todo', label: 'Bài tập được giao', path: '/lrn/todo', roles: ['Student'], ready: true },
+      { key: 'lrn-done', label: 'Danh sách bài tập', path: '/lrn/done', roles: ['Student'], ready: true },
+      { key: 'lrn-children', label: 'Kết quả của con', path: '/lrn/children', roles: ['Parent'], ready: true },
     ],
   },
   {
     key: 'par', label: 'Phụ huynh', icon: HeartHandshake, section: 'manage',
     children: [
-      { key: 'par-leave', label: 'Đơn xin nghỉ', path: '/par/leave-requests', roles: ['VicePrincipal', 'Teacher', 'Parent'], ready: true },
-      { key: 'par-report', label: 'Sổ liên lạc', path: '/par/weekly-reports', roles: ['Teacher', 'Student', 'Parent'], ready: false },
-      { key: 'par-inbox', label: 'Hộp thư', path: '/par/inbox', roles: ['Teacher', 'Parent'], ready: true },
+      { key: 'par-leave', label: 'Đơn xin nghỉ', path: '/par/leave-requests', roles: ['VicePrincipal', 'Teacher', 'Parent'], ready: true, icon: FileText },
+      { key: 'par-report', label: 'Sổ liên lạc', path: '/par/weekly-reports', roles: ['Teacher', 'Student', 'Parent'], ready: false, icon: HeartHandshake },
+      { key: 'par-inbox', label: 'Hộp thư', path: '/par/inbox', roles: ['Teacher', 'Parent'], ready: true, icon: Mail },
     ],
   },
   { key: 'com', label: 'Bảng tin', icon: Newspaper, section: 'manage', path: '/com/posts', roles: ALL, ready: false },
@@ -106,9 +109,31 @@ export function visibleMenu(type: AccountType): MenuGroup[] {
   for (const g of menu) {
     if (g.children) {
       const children = g.children.filter((c) => c.ready && c.roles.includes(type));
-      // Nhóm chỉ còn một màn hình thì không có cấp 2 (Conventions §4.7): dùng thẳng tên và đường dẫn của màn hình đó.
-      if (children.length === 1) result.push({ ...g, label: children[0].label, path: children[0].path, children: undefined });
-      else if (children.length) result.push({ ...g, children });
+      if (type === 'Parent' && g.key === 'par') {
+        // Đối với Phụ huynh: phẳng hóa các mục con của nhóm 'par' ra menu cấp 1 (ngang hàng với Lịch học, không cần nhóm cha "Phụ huynh").
+        for (const c of children) {
+          result.push({
+            key: c.key,
+            label: c.label,
+            icon: c.icon ?? g.icon,
+            section: g.section,
+            path: c.path,
+            roles: c.roles,
+            ready: c.ready,
+          });
+        }
+      } else if (children.length === 1) {
+        // Nhóm chỉ còn một màn hình thì không có cấp 2 (Conventions §4.7): dùng thẳng tên và đường dẫn của màn hình đó.
+        result.push({
+          ...g,
+          label: children[0].label,
+          path: children[0].path,
+          icon: children[0].icon ?? g.icon,
+          children: undefined,
+        });
+      } else if (children.length) {
+        result.push({ ...g, children });
+      }
     } else if (g.ready && g.roles?.includes(type)) {
       result.push(g);
     }
@@ -122,11 +147,22 @@ const extraCrumbs: Record<string, string[]> = {
   '/change-password': ['Tài khoản', 'Đổi mật khẩu'],
 };
 
-export function resolveCrumbs(pathname: string): string[] {
+export function resolveCrumbs(pathname: string, type?: AccountType): string[] {
   if (extraCrumbs[pathname]) return extraCrumbs[pathname];
   for (const g of menu) {
     if (g.path === pathname) return [g.label];
     const leaf = g.children?.find((c) => c.path === pathname);
+    if (leaf) {
+      if (type === 'Parent' && g.key === 'par') {
+        return [leaf.label];
+      }
+      return [g.label, leaf.label];
+    }
+  }
+  // Trang con của một mục menu (vd. chi tiết bài tập) lấy breadcrumb của mục cha.
+  for (const g of menu) {
+    if (g.path && g.path !== '/' && pathname.startsWith(g.path + '/')) return [g.label];
+    const leaf = g.children?.find((c) => pathname.startsWith(c.path + '/'));
     if (leaf) return [g.label, leaf.label];
   }
   return [];

@@ -181,7 +181,7 @@ export function ChatPage() {
 
         // Nếu tin nhắn của đối phương gửi tới phòng đang mở, tự động đánh dấu đã đọc
         if (!isMine) {
-          conversationApi.getMessages(msg.conversationId).catch(() => {});
+          conversationApi.getMessages(msg.conversationId).catch(() => { });
         }
       }
 
@@ -219,7 +219,7 @@ export function ChatPage() {
 
     connection.onreconnected(() => {
       if (activeConversationIdRef.current) {
-        connection.invoke('JoinConversation', activeConversationIdRef.current).catch(() => {});
+        connection.invoke('JoinConversation', activeConversationIdRef.current).catch(() => { });
       }
     });
 
@@ -229,7 +229,7 @@ export function ChatPage() {
         hubRef.current = connection;
         // Nếu đã có conversation đang chọn, join ngay vào group
         if (activeConversationIdRef.current) {
-          connection.invoke('JoinConversation', activeConversationIdRef.current).catch(() => {});
+          connection.invoke('JoinConversation', activeConversationIdRef.current).catch(() => { });
         }
       })
       .catch((err) => {
@@ -249,7 +249,7 @@ export function ChatPage() {
       setIsPartnerTyping(false);
 
       if (hubRef.current && hubRef.current.state === signalR.HubConnectionState.Connected) {
-        hubRef.current.invoke('JoinConversation', selectedId).catch(() => {});
+        hubRef.current.invoke('JoinConversation', selectedId).catch(() => { });
       }
     } else {
       setMessages([]);
@@ -276,7 +276,7 @@ export function ChatPage() {
 
       // Báo dừng soạn tin
       if (hubRef.current && hubRef.current.state === signalR.HubConnectionState.Connected) {
-        hubRef.current.invoke('SendTyping', selectedId, false).catch(() => {});
+        hubRef.current.invoke('SendTyping', selectedId, false).catch(() => { });
       }
 
       const sentMsg = await conversationApi.sendMessage(selectedId, content);
@@ -294,10 +294,10 @@ export function ChatPage() {
           prev.map((c) =>
             c.conversationId === selectedId
               ? {
-                  ...c,
-                  lastMessageContent: sentMsg.content,
-                  lastMessageAt: sentMsg.sentAt,
-                }
+                ...c,
+                lastMessageContent: sentMsg.content,
+                lastMessageAt: sentMsg.sentAt,
+              }
               : c
           )
         );
@@ -319,12 +319,12 @@ export function ChatPage() {
     if (!selectedId || activeConversation?.isReadOnly) return;
 
     if (hubRef.current && hubRef.current.state === signalR.HubConnectionState.Connected) {
-      hubRef.current.invoke('SendTyping', selectedId, true).catch(() => {});
+      hubRef.current.invoke('SendTyping', selectedId, true).catch(() => { });
 
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       typingTimeoutRef.current = setTimeout(() => {
         if (hubRef.current && hubRef.current.state === signalR.HubConnectionState.Connected && selectedId) {
-          hubRef.current.invoke('SendTyping', selectedId, false).catch(() => {});
+          hubRef.current.invoke('SendTyping', selectedId, false).catch(() => { });
         }
       }, 2500);
     }
@@ -431,19 +431,29 @@ export function ChatPage() {
     }
   };
 
-  // Lọc danh sách hội thoại theo từ khóa tìm kiếm
+  // Bỏ dấu và đưa về chữ thường để gõ "nguyen van" vẫn ra "Nguyễn Văn"
+  const fold = (s: string) =>
+    s.normalize('NFD').replace(/\p{M}/gu, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+
+  // Lọc danh sách hội thoại theo từ khóa tìm kiếm (hỗ trợ tiếng Việt không dấu & đa tiêu chí)
   const filteredConversations = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
+    const q = fold(searchQuery.trim());
     if (!q) return conversations;
 
     return conversations.filter((c) => {
-      const name = isParent ? c.staffName : `Phụ huynh em ${c.studentName}`;
-      return (
-        name.toLowerCase().includes(q) ||
-        c.studentName.toLowerCase().includes(q) ||
-        c.studentCode.toLowerCase().includes(q) ||
-        c.className.toLowerCase().includes(q)
-      );
+      // Tìm theo đối tác chat (Phụ huynh tìm Giáo viên, Giáo viên tìm Phụ huynh) để tránh trùng tên chính mình
+      const partnerFields = isParent
+        ? [c.staffName, c.staffAbbr ?? '', c.roleDescription ?? '']
+        : [c.parentName ?? '', `Phụ huynh em ${c.studentName}`];
+
+      const searchFields = [
+        ...partnerFields,
+        c.studentName,
+        c.studentCode,
+        c.className,
+      ];
+
+      return searchFields.some((field) => fold(field).includes(q));
     });
   }, [conversations, searchQuery, isParent]);
 
@@ -457,11 +467,13 @@ export function ChatPage() {
         studentSub: `HS: ${c.studentName} (${c.className})`,
       };
     }
+    // Giáo viên xem: hiển thị tên thực tế của phụ huynh (nếu có)
+    const displayName = c.parentName?.trim() || `Phụ huynh em ${c.studentName}`;
     return {
-      name: `Phụ huynh em ${c.studentName}`,
-      initial: c.studentName.trim().split(/\s+/).at(-1)?.[0]?.toUpperCase() ?? 'P',
+      name: displayName,
+      initial: displayName.trim().split(/\s+/).at(-1)?.[0]?.toUpperCase() ?? 'P',
       role: `Lớp ${c.className}`,
-      studentSub: `Học sinh: ${c.studentName} - ${c.studentCode}`,
+      studentSub: `HS: ${c.studentName} (${c.className}) - ${c.studentCode}`,
     };
   };
 
@@ -471,7 +483,7 @@ export function ChatPage() {
     <div className="page-container">
       <PageHeader
         title="Hộp thư Phụ huynh – Giáo viên"
-        description="Trao đổi trực tiếp 1-1 giữa Phụ huynh và Giáo viên phụ trách giảng dạy (BR-25)"
+        description="Trao đổi trực tiếp 1-1 giữa Phụ huynh và Giáo viên phụ trách giảng dạy"
       />
 
       <div className="chat-container">
@@ -495,6 +507,7 @@ export function ChatPage() {
               allowClear
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onSearch={(val) => setSearchQuery(val)}
             />
           </div>
 
@@ -506,10 +519,14 @@ export function ChatPage() {
             ) : filteredConversations.length === 0 ? (
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description={searchQuery ? 'Không tìm thấy hội thoại' : 'Chưa có cuộc trò chuyện nào'}
+                description={searchQuery ? `Không tìm thấy hội thoại phù hợp với "${searchQuery}"` : 'Chưa có cuộc trò chuyện nào'}
                 style={{ margin: '40px 0' }}
               >
-                {!searchQuery && (
+                {searchQuery ? (
+                  <Button size="small" onClick={() => setSearchQuery('')}>
+                    Xóa tìm kiếm
+                  </Button>
+                ) : (
                   <Button type="primary" size="small" onClick={handleOpenCreateModal}>
                     Bắt đầu trò chuyện
                   </Button>
@@ -524,9 +541,8 @@ export function ChatPage() {
                 return (
                   <div
                     key={c.conversationId}
-                    className={`chat-conv-item ${isSelected ? 'chat-conv-item--active' : ''} ${
-                      c.unreadCount > 0 ? 'chat-conv-item--unread' : ''
-                    }`}
+                    className={`chat-conv-item ${isSelected ? 'chat-conv-item--active' : ''} ${c.unreadCount > 0 ? 'chat-conv-item--unread' : ''
+                      }`}
                     onClick={() => setSelectedId(c.conversationId)}
                   >
                     <div className="chat-conv-item__avatar-wrap">
@@ -629,9 +645,8 @@ export function ChatPage() {
                     return (
                       <div
                         key={m.messageId}
-                        className={`chat-message-row ${
-                          m.isMine ? 'chat-message-row--mine' : 'chat-message-row--theirs'
-                        }`}
+                        className={`chat-message-row ${m.isMine ? 'chat-message-row--mine' : 'chat-message-row--theirs'
+                          }`}
                       >
                         <div className="chat-bubble">{m.content}</div>
                         <div className="chat-message-time">
@@ -750,8 +765,8 @@ export function ChatPage() {
                     loadingTeachers
                       ? 'Đang tải danh sách giáo viên...'
                       : selectedStudentId && availableTeachers.length === 0
-                      ? 'Không có giáo viên phụ trách học kỳ này'
-                      : 'Chọn giáo viên phụ trách...'
+                        ? 'Không có giáo viên phụ trách học kỳ này'
+                        : 'Chọn giáo viên phụ trách...'
                   }
                   loading={loadingTeachers}
                   disabled={!selectedStudentId || loadingTeachers || availableTeachers.length === 0}
@@ -801,8 +816,8 @@ export function ChatPage() {
                     loadingParents
                       ? 'Đang tải danh sách phụ huynh...'
                       : selectedStudentId && availableParents.length === 0
-                      ? 'Học sinh chưa có phụ huynh liên kết'
-                      : 'Chọn phụ huynh để nhắn tin...'
+                        ? 'Học sinh chưa có phụ huynh liên kết'
+                        : 'Chọn phụ huynh để nhắn tin...'
                   }
                   loading={loadingParents}
                   disabled={!selectedStudentId || loadingParents || availableParents.length === 0}
