@@ -33,11 +33,9 @@ public partial class Person
 
     public virtual Account? Account { get; set; }
 
-    public virtual ICollection<AiFeedback> AiFeedback { get; set; } = new List<AiFeedback>();
 
     public virtual ICollection<Assignment> AssignmentAssignedByPerson { get; set; } = new List<Assignment>();
 
-    public virtual ICollection<Assignment> AssignmentScorePublishedByPerson { get; set; } = new List<Assignment>();
 
     public virtual ICollection<AttendanceRecord> AttendanceRecordRecordedByPerson { get; set; } = new List<AttendanceRecord>();
 
@@ -51,7 +49,6 @@ public partial class Person
 
     public virtual ICollection<DepartmentHead> DepartmentHead { get; set; } = new List<DepartmentHead>();
 
-    public virtual ICollection<Exam> Exam { get; set; } = new List<Exam>();
 
     public virtual ICollection<Holiday> Holiday { get; set; } = new List<Holiday>();
 

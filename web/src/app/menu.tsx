@@ -73,13 +73,15 @@ export const menu: MenuGroup[] = [
   },
   { key: 'att', label: 'Điểm danh', icon: ClipboardCheck, section: 'manage', path: '/att', roles: [...STAFF, 'Student', 'Parent'], ready: false },
   {
-    key: 'lrn', label: 'Học tập', icon: BookOpen, section: 'manage',
+    key: 'lrn', label: 'Bài tập rèn luyện', icon: BookOpen, section: 'manage',
     children: [
-      { key: 'lrn-bank', label: 'Ngân hàng câu hỏi', path: '/lrn/questions', roles: ['Teacher'], ready: false },
-      { key: 'lrn-exam', label: 'Đề', path: '/lrn/exams', roles: ['Teacher'], ready: false },
-      { key: 'lrn-assign', label: 'Bài tập', path: '/lrn/assignments', roles: ['Teacher', 'Student'], ready: false },
-      { key: 'lrn-ai', label: 'Nhận xét AI', path: '/lrn/ai-feedback', roles: ['Teacher'], ready: false },
-      { key: 'lrn-dept', label: 'Giám sát tổ', path: '/lrn/department', roles: ['Teacher'], ready: false },
+      { key: 'lrn-bank', label: 'Kho câu hỏi', path: '/lrn/questions', roles: ['Teacher'], ready: true },
+      { key: 'lrn-assign', label: 'Giao bài tập', path: '/lrn/assign', roles: ['Teacher'], ready: true },
+      { key: 'lrn-assigned', label: 'Bài tập đã giao', path: '/lrn/assigned', roles: ['Teacher'], ready: true },
+      { key: 'lrn-dept', label: 'Tiến độ giao bài của tổ', path: '/lrn/department', roles: ['Teacher'], ready: true },
+      { key: 'lrn-todo', label: 'Bài tập được giao', path: '/lrn/todo', roles: ['Student'], ready: true },
+      { key: 'lrn-done', label: 'Danh sách bài tập', path: '/lrn/done', roles: ['Student'], ready: true },
+      { key: 'lrn-children', label: 'Kết quả của con', path: '/lrn/children', roles: ['Parent'], ready: true },
     ],
   },
   {
@@ -156,6 +158,12 @@ export function resolveCrumbs(pathname: string, type?: AccountType): string[] {
       }
       return [g.label, leaf.label];
     }
+  }
+  // Trang con của một mục menu (vd. chi tiết bài tập) lấy breadcrumb của mục cha.
+  for (const g of menu) {
+    if (g.path && g.path !== '/' && pathname.startsWith(g.path + '/')) return [g.label];
+    const leaf = g.children?.find((c) => pathname.startsWith(c.path + '/'));
+    if (leaf) return [g.label, leaf.label];
   }
   return [];
 }

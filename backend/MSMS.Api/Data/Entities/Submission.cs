@@ -21,6 +21,8 @@ public partial class Submission
 
     public short? CorrectCount { get; set; }
 
+    public virtual AiFeedback? AiFeedback { get; set; }
+
     public virtual Assignment Assignment { get; set; } = null!;
 
     public virtual StudentProfile Student { get; set; } = null!;

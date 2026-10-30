@@ -1,6 +1,6 @@
 # 4. Software Product Development — MSMS
 
-Cấu trúc phân rã: Module → Feature → Task. Mỗi Task là một hành động nghiệp vụ hoàn chỉnh của một actor. Các task thuộc cùng một Feature tô cùng màu ở cột Feature. Căn theo Business Specification V3.1 (Oct 20, 2026) — 9 Module / 33 Feature / 258 Task.
+Cấu trúc phân rã: Module → Feature → Task. Mỗi Task là một hành động nghiệp vụ hoàn chỉnh của một actor. Các task thuộc cùng một Feature tô cùng màu ở cột Feature. Căn theo Business Specification V3.1 (Oct 20, 2026) — 9 Module / 33 Feature / 246 Task.
 
 Cột Platform của mỗi Task: `BE` (không có giao diện), `BE + Web`, hoặc `BE + Web + Mobile`. Mọi Task có giao diện đều có trên web; chỉ một số có thêm trên mobile app (Business Specification V3 mục 8.1–8.2).
 
@@ -39,7 +39,7 @@ Mọi yêu cầu qua hai lần kiểm độc lập: loại tài khoản có đư
 
 **4.1.5 — Cấp quyền hành vi theo vai trò / Role-bound Action Policies**  
 `BE` · 0.5 MD · dep: 4.1.4  
-Các hành vi chỉ đúng vai trò làm được — làm và nộp bài, gửi và rút đơn nghỉ, tạo hội thoại và nhắn tin, soạn — giao — nhân bản đề, công bố điểm, thao tác nhận xét AI, điểm danh với tư cách giáo viên của tiết — chỉ được cấp cho vai trò tương ứng bằng Authorization Policy thông thường. School Admin không nằm trong policy nào của chúng và không có cờ bỏ qua phân quyền (BR-02).
+Các hành vi chỉ đúng vai trò làm được — làm và nộp bài, gửi và rút đơn nghỉ, tạo hội thoại và nhắn tin, soạn câu hỏi, giao bài, điểm danh với tư cách giáo viên của tiết — chỉ được cấp cho vai trò tương ứng bằng Authorization Policy thông thường. School Admin không nằm trong policy nào của chúng và không có cờ bỏ qua phân quyền (BR-02).
 
 **4.1.6 — Kiểm trạng thái tài khoản ở mỗi request / Enforce Account Status per Request**  
 `BE` · 1 MD · dep: 4.1.4  
@@ -641,7 +641,7 @@ Tiết Chờ xử lý để trống giáo viên và không điểm danh được
 
 **4.4.35 — Tính phụ trách chuyên môn từ thời khóa biểu / Derive Subject Responsibility from Timetable**  
 `BE` · 2 MD · dep: 4.4.11  
-Không có bảng riêng, không nhập tay: tính mỗi khi cần. Với mỗi lớp, lấy phiên bản Đã phát hành mới nhất của lớp trong học kỳ hiện hành; lớp không có trong lần Phát hành sau vẫn theo phiên bản trước đó của nó. Giáo viên có tiết của một môn trong phiên bản ấy đang phụ trách chuyên môn môn đó ở lớp đó; số tiết mỗi tuần là số ô của (lớp, môn, giáo viên). Một (lớp, môn) có thể có nhiều giáo viên. Điều chỉnh lịch và dạy thay chỉ đổi lịch dạy nên không đổi kết quả. Là nguồn quyền cho giao bài, công bố điểm, nhận xét AI và hộp thư (BR-14, BR-21, BR-22, BR-23, BR-25).
+Không có bảng riêng, không nhập tay: tính mỗi khi cần. Với mỗi lớp, lấy phiên bản Đã phát hành mới nhất của lớp trong học kỳ hiện hành; lớp không có trong lần Phát hành sau vẫn theo phiên bản trước đó của nó. Giáo viên có tiết của một môn trong phiên bản ấy đang phụ trách chuyên môn môn đó ở lớp đó; số tiết mỗi tuần là số ô của (lớp, môn, giáo viên). Một (lớp, môn) có thể có nhiều giáo viên. Điều chỉnh lịch và dạy thay chỉ đổi lịch dạy nên không đổi kết quả. Là nguồn quyền cho giao bài, công bố điểm, phân tích bằng AI và hộp thư (BR-14, BR-21, BR-22, BR-23, BR-25).
 
 **4.4.36 — Xem phụ trách chuyên môn toàn trường / View Subject Responsibility**  
 `BE + Web` · 2.5 MD · dep: 4.4.35  
@@ -717,207 +717,111 @@ Giáo viên không sửa được sau ngày của tiết; School Admin nhập b�
 
 ## 4.6 LRN — Learning (Học tập)
 
-### LRN-01 Question Bank & Quiz (Ngân hàng câu hỏi & Đề)
+### LRN-01 Question Bank (Ngân hàng câu hỏi)
 
-**4.6.1 — Xem ngân hàng câu hỏi / View Question Bank**  
-`BE + Web` · 1.5 MD · dep: 4.2.9  
-Ngân hàng dùng chung toàn trường: mọi Teacher xem và dùng câu Sẵn dùng của mọi môn (BR-20).
+**4.6.1 — Xem và lọc ngân hàng câu hỏi / View and Filter Question Bank**  
+`BE + Web` · 2 MD · dep: 4.2.9  
+Ngân hàng dùng chung toàn trường: mọi Teacher xem và dùng câu Sẵn dùng của mọi môn (BR-20). Thu hẹp theo môn, khối (6–9), chủ đề, người tạo và trạng thái Nháp hay Sẵn dùng.
 
-**4.6.2 — Lọc câu hỏi theo môn, khối và người tạo / Filter Questions**  
-`BE + Web` · 1 MD · dep: 4.6.1  
-Thu hẹp ngân hàng theo môn, khối, chủ đề, người tạo và trạng thái Nháp hay Sẵn dùng.
+**4.6.2 — Soạn câu hỏi trắc nghiệm / Create Question**  
+`BE + Web` · 2 MD · dep: 4.6.1  
+Câu hỏi thuộc một môn, có khối 6–9 và chủ đề, 4 lựa chọn A–D, từ 1 đến 3 đáp án đúng, giải thích tùy chọn. Giao diện báo rõ câu có một hay nhiều đáp án đúng (BR-20).
 
-**4.6.3 — Soạn câu hỏi trắc nghiệm / Create Question**  
-`BE + Web` · 1.5 MD · dep: 4.6.1  
-Câu hỏi thuộc một môn, 4 lựa chọn, đúng 1 đáp án, giải thích tùy chọn (BR-20).
+**4.6.3 — Cập nhật câu hỏi của mình / Update Own Question**  
+`BE + Web` · 1 MD · dep: 4.6.2  
+Chỉ người tạo sửa được. Câu đã nằm trong một bài tập thì không sửa được nữa (BR-20). Kiểm thử: người khác không sửa được câu của mình; câu trong bài đã giao bị chặn sửa kể cả với người tạo.
 
-**4.6.4 — Cập nhật câu hỏi của mình / Update Own Question**  
-`BE + Web` · 1 MD · dep: 4.6.3  
-Chỉ người tạo sửa được. Câu đã nằm trong một đề ĐÃ GIAO thì không sửa được nữa (BR-20).
+**4.6.4 — Ẩn câu hỏi khỏi ngân hàng / Hide Question**  
+`BE + Web` · 0.5 MD · dep: 4.6.2  
+Câu đã nằm trong bài tập chỉ còn ẩn khỏi ngân hàng; ẩn không ảnh hưởng bài cũ. Muốn phiên bản khác thì soạn câu mới (BR-20).
 
-**4.6.5 — Ẩn câu hỏi khỏi ngân hàng / Hide Question**  
-`BE + Web` · 0.5 MD · dep: 4.6.3  
-Câu đã khóa chỉ còn ẩn khỏi ngân hàng; ẩn không ảnh hưởng đề cũ. Muốn phiên bản khác thì soạn câu mới (BR-20).
+**4.6.5 — Yêu cầu MSMS AI sinh nháp câu hỏi / Request AI Question Drafts**  
+`BE + Web` · 2.5 MD · dep: 4.6.2  
+Giáo viên chọn môn, khối, chủ đề, bộ sách (Kết nối tri thức với cuộc sống, Chân trời sáng tạo hoặc Cánh diều) và số câu; bộ sách chỉ đi kèm yêu cầu để AI bám đúng chương trình, không lưu trên câu hỏi. AI trả về các câu ở trạng thái Nháp gắn cờ AI; Backend loại câu không đủ 4 lựa chọn hoặc không có đáp án đúng. AI hỏng thì giáo viên soạn thủ công, không ảnh hưởng luồng nào khác (mục 3.1, BR-20).
 
-**4.6.6 — Yêu cầu AI sinh nháp câu hỏi / Request AI Question Drafts**  
-`BE + Web` · 2.5 MD · dep: 4.6.3  
-Giáo viên chọn môn, khối, chủ đề và số câu; AI trả về các câu ở trạng thái Nháp gắn cờ AI. AI hỏng thì giáo viên soạn thủ công, không ảnh hưởng luồng nào khác (mục 3.1, BR-20).
-
-**4.6.7 — Xem và sửa nháp AI / Review and Edit AI Drafts**  
-`BE + Web` · 1.5 MD · dep: 4.6.6  
+**4.6.6 — Xem và sửa nháp AI / Review and Edit AI Drafts**  
+`BE + Web` · 1.5 MD · dep: 4.6.5  
 Giáo viên sửa nội dung, lựa chọn và đáp án của câu nháp trước khi xác nhận.
 
-**4.6.8 — Xác nhận nháp AI thành câu Sẵn dùng / Confirm AI Draft**  
-`BE + Web` · 1 MD · dep: 4.6.7  
-Câu do AI sinh là nháp cho tới khi giáo viên xác nhận; chỉ câu Sẵn dùng mới đưa vào đề được (BR-20).
+**4.6.7 — Xác nhận nháp AI thành câu Sẵn dùng / Confirm AI Draft**  
+`BE + Web` · 1 MD · dep: 4.6.6  
+Câu do AI sinh là nháp cho tới khi giáo viên xác nhận; chỉ câu Sẵn dùng mới đưa vào bài tập được (BR-20).
 
-**4.6.9 — Xóa nháp AI / Delete AI Draft**  
-`BE + Web` · 0.5 MD · dep: 4.6.7  
+**4.6.8 — Xóa nháp AI / Delete AI Draft**  
+`BE + Web` · 0.5 MD · dep: 4.6.6  
 Bỏ các câu nháp không dùng.
 
-**4.6.10 — Tạo đề từ câu hỏi Sẵn dùng / Create Quiz**  
-`BE + Web` · 1.5 MD · dep: 4.6.3  
-Đề gồm các câu Sẵn dùng CÙNG MỘT MÔN, soạn thủ công (4.6.3) hoặc xác nhận từ nháp AI (4.6.8); tạo đề không phụ thuộc AI. Đề thuộc về người tạo (BR-20).
+### LRN-02 Assignment & Attempt (Giao bài & Làm bài)
 
-**4.6.11 — Sắp thứ tự và đặt điểm từng câu / Order Questions and Set Points**  
-`BE + Web` · 1.5 MD · dep: 4.6.10  
-Đặt thứ tự câu và điểm từng câu; tổng điểm đề là mẫu số khi quy về thang 10 (BR-21).
+**4.6.9 — Giao bài tập / Assign Practice**  
+`BE + Web` · 3 MD · dep: 4.6.2, 4.4.35  
+Teacher ĐANG PHỤ TRÁCH CHUYÊN MÔN ở (lớp, môn) chọn các câu Sẵn dùng CÙNG MỘT MÔN từ ngân hàng, đặt thứ tự và điểm từng câu (tổng điểm là mẫu số khi quy về thang 10 và phải lớn hơn 0), thời điểm mở (mặc định ngay), hạn nộp lớn hơn hiện tại và thời lượng làm bài tùy chọn. Bài giao ngay, không có bước nháp; lưu danh sách học sinh có ghi danh hiệu lực ở lớp lúc đó làm DANH SÁCH ĐƯỢC GIAO, không đổi khi học sinh chuyển lớp về sau; tạo thông báo cho học sinh của lớp. Bài đã giao không sửa, không xóa, không gia hạn (BR-21, BR-26, mục 7.8).
 
-**4.6.12 — Cập nhật đề chưa khóa / Update Unlocked Quiz**  
-`BE + Web` · 1 MD · dep: 4.6.10  
-Chỉ người tạo sửa hoặc xóa đề chưa khóa (BR-20).
+**4.6.10 — Xem danh sách bài đã giao theo lớp / View Assignments by Class**  
+`BE + Web` · 1.5 MD · dep: 4.6.9  
+Giáo viên xem bài của lớp và môn mình phụ trách kèm hạn nộp và số lượt đã nộp.
 
-**4.6.13 — Nhân bản đề / Clone Quiz**  
-`BE + Web` · 1 MD · dep: 4.6.10  
-Mọi Teacher nhân bản được đề của người khác; bản nhân bản thuộc về người bấm nhân bản và chưa khóa. Đây là cách giáo viên tiếp quản lớp dùng lại đề của người tiền nhiệm (BR-20).
+**4.6.11 — Xem danh sách bài của mình / View My Assignments**  
+`BE + Web + Mobile` · 1.5 MD · dep: 4.6.9  
+Học sinh xem bài được giao kèm hạn nộp và thời lượng ở mục Bài tập được giao (bài chưa nộp, bấm vào là làm bài ngay) và các bài đã nộp hoặc quá hạn ở mục Danh sách bài tập (bấm vào để xem kết quả).
 
-**4.6.14 — Xem trước đề / Preview Quiz**  
-`BE + Web` · 1 MD · dep: 4.6.10  
-Xem đề đúng như học sinh sẽ thấy trước khi giao.
+**4.6.12 — Bắt đầu và làm bài / Start and Take Practice**  
+`BE + Web + Mobile` · 2.5 MD · dep: 4.6.11  
+Học sinh trong danh sách được giao (4.6.9) mở bài từ thời điểm mở tới hạn nộp. Bài có thời lượng: học sinh bấm Bắt đầu, đồng hồ tính từ lúc đó theo giờ Backend và vẫn chạy khi thoát ra rồi vào lại; hạn thực tế là mốc sớm hơn giữa hạn nộp và (giờ bắt đầu + thời lượng). Câu có nhiều đáp án đúng cho chọn nhiều lựa chọn (BR-21).
 
-**4.6.15 — Kiểm thử quyền sở hữu câu hỏi và đề / Ownership Tests**  
-`QA` · 1.5 MD · dep: 4.6.4, 4.6.12, 4.6.13  
-Người khác không sửa được câu và đề của mình; đề đã giao khóa vĩnh viễn kể cả với người tạo; nhân bản tạo bản mới thuộc người bấm.
+**4.6.13 — Tự lưu nháp bài làm / Autosave Attempt**  
+`BE + Web + Mobile` · 1.5 MD · dep: 4.6.12  
+Bài làm tự lưu nháp trong lúc làm; Backend từ chối lưu sau hạn thực tế (BR-21).
 
-### LRN-02 Assignment & Submission (Giao bài & Nộp bài)
+**4.6.14 — Nộp bài một lượt và tự nộp khi hết hạn / Submit and Auto-submit Attempt**  
+`BE + Web + Mobile` · 2 MD · dep: 4.6.13  
+Tối đa MỘT lần nộp. Backend từ chối nộp sau hạn thực tế (có dung sai 10 giây cho độ trễ mạng) và nộp lại. Hết hạn thực tế mà chưa nộp: bản nháp có ít nhất một câu trả lời được Backend tự nộp và chấm ở lần đầu bài được truy cập sau hạn thực tế (không job nền); bản nháp rỗng hoặc chưa từng mở thì Không nộp. Không kiểm lại ghi danh khi nộp nên chuyển lớp giữa chừng không làm mất bài (BR-21, mục 7.8). Kiểm thử: nộp sau hạn thực tế bị chặn; nộp lần hai bị chặn; học sinh ngoài danh sách được giao không mở được bài; đóng trình duyệt giữa chừng rồi hết giờ vẫn được chấm bản nháp; chuyển lớp sau khi giao không đổi người nhận, mẫu số và bài đã nộp.
 
-**4.6.16 — Giao đề cho lớp / Assign Quiz to Class**  
-`BE + Web` · 2 MD · dep: 4.6.10, 4.4.35  
-Teacher ĐANG PHỤ TRÁCH CHUYÊN MÔN ở (lớp, môn của đề) giao ĐỀ MÌNH SỞ HỮU cho lớp đó, chọn thời điểm mở (mặc định ngay) và hạn nộp lớn hơn hiện tại. Khi bài chuyển sang Đã giao, hệ thống lưu danh sách học sinh có ghi danh hiệu lực ở lớp lúc đó làm DANH SÁCH ĐƯỢC GIAO; danh sách này không đổi khi học sinh chuyển lớp về sau (BR-21).
+### LRN-03 Practice Results (Kết quả bài làm)
 
-**4.6.17 — Cập nhật bài đang ở Nháp / Update Draft Assignment**  
-`BE + Web` · 1 MD · dep: 4.6.16  
-Bài ở Nháp sửa được. Chuyển sang Đã giao thì không sửa và không gia hạn được nữa (BR-21).
+**4.6.15 — Chấm tự động khi nộp / Auto-grade on Submission**  
+`BE` · 2 MD · dep: 4.6.14  
+Backend chấm ngay khi nộp. Một câu chỉ được điểm khi học sinh chọn ĐÚNG VÀ ĐỦ các đáp án đúng, không chọn thừa. Điểm = tổng điểm câu đúng / tổng điểm bài × 10, làm tròn 2 chữ số thập phân. Chưa nộp KHÔNG phải 0 điểm — hiển thị Không nộp, chỉ áp dụng cho học sinh trong danh sách được giao; mẫu số tỉ lệ nộp là số học sinh của danh sách đó (BR-21).
 
-**4.6.18 — Xóa bài đang ở Nháp / Delete Draft Assignment**  
-`BE + Web` · 0.5 MD · dep: 4.6.16  
-Xóa bài chưa giao.
+**4.6.16 — Xem kết quả bài làm (học sinh và phụ huynh) / View Practice Result**  
+`BE + Web + Mobile` · 2 MD · dep: 4.6.15  
+Ngay khi nộp, học sinh thấy điểm, lựa chọn của mình, đáp án đúng và giải thích của từng câu, kèm khung phân tích AI (4.6.20). Phụ huynh xem cùng nội dung của từng con được liên kết. Không có bước công bố. Học sinh chưa nộp hiện Không nộp chứ không phải 0, không xem được đáp án (BR-22).
 
-**4.6.19 — Khóa đề khi giao lần đầu / Lock Quiz on First Assignment**  
-`BE` · 1 MD · dep: 4.6.16  
-Giao lần đầu thì đề khóa VĨNH VIỄN — từ đó không ai sửa được, kể cả người tạo. Muốn cho làm lại thì nhân bản đề và giao như bài mới (BR-20, BR-21).
+**4.6.17 — Xem kết quả bài theo lớp / View Class Results**  
+`BE + Web` · 1.5 MD · dep: 4.6.15  
+Teacher đang phụ trách chuyên môn xem điểm và kết quả từng học sinh, ai chưa nộp, kèm phân tích AI của từng bài nộp (BR-22).
 
-**4.6.20 — Xem danh sách bài đã giao theo lớp / View Assignments by Class**  
-`BE + Web` · 1.5 MD · dep: 4.6.16  
-Giáo viên xem bài của lớp và môn mình phụ trách kèm trạng thái, hạn nộp và số lượt đã nộp.
+### LRN-04 AI Result Analysis (Phân tích bài làm bằng AI)
 
-**4.6.21 — Xem danh sách bài của mình / View My Assignments**  
-`BE + Web + Mobile` · 1.5 MD · dep: 4.6.16  
-Học sinh xem bài được giao kèm hạn nộp và tình trạng đã nộp hay chưa.
+**4.6.18 — Dựng dữ liệu gửi AI không kèm danh tính / Build Anonymous Analysis Input**  
+`BE` · 1.5 MD · dep: 4.6.15  
+Backend dựng dữ liệu của một bài nộp: nội dung câu hỏi, các lựa chọn, đáp án đúng, lựa chọn của học sinh ở từng câu và điểm. KHÔNG BAO GIỜ gửi tên, mã học sinh, ngày sinh, tên lớp, tên trường (mục 3.1, BR-23).
 
-**4.6.22 — Mở đề và làm bài / Open and Take Quiz**  
-`BE + Web + Mobile` · 2 MD · dep: 4.6.21  
-Học sinh trong danh sách được giao (4.6.16) mở bài từ thời điểm mở tới hạn nộp. Mở đề không tính lượt, không giới hạn thời lượng (BR-21).
+**4.6.19 — Gọi AI phân tích khi nộp bài / Analyze on Submission**  
+`BE` · 2.5 MD · dep: 4.6.18  
+Mỗi bài nộp (kể cả bị tự nộp) được gửi AI MỘT LẦN, tự động, không qua giáo viên duyệt. Kết quả gồm điểm mạnh, điểm yếu, giải thích lỗi sai và gợi ý kiến thức; Backend kiểm kết quả không rỗng rồi lưu kèm bài nộp, sai hoặc AI lỗi thì ghi Lỗi, để trống phân tích và KHÔNG thử lại. AI không chấm điểm, không quyết định đúng sai (mục 3.1, BR-23). Kiểm thử: dữ liệu gửi đi không chứa thông tin định danh; AI hỏng không chặn chấm và xem kết quả.
 
-**4.6.23 — Tự lưu nháp bài làm / Autosave Attempt**  
-`BE + Web + Mobile` · 1.5 MD · dep: 4.6.22  
-Bài làm tự lưu nháp trong lúc làm; nháp chưa nộp KHÔNG được chấm (BR-21).
+**4.6.20 — Xem phân tích bài làm / View Analysis**  
+`BE + Web + Mobile` · 1.5 MD · dep: 4.6.19  
+Khung phân tích AI nằm dưới kết quả từng bài, hiện cho Student, Parent và Teacher đang phụ trách chuyên môn. Đang phân tích hiện avatar MSMS AI chờ; Lỗi để trống.
 
-**4.6.24 — Nộp bài một lượt / Submit Attempt**  
-`BE + Web + Mobile` · 1.5 MD · dep: 4.6.23  
-Tối đa MỘT lần nộp. Backend từ chối nộp sau hạn và nộp lại. Không kiểm lại ghi danh khi nộp nên chuyển lớp giữa chừng không làm mất bài (BR-21, mục 7.8).
+**4.6.21 — Giao diện MSMS AI / MSMS AI Presence**  
+`Web + Mobile` · 2 MD · dep: 4.6.5, 4.6.12, 4.6.20  
+Avatar MSMS AI (logo/chatbot.png) kèm bong bóng chat ở ba chỗ: tạo câu hỏi (đang soạn, xong), làm bài (đồng hồ đếm ngược trong bong bóng, lời động viên, nhắc còn 1 phút, báo hết giờ) và phân tích (đang phân tích, xong). Lời nhắn soạn sẵn ở frontend, không gọi AI; animation CSS đơn giản.
 
-**4.6.25 — Chấm tự động khi nộp / Auto-grade on Submission**  
-`BE` · 2 MD · dep: 4.6.24  
-Backend chấm ngay khi nộp: điểm = tổng điểm câu đúng / tổng điểm đề × 10. Chưa nộp KHÔNG phải 0 điểm — hiển thị Không nộp, chỉ áp dụng cho học sinh trong danh sách được giao; mẫu số tỉ lệ nộp là số học sinh của danh sách đó (BR-21).
+**4.6.22 — Kiểm thử giao bài, hạn thực tế và phân tích / Practice Flow Tests**  
+`QA` · 2 MD · dep: 4.6.14, 4.6.19  
+Hạn thực tế là mốc sớm hơn giữa hạn nộp và giờ bắt đầu cộng thời lượng; bài không có thời lượng theo hạn nộp; tự nộp bản nháp khi hết hạn thực tế; học sinh chỉ xem kết quả bài mình đã nộp; phụ huynh chỉ xem con của mình; AI lỗi vẫn xem được điểm và đáp án.
 
-**4.6.26 — Kiểm thử nộp bài và hạn nộp / Submission Tests**  
-`QA` · 2 MD · dep: 4.6.24, 4.6.25  
-Nộp sau hạn bị chặn; nộp lần hai bị chặn; nháp không ra điểm; học sinh ngoài danh sách được giao không mở được bài; chuyển lớp sau khi giao hoặc sau khi nộp không đổi người nhận, mẫu số và bài đã nộp.
+### LRN-05 Department Progress (Tiến độ giao bài của tổ)
 
-### LRN-03 Grading & Score Publication (Chấm bài & Công bố điểm)
+**4.6.23 — Xem tiến độ giao bài của tổ / View Department Assignment Progress**  
+`BE + Web` · 2.5 MD · dep: 4.6.10, 4.3.29  
+Tổ trưởng xem tiến độ bài tập của MỌI LỚP thuộc các môn trong tổ mình: hạn nộp, số nộp trên sĩ số, số bài mỗi giáo viên trong tổ đã giao. Lọc theo môn khi tổ có từ hai môn.
 
-**4.6.27 — Xem kết quả bài theo lớp / View Class Results**  
-`BE + Web` · 1.5 MD · dep: 4.6.25  
-Teacher đang phụ trách chuyên môn xem điểm từng học sinh, ai chưa nộp, trước khi công bố (BR-22).
-
-**4.6.28 — Xem thống kê câu sai nhiều nhất / View Most-missed Questions**  
-`BE + Web` · 1.5 MD · dep: 4.6.27  
-Số và tỉ lệ học sinh ĐÃ NỘP chọn sai mỗi câu, sắp theo mức sai nhiều nhất (BR-22).
-
-**4.6.29 — Công bố điểm cho lớp / Publish Scores**  
-`BE + Web` · 1.5 MD · dep: 4.6.27  
-Chỉ khi bài ĐÃ ĐÓNG (đã giao và quá hạn nộp), bởi Teacher đang phụ trách chuyên môn. Công bố cho cả lớp một lần, KHÔNG THU HỒI; tạo thông báo cho học sinh và phụ huynh (BR-22, BR-26).
-
-**4.6.30 — Xem điểm đã công bố / View Published Score**  
-`BE + Web + Mobile` · 1.5 MD · dep: 4.6.29  
-Học sinh xem điểm và đáp án đúng sau khi giáo viên công bố.
-
-**4.6.31 — Xem điểm của con đã công bố / View Child's Published Score**  
-`BE + Web + Mobile` · 1 MD · dep: 4.6.30  
-Phụ huynh xem điểm đã công bố của từng con được liên kết.
-
-**4.6.32 — Kiểm thử công bố điểm / Publication Tests**  
-`QA` · 1.5 MD · dep: 4.6.29  
-Bài chưa đóng không công bố được; giáo viên hết phụ trách chuyên môn không công bố được; công bố rồi không thu hồi được; học sinh chưa nộp hiện Không nộp chứ không phải 0.
-
-### LRN-04 AI Learning Analysis (Phân tích học tập bằng AI)
-
-**4.6.33 — Tính chỉ số cấp lớp và cấp học sinh / Compute Analysis Metrics**  
-`BE` · 2 MD · dep: 4.6.25  
-Backend tính sẵn: cấp lớp là tỉ lệ đúng theo câu và phân bố điểm; cấp học sinh (chỉ học sinh đã nộp) là kết quả bài này kèm tối đa 5 bài gần nhất cùng môn ĐÃ CÔNG BỐ ĐIỂM của chính em đó (BR-23).
-
-**4.6.34 — Gắn mã giả lập trước khi gửi AI / Pseudonymize Data**  
-`BE` · 1.5 MD · dep: 4.6.33  
-AI chỉ nhận dữ liệu đã tính sẵn gắn mã giả lập. KHÔNG BAO GIỜ gửi tên, mã học sinh, ngày sinh, tên lớp, tên trường hay bài làm nguyên văn (mục 3.1, BR-23).
-
-**4.6.35 — Gọi AI và nhận nhận xét nháp / Call AI and Receive Draft Comments**  
-`BE + Web` · 2 MD · dep: 4.6.34  
-Chạy được sau khi bài đã đóng và có ít nhất một bài nộp. Kết quả về ở trạng thái Nháp; AI không chấm điểm, không quyết định đúng sai, không ghi trực tiếp vào dữ liệu nghiệp vụ (mục 3.1, BR-23).
-
-**4.6.36 — Xem nhận xét nháp cấp lớp / View Class-level Draft Comment**  
-`BE + Web` · 1 MD · dep: 4.6.35  
-Giáo viên xem nhận xét chung của cả lớp kèm các chỉ số đã tính.
-
-**4.6.37 — Xem nhận xét nháp từng học sinh / View Student Draft Comments**  
-`BE + Web` · 1.5 MD · dep: 4.6.35  
-Giáo viên xem nhận xét nháp của từng học sinh đã nộp.
-
-**4.6.38 — Chỉnh nhận xét / Edit Comment**  
-`BE + Web` · 1 MD · dep: 4.6.37  
-Giáo viên sửa nội dung nhận xét khi còn ở Nháp (BR-23).
-
-**4.6.39 — Duyệt nhận xét / Approve Comment**  
-`BE + Web` · 1 MD · dep: 4.6.38  
-Chuyển nhận xét từ Nháp sang Đã duyệt; chỉ Teacher đang phụ trách chuyên môn làm được (BR-02, BR-23).
-
-**4.6.40 — Công bố nhận xét / Publish Comment**  
-`BE + Web` · 1 MD · dep: 4.6.39  
-Công bố cho học sinh và phụ huynh; công bố nhận xét ĐỘC LẬP với công bố điểm (BR-23, BR-26).
-
-**4.6.41 — Duyệt và công bố hàng loạt / Bulk Approve and Publish**  
-`BE + Web` · 1 MD · dep: 4.6.39  
-Duyệt và công bố nhiều nhận xét trong một thao tác.
-
-**4.6.42 — Tạo lại nhận xét khi Lỗi hoặc Nháp / Regenerate Failed or Draft Analysis**  
-`BE + Web` · 1.5 MD · dep: 4.6.35  
-AI lỗi thì nhận xét ở trạng thái Lỗi kèm lý do, giáo viên chạy lại. Nhận xét còn Nháp cũng tạo lại được và nội dung Nháp cũ bị thay bằng kết quả mới. Nhận xét đã Đã duyệt hoặc Đã công bố thì không tạo lại và không bị ghi đè. Không ảnh hưởng chấm, nộp và công bố điểm (mục 3.1, BR-23).
-
-**4.6.43 — Xem nhận xét đã công bố / View Published Comment**  
-`BE + Web + Mobile` · 1.5 MD · dep: 4.6.40  
-Student và Parent chỉ thấy nhận xét Đã công bố.
-
-**4.6.44 — Kiểm thử phân tích AI / AI Analysis Tests**  
-`QA` · 2 MD · dep: 4.6.34, 4.6.35, 4.6.40  
-Dữ liệu gửi đi không chứa thông tin định danh; bài chưa đóng hoặc không có bài nộp thì không chạy được; AI hỏng không chặn chấm và công bố điểm; nhận xét Nháp không lộ cho học sinh; tạo lại được khi Nháp hoặc Lỗi, bị chặn khi đã duyệt hoặc công bố.
-
-### LRN-05 Department Monitoring (Giám sát cấp tổ)
-
-**4.6.45 — Xem tiến độ bài tập của tổ / View Department Assignment Progress**  
-`BE + Web` · 2 MD · dep: 4.6.20, 4.3.29  
-Tổ trưởng xem tiến độ bài tập của MỌI LỚP thuộc các môn trong tổ mình: trạng thái, hạn nộp, số nộp trên sĩ số, đã công bố điểm chưa.
-
-**4.6.46 — Lọc tiến độ theo môn, lớp và khoảng hạn nộp / Filter Department Progress**  
-`BE + Web` · 1 MD · dep: 4.6.45  
-Thu hẹp bảng tiến độ theo môn, lớp, phân hiệu và khoảng hạn nộp.
-
-**4.6.47 — Xem chi tiết một bài ở chế độ chỉ đọc / View Assignment Detail Read-only**  
-`BE + Web` · 1.5 MD · dep: 4.6.45  
-Mở chi tiết một bài để xem kết quả tổng hợp, không có đường nào ghi.
-
-**4.6.48 — Kiểm thử chặn mọi đường ghi của tổ trưởng / Read-only Enforcement Tests**  
-`QA` · 1 MD · dep: 4.6.45  
-Backend chặn mọi API ghi khi người gọi chỉ có trách nhiệm tổ trưởng: không giao bài, không công bố điểm, không sửa nhận xét của lớp mình không phụ trách.
+**4.6.24 — Xem chi tiết một bài ở chế độ chỉ đọc / View Assignment Detail Read-only**  
+`BE + Web` · 2 MD · dep: 4.6.23, 4.6.17  
+Mở chi tiết một bài để xem kết quả tổng hợp, không có đường nào ghi. Backend chặn mọi API ghi khi người gọi chỉ có trách nhiệm tổ trưởng: không giao bài cho lớp mình không phụ trách.
 
 ---
 
@@ -960,16 +864,12 @@ Ngày bắt đầu trong quá khứ bị chặn; hai đơn chồng ngày và ch�
 ### PAR-02 Weekly Student Report (Sổ liên lạc tuần)
 
 **4.7.9 — Tính sổ liên lạc tuần khi mở / Compute Weekly Report on Read**  
-`BE` · 3 MD · dep: 4.2.33, 4.4.21, 4.5.10, 4.6.16, 4.6.29, 4.6.40  
-TÍNH TRỰC TIẾP khi mở, không lưu, không có job sinh sổ, không ai viết tay (BR-24). Một sổ = một học sinh + một tuần (thứ Hai – Chủ nhật, theo lịch của phân hiệu) thuộc năm học hiện hành. Chỉ tính dữ liệu nằm trong tuần đó:
-- Chuyên cần dùng ghi danh có hiệu lực tại ngày của từng tiết (4.2.33, 4.2.34), nên học sinh chuyển lớp giữa tuần vẫn được tính đúng lớp cho từng tiết.
-- Bài tập dùng danh sách được giao đã chốt lúc giao (BR-21), không dùng lớp hiện tại của học sinh.
+`BE` · 2.5 MD · dep: 4.5.10, 4.6.15  
+TÍNH TRỰC TIẾP khi mở, không lưu, không có job sinh sổ, không ai viết tay. Một sổ = một học sinh + một tuần (thứ Hai – Chủ nhật) của năm học hiện hành mà học sinh có ghi danh (BR-24).
 
 **4.7.10 — Xem sổ liên lạc tuần của con / View Child's Weekly Report**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.7.9  
-Chuyên cần: đếm theo tiết Đã xếp lịch đã diễn ra, gồm có mặt, muộn, vắng có phép, vắng không phép, chưa điểm danh (đã diễn ra nhưng chưa ghi). Tiết Đã hủy và tiết còn Chờ xử lý không tính; tiết bù tính như tiết thường.
-Bài tập: các bài có hạn nộp trong tuần mà học sinh nằm trong danh sách được giao, hiển thị số được giao, đã nộp, không nộp (đã đóng mà chưa nộp) và chưa nộp (bài còn mở, chưa đóng; không gọi là "không nộp").
-Điểm và nhận xét: chỉ hiện khi đã công bố. Điểm theo BR-22, nhận xét theo BR-23; hai loại độc lập, bài chưa công bố điểm thì ẩn điểm nhưng nhận xét đã công bố vẫn hiện, và ngược lại. Mục không có dữ liệu để trống. Không xếp hạng, không điểm trung bình lớp, không hạnh kiểm (BR-24).
+Gồm chuyên cần theo tiết Đã xếp lịch đã diễn ra; bài tập có hạn nộp trong tuần với số được giao, đã nộp, không nộp; điểm và phân tích của các bài đó. Không xếp hạng, không điểm trung bình lớp, không hạnh kiểm (BR-24).
 
 **4.7.11 — Xem sổ liên lạc tuần của mình / View Own Weekly Report**  
 `BE + Web + Mobile` · 1 MD · dep: 4.7.9  
@@ -977,15 +877,15 @@ Học sinh xem sổ của chính mình, cùng nội dung như phụ huynh xem.
 
 **4.7.12 — Chọn tuần để xem / Select Report Week**  
 `BE + Web + Mobile` · 1 MD · dep: 4.7.9  
-Xem được mọi tuần của năm học hiện hành mà học sinh có ghi danh trong tuần đó (BR-24); tuần không có dữ liệu thì hiển thị trống.
+Xem được mọi tuần của năm học hiện hành mà học sinh có ghi danh; mục không có dữ liệu để trống.
 
 **4.7.13 — Chủ nhiệm xem sổ của học sinh lớp mình / View Class Weekly Reports**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.7.9  
-Chỉ chủ nhiệm ĐANG HIỆU LỰC của lớp mở được sổ của học sinh thuộc lớp đó; Teacher khác không thấy mục trên menu và API từ chối. Danh sách học sinh lấy theo ghi danh tại ngày đang xem (4.2.33). Đổi chủ nhiệm giữa chừng thì người mới thấy sổ, người cũ không còn quyền.
+Chủ nhiệm mở sổ của từng học sinh trong lớp chủ nhiệm.
 
 **4.7.14 — Kiểm thử sổ liên lạc / Weekly Report Tests**  
-`QA` · 1.5 MD · dep: 4.7.9  
-Nhập bù điểm danh và đơn duyệt muộn được phản ánh ngay lần mở sau; tiết Đã hủy và tiết Chờ xử lý không vào chuyên cần; tiết bù được đếm; bài chưa công bố điểm không hiện điểm nhưng vẫn đếm đã nộp; nhận xét đã công bố vẫn hiện khi điểm chưa công bố; học sinh chuyển lớp giữa tuần: tiết trước khi chuyển tính lớp cũ, bài đã giao trước khi chuyển vẫn tính là được giao; học sinh vào lớp sau thời điểm giao không có bài đó; bài còn mở không tính vào "không nộp"; Parent không xem được sổ của con không liên kết; Teacher không phải chủ nhiệm bị chặn.
+`QA` · 1 MD · dep: 4.7.9  
+Nhập bù điểm danh và đơn duyệt muộn được phản ánh ngay lần mở sau; tiết Đã hủy không vào thống kê; bài chưa nộp không hiện điểm.
 
 ### PAR-03 Parent–Teacher Messaging (Hộp thư phụ huynh – giáo viên)
 
@@ -1025,7 +925,7 @@ Phụ huynh không tạo được hội thoại với giáo viên không dạy c
 
 **4.8.1 — Phát thông báo theo danh sách sự kiện đóng / Dispatch Event Notifications**  
 `BE` · 2 MD · dep: 4.1.4  
-Chỉ trong ứng dụng, không gửi email. Danh sách sự kiện là DANH SÁCH ĐÓNG: phát hành thời khóa biểu, tiết bị đổi — hủy — thêm bù — có giáo viên dạy thay — trả lại giáo viên khi xóa khai báo vắng, tiết chuyển Chờ xử lý, đơn nghỉ mới, đơn được duyệt hoặc từ chối, bài mới được giao, điểm và nhận xét được công bố, tin nhắn mới (BR-26).
+Chỉ trong ứng dụng, không gửi email. Danh sách sự kiện là DANH SÁCH ĐÓNG: phát hành thời khóa biểu, tiết bị đổi — hủy — thêm bù — có giáo viên dạy thay — trả lại giáo viên khi xóa khai báo vắng, tiết chuyển Chờ xử lý, đơn nghỉ mới, đơn được duyệt hoặc từ chối, bài mới được giao, tin nhắn mới (BR-26).
 
 **4.8.2 — Xem trung tâm thông báo / View Notification Center**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.8.1  
@@ -1148,7 +1048,7 @@ Nguồn là bản ghi điểm danh, kèm nhãn cuối suy ra. Chủ nhiệm xu�
 Nguồn là LỊCH DẠY chứ không phải phiên bản thời khóa biểu, để phản ánh cả các điều chỉnh tay. Vice Principal xuất phân hiệu mình (BR-14, mục 5.2).
 
 **4.9.12 — Xuất kết quả bài tập theo lớp / Export Class Assignment Results**  
-`BE + Web` · 1.5 MD · dep: 4.6.25  
+`BE + Web` · 1.5 MD · dep: 4.6.15  
 Nguồn là lượt làm bài. Chỉ Teacher đang phụ trách chuyên môn xuất được (mục 5.2).
 
 **4.9.13 — Kiểm thử phạm vi xuất dữ liệu / Export Scope Tests**  
@@ -1157,4 +1057,4 @@ Mỗi mục chỉ xuất đúng phạm vi của người gọi; danh sách tài 
 
 ---
 
-**Tổng:** 258 task · 348 MD
+**Tổng:** 234 task · 324 MD
