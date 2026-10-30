@@ -864,16 +864,12 @@ Ngày bắt đầu trong quá khứ bị chặn; hai đơn chồng ngày và ch�
 ### PAR-02 Weekly Student Report (Sổ liên lạc tuần)
 
 **4.7.9 — Tính sổ liên lạc tuần khi mở / Compute Weekly Report on Read**  
-`BE` · 3 MD · dep: 4.2.33, 4.4.21, 4.5.10, 4.6.16  
-TÍNH TRỰC TIẾP khi mở, không lưu, không có job sinh sổ, không ai viết tay (BR-24). Một sổ = một học sinh + một tuần (thứ Hai – Chủ nhật, theo lịch của phân hiệu) thuộc năm học hiện hành. Chỉ tính dữ liệu nằm trong tuần đó:
-- Chuyên cần dùng ghi danh có hiệu lực tại ngày của từng tiết (4.2.33, 4.2.34), nên học sinh chuyển lớp giữa tuần vẫn được tính đúng lớp cho từng tiết.
-- Bài tập dùng danh sách được giao đã chốt lúc giao (BR-21), không dùng lớp hiện tại của học sinh.
+`BE` · 2.5 MD · dep: 4.5.10, 4.6.15  
+TÍNH TRỰC TIẾP khi mở, không lưu, không có job sinh sổ, không ai viết tay. Một sổ = một học sinh + một tuần (thứ Hai – Chủ nhật) của năm học hiện hành mà học sinh có ghi danh (BR-24).
 
 **4.7.10 — Xem sổ liên lạc tuần của con / View Child's Weekly Report**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.7.9  
-Chuyên cần: đếm theo tiết Đã xếp lịch đã diễn ra, gồm có mặt, muộn, vắng có phép, vắng không phép, chưa điểm danh (đã diễn ra nhưng chưa ghi). Tiết Đã hủy và tiết còn Chờ xử lý không tính; tiết bù tính như tiết thường.
-Bài tập: các bài có hạn nộp trong tuần mà học sinh nằm trong danh sách được giao, hiển thị số được giao, đã nộp, không nộp (đã đóng mà chưa nộp).
-Điểm và phân tích: hiện ngay khi học sinh đã nộp (BR-22, BR-23), không có bước công bố. Mục không có dữ liệu để trống. Không xếp hạng, không điểm trung bình lớp, không hạnh kiểm (BR-24).
+Gồm chuyên cần theo tiết Đã xếp lịch đã diễn ra; bài tập có hạn nộp trong tuần với số được giao, đã nộp, không nộp; điểm và phân tích của các bài đó. Không xếp hạng, không điểm trung bình lớp, không hạnh kiểm (BR-24).
 
 **4.7.11 — Xem sổ liên lạc tuần của mình / View Own Weekly Report**  
 `BE + Web + Mobile` · 1 MD · dep: 4.7.9  
@@ -881,15 +877,15 @@ Học sinh xem sổ của chính mình, cùng nội dung như phụ huynh xem.
 
 **4.7.12 — Chọn tuần để xem / Select Report Week**  
 `BE + Web + Mobile` · 1 MD · dep: 4.7.9  
-Xem được mọi tuần của năm học hiện hành mà học sinh có ghi danh trong tuần đó (BR-24); tuần không có dữ liệu thì hiển thị trống.
+Xem được mọi tuần của năm học hiện hành mà học sinh có ghi danh; mục không có dữ liệu để trống.
 
 **4.7.13 — Chủ nhiệm xem sổ của học sinh lớp mình / View Class Weekly Reports**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.7.9  
-Chỉ chủ nhiệm ĐANG HIỆU LỰC của lớp mở được sổ của học sinh thuộc lớp đó; Teacher khác không thấy mục trên menu và API từ chối. Danh sách học sinh lấy theo ghi danh tại ngày đang xem (4.2.33). Đổi chủ nhiệm giữa chừng thì người mới thấy sổ, người cũ không còn quyền.
+Chủ nhiệm mở sổ của từng học sinh trong lớp chủ nhiệm.
 
 **4.7.14 — Kiểm thử sổ liên lạc / Weekly Report Tests**  
-`QA` · 1.5 MD · dep: 4.7.9  
-Nhập bù điểm danh và đơn duyệt muộn được phản ánh ngay lần mở sau; tiết Đã hủy và tiết Chờ xử lý không vào chuyên cần; tiết bù được đếm; bài đã nộp hiện điểm và phân tích ngay; học sinh chuyển lớp giữa tuần: tiết trước khi chuyển tính lớp cũ, bài đã giao trước khi chuyển vẫn tính là được giao; học sinh vào lớp sau thời điểm giao không có bài đó; Parent không xem được sổ của con không liên kết; Teacher không phải chủ nhiệm bị chặn.
+`QA` · 1 MD · dep: 4.7.9  
+Nhập bù điểm danh và đơn duyệt muộn được phản ánh ngay lần mở sau; tiết Đã hủy không vào thống kê; bài chưa nộp không hiện điểm.
 
 ### PAR-03 Parent–Teacher Messaging (Hộp thư phụ huynh – giáo viên)
 
