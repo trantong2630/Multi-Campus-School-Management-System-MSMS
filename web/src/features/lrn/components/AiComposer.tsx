@@ -1,11 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { Input, Select } from 'antd';
+import { AutoComplete, Input, Select } from 'antd';
 import { Minus, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getErrorMessage } from '@/app/apiClient';
 import { composeSteps } from '../aiLines';
 import { lrnApi } from '../api';
-import { GRADES, TEXTBOOKS } from '../labels';
+import { GRADES, TEXTBOOK } from '../labels';
+import { topicSuggestions } from '../textbookToc';
 import { AiAvatar, AiBubble, AiDots, TypedText } from './MsmsAi';
 import type { AiMood, AiTone } from './MsmsAi';
 import './lrn.css';
@@ -26,7 +27,6 @@ export function AiComposer({ subjects, defaultSubjectId, onDone }: Props) {
   const subjectId = pickedSubject ?? defaultSubjectId;
   const [grade, setGrade] = useState<number>(6);
   const [topic, setTopic] = useState('');
-  const [textbook, setTextbook] = useState<string | undefined>();
   const [count, setCount] = useState(5);
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' });
   const [step, setStep] = useState(0);
@@ -37,7 +37,8 @@ export function AiComposer({ subjects, defaultSubjectId, onDone }: Props) {
     return () => clearInterval(t);
   }, [phase.kind]);
 
-  const ready = subjectId !== undefined && topic.trim().length > 0 && !!textbook;
+  const lessons = topicSuggestions(subjects.find((s) => s.subjectId === subjectId)?.name, grade).map((t) => ({ value: t }));
+  const ready =subjectId !== undefined && topic.trim().length > 0;
   const working = phase.kind === 'working';
 
   const run = async () => {
@@ -45,7 +46,7 @@ export function AiComposer({ subjects, defaultSubjectId, onDone }: Props) {
     setStep(0);
     setPhase({ kind: 'working' });
     try {
-      const r = await lrnApi.questions.generate({ subjectId: subjectId!, gradeLevel: grade, topic: topic.trim(), textbook: textbook!, count });
+      const r = await lrnApi.questions.generate({ subjectId: subjectId!, gradeLevel: grade, topic: topic.trim(), textbook: TEXTBOOK, count });
       await qc.invalidateQueries({ queryKey: ['lrn', 'questions'] });
       setPhase({
         kind: 'done',
@@ -53,6 +54,7 @@ export function AiComposer({ subjects, defaultSubjectId, onDone }: Props) {
           ? `Xong rồi! Mình soạn được ${r.drafts.length} câu (bỏ ${r.discarded} câu chưa đạt). Thầy cô xem lại ở tab Nháp nhé.`
           : `Xong rồi! ${r.drafts.length} câu mới đang ở tab Nháp, thầy cô xem lại rồi duyệt nhé.`,
       });
+      setTopic('');
       onDone();
     } catch (e) {
       setPhase({ kind: 'error', text: `${getErrorMessage(e)}` });
@@ -89,11 +91,17 @@ export function AiComposer({ subjects, defaultSubjectId, onDone }: Props) {
           </div>
         </div>
         <label>Chủ đề
-          <Input value={topic} maxLength={150} disabled={working} onChange={(e) => setTopic(e.target.value)} placeholder="Ví dụ: Phân số, Quang hợp" />
+          <AutoComplete
+            value={topic} options={lessons} disabled={working} onChange={setTopic}
+            filterOption={(input, o) => (o?.value ?? '').toLowerCase().includes(input.trim().toLowerCase())}
+          >
+            <Input maxLength={150} placeholder={lessons.length > 0 ? 'Gõ để tìm bài hoặc nhập chủ đề tự do' : 'Ví dụ: Phân số, Quang hợp'} />
+          </AutoComplete>
         </label>
-        <label>Bộ sách
-          <Select placeholder="Chọn bộ sách" value={textbook} onChange={setTextbook} disabled={working} options={TEXTBOOKS.map((t) => ({ value: t, label: t }))} />
-        </label>
+        <div className="composer__field">
+          <span>Bộ sách</span>
+          <strong className="composer__book">{TEXTBOOK}</strong>
+        </div>
         <div className="composer__field">
           <span>Số câu</span>
           <div className="stepper">
