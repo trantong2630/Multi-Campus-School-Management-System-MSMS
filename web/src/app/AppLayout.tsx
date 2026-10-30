@@ -9,6 +9,7 @@ import { accountTypeLabel, logoutErrorTitle, logoutLabel } from '@/shared/lib/la
 import { showError } from '@/shared/lib/feedback';
 import { color } from '@/shared/lib/tokens';
 import { conversationApi } from '@/features/par/api';
+import { NotificationBell } from '@/features/com/components/NotificationBell';
 import { useAuth } from './AuthProvider';
 import { CommandPalette } from './CommandPalette';
 import { isPathAllowed, resolveCrumbs, sectionLabel, visibleMenu } from './menu';
@@ -267,6 +268,7 @@ export function AppLayout() {
             <span>Tìm nhanh màn hình</span>
             <kbd className="kbd">Ctrl K</kbd>
           </button>
+          <NotificationBell />
           <Dropdown menu={{ items: userMenu }} trigger={['click']} placement="bottomRight">
             <button type="button" className="header-user" aria-label="Tài khoản">
               <Avatar size={34} className="header-user__avatar">{initialsOf(user!.fullName)}</Avatar>

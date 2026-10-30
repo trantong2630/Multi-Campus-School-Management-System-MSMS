@@ -1,15 +1,25 @@
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using MSMS.Api.Data;
+using MSMS.Api.Modules.Com.Services;
+
 namespace MSMS.Api.Modules.Com;
 
 public static class ComModule
 {
     /// <summary>
-    /// Đăng ký các dịch vụ của Com module.
-    /// Hiện tại chỉ có CommunicationHub để xử lý realtime events.
+    /// Đăng ký dịch vụ của Com module: trung tâm thông báo (COM-01), đẩy realtime sau commit,
+    /// theo dõi online và bộ lọc kiểm tài khoản/phiên cho hub. AddSignalR và MapHub nằm ở Program.cs.
     /// </summary>
     public static IServiceCollection AddComModule(this IServiceCollection services)
     {
-        // SignalR Hub được đăng ký ở Program.cs bằng AddSignalR()
-        // và MapHub ở app.MapHub
+        services.AddScoped<NotificationService>();
+        services.AddScoped<NotificationPushInterceptor>();
+        // COM-4.8.7: gắn interceptor vào DbContext từ module Com, không đụng tới Program.cs.
+        services.ConfigureDbContext<MsmsDbContext>((sp, o) => o.AddInterceptors(sp.GetRequiredService<NotificationPushInterceptor>()));
+        services.AddSingleton<PresenceTracker>();
+        services.AddScoped<HubGuardFilter>();
+        services.Configure<HubOptions>(o => o.AddFilter<HubGuardFilter>());
         return services;
     }
 }
