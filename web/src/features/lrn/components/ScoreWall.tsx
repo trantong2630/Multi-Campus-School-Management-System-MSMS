@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
+import { Popover } from 'antd';
 import dayjs from 'dayjs';
+import { ChevronDown } from 'lucide-react';
 import { fmtScore } from '../time';
 import { AnswerStrip } from './parts';
 import { bandColor, subjectVars } from './tone';
@@ -31,6 +33,7 @@ interface Props {
  */
 export function ScoreWall({ items, onOpen, averageLabel }: Props) {
   const [subjectId, setSubjectId] = useState<number | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const subjects = useMemo(() => {
     const m = new Map<number, string>();
     for (const i of items) m.set(i.subjectId, i.subjectName);
@@ -54,12 +57,27 @@ export function ScoreWall({ items, onOpen, averageLabel }: Props) {
           {missed > 0 && <span><strong>{missed}</strong> bài không nộp</span>}
         </div>
         {subjects.length > 1 && (
-          <div className="wall__subjects" role="tablist" aria-label="Lọc theo môn">
-            <button type="button" role="tab" aria-selected={subjectId === null} className={subjectId === null ? 'is-on' : ''} onClick={() => setSubjectId(null)}>Tất cả</button>
-            {subjects.map(([id, name]) => (
-              <button key={id} type="button" role="tab" aria-selected={subjectId === id} className={subjectId === id ? 'is-on' : ''} onClick={() => setSubjectId(id)}>{name}</button>
-            ))}
-          </div>
+          <Popover
+            trigger="click" placement="bottomRight" arrow={false} open={pickerOpen} onOpenChange={setPickerOpen}
+            content={(
+              <div className="wall__picker" role="listbox" aria-label="Lọc theo môn">
+                <button type="button" role="option" aria-selected={subjectId === null} className={subjectId === null ? 'is-on' : ''} onClick={() => { setSubjectId(null); setPickerOpen(false); }}>
+                  <i className="wall__dot wall__dot--all" />Tất cả môn<em className="tabular">{items.length}</em>
+                </button>
+                {subjects.map(([id, name]) => (
+                  <button key={id} type="button" role="option" aria-selected={subjectId === id} className={subjectId === id ? 'is-on' : ''} style={subjectVars(id)} onClick={() => { setSubjectId(id); setPickerOpen(false); }}>
+                    <i className="wall__dot" />{name}<em className="tabular">{items.filter((i) => i.subjectId === id).length}</em>
+                  </button>
+                ))}
+              </div>
+            )}
+          >
+            <button type="button" className="wall__subject" style={subjectId === null ? undefined : subjectVars(subjectId)} aria-haspopup="listbox" aria-label="Lọc theo môn">
+              <i className={`wall__dot${subjectId === null ? ' wall__dot--all' : ''}`} />
+              {subjectId === null ? 'Tất cả môn' : subjects.find(([id]) => id === subjectId)?.[1]}
+              <ChevronDown size={15} aria-hidden />
+            </button>
+          </Popover>
         )}
       </div>
 

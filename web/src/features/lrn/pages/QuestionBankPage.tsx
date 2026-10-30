@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Input, Select } from 'antd';
-import { Check, ChevronDown, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ConfigProvider, Input, Select } from 'antd';
+import { FILTER_THEME } from '@/shared/components/FilterBar';
+import { Check, ChevronDown, Eye, EyeOff, ListChecks, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { message } from '@/shared/lib/antdStatic';
 import { confirmAction, showError } from '@/shared/lib/feedback';
@@ -9,12 +10,12 @@ import { AiComposer } from '../components/AiComposer';
 import { AiEmpty } from '../components/parts';
 import { subjectVars } from '../components/tone';
 import { QuestionEditor } from '../components/QuestionEditor';
-import { useDebounced, useSubjects } from '../hooks';
+import { useDebounced, useMySubjects, useSubjects } from '../hooks';
 import { GRADE_OPTIONS } from '../labels';
 import type { QuestionDetail, QuestionItem, QuestionQuery } from '../types';
 import '../components/lrn.css';
 
-type Tab = 'all' | 'mine' | 'draft';
+type Tab = 'all' | 'mine' | 'draft' | 'hidden';
 const PAGE = 15;
 
 /** Câu hỏi mở rộng: lấy chi tiết (có đáp án) khi giáo viên bấm vào một dòng. */
@@ -40,6 +41,7 @@ function Expanded({ id }: { id: number }) {
 export function QuestionBankPage() {
   const qc = useQueryClient();
   const subjects = useSubjects();
+  const mySubjects = useMySubjects();
   const [tab, setTab] = useState<Tab>('all');
   const [subjectId, setSubjectId] = useState<number | undefined>();
   const [gradeLevel, setGradeLevel] = useState<number | undefined>();
@@ -49,7 +51,7 @@ export function QuestionBankPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<QuestionDetail | null>(null);
 
-  const base: QuestionQuery = { subjectId, gradeLevel, search: dSearch || undefined, mine: tab !== 'all', status: tab === 'draft' ? 'Draft' : tab === 'all' ? 'Ready' : undefined };
+  const base: QuestionQuery = { subjectId, gradeLevel, search: dSearch || undefined, mine: tab !== 'all', includeHidden: tab === 'hidden' || undefined, status: tab === 'draft' ? 'Draft' : tab === 'all' ? 'Ready' : undefined };
   const list = useInfiniteQuery({
     queryKey: ['lrn', 'questions', 'list', base],
     initialPageParam: 1,
@@ -72,6 +74,11 @@ export function QuestionBankPage() {
     onSuccess: () => { void refresh(); message.success('Đã ẩn câu hỏi khỏi kho. Các bài tập cũ không bị ảnh hưởng.'); },
     onError: (e) => showError(e),
   });
+  const unhide = useMutation({
+    mutationFn: (id: number) => lrnApi.questions.unhide(id),
+    onSuccess: () => { void refresh(); message.success('Đã bỏ ẩn: câu hỏi trở lại kho chung.'); },
+    onError: (e) => showError(e),
+  });
   const removeDraft = useMutation({
     mutationFn: (id: number) => lrnApi.questions.removeDraft(id),
     onSuccess: () => { void refresh(); message.success('Đã xóa câu nháp.'); },
@@ -84,13 +91,13 @@ export function QuestionBankPage() {
 
   const drafts = draftCount.data?.total ?? 0;
   const tabs: { key: Tab; label: string }[] = [
-    { key: 'all', label: 'Kho chung' }, { key: 'mine', label: 'Của tôi' }, { key: 'draft', label: drafts > 0 ? `Nháp · ${drafts}` : 'Nháp' },
+    { key: 'all', label: 'Kho chung' }, { key: 'mine', label: 'Của tôi' }, { key: 'draft', label: drafts > 0 ? `Nháp · ${drafts}` : 'Nháp' }, { key: 'hidden', label: 'Đã ẩn' },
   ];
 
   return (
     <div className="bank">
       <aside className="bank__studio">
-        <AiComposer subjects={subjects.active} defaultSubjectId={subjectId} onDone={() => setTab('draft')} />
+        <AiComposer subjects={mySubjects} defaultSubjectId={mySubjects.some((s) => s.subjectId === subjectId) ? subjectId : undefined} onDone={() => setTab('draft')} />
       </aside>
 
       <section className="bank__main">
@@ -103,17 +110,17 @@ export function QuestionBankPage() {
           {tabs.map((t) => (
             <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} className={tab === t.key ? 'is-on' : ''} onClick={() => setTab(t.key)}>{t.label}</button>
           ))}
-          <span className="bank__filters">
+          <ConfigProvider theme={FILTER_THEME}><span className="bank__filters">
             <Input.Search allowClear placeholder="Tìm câu hỏi" value={search} onChange={(e) => setSearch(e.target.value)} style={{ width: 190 }} />
             <Select allowClear placeholder="Môn" value={subjectId} onChange={setSubjectId} style={{ width: 130 }} showSearch optionFilterProp="label"
               options={subjects.active.map((s) => ({ value: s.subjectId, label: s.name }))} />
             <Select allowClear placeholder="Khối" value={gradeLevel} onChange={setGradeLevel} style={{ width: 92 }} options={GRADE_OPTIONS} />
-          </span>
+          </span></ConfigProvider>
         </div>
 
         {list.isLoading ? <div className="bank__empty">Đang tải…</div> : items.length === 0 ? (
           <AiEmpty
-            title={tab === 'draft' ? 'Chưa có câu nháp nào' : 'Chưa có câu hỏi nào'}
+            title={tab === 'draft' ? 'Chưa có câu nháp nào' : tab === 'hidden' ? 'Chưa ẩn câu nào' : 'Chưa có câu hỏi nào'}
             hint={tab === 'draft' ? 'Nhờ MSMS AI soạn ở khung bên trái, các câu mới sẽ nằm ở đây chờ thầy cô duyệt.' : 'Thử bỏ bớt bộ lọc, hoặc nhờ MSMS AI soạn câu mới.'}
           />
         ) : (
@@ -122,16 +129,19 @@ export function QuestionBankPage() {
               const expanded = open === q.questionId;
               return (
                 <li key={q.questionId} className={`qrow${expanded ? ' is-open' : ''}${q.status === 'Draft' ? ' is-draft' : ''}`} style={subjectVars(q.subjectId)}>
+                  <span className="qrow__ear">
+                    <b className="qrow__subject">{q.subjectName}</b>
+                    {q.gradeLevel && <span className="qrow__grade">Khối {q.gradeLevel}</span>}
+                    {q.topic && <span className="qrow__topic" title={q.topic}>{q.topic}</span>}
+                  </span>
+                  <div className="qrow__card">
                   <button type="button" className="qrow__main" onClick={() => setOpen(expanded ? null : q.questionId)} aria-expanded={expanded}>
                     <span className="qrow__text">{q.content}</span>
                     <span className="qrow__chips">
-                      <span className="chip chip--subject">{q.subjectName}</span>
-                      {q.gradeLevel && <span className="chip">Khối {q.gradeLevel}</span>}
-                      {q.topic && <span className="chip">{q.topic}</span>}
-                      {q.isMultiple && <span className="chip chip--warn">Chọn nhiều</span>}
-                      {q.isAiGenerated && <span className="chip chip--ai">MSMS AI soạn</span>}
-                      {q.isLocked && <span className="chip">Đã dùng trong bài tập</span>}
-                      {!q.isMine && <span className="chip chip--quiet">{q.createdByName}</span>}
+                      {!q.isMine && <span className="qrow__by">{q.createdByName}</span>}
+                      {q.isMultiple && <span className="chip chip--warn"><ListChecks size={12} />Chọn nhiều</span>}
+                      {q.isAiGenerated && <span className="chip chip--ai"><Sparkles size={12} />AI soạn</span>}
+                      {q.isLocked && <span className="chip chip--used"><Check size={12} strokeWidth={3} />Đã giao</span>}
                     </span>
                     <ChevronDown size={18} className="qrow__chev" />
                   </button>
@@ -141,12 +151,15 @@ export function QuestionBankPage() {
                         <button type="button" className="act act--ok" onClick={() => confirmDraft.mutate(q.questionId)}><Check size={15} />Duyệt</button>
                       )}
                       {!q.isLocked && <button type="button" className="act" aria-label="Sửa câu hỏi" onClick={() => void edit(q.questionId)}><Pencil size={15} /></button>}
+                      {q.isHidden && (
+                        <button type="button" className="act" onClick={() => unhide.mutate(q.questionId)}><Eye size={15} />Bỏ ẩn</button>
+                      )}
                       {q.status === 'Ready' && !q.isHidden && (
                         <button
                           type="button" className="act" aria-label="Ẩn khỏi kho"
                           onClick={() => confirmAction({
                             title: 'Ẩn câu hỏi khỏi kho?',
-                            content: 'Giáo viên khác không còn thấy câu này để đưa vào bài mới. Các bài đã có câu này không bị ảnh hưởng. Muốn dùng lại thì phải soạn câu mới.',
+                            content: 'Giáo viên khác không còn thấy câu này để đưa vào bài mới. Các bài đã có câu này không bị ảnh hưởng. Muốn dùng lại thì vào tab Đã ẩn và bấm Bỏ ẩn.',
                             okText: 'Ẩn khỏi kho', onOk: () => hide.mutateAsync(q.questionId).catch(() => undefined),
                           })}
                         ><EyeOff size={15} /></button>
@@ -163,6 +176,7 @@ export function QuestionBankPage() {
                     </span>
                   )}
                   {expanded && <Expanded id={q.questionId} />}
+                  </div>
                 </li>
               );
             })}
@@ -177,7 +191,7 @@ export function QuestionBankPage() {
         )}
       </section>
 
-      <QuestionEditor open={formOpen} editing={editing} subjects={subjects.active} defaultSubjectId={subjectId} onClose={() => setFormOpen(false)} />
+      <QuestionEditor open={formOpen} editing={editing} subjects={mySubjects} defaultSubjectId={mySubjects.some((s) => s.subjectId === subjectId) ? subjectId : undefined} onClose={() => setFormOpen(false)} />
     </div>
   );
 }

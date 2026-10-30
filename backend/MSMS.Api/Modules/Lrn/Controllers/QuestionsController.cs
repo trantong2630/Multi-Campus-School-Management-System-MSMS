@@ -17,6 +17,9 @@ public class QuestionsController(QuestionService service, QuestionDraftService d
         [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         => service.ListAsync(subjectId, gradeLevel, topic, creator, status, mine, includeHidden, search, page, pageSize);
 
+    [HttpGet("my-subjects")]
+    public Task<IReadOnlyList<SubjectOptionDto>> MySubjects() => service.MySubjectsAsync();
+
     [HttpGet("{id:int}")]
     public Task<QuestionDetailDto> Get(int id) => service.GetAsync(id);
 
@@ -28,6 +31,9 @@ public class QuestionsController(QuestionService service, QuestionDraftService d
 
     [HttpPut("{id:int}/hide")]
     public async Task<IActionResult> Hide(int id) { await service.HideAsync(id); return NoContent(); }
+
+    [HttpPut("{id:int}/unhide")]
+    public async Task<IActionResult> Unhide(int id) { await service.UnhideAsync(id); return NoContent(); }
 
     [HttpPut("{id:int}/confirm")]
     public async Task<IActionResult> Confirm(int id) { await service.ConfirmAsync(id); return NoContent(); }

@@ -13,11 +13,12 @@ interface AvatarProps {
   className?: string;
 }
 
-/** Linh vật MSMS AI (logo/chatbot.png): chỉ chuyển động bằng CSS, tôn trọng "giảm chuyển động" của hệ điều hành. */
+/** Linh vật MSMS AI (logo/chatbot.png) đeo thẻ tên: chỉ chuyển động bằng CSS, tôn trọng "giảm chuyển động" của hệ điều hành. */
 export function AiAvatar({ mood = 'idle', size = 72, className }: AvatarProps) {
   return (
-    <span className={`ai-avatar ai-avatar--${mood}${className ? ` ${className}` : ''}`} style={{ width: size, height: size }} aria-hidden>
+    <span className={`ai-avatar ai-avatar--${mood}${className ? ` ${className}` : ''}`} style={{ width: size, height: size, fontSize: Math.max(9, Math.round(size * 0.15)) }} aria-hidden>
       <img src={avatar} alt="" draggable={false} />
+      <span className="ai-avatar__tag">MSMS AI</span>
     </span>
   );
 }

@@ -1,8 +1,9 @@
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
-import { DatePicker, Input, InputNumber } from 'antd';
+import { ConfigProvider, DatePicker, Input, InputNumber } from 'antd';
+import { FILTER_THEME } from '@/shared/components/FilterBar';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
-import { ArrowDown, ArrowUp, Check, Plus, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ListChecks, Plus, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { confirmAction, showError } from '@/shared/lib/feedback';
@@ -24,7 +25,6 @@ const DUE_PRESETS: { label: string; at: () => Dayjs }[] = [
   { label: 'Tối nay 21:00', at: () => dayjs().hour(21).minute(0).second(0) },
   { label: 'Ngày mai 21:00', at: () => dayjs().add(1, 'day').hour(21).minute(0).second(0) },
   { label: '3 ngày nữa', at: () => dayjs().add(3, 'day').hour(21).minute(0).second(0) },
-  { label: '1 tuần nữa', at: () => dayjs().add(7, 'day').hour(21).minute(0).second(0) },
 ];
 
 /**
@@ -169,7 +169,7 @@ export function AssignBuilderPage() {
             {target && (
               <>
                 <div className="picker__bar">
-                  <Input.Search allowClear placeholder="Tìm trong kho" value={search} onChange={(e) => setSearch(e.target.value)} />
+                  <ConfigProvider theme={FILTER_THEME}><Input.Search allowClear placeholder="Tìm trong kho" value={search} onChange={(e) => setSearch(e.target.value)} /></ConfigProvider>
                   <button type="button" className={`pill${onlyMine ? ' is-on' : ''}`} onClick={() => setOnlyMine(!onlyMine)} aria-pressed={onlyMine}>Chỉ câu của tôi</button>
                 </div>
                 {pool.length === 0 && !bank.isLoading ? (
@@ -184,9 +184,9 @@ export function AssignBuilderPage() {
                             <span className="picker__check">{on ? <Check size={14} strokeWidth={3} /> : <Plus size={14} />}</span>
                             <span className="picker__text">{q.content}</span>
                             <span className="picker__tags">
-                              {q.gradeLevel && <span className="chip">Khối {q.gradeLevel}</span>}
-                              {q.topic && <span className="chip">{q.topic}</span>}
-                              {q.isMultiple && <span className="chip chip--warn">Chọn nhiều</span>}
+                              {q.gradeLevel && <span className="tagtext">Khối {q.gradeLevel}</span>}
+                              {q.topic && <span className="tagtext">{q.topic}</span>}
+                              {q.isMultiple && <span className="chip chip--warn"><ListChecks size={12} />Chọn nhiều</span>}
                             </span>
                           </button>
                         </li>
@@ -229,13 +229,13 @@ export function AssignBuilderPage() {
               </div>
               <div className="when__row">
                 <span>Thời gian làm</span>
-                <div className="when__ctl">
+                <div className="when__ctl when__ctl--col">
                 <div className="pillset pillset--wrap">
                   <button type="button" className={duration === null && !customDuration ? 'is-on' : ''} onClick={() => { setDuration(null); setCustomDuration(false); }}>Không giới hạn</button>
+                  <button type="button" className={customDuration ? 'is-on' : ''} onClick={() => { setCustomDuration(true); setDuration((d) => d ?? 20); }}>Tự nhập</button>
                   {DURATION_PRESETS.map((m) => (
                     <button key={m} type="button" className={duration === m && !customDuration ? 'is-on' : ''} onClick={() => { setDuration(m); setCustomDuration(false); }}>{m} phút</button>
                   ))}
-                  <button type="button" className={customDuration ? 'is-on' : ''} onClick={() => { setCustomDuration(true); setDuration((d) => d ?? 20); }}>Tự nhập</button>
                 </div>
                 {customDuration && <InputNumber min={1} max={600} precision={0} value={duration} onChange={(v) => setDuration(v)} addonAfter="phút" />}
                 </div>
