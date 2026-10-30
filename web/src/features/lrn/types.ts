@@ -56,6 +56,7 @@ export interface QuestionQuery {
   gradeLevel?: number;
   status?: QuestionStatus;
   mine?: boolean;
+  includeHidden?: boolean;
   search?: string;
   page?: number;
   pageSize?: number;
@@ -123,6 +124,8 @@ export interface QuizQuestion {
   points: number;
   content: string;
   isMultiple: boolean;
+  /** Số đáp án đúng: học sinh biết phải chọn mấy đáp án. */
+  correctCount: number;
   options: QuizOption[];
 }
 
@@ -244,7 +247,7 @@ export interface PracticeResult {
 // ---- Tiến độ giao bài của tổ ----
 
 export interface SubjectOption { subjectId: number; name: string }
-export interface TeacherProgress { personId: number; name: string; assignmentCount: number; openCount: number }
+export interface TeacherProgress { personId: number; name: string; campusId: number; campusName: string; assignmentCount: number; openCount: number }
 export interface DepartmentItem {
   assignmentId: number;
   title: string;

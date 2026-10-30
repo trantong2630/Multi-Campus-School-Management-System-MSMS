@@ -121,7 +121,7 @@ public sealed class AssignmentService(
 
     public static IReadOnlyList<QuizQuestionDto> ToQuiz(IEnumerable<AssignmentQuestion> lines) => lines.OrderBy(l => l.OrderNo)
         .Select(l => new QuizQuestionDto(l.AssignmentQuestionId, l.OrderNo, l.Points, l.Question.Content,
-            l.Question.QuestionOption.Count(o => o.IsCorrect) > 1,
+            l.Question.QuestionOption.Count(o => o.IsCorrect) > 1, l.Question.QuestionOption.Count(o => o.IsCorrect),
             l.Question.QuestionOption.OrderBy(o => o.OptionLabel).Select(o => new QuizOptionDto(o.OptionId, o.OptionLabel, o.Content)).ToList()))
         .ToList();
 

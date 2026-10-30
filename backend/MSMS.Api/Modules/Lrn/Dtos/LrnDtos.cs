@@ -49,7 +49,7 @@ public record AssignmentDetailDto(
 
 /// <summary>Đề đúng như học sinh thấy: không có đáp án đúng, không có giải thích.</summary>
 public record QuizOptionDto(int OptionId, string Label, string Content);
-public record QuizQuestionDto(int AssignmentQuestionId, int OrderNo, decimal Points, string Content, bool IsMultiple, IReadOnlyList<QuizOptionDto> Options);
+public record QuizQuestionDto(int AssignmentQuestionId, int OrderNo, decimal Points, string Content, bool IsMultiple, int CorrectCount, IReadOnlyList<QuizOptionDto> Options);
 
 public record AnswerInputDto(int AssignmentQuestionId, List<int>? OptionIds);
 public record SaveAnswersDto(List<AnswerInputDto>? Answers);
@@ -104,7 +104,7 @@ public record PracticeResultDto(
 
 public record SubjectOptionDto(int SubjectId, string Name);
 
-public record TeacherProgressDto(int PersonId, string Name, int AssignmentCount, int OpenCount);
+public record TeacherProgressDto(int PersonId, string Name, int CampusId, string CampusName, int AssignmentCount, int OpenCount);
 
 public record DepartmentItemDto(
     int AssignmentId, string Title, int CampusId, string CampusName, int ClassId, string ClassName, int SubjectId, string SubjectName,

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from 'antd';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PersonAvatar } from '@/shared/components/PersonAvatar';
 import { lrnApi } from '../api';
 import { MsmsAi } from '../components/MsmsAi';
 import { AiEmpty } from '../components/parts';
@@ -45,7 +46,7 @@ export function ChildrenPage() {
                   key={c.studentId} type="button" role="tab" aria-selected={c.studentId === child.studentId}
                   className={c.studentId === child.studentId ? 'is-on' : ''} onClick={() => setPicked(c.studentId)}
                 >
-                  <span className="kids__avatar">{firstName(c.fullName).charAt(0).toUpperCase()}</span>
+                  <PersonAvatar name={c.fullName} size={36} />
                   <span><strong>{c.fullName}</strong>{c.className && <em>{c.className}</em>}</span>
                 </button>
               ))}
