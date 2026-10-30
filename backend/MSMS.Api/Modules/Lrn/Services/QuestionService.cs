@@ -22,15 +22,31 @@ public static class QuestionStatuses
 /// </summary>
 public sealed class QuestionService(MsmsDbContext db, CurrentUser user, IClock clock)
 {
+    /// <summary>Môn thuộc tổ chuyên môn của giáo viên: chỉ những môn này được soạn câu hỏi (kể cả nhờ AI soạn).</summary>
+    public async Task<IReadOnlyList<SubjectOptionDto>> MySubjectsAsync()
+    {
+        var departmentId = await db.StaffProfile.AsNoTracking().Where(s => s.StaffId == user.PersonId).Select(s => s.DepartmentId).FirstOrDefaultAsync();
+        if (departmentId is null) return [];
+        return await db.Subject.AsNoTracking().Where(s => s.IsActive && s.DepartmentId == departmentId)
+            .OrderBy(s => s.Name).Select(s => new SubjectOptionDto(s.SubjectId, s.Name)).ToListAsync();
+    }
+
+    public async Task EnsureOwnSubjectAsync(int subjectId)
+    {
+        if ((await MySubjectsAsync()).All(s => s.SubjectId != subjectId))
+            throw ApiException.Forbidden("Chỉ soạn được câu hỏi cho môn thuộc tổ chuyên môn của mình. Chọn môn khác.");
+    }
+
     public async Task<PagedResult<QuestionItemDto>> ListAsync(
         int? subjectId, byte? gradeLevel, string? topic, string? creator, string? status, bool mine, bool includeHidden, string? search, int page, int pageSize)
     {
         var me = user.PersonId;
-        // Câu bị ẩn chỉ người tạo thấy và chỉ khi chọn xem câu đã ẩn; câu Nháp chỉ người tạo thấy.
+        // Câu bị ẩn chỉ người tạo thấy và chỉ khi chọn xem câu đã ẩn (khi đó chỉ trả câu đã ẩn); câu Nháp chỉ người tạo thấy.
         var q = db.Question.AsNoTracking().Where(x => x.IsHidden
             ? includeHidden && x.CreatedByPersonId == me
             : x.Status == QuestionStatuses.Ready || x.CreatedByPersonId == me);
 
+        if (includeHidden) q = q.Where(x => x.IsHidden);
         if (subjectId is not null) q = q.Where(x => x.SubjectId == subjectId);
         if (gradeLevel is not null) q = q.Where(x => x.GradeLevel == gradeLevel);
         if (mine) q = q.Where(x => x.CreatedByPersonId == me);
@@ -115,6 +131,17 @@ public sealed class QuestionService(MsmsDbContext db, CurrentUser user, IClock c
         await db.SaveChangesAsync();
     }
 
+    /// <summary>Bỏ ẩn (4.6.4): câu trở lại ngân hàng chung, người khác đưa vào bài mới được như trước.</summary>
+    public async Task UnhideAsync(int id)
+    {
+        var q = await db.Question.FirstOrDefaultAsync(x => x.QuestionId == id) ?? throw ApiException.NotFound("Không tìm thấy câu hỏi.");
+        EnsureOwner(q, "bỏ ẩn");
+        if (!q.IsHidden) return;
+        q.IsHidden = false;
+        q.UpdatedAt = clock.Now;
+        await db.SaveChangesAsync();
+    }
+
     /// <summary>Xác nhận nháp AI thành câu Sẵn dùng (4.6.7). Chỉ câu Sẵn dùng mới đưa vào bài tập được.</summary>
     public async Task ConfirmAsync(int id)
     {
@@ -190,6 +217,7 @@ public sealed class QuestionService(MsmsDbContext db, CurrentUser user, IClock c
     {
         if (!await db.Subject.AnyAsync(s => s.SubjectId == dto.SubjectId && s.IsActive))
             throw ApiException.BadRequest("Môn học không tồn tại hoặc đã ngừng hoạt động. Chọn môn khác.");
+        await EnsureOwnSubjectAsync(dto.SubjectId);
         if (dto.GradeLevel is < QuizRules.MinGrade or > QuizRules.MaxGrade) throw ApiException.BadRequest("Khối phải từ 6 đến 9. Chọn lại khối.");
         var topic = Guard.Required(dto.Topic, "Chủ đề", 150);
         var content = Guard.Required(dto.Content, "Nội dung câu hỏi", QuizRules.ContentMaxLength);
