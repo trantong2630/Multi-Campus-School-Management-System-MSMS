@@ -1,5 +1,5 @@
 import {
-  BookOpen, CalendarDays, ClipboardCheck, HeartHandshake, House, LayoutDashboard, Newspaper, Settings2, ShieldCheck, Users,
+  BookOpen, CalendarDays, ClipboardCheck, FileText, HeartHandshake, House, LayoutDashboard, Mail, Newspaper, Settings2, ShieldCheck, Users,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { AccountType } from '@/shared/lib/labels';
@@ -12,6 +12,7 @@ export interface MenuLeaf {
   roles: AccountType[];
   /** false = màn hình chưa làm, chưa đưa lên menu. Đổi thành true khi trang có thật. */
   ready: boolean;
+  icon?: LucideIcon;
 }
 
 export interface MenuGroup {
@@ -86,9 +87,9 @@ export const menu: MenuGroup[] = [
   {
     key: 'par', label: 'Phụ huynh', icon: HeartHandshake, section: 'manage',
     children: [
-      { key: 'par-leave', label: 'Đơn xin nghỉ', path: '/par/leave-requests', roles: ['VicePrincipal', 'Teacher', 'Parent'], ready: true },
-      { key: 'par-report', label: 'Sổ liên lạc', path: '/par/weekly-reports', roles: ['Teacher', 'Student', 'Parent'], ready: false },
-      { key: 'par-inbox', label: 'Hộp thư', path: '/par/inbox', roles: ['Teacher', 'Parent'], ready: true },
+      { key: 'par-leave', label: 'Đơn xin nghỉ', path: '/par/leave-requests', roles: ['VicePrincipal', 'Teacher', 'Parent'], ready: true, icon: FileText },
+      { key: 'par-report', label: 'Sổ liên lạc', path: '/par/weekly-reports', roles: ['Teacher', 'Student', 'Parent'], ready: false, icon: HeartHandshake },
+      { key: 'par-inbox', label: 'Hộp thư', path: '/par/inbox', roles: ['Teacher', 'Parent'], ready: true, icon: Mail },
     ],
   },
   { key: 'com', label: 'Bảng tin', icon: Newspaper, section: 'manage', path: '/com/posts', roles: ALL, ready: false },
@@ -108,9 +109,31 @@ export function visibleMenu(type: AccountType): MenuGroup[] {
   for (const g of menu) {
     if (g.children) {
       const children = g.children.filter((c) => c.ready && c.roles.includes(type));
-      // Nhóm chỉ còn một màn hình thì không có cấp 2 (Conventions §4.7): dùng thẳng tên và đường dẫn của màn hình đó.
-      if (children.length === 1) result.push({ ...g, label: children[0].label, path: children[0].path, children: undefined });
-      else if (children.length) result.push({ ...g, children });
+      if (type === 'Parent' && g.key === 'par') {
+        // Đối với Phụ huynh: phẳng hóa các mục con của nhóm 'par' ra menu cấp 1 (ngang hàng với Lịch học, không cần nhóm cha "Phụ huynh").
+        for (const c of children) {
+          result.push({
+            key: c.key,
+            label: c.label,
+            icon: c.icon ?? g.icon,
+            section: g.section,
+            path: c.path,
+            roles: c.roles,
+            ready: c.ready,
+          });
+        }
+      } else if (children.length === 1) {
+        // Nhóm chỉ còn một màn hình thì không có cấp 2 (Conventions §4.7): dùng thẳng tên và đường dẫn của màn hình đó.
+        result.push({
+          ...g,
+          label: children[0].label,
+          path: children[0].path,
+          icon: children[0].icon ?? g.icon,
+          children: undefined,
+        });
+      } else if (children.length) {
+        result.push({ ...g, children });
+      }
     } else if (g.ready && g.roles?.includes(type)) {
       result.push(g);
     }
@@ -124,12 +147,17 @@ const extraCrumbs: Record<string, string[]> = {
   '/change-password': ['Tài khoản', 'Đổi mật khẩu'],
 };
 
-export function resolveCrumbs(pathname: string): string[] {
+export function resolveCrumbs(pathname: string, type?: AccountType): string[] {
   if (extraCrumbs[pathname]) return extraCrumbs[pathname];
   for (const g of menu) {
     if (g.path === pathname) return [g.label];
     const leaf = g.children?.find((c) => c.path === pathname);
-    if (leaf) return [g.label, leaf.label];
+    if (leaf) {
+      if (type === 'Parent' && g.key === 'par') {
+        return [leaf.label];
+      }
+      return [g.label, leaf.label];
+    }
   }
   // Trang con của một mục menu (vd. chi tiết bài tập) lấy breadcrumb của mục cha.
   for (const g of menu) {

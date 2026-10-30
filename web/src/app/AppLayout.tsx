@@ -92,7 +92,21 @@ export function AppLayout() {
           <Icon size={18} strokeWidth={2} />
         </span>
       );
-      if (!g.children) return { key: g.key, icon: tile, label: g.label };
+      if (!g.children) {
+        const hasBadge = g.key === 'par-inbox' && unreadInboxCount > 0;
+        return {
+          key: g.key,
+          icon: tile,
+          label: hasBadge ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              <span>{g.label}</span>
+              <Badge count={unreadInboxCount} size="small" style={{ marginLeft: 8 }} />
+            </span>
+          ) : (
+            g.label
+          ),
+        };
+      }
       return {
         key: g.key,
         icon: tile,
@@ -165,7 +179,7 @@ export function AppLayout() {
     },
   ];
 
-  const crumbs = resolveCrumbs(location.pathname);
+  const crumbs = resolveCrumbs(location.pathname, user?.accountType);
 
   // Tab trình duyệt: tên trang trước để nhiều tab vẫn phân biệt được khi bị cắt chữ; Trang chủ chỉ có tên trường.
   const pageTitle = location.pathname === '/' ? undefined : crumbs[crumbs.length - 1];
