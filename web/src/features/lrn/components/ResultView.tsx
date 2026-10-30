@@ -21,7 +21,7 @@ function QuestionCard({ q, viewer }: { q: ResultQuestion; viewer: Viewer }) {
           {right ? <Check size={16} strokeWidth={3} /> : <X size={16} strokeWidth={3} />}
         </span>
         <div className="rv-q__text">
-          <span className="rv-q__label">Câu {q.orderNo}{q.isMultiple ? ' · chọn nhiều đáp án' : ''}</span>
+          <span className="rv-q__label">Câu {q.orderNo}{q.isMultiple && <span className="rv-q__multi">Chọn nhiều đáp án: {q.options.filter((o) => o.isCorrect).length} đáp án đúng</span>}</span>
           <p>{q.content}</p>
         </div>
         <span className="rv-q__pts tabular">{fmtScore(q.earnedPoints)}/{fmtScore(q.points)}</span>

@@ -36,8 +36,12 @@ public sealed class DepartmentService(MsmsDbContext db, IClock clock, LrnAccess 
         var items = rows.Select(r => new DepartmentItemDto(r.AssignmentId, r.Title, r.CampusId, r.CampusName, r.ClassId, r.ClassName, r.SubjectId, r.SubjectName,
             r.AssignedByName, r.OpenAt, r.DueAt, AssignmentRules.IsClosed(r.DueAt, now), r.RecipientCount, r.SubmittedCount)).ToList();
 
+        var personIds = rows.Select(r => r.AssignedByPersonId).Distinct().ToList();
+        var campusOf = await db.StaffProfile.AsNoTracking().Where(s => personIds.Contains(s.StaffId))
+            .Select(s => new { s.StaffId, CampusId = s.PrimaryCampusId, CampusName = s.PrimaryCampus.Name }).ToDictionaryAsync(s => s.StaffId);
+
         var teachers = rows.GroupBy(r => (r.AssignedByPersonId, r.AssignedByName))
-            .Select(g => new TeacherProgressDto(g.Key.AssignedByPersonId, g.Key.AssignedByName, g.Count(), g.Count(r => !AssignmentRules.IsClosed(r.DueAt, now))))
+            .Select(g => new TeacherProgressDto(g.Key.AssignedByPersonId, g.Key.AssignedByName, campusOf.GetValueOrDefault(g.Key.AssignedByPersonId)?.CampusId ?? 0, campusOf.GetValueOrDefault(g.Key.AssignedByPersonId)?.CampusName ?? "", g.Count(), g.Count(r => !AssignmentRules.IsClosed(r.DueAt, now))))
             .OrderByDescending(t => t.AssignmentCount).ThenBy(t => t.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
         return new DepartmentOverviewDto(true, subjects, teachers, items);
     }

@@ -237,6 +237,7 @@ export function AttemptPage() {
             Bài có <strong>{data.questionCount} câu</strong> và giới hạn <strong>{durationText(data.durationMinutes)}</strong>.
             Đồng hồ chỉ bắt đầu chạy khi bạn bấm nút dưới đây, và sẽ vẫn chạy nếu bạn thoát ra.
           </p>
+          <p className="focus__due">Hạn nộp: <strong>{dayjs(data.dueAt).format('HH:mm [ngày] DD/MM/YYYY')}</strong></p>
           {data.instruction && <p className="focus__note">{data.instruction}</p>}
           <div className="focus__introbtns">
             <Button size="large" onClick={() => navigate('/lrn/todo')}>Để sau</Button>
@@ -254,7 +255,7 @@ export function AttemptPage() {
           </button>
           <div className="focus__title">
             <strong>{data.title}</strong>
-            <span>{data.subjectName} · {timed ? durationText(data.durationMinutes) : `Hạn nộp ${dayjs(data.dueAt).format('HH:mm DD/MM')}`}</span>
+            <span>{data.subjectName} · {timed ? `${durationText(data.durationMinutes)} · ` : ''}Hạn nộp {dayjs(data.dueAt).format('HH:mm DD/MM')}</span>
           </div>
           <div className="focus__progress" aria-label={`Đã làm ${answered} trên ${total} câu`}>
             <span className="tabular">{answered}/{total}</span>
@@ -271,7 +272,9 @@ export function AttemptPage() {
             <article className="qcard" key={q.assignmentQuestionId} style={subjectVars(data.subjectId)}>
               <div className="qcard__meta">
                 <span className="qcard__no">Câu {q.orderNo}<small>/{total}</small></span>
-                <span className="qcard__tag">{q.isMultiple ? 'Chọn nhiều đáp án' : 'Chọn một đáp án'}</span>
+                {q.isMultiple
+                  ? <span className="qcard__tag qcard__tag--multi">Chọn nhiều đáp án: chọn đúng {q.correctCount} đáp án</span>
+                  : <span className="qcard__tag">Chọn một đáp án</span>}
                 <span className="qcard__pts">{q.points.toLocaleString('vi-VN')} điểm</span>
               </div>
               {idx === 0 && data.instruction && <p className="focus__note">{data.instruction}</p>}
