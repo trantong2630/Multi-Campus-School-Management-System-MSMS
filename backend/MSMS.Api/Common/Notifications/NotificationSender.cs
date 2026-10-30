@@ -9,6 +9,7 @@ public static class NotificationTypes
     public const string TimetablePublished = "TimetablePublished";
     public const string SessionPending = "SessionPending";
     public const string ScheduleChanged = "ScheduleChanged";
+    public const string AssignmentAssigned = "AssignmentAssigned";
 }
 
 /// <summary>
