@@ -46,12 +46,16 @@ export function PostsPage() {
     queryFn: () => postApi.list({ page, pageSize: PAGE_SIZE, status, visibility }),
     placeholderData: (prev) => prev,
   });
-  const refresh = () => qc.invalidateQueries({ queryKey: ['com'] });
+  // Chỉ làm mới danh sách và chi tiết; không đụng tới ảnh (['com','post-image']) vì ảnh đã gỡ hoặc bài đã xóa sẽ trả 404.
+  const refresh = (detail = true) => Promise.all([
+    qc.invalidateQueries({ queryKey: ['com', 'posts'] }),
+    detail ? qc.invalidateQueries({ queryKey: ['com', 'post'] }) : undefined,
+  ]);
 
-  const run = async (action: () => Promise<unknown>, success: string) => {
+  const run = async (action: () => Promise<unknown>, success: string, detail = true) => {
     try {
       await action();
-      await refresh();
+      await refresh(detail);
       message.success(success);
     } catch (e) {
       showError(e);
@@ -70,7 +74,7 @@ export function PostsPage() {
   const remove = (p: { postId: number; title: string }) => confirmAction({
     title: `Xóa bài "${p.title}"?`, content: 'Xóa bài sẽ xóa luôn các ảnh đính kèm và không khôi phục được. Muốn giữ lại thì chọn Ẩn bài.',
     okText: 'Xóa bài', danger: true,
-    onOk: () => run(async () => { await postApi.remove(p.postId); setOpenId(null); }, 'Đã xóa bài.'),
+    onOk: () => run(async () => { await postApi.remove(p.postId); setOpenId(null); }, 'Đã xóa bài.', false),
   });
 
   return (
