@@ -48,10 +48,10 @@ export function StaffImportModal({ open, onClose }: { open: boolean; onClose: ()
       open={open} title="Import cán bộ từ Excel" width={820} onCancel={close} mask={{ closable: false }}
       footer={<Button onClick={close}>Đóng</Button>}
     >
-      <p style={{ marginTop: 0, color: 'var(--c-text2)' }}>
+      <p className="import-modal__hint">
         Tải file mẫu, điền rồi tải lên. Người đã có (trùng họ tên và ngày sinh) bị bỏ qua cả dòng; import chỉ tạo hồ sơ, không tạo tài khoản.
       </p>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+      <div className="import-modal__actions">
         <Button icon={<FileDown size={16} />} onClick={template}>Tải file mẫu</Button>
         <FileButton type="primary" icon={<FileUp size={16} />} loading={uploading} onFile={upload}>Tải lên</FileButton>
       </div>

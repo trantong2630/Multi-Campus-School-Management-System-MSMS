@@ -111,7 +111,7 @@ export function SchoolProfilePage() {
           <div className="school-logo-box">
             {logoSrc ? <img src={logoSrc} alt={`Logo ${name}`} /> : <SchoolLogo size={72} />}
           </div>
-          <p style={{ textAlign: 'center', color: 'var(--c-text2)', margin: '0 0 16px' }}>
+          <p className="school-logo-hint">
             Ảnh JPG hoặc PNG, tối đa 2 MB.
           </p>
           {canWrite && (
@@ -132,7 +132,7 @@ export function SchoolProfilePage() {
                   </Button>
                 )}
               </div>
-              {!profile?.name && <p className="muted" style={{ textAlign: 'center', marginTop: 12 }}>Lưu tên trường trước, sau đó mới tải logo.</p>}
+              {!profile?.name && <p className="muted school-logo-note">Lưu tên trường trước, sau đó mới tải logo.</p>}
             </>
           )}
         </Card>

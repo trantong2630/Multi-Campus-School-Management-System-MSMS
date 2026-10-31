@@ -31,6 +31,7 @@ public sealed class PeriodSlotService(MsmsDbContext db)
         EnsureTimes(r.StartTime, r.EndTime);
         if (await db.PeriodSlot.AnyAsync(p => p.SessionOfDay == r.SessionOfDay && p.PeriodNo == r.PeriodNo))
             throw ApiException.BadRequest($"Khung {SessionOfDay.Label(r.SessionOfDay)} tiết {r.PeriodNo} đã có. Sửa giờ của khung đó hoặc chọn tiết khác.");
+        await EnsureNoConflictAsync(r.SessionOfDay, r.PeriodNo, r.StartTime, r.EndTime, exceptId: null);
 
         var slot = new PeriodSlot
         {
@@ -45,6 +46,7 @@ public sealed class PeriodSlotService(MsmsDbContext db)
     {
         var slot = await db.PeriodSlot.FindAsync(id) ?? throw ApiException.NotFound("Không tìm thấy khung giờ.");
         EnsureTimes(r.StartTime, r.EndTime);
+        if (slot.IsActive) await EnsureNoConflictAsync(slot.SessionOfDay, slot.PeriodNo, r.StartTime, r.EndTime, exceptId: id);
         slot.StartTime = r.StartTime;
         slot.EndTime = r.EndTime;
         await db.SaveChangesAsync();
@@ -57,8 +59,33 @@ public sealed class PeriodSlotService(MsmsDbContext db)
         if (!isActive && (await db.TeachingSession.AnyAsync(s => s.PeriodSlotId == id)
                           || await db.TimetableEntry.AnyAsync(e => e.PeriodSlotId == id)))
             throw ApiException.BadRequest("Khung giờ đang có tiết học hoặc thời khóa biểu tham chiếu nên không ngừng dùng được.");
+        if (isActive) await EnsureNoConflictAsync(slot.SessionOfDay, slot.PeriodNo, slot.StartTime, slot.EndTime, exceptId: id);   // lúc đang ngừng dùng giờ có thể đã bị khung khác chiếm
         slot.IsActive = isActive;
         await db.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Giờ của các khung đang dùng không được chồng nhau và phải đúng thứ tự: trong một buổi, tiết nhỏ hơn kết thúc trước khi tiết lớn hơn bắt đầu;
+    /// buổi Sáng kết thúc trước khi buổi Chiều bắt đầu. Kiểm xung đột giáo viên (BR-13) dựa trên khung giờ nên giờ chồng nhau sẽ làm lọt xung đột thật.
+    /// </summary>
+    private async Task EnsureNoConflictAsync(string session, byte periodNo, TimeOnly start, TimeOnly end, int? exceptId)
+    {
+        var others = await db.PeriodSlot.AsNoTracking().Where(p => p.IsActive && p.PeriodSlotId != exceptId).ToListAsync();
+        var clash = others.FirstOrDefault(o => Conflicts(session, periodNo, start, end, o));
+        if (clash is not null)
+            throw ApiException.BadRequest(
+                $"Giờ {start:HH:mm}–{end:HH:mm} chồng hoặc sai thứ tự với khung {SessionOfDay.Label(clash.SessionOfDay)} tiết {clash.PeriodNo} ({clash.StartTime:HH:mm}–{clash.EndTime:HH:mm}). " +
+                "Tiết trước phải kết thúc trước khi tiết sau bắt đầu, buổi Sáng phải kết thúc trước buổi Chiều.");
+    }
+
+    private static bool Conflicts(string session, byte periodNo, TimeOnly start, TimeOnly end, PeriodSlot other)
+    {
+        if (other.SessionOfDay == session)
+        {
+            if (other.PeriodNo == periodNo) return false;   // cùng khóa (Buổi, Tiết) đã được kiểm riêng
+            return other.PeriodNo < periodNo ? other.EndTime > start : end > other.StartTime;
+        }
+        return session == SessionOfDay.Morning ? end > other.StartTime : other.EndTime > start;
     }
 
     private static void EnsureTimes(TimeOnly start, TimeOnly end)

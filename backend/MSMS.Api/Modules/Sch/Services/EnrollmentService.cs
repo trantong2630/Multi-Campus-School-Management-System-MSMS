@@ -21,11 +21,11 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
     /// <summary>4.2.29 / 4.2.33: học sinh có ghi danh hiệu lực của lớp tại ngày xem (mặc định hôm nay).</summary>
     public async Task<RosterDto> GetRosterAsync(int classId, DateOnly? date)
     {
-        var cls = await db.Class.AsNoTracking().FirstOrDefaultAsync(c => c.ClassId == classId)
+        var cls = await db.Class.AsNoTracking().Include(c => c.AcademicYear).FirstOrDefaultAsync(c => c.ClassId == classId)
                   ?? throw ApiException.NotFound("Không tìm thấy lớp.");
         await EnsureCanReadRosterAsync(cls);
 
-        var on = date ?? clock.Today;
+        var on = date ?? EnrollmentRules.DefaultViewDate(clock.Today, cls.AcademicYear.StartDate);
         var students = await db.Enrollment.AsNoTracking().RosterAt(classId, on)
             .OrderBy(e => e.Student.Student.FullName)
             .Select(e => new RosterItemDto(e.EnrollmentId, e.StudentId, e.Student.Student.PersonCode, e.Student.Student.FullName,
@@ -94,8 +94,9 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
     }
 
     /// <summary>
-    /// 4.2.32: kết thúc ghi danh đang mở, ngày kết thúc là ngày thao tác (BR-09). Chuyển trường hoặc tốt nghiệp
-    /// đồng thời đổi trạng thái học sinh và khóa tài khoản học sinh trong cùng thao tác (BR-05).
+    /// 4.2.32: kết thúc ghi danh đang mở, ngày kết thúc là ngày thao tác (BR-09). Chuyển trường hoặc tốt nghiệp đồng thời đổi trạng thái học sinh,
+    /// khóa tài khoản học sinh (BR-05) và kết thúc MỌI ghi danh còn lại của em: ghi danh đang hiệu lực thì đóng, ghi danh chưa bắt đầu
+    /// (ví dụ lớp năm sau tạo bởi kết chuyển) thì bỏ hẳn vì chưa từng có hiệu lực.
     /// </summary>
     public async Task CloseAsync(int enrollmentId, CloseEnrollmentRequest r)
     {
@@ -105,17 +106,30 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
         if (e.EndDate != null) throw ApiException.BadRequest("Ghi danh này đã kết thúc từ trước.");
 
         var today = clock.Today;
+        var leaving = r.Reason != EnrollmentCloseReasons.ClassTransfer;
         await using var tx = await db.Database.BeginTransactionAsync();
-        var endDate = e.StartDate > today ? e.StartDate : today;   // ghi danh chưa hiệu lực thì rút về đúng ngày bắt đầu
-        var yearEnd = e.Class.AcademicYear.EndDate;
-        e.EndDate = endDate > yearEnd ? yearEnd : endDate;          // đóng sau khi hết năm học thì ghi đúng ngày cuối năm học
-        e.Reason = r.Reason;
+
+        DateOnly leftDate;
+        if (leaving && e.StartDate > today)
+        {
+            db.Enrollment.Remove(e);   // chưa bắt đầu thì không có gì để đóng, em đã rời trường
+            leftDate = today;
+        }
+        else
+        {
+            var endDate = e.StartDate > today ? e.StartDate : today;   // ghi danh chưa hiệu lực thì rút về đúng ngày bắt đầu
+            var yearEnd = e.Class.AcademicYear.EndDate;
+            e.EndDate = endDate > yearEnd ? yearEnd : endDate;          // đóng sau khi hết năm học thì ghi đúng ngày cuối năm học
+            e.Reason = r.Reason;
+            leftDate = e.EndDate.Value;
+        }
 
         int? lockedAccountId = null;
-        if (r.Reason != EnrollmentCloseReasons.ClassTransfer)
+        if (leaving)
         {
+            await EndOtherEnrollmentsAsync(e, today, r.Reason);
             e.Student.Status = r.Reason == EnrollmentCloseReasons.Graduated ? "Graduated" : "Transferred";
-            e.Student.LeftDate = e.EndDate;
+            e.Student.LeftDate = leftDate;
             var account = await db.Account.FirstOrDefaultAsync(a => a.PersonId == e.StudentId);
             if (account is { Status: not AccountStatuses.Locked })
             {
@@ -127,6 +141,25 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
         await db.SaveChangesAsync();
         await tx.CommitAsync();
         if (lockedAccountId is int id) await sessions.RevokeAllAsync(id);
+    }
+
+    /// <summary>Học sinh rời trường: đóng ghi danh đang hiệu lực khác của em, bỏ ghi danh chưa bắt đầu. Ghi danh đã kết thúc không đụng tới.</summary>
+    private async Task EndOtherEnrollmentsAsync(Enrollment kept, DateOnly today, string reason)
+    {
+        var others = await db.Enrollment.Include(x => x.Class).ThenInclude(c => c.AcademicYear)
+            .Where(x => x.StudentId == kept.StudentId && x.EnrollmentId != kept.EnrollmentId)
+            .Where(EnrollmentRules.OpenOrUpcoming(today))
+            .ToListAsync();
+        foreach (var o in others)
+        {
+            if (o.StartDate > today) db.Enrollment.Remove(o);
+            else
+            {
+                var yearEnd = o.Class.AcademicYear.EndDate;
+                o.EndDate = today > yearEnd ? yearEnd : today;
+                o.Reason = reason;
+            }
+        }
     }
 
     private async Task<Enrollment> FindEnrollmentAsync(int id) =>
