@@ -98,7 +98,7 @@ export const menu: MenuGroup[] = [
       { key: 'par-inbox', label: 'Hộp thư', path: '/par/inbox', roles: ['Teacher', 'Parent'], ready: true, icon: Mail },
     ],
   },
-  { key: 'com', label: 'Bảng tin', icon: Newspaper, section: 'manage', path: '/com/posts', roles: ALL, ready: false },
+  { key: 'com', label: 'Bảng tin', icon: Newspaper, section: 'manage', path: '/com/posts', roles: ALL, ready: true },
   {
     key: 'adm', label: 'Quản trị', icon: ShieldCheck, section: 'system',
     children: [
