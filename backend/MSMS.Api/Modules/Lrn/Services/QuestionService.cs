@@ -185,9 +185,6 @@ public sealed class QuestionService(MsmsDbContext db, CurrentUser user, IClock c
         db.Question.Where(q => questionIds.Contains(q.QuestionId))
             .ExecuteUpdateAsync(s => s.SetProperty(q => q.IsHidden, q => q.IsHidden));
 
-    public static string? CheckBook(string? textbook) => textbook is "Kết nối tri thức với cuộc sống" or "Chân trời sáng tạo" or "Cánh diều"
-        ? textbook : null;
-
     private void EnsureOwner(Question q, string action)
     {
         if (q.CreatedByPersonId != user.PersonId)
