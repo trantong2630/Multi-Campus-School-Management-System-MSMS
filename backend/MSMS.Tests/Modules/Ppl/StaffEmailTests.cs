@@ -1,3 +1,4 @@
+using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
 using MSMS.Api.Data;
 using MSMS.Api.Modules.Ppl.Dtos;
@@ -13,7 +14,8 @@ public class StaffEmailTests
     {
         var db = NewDb();
         AddCampus(db, 1, "Phân hiệu 1");
-        return (db, new StaffService(db, ClockAt()));
+        var user = UserOf(AccountTypes.SchoolAdmin, 900);
+        return (db, new StaffService(db, ClockAt(), new ScopeResolver(db, user, ClockAt())));
     }
 
     private static StaffRequest Request(string? email) =>

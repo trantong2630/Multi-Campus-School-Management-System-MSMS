@@ -51,7 +51,7 @@ export function HomePage() {
     enabled: isStaff && !!year,
   });
   const slots = useQuery({ queryKey: ['sch', 'slots'], queryFn: schApi.periodSlots.list, enabled: isStaff });
-  const mine = useQuery({ queryKey: ['scd', 'mine', today, today], queryFn: () => scdApi.mine(today, today), enabled: isStaff });
+  const mine = useQuery({ queryKey: ['scd', 'mine', today, today], queryFn: () => scdApi.mine(today, today), enabled: user?.accountType === 'Teacher' });
 
   if (!user) return null;
   const given = user.fullName.trim().split(/\s+/).at(-1) ?? user.fullName;

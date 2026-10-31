@@ -6,7 +6,7 @@ using MSMS.Api.Modules.Par.Services;
 
 namespace MSMS.Api.Modules.Par.Controllers;
 
-[ApiController, Route("api/par/conversations")]
+[ApiController, Route("api/par/conversations"), Authorize(Policy = Policies.ConversationParticipant)]
 public class ConversationsController(ConversationService service) : ControllerBase
 {
     [HttpGet("available-teachers"), Authorize(Policy = Policies.Parent)]

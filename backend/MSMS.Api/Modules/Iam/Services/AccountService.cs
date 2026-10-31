@@ -140,9 +140,9 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
         var (sessionCount, dutyCount) = await ReleaseDutiesAsync(account);
         account.Status = AccountStatuses.Locked;
         audit.Add(AuditCategories.Account, "LockAccount", [account.AccountId], new { pendingSessions = sessionCount, closedDuties = dutyCount });
+        await sessions.RevokeAllAsync(account.AccountId);
         await db.SaveChangesAsync();
         await tx.CommitAsync();
-        await sessions.RevokeAllAsync(account.AccountId);
     }
 
     private async Task<List<TeachingSession>> AffectedSessionsAsync(int teacherId)
@@ -226,13 +226,15 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
     public async Task<ResetPasswordResult> ResetPasswordAsync(int accountId)
     {
         var account = await FindAsync(accountId);
+        await using var tx = await db.Database.BeginTransactionAsync();
         var password = TempPasswords.Generate();
         account.PasswordHash = AuthService.HashPassword(account, password);
         account.Status = AccountStatuses.PendingPasswordChange;
         account.UpdatedAt = null;
         audit.Add(AuditCategories.Account, "ResetPassword", [account.AccountId]);   // không ghi mật khẩu
-        await db.SaveChangesAsync();
         await sessions.RevokeAllAsync(account.AccountId);
+        await db.SaveChangesAsync();
+        await tx.CommitAsync();
         return new ResetPasswordResult(account.Username, password);
     }
 
@@ -260,9 +262,9 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
         account.UpdatedAt = null;
         audit.Add(AuditCategories.Account, "ChangeAccountType", [account.AccountId],
             new { from, to = r.AccountType, pendingSessions = sessionCount, closedDuties = dutyCount });
+        await sessions.RevokeAllAsync(account.AccountId);
         await db.SaveChangesAsync();
         await tx.CommitAsync();
-        await sessions.RevokeAllAsync(account.AccountId);
         return new ResetPasswordResult(account.Username, password);
     }
 

@@ -1,5 +1,16 @@
 import type { AccountType } from '@/shared/lib/labels';
 
+export interface AccountScope {
+  asOfDate: string;
+  isSchoolWide: boolean;
+  ledCampusIds: number[];
+  headDepartmentIds: number[];
+  homeroomClassIds: number[];
+  subjectResponsibilities: { classId: number; subjectId: number; semesterId: number }[];
+  enrollments: { studentId: number; enrollmentId: number; classId: number; campusId: number; academicYearId: number }[];
+  linkedStudentIds: number[];
+}
+
 export interface UserInfo {
   accountId: number;
   personId: number;
@@ -9,6 +20,7 @@ export interface UserInfo {
   status: string;
   mustChangePassword: boolean;
   avatarPath: string | null;
+  scope: AccountScope;
 }
 
 export interface LoginResponse {

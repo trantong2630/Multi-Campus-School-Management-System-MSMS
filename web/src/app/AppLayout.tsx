@@ -27,14 +27,19 @@ function initialsOf(fullName: string) {
 interface Indicator { top: number; height: number; visible: boolean }
 
 export function AppLayout() {
-  const { user, logout, loggingOut } = useAuth();
+  const { user, logout, loggingOut, refresh } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const school = useSchool();
   const [collapsed, setCollapsed] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
 
-  const groups = useMemo(() => visibleMenu(user!.accountType), [user]);
+  const groups = useMemo(() => visibleMenu(user!), [user]);
+
+  useEffect(() => {
+    // Đổi màn hình cũng cập nhật trách nhiệm; API vẫn tự kiểm quyền cho từng request.
+    void refresh().catch(() => {});
+  }, [location.pathname, refresh]);
 
   // Từ key trong menu suy ra đường dẫn, và ngược lại từ đường dẫn tìm mục đang chọn.
   const pathByKey = useMemo(() => {
@@ -255,7 +260,7 @@ export function AppLayout() {
           <nav className="header-crumb" aria-label="Vị trí hiện tại">
             <span className="header-crumb__path">
               {(crumbs.length ? crumbs : ['Trang chủ']).map((c, k, arr) => (
-                <span key={c} className={k === arr.length - 1 ? 'header-crumb__item header-crumb__item--current' : 'header-crumb__item'}>
+                <span key={`${k}-${c}`} className={k === arr.length - 1 ? 'header-crumb__item header-crumb__item--current' : 'header-crumb__item'}>
                   {k > 0 && <ChevronRight size={14} />}
                   {c}
                 </span>
@@ -284,7 +289,7 @@ export function AppLayout() {
         <Content className="app-content">
           {/* key theo đường dẫn để nội dung mỗi trang hiện dần lên khi chuyển trang. */}
           <div className="app-content__inner" key={location.pathname}>
-            {isPathAllowed(location.pathname, user!.accountType) ? <Outlet /> : <Forbidden />}
+            {isPathAllowed(location.pathname, user!) ? <Outlet /> : <Forbidden />}
           </div>
         </Content>
       </Layout>

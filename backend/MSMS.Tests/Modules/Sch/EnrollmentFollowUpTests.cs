@@ -42,7 +42,7 @@ public class EnrollmentFollowUpTests
         db.SaveChanges();
         var enrollments = new EnrollmentService(db, clock, user, new ScopeResolver(db, user, clock), new AuditWriter(db, user, clock),
             new SessionService(db, clock, Options.Create(new JwtOptions())));
-        return (db, enrollments, new ClassService(db, clock, user, new ScopeResolver(db, user, clock)));
+        return (db, enrollments, new ClassService(db, clock));
     }
 
     private static Enrollment Row(int student, int classId, DateOnly start, DateOnly? end = null, string? reason = null) =>

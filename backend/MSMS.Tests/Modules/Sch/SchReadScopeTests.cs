@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Authorization;
 using MSMS.Api.Common.Auth;
+using MSMS.Api.Common.Errors;
 using MSMS.Api.Data;
 using MSMS.Api.Data.Entities;
 using MSMS.Api.Modules.Sch.Services;
@@ -17,7 +18,7 @@ public class SchReadScopeTests
 {
     private const int Campus1 = 1, Campus2 = 2, Year1 = 1, Teacher = 50, OtherTeacher = 51, ViceOfCampus1 = 70, ViceOfCampus2 = 71;
 
-    private static (MsmsDbContext Db, ClassService Service) CreateAs(string accountType, int personId, DateOnly? homeroomEnd = null)
+    private static (MsmsDbContext Db, ClassService Service, ScopeResolver Scope) CreateAs(string accountType, int personId, DateOnly? homeroomEnd = null)
     {
         var db = NewDb();
         var clock = ClockAt();
@@ -33,13 +34,13 @@ public class SchReadScopeTests
             new CampusLeadership { CampusId = Campus1, StaffId = ViceOfCampus1, StartDate = D(2026, 9, 5), CreatedAt = DateTime.UtcNow },
             new CampusLeadership { CampusId = Campus2, StaffId = ViceOfCampus2, StartDate = D(2026, 9, 5), CreatedAt = DateTime.UtcNow });
         db.SaveChanges();
-        return (db, new ClassService(db, clock, user, new ScopeResolver(db, user, clock)));
+        return (db, new ClassService(db, clock), new ScopeResolver(db, user, clock));
     }
 
     private static async Task<string[]> NamesSeenBy(string accountType, int personId, DateOnly? homeroomEnd = null)
     {
-        var (_, svc) = CreateAs(accountType, personId, homeroomEnd);
-        return (await svc.ListAsync(null, null, includeInactive: false)).Select(c => c.Name).Order().ToArray();
+        var (_, svc, scope) = CreateAs(accountType, personId, homeroomEnd);
+        return (await svc.ListVisibleAsync(null, null, includeInactive: false, scope)).Select(c => c.Name).Order().ToArray();
     }
 
     [Theory]
@@ -67,21 +68,22 @@ public class SchReadScopeTests
     public async Task Teacher_WhoseHomeroomDutyEnded_NoLongerSeesTheClass()
     {
         Assert.Empty(await NamesSeenBy(AccountTypes.Teacher, Teacher, homeroomEnd: Today.AddDays(-1)));
-        Assert.Equal(["6A1"], await NamesSeenBy(AccountTypes.Teacher, Teacher, homeroomEnd: Today));   // còn đúng đến hết ngày kết thúc
+        Assert.Empty(await NamesSeenBy(AccountTypes.Teacher, Teacher, homeroomEnd: Today));   // kết thúc hôm nay thì mất quyền ngay (BR-09, IAM)
+        Assert.Equal(["6A1"], await NamesSeenBy(AccountTypes.Teacher, Teacher, homeroomEnd: Today.AddDays(1)));
     }
 
     [Theory]
     [InlineData(AccountTypes.Student, 100)]
     [InlineData(AccountTypes.Parent, 200)]
-    public async Task StudentsAndParents_SeeNoClassList(string accountType, int personId) =>
-        Assert.Empty(await NamesSeenBy(accountType, personId));
+    public async Task StudentsAndParents_AreRefusedTheClassList(string accountType, int personId) =>
+        await Assert.ThrowsAsync<ApiException>(() => NamesSeenBy(accountType, personId));
 
     [Fact]
     public async Task TheCampusFilter_NeverWidensTheCallersScope()
     {
-        var (_, svc) = CreateAs(AccountTypes.VicePrincipal, ViceOfCampus1);
+        var (_, svc, scope) = CreateAs(AccountTypes.VicePrincipal, ViceOfCampus1);
 
-        var asked = await svc.ListAsync(Campus2, null, includeInactive: false);   // xin phân hiệu mình không phụ trách
+        var asked = await svc.ListVisibleAsync(Campus2, null, includeInactive: false, scope);   // xin phân hiệu mình không phụ trách
 
         Assert.Empty(asked);
     }

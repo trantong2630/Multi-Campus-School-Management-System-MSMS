@@ -20,7 +20,7 @@ public static class ResponsibilityKinds
 /// PPL-04: trách nhiệm có khoảng hiệu lực (BR-09). Mỗi đích tối đa một bản đang hiệu lực;
 /// thay người là một transaction: bản cũ kết thúc vào ngày liền trước ngày hiệu lực của bản mới.
 /// </summary>
-public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IClock clock)
+public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IClock clock, ScopeResolver scope)
 {
     public async Task<List<ResponsibilityRow>> ListCurrentAsync(string kind, int? yearId)
     {
@@ -31,7 +31,13 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
             {
                 var holders = await db.CampusLeadership.AsNoTracking().Where(EffectivePeriod.EffectiveAt<CampusLeadership>(today))
                     .Select(x => new { x.Id, x.CampusId, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
-                var campuses = await db.Campus.AsNoTracking().Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
+                var campusesQuery = db.Campus.AsNoTracking().Where(c => c.IsActive);
+                if (user.AccountType == AccountTypes.VicePrincipal)
+                {
+                    var led = await scope.LedCampusIdsAsync();
+                    campusesQuery = campusesQuery.Where(c => led.Contains(c.CampusId));
+                }
+                var campuses = await campusesQuery.OrderBy(c => c.Name).ToListAsync();
                 return campuses.Select(c =>
                 {
                     var h = holders.FirstOrDefault(x => x.CampusId == c.CampusId);
@@ -42,7 +48,15 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
             {
                 var holders = await db.DepartmentHead.AsNoTracking().Where(EffectivePeriod.EffectiveAt<DepartmentHead>(today))
                     .Select(x => new { x.Id, x.DepartmentId, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
-                var departments = await db.SubjectDepartment.AsNoTracking().Where(d => d.IsActive).OrderBy(d => d.Name).ToListAsync();
+                var departmentsQuery = db.SubjectDepartment.AsNoTracking().Where(d => d.IsActive);
+                if (user.AccountType == AccountTypes.VicePrincipal)
+                {
+                    var staff = await scope.FilterStaffAsync(db.StaffProfile.AsNoTracking());
+                    var staffIds = await staff.Select(s => s.StaffId).ToListAsync();
+                    var departmentIds = holders.Where(h => staffIds.Contains(h.StaffId)).Select(h => h.DepartmentId).ToList();
+                    departmentsQuery = departmentsQuery.Where(d => departmentIds.Contains(d.DepartmentId));
+                }
+                var departments = await departmentsQuery.OrderBy(d => d.Name).ToListAsync();
                 return departments.Select(d =>
                 {
                     var h = holders.FirstOrDefault(x => x.DepartmentId == d.DepartmentId);
@@ -54,7 +68,8 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
                 var year = yearId ?? await db.AcademicYear.Where(y => y.IsCurrent).Select(y => (int?)y.AcademicYearId).FirstOrDefaultAsync();
                 var holders = await db.HomeroomAssignment.AsNoTracking().Where(EffectivePeriod.EffectiveAt<HomeroomAssignment>(today))
                     .Select(x => new { x.Id, x.ClassId, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
-                var classes = await db.Class.AsNoTracking().Where(c => c.IsActive && c.AcademicYearId == year)
+                var visibleClasses = await scope.FilterClassesAsync(db.Class.AsNoTracking());
+                var classes = await visibleClasses.Where(c => c.IsActive && c.AcademicYearId == year)
                     .OrderBy(c => c.Campus.Name).ThenBy(c => c.GradeLevel).ThenBy(c => c.Name)
                     .Select(c => new { c.ClassId, c.Name, Campus = c.Campus.Name }).ToListAsync();
                 return classes.Select(c =>
@@ -70,6 +85,18 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
 
     public async Task<List<ResponsibilityHistoryRow>> HistoryAsync(string kind, int targetId)
     {
+        if (user.AccountType == AccountTypes.VicePrincipal)
+        {
+            var campuses = await scope.LedCampusIdsAsync();
+            var allowed = kind switch
+            {
+                ResponsibilityKinds.Campus => campuses.Contains(targetId),
+                ResponsibilityKinds.Homeroom => await db.Class.AnyAsync(c => c.ClassId == targetId && campuses.Contains(c.CampusId)),
+                ResponsibilityKinds.Department => (await ListCurrentAsync(kind, null)).Any(r => r.TargetId == targetId),
+                _ => false,
+            };
+            if (!allowed) throw ApiException.Forbidden("Không có quyền xem lịch sử trách nhiệm ngoài phân hiệu phụ trách.");
+        }
         var today = clock.Today;
         var rows = kind switch
         {
