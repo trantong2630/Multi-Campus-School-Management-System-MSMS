@@ -52,6 +52,33 @@ public sealed class SubjectResponsibilityService(MsmsDbContext db, IClock clock)
         return new ResponsibilityDto(semester.Name, teachers);
     }
 
+    /// <summary>Giáo viên có đang phụ trách chuyên môn môn này ở lớp này không. LRN gọi hàm này mỗi lần kiểm quyền giao bài, công bố điểm, duyệt phân tích.</summary>
+    public async Task<bool> IsResponsibleAsync(int teacherId, int classId, int subjectId)
+    {
+        var semester = await CurrentSemesterAsync();
+        if (semester is null) return false;
+        return await PublishedTimetable.LatestEntries(db, semester.SemesterId).AnyAsync(e =>
+            e.ClassId == classId && e.SubjectId == subjectId && e.TeacherId == teacherId);
+    }
+
+    /// <summary>Các cặp (lớp, môn) giáo viên đang phụ trách chuyên môn.</summary>
+    public async Task<IReadOnlyList<TeacherClassSubject>> ForTeacherAsync(int teacherId)
+    {
+        var semester = await CurrentSemesterAsync();
+        if (semester is null) return [];
+        var cells = await PublishedTimetable.LatestEntries(db, semester.SemesterId)
+            .Where(e => e.TeacherId == teacherId)
+            .Select(e => new
+            {
+                e.VersionId, e.ClassId, e.SubjectId,
+                ClassName = e.Class.Name, e.Class.GradeLevel, e.Class.CampusId, SubjectName = e.Subject.Name,
+            }).ToListAsync();
+        return cells.GroupBy(c => (c.ClassId, c.SubjectId))
+            .Select(g => g.First())
+            .Select(c => new TeacherClassSubject(c.ClassId, c.ClassName, c.GradeLevel, c.CampusId, c.SubjectId, c.SubjectName))
+            .ToList();
+    }
+
     /// <summary>Học kỳ của năm học hiện hành chứa hôm nay; ngoài các học kỳ thì lấy học kỳ đã bắt đầu gần nhất, chưa có thì học kỳ đầu.</summary>
     private async Task<Data.Entities.Semester?> CurrentSemesterAsync()
     {
