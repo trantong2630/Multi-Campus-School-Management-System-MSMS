@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MSMS.Api.Common.Rules;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
 using MSMS.Api.Modules.Scd.Dtos;
@@ -20,12 +21,7 @@ public sealed class SubjectResponsibilityService(MsmsDbContext db, IClock clock)
         var semester = await CurrentSemesterAsync();
         if (semester is null) return new ResponsibilityDto(null, []);
 
-        var latest = await LatestVersionByClassAsync(semester);
-        if (latest.Count == 0) return new ResponsibilityDto(semester.Name, []);
-
-        var versionIds = latest.Values.Distinct().ToList();
-        var cells = await db.TimetableEntry.AsNoTracking()
-            .Where(e => versionIds.Contains(e.VersionId))
+        var items = await PublishedTimetable.LatestEntries(db, semester.SemesterId)
             .Select(e => new
             {
                 e.VersionId, e.ClassId, e.SubjectId, e.TeacherId,
@@ -33,8 +29,6 @@ public sealed class SubjectResponsibilityService(MsmsDbContext db, IClock clock)
                 ClassName = e.Class.Name, e.Class.GradeLevel, CampusId = e.Class.CampusId,
                 TeacherName = e.Teacher.Staff.FullName, e.Teacher.TeacherAbbr,
             }).ToListAsync();
-
-        var items = cells.Where(c => latest.TryGetValue(c.ClassId, out var v) && v == c.VersionId).ToList();
 
         var teachers = items.GroupBy(c => c.TeacherId)
             .Where(g => (campusId is null || g.Any(c => c.CampusId == campusId)) && (subjectId is null || g.Any(c => c.SubjectId == subjectId)))
@@ -63,13 +57,8 @@ public sealed class SubjectResponsibilityService(MsmsDbContext db, IClock clock)
     {
         var semester = await CurrentSemesterAsync();
         if (semester is null) return false;
-        var versionId = await db.TimetableVersionClass.AsNoTracking()
-            .Where(vc => vc.ClassId == classId && vc.Version.Status == "Published" && vc.Version.SemesterId == semester.SemesterId)
-            .OrderByDescending(vc => vc.Version.PublishedAt).ThenByDescending(vc => vc.VersionId)
-            .Select(vc => (int?)vc.VersionId).FirstOrDefaultAsync();
-        if (versionId is null) return false;
-        return await db.TimetableEntry.AsNoTracking().AnyAsync(e =>
-            e.VersionId == versionId && e.ClassId == classId && e.SubjectId == subjectId && e.TeacherId == teacherId);
+        return await PublishedTimetable.LatestEntries(db, semester.SemesterId).AnyAsync(e =>
+            e.ClassId == classId && e.SubjectId == subjectId && e.TeacherId == teacherId);
     }
 
     /// <summary>Các cặp (lớp, môn) giáo viên đang phụ trách chuyên môn.</summary>
@@ -77,33 +66,17 @@ public sealed class SubjectResponsibilityService(MsmsDbContext db, IClock clock)
     {
         var semester = await CurrentSemesterAsync();
         if (semester is null) return [];
-        var latest = await LatestVersionByClassAsync(semester);
-        if (latest.Count == 0) return [];
-        var versionIds = latest.Values.Distinct().ToList();
-        var cells = await db.TimetableEntry.AsNoTracking()
-            .Where(e => e.TeacherId == teacherId && versionIds.Contains(e.VersionId))
+        var cells = await PublishedTimetable.LatestEntries(db, semester.SemesterId)
+            .Where(e => e.TeacherId == teacherId)
             .Select(e => new
             {
                 e.VersionId, e.ClassId, e.SubjectId,
                 ClassName = e.Class.Name, e.Class.GradeLevel, e.Class.CampusId, SubjectName = e.Subject.Name,
             }).ToListAsync();
-        return cells.Where(c => latest.TryGetValue(c.ClassId, out var v) && v == c.VersionId)
-            .GroupBy(c => (c.ClassId, c.SubjectId))
+        return cells.GroupBy(c => (c.ClassId, c.SubjectId))
             .Select(g => g.First())
             .Select(c => new TeacherClassSubject(c.ClassId, c.ClassName, c.GradeLevel, c.CampusId, c.SubjectId, c.SubjectName))
             .ToList();
-    }
-
-    /// <summary>Phiên bản Đã phát hành mới nhất của từng lớp; lớp không có trong lần Phát hành sau vẫn theo phiên bản trước đó của nó.</summary>
-    private async Task<Dictionary<int, int>> LatestVersionByClassAsync(Data.Entities.Semester semester)
-    {
-        var published = await db.TimetableVersionClass.AsNoTracking()
-            .Where(vc => vc.Version.Status == "Published" && vc.Version.SemesterId == semester.SemesterId)
-            .Select(vc => new { vc.ClassId, vc.VersionId, vc.Version.PublishedAt })
-            .ToListAsync();
-        return published.GroupBy(x => x.ClassId)
-            .Select(g => g.OrderByDescending(x => x.PublishedAt).ThenByDescending(x => x.VersionId).First())
-            .ToDictionary(x => x.ClassId, x => x.VersionId);
     }
 
     /// <summary>Học kỳ của năm học hiện hành chứa hôm nay; ngoài các học kỳ thì lấy học kỳ đã bắt đầu gần nhất, chưa có thì học kỳ đầu.</summary>
