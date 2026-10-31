@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
 using MSMS.Api.Common.Rules;
 using MSMS.Api.Common.Time;
@@ -12,9 +13,19 @@ namespace MSMS.Api.Modules.Sch.Services;
 public sealed class ClassService(MsmsDbContext db, IClock clock)
 {
     public async Task<List<ClassDto>> ListAsync(int? campusId, int? yearId, bool includeInactive)
+        => await ListAsync(db.Class.AsNoTracking(), campusId, yearId, includeInactive);
+
+    public async Task<List<ClassDto>> ListVisibleAsync(int? campusId, int? yearId, bool includeInactive,
+        ScopeResolver scope)
+    {
+        var query = await scope.FilterClassesAsync(db.Class.AsNoTracking());
+        return await ListAsync(query, campusId, yearId, includeInactive);
+    }
+
+    private async Task<List<ClassDto>> ListAsync(IQueryable<Class> query, int? campusId, int? yearId, bool includeInactive)
     {
         var today = clock.Today;
-        return await db.Class.AsNoTracking()
+        return await query
             .Where(c => (campusId == null || c.CampusId == campusId)
                         && (yearId == null || c.AcademicYearId == yearId)
                         && (includeInactive || c.IsActive))

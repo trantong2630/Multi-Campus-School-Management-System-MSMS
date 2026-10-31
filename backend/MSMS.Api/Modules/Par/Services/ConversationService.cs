@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
 using MSMS.Api.Common.Notifications;
+using MSMS.Api.Common.Rules;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
 using MSMS.Api.Data.Entities;
@@ -20,8 +21,7 @@ public sealed class ConversationService(
 {
     public async Task<List<AvailableTeacherDto>> GetAvailableTeachersAsync(int studentId)
     {
-        if (currentUser.IsSchoolAdmin)
-            throw ApiException.Forbidden("School Admin không có quyền truy cập hộp thư.");
+        EnsureConversationRole();
 
         var hasLink = await db.ParentStudentLink.AsNoTracking()
             .AnyAsync(l => l.StudentId == studentId && l.ParentId == currentUser.PersonId);
@@ -30,8 +30,8 @@ public sealed class ConversationService(
 
         var today = clock.Today;
         var enrollment = await db.Enrollment.AsNoTracking()
-            .Include(e => e.Class)
-            .Where(e => e.StudentId == studentId && e.StartDate <= today && (e.EndDate == null || e.EndDate >= today))
+            .Include(e => e.Class).ThenInclude(c => c.AcademicYear)
+            .Where(EnrollmentRules.ActiveAt(today)).Where(e => e.StudentId == studentId)
             .OrderByDescending(e => e.StartDate)
             .FirstOrDefaultAsync();
 
@@ -123,11 +123,7 @@ public sealed class ConversationService(
 
     public async Task<List<TeachingStudentDto>> GetMyTeachingStudentsAsync()
     {
-        if (currentUser.IsSchoolAdmin)
-            throw ApiException.Forbidden("School Admin không có quyền truy cập hộp thư.");
-
-        if (currentUser.AccountType == AccountTypes.Student)
-            throw ApiException.Forbidden("Học sinh không có quyền truy cập hộp thư.");
+        EnsureConversationRole();
 
         var staffPersonId = currentUser.PersonId;
         var today = clock.Today;
@@ -171,7 +167,7 @@ public sealed class ConversationService(
             return [];
 
         var rawStudents = await db.Enrollment.AsNoTracking()
-            .Where(e => activeClassIds.Contains(e.ClassId) && e.StartDate <= today && (e.EndDate == null || e.EndDate >= today))
+            .Where(EnrollmentRules.ActiveAt(today)).Where(e => activeClassIds.Contains(e.ClassId))
             .Select(e => new
             {
                 e.StudentId,
@@ -199,18 +195,14 @@ public sealed class ConversationService(
 
     public async Task<List<AvailableParentDto>> GetAvailableParentsAsync(int studentId)
     {
-        if (currentUser.IsSchoolAdmin)
-            throw ApiException.Forbidden("School Admin không có quyền truy cập hộp thư.");
-
-        if (currentUser.AccountType == AccountTypes.Student)
-            throw ApiException.Forbidden("Học sinh không có quyền truy cập hộp thư.");
+        EnsureConversationRole();
 
         var staffPersonId = currentUser.PersonId;
         var today = clock.Today;
 
         var enrollment = await db.Enrollment.AsNoTracking()
-            .Include(e => e.Class)
-            .Where(e => e.StudentId == studentId && e.StartDate <= today && (e.EndDate == null || e.EndDate >= today))
+            .Include(e => e.Class).ThenInclude(c => c.AcademicYear)
+            .Where(EnrollmentRules.ActiveAt(today)).Where(e => e.StudentId == studentId)
             .OrderByDescending(e => e.StartDate)
             .FirstOrDefaultAsync();
 
@@ -245,11 +237,7 @@ public sealed class ConversationService(
 
     public async Task<int> CreateOrGetConversationAsync(CreateConversationDto dto)
     {
-        if (currentUser.IsSchoolAdmin)
-            throw ApiException.Forbidden("School Admin không có quyền truy cập hộp thư.");
-
-        if (currentUser.AccountType == AccountTypes.Student)
-            throw ApiException.Forbidden("Học sinh không có quyền truy cập hộp thư.");
+        EnsureConversationRole();
 
         int parentId;
         int staffId;
@@ -293,16 +281,12 @@ public sealed class ConversationService(
 
     public async Task<List<ConversationItemDto>> GetMyConversationsAsync()
     {
-        if (currentUser.IsSchoolAdmin)
-            throw ApiException.Forbidden("School Admin không có quyền truy cập hộp thư.");
-
-        if (currentUser.AccountType == AccountTypes.Student)
-            throw ApiException.Forbidden("Học sinh không có quyền truy cập hộp thư.");
+        EnsureConversationRole();
 
         var currentPersonId = currentUser.PersonId;
 
         var convos = await db.Conversation.AsNoTracking()
-            .Where(c => c.ParentId == currentPersonId || c.StaffId == currentPersonId)
+            .Where(c => (currentUser.AccountType == AccountTypes.Parent && c.ParentId == currentPersonId) || (currentUser.AccountType == AccountTypes.Teacher && c.StaffId == currentPersonId))
             .OrderByDescending(c => c.LastMessageAt ?? c.CreatedAt)
             .Select(c => new
             {
@@ -335,13 +319,13 @@ public sealed class ConversationService(
         var linkSet = activeLinks.Select(l => (l.ParentId, l.StudentId)).ToHashSet();
 
         var allEnrollments = await db.Enrollment.AsNoTracking()
-            .Include(e => e.Class)
+            .Include(e => e.Class).ThenInclude(c => c.AcademicYear)
             .Where(e => studentIds.Contains(e.StudentId))
             .OrderByDescending(e => e.StartDate)
             .ToListAsync();
 
         var studentActiveEnrollmentMap = allEnrollments
-            .Where(e => e.StartDate <= today && (e.EndDate == null || e.EndDate >= today))
+            .Where(EnrollmentRules.ActiveAt(today).Compile())
             .GroupBy(e => e.StudentId)
             .ToDictionary(g => g.Key, g => g.First());
 
@@ -446,8 +430,7 @@ public sealed class ConversationService(
 
     public async Task<List<MessageItemDto>> GetMessagesAsync(int conversationId)
     {
-        if (currentUser.IsSchoolAdmin)
-            throw ApiException.Forbidden("School Admin không có quyền truy cập hộp thư.");
+        EnsureConversationRole();
 
         var conversation = await db.Conversation.AsNoTracking()
             .FirstOrDefaultAsync(c => c.ConversationId == conversationId);
@@ -456,7 +439,7 @@ public sealed class ConversationService(
             throw ApiException.NotFound("Không tìm thấy cuộc hội thoại.");
 
         var currentPersonId = currentUser.PersonId;
-        if (conversation.ParentId != currentPersonId && conversation.StaffId != currentPersonId)
+        if (!ConversationAccess.IsParticipant(currentUser.AccountType, currentPersonId, conversation.ParentId, conversation.StaffId))
             throw ApiException.Forbidden("Bạn không phải thành viên của cuộc hội thoại này.");
 
         var messages = await db.Message
@@ -500,8 +483,7 @@ public sealed class ConversationService(
 
     public async Task<MessageItemDto> SendMessageAsync(int conversationId, string content)
     {
-        if (currentUser.IsSchoolAdmin)
-            throw ApiException.Forbidden("School Admin không có quyền truy cập hộp thư.");
+        EnsureConversationRole();
 
         if (string.IsNullOrWhiteSpace(content))
             throw ApiException.BadRequest("Nội dung tin nhắn không được để trống.");
@@ -518,7 +500,7 @@ public sealed class ConversationService(
             throw ApiException.NotFound("Không tìm thấy cuộc hội thoại.");
 
         var currentPersonId = currentUser.PersonId;
-        if (conversation.ParentId != currentPersonId && conversation.StaffId != currentPersonId)
+        if (!ConversationAccess.IsParticipant(currentUser.AccountType, currentPersonId, conversation.ParentId, conversation.StaffId))
             throw ApiException.Forbidden("Bạn không phải thành viên của cuộc hội thoại này.");
 
         var isRelationshipActive = await IsRelationshipActiveAsync(
@@ -617,16 +599,21 @@ public sealed class ConversationService(
 
     public async Task<int> GetTotalUnreadCountAsync()
     {
-        if (currentUser.IsSchoolAdmin)
-            throw ApiException.Forbidden("School Admin không có quyền truy cập hộp thư.");
+        EnsureConversationRole();
 
         var currentPersonId = currentUser.PersonId;
 
         return await db.Message.AsNoTracking()
-            .Where(m => (m.Conversation.ParentId == currentPersonId || m.Conversation.StaffId == currentPersonId)
+            .Where(m => ((currentUser.AccountType == AccountTypes.Parent && m.Conversation.ParentId == currentPersonId) || (currentUser.AccountType == AccountTypes.Teacher && m.Conversation.StaffId == currentPersonId))
                      && m.SenderPersonId != currentPersonId
                      && m.ReadAt == null)
             .CountAsync();
+    }
+
+    private void EnsureConversationRole()
+    {
+        if (currentUser.AccountType is not (AccountTypes.Parent or AccountTypes.Teacher))
+            throw ApiException.Forbidden("Chỉ giáo viên và phụ huynh được truy cập hộp thư.");
     }
 
     private async Task<bool> IsRelationshipActiveAsync(int parentId, int staffId, int studentId, DateOnly today)
@@ -637,7 +624,7 @@ public sealed class ConversationService(
             return false;
 
         var enrollment = await db.Enrollment.AsNoTracking()
-            .Where(e => e.StudentId == studentId && e.StartDate <= today && (e.EndDate == null || e.EndDate >= today))
+            .Where(EnrollmentRules.ActiveAt(today)).Where(e => e.StudentId == studentId)
             .OrderByDescending(e => e.StartDate)
             .FirstOrDefaultAsync();
 

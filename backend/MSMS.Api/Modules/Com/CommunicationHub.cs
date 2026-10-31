@@ -35,6 +35,8 @@ public class CommunicationHub(MsmsDbContext db, CurrentUser currentUser) : Hub
     /// </summary>
     private string UserGroup => $"user_{PersonId}";
 
+    private string AccountType => Context.User?.FindFirst(CurrentUser.TypeClaim)?.Value ?? currentUser.AccountType;
+
     /// <summary>
     /// Nhóm cho từng hội thoại, để broadcast sự kiện sang bên kia trong cùng conversation.
     /// Format: "conversation_{conversationId}"
@@ -60,6 +62,7 @@ public class CommunicationHub(MsmsDbContext db, CurrentUser currentUser) : Hub
     /// </summary>
     /// <param name="conversationId">ID hội thoại</param>
     /// <param name="isTyping">true = đang soạn, false = ngừng soạn</param>
+    [Authorize(Policy = Policies.ConversationParticipant)]
     public async Task SendTyping(int conversationId, bool isTyping)
     {
         // Kiểm tra người gọi có trong hội thoại này không
@@ -83,6 +86,7 @@ public class CommunicationHub(MsmsDbContext db, CurrentUser currentUser) : Hub
     /// COM-4.8.8: "mỗi lệnh kiểm người gọi thuộc hội thoại rồi chuyển cho bên kia"
     /// </summary>
     /// <param name="conversationId">ID hội thoại</param>
+    [Authorize(Policy = Policies.ConversationParticipant)]
     public async Task JoinConversation(int conversationId)
     {
         // Kiểm tra người gọi có trong hội thoại này không
@@ -109,6 +113,6 @@ public class CommunicationHub(MsmsDbContext db, CurrentUser currentUser) : Hub
 
         // Người dùng là ParentId hoặc StaffId của hội thoại
         var pid = PersonId;
-        return conversation.ParentId == pid || conversation.StaffId == pid;
+        return ConversationAccess.IsParticipant(AccountType, pid, conversation.ParentId, conversation.StaffId);
     }
 }

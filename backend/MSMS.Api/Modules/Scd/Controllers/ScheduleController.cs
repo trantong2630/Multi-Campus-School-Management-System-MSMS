@@ -12,7 +12,7 @@ public class ScheduleController(ScheduleQueryService query) : ControllerBase
     [HttpGet("day"), Authorize(Policy = Policies.TimetableReader)]
     public Task<DayScheduleDto> Day([FromQuery] int campusId, [FromQuery] DateOnly date) => query.GetDayAsync(campusId, date);
 
-    [HttpGet("mine"), Authorize(Policy = Policies.Staff)]
+    [HttpGet("mine"), Authorize(Policy = Policies.Teacher)]
     public Task<List<MySessionDto>> Mine([FromQuery] DateOnly from, [FromQuery] DateOnly to) => query.GetMineAsync(from, to);
 
     [HttpGet("classes"), Authorize(Policy = Policies.TimetableReader)]
