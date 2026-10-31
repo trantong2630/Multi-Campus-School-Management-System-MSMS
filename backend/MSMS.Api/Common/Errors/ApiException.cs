@@ -10,4 +10,5 @@ public class ApiException(int statusCode, string code, string message) : Excepti
     public static ApiException Unauthorized(string message, string code = ErrorCodes.Unauthorized) => new(401, code, message);
     public static ApiException Forbidden(string message, string code = ErrorCodes.Forbidden) => new(403, code, message);
     public static ApiException NotFound(string message) => new(404, ErrorCodes.NotFound, message);
+    public static ApiException Conflict(string message, string code = ErrorCodes.Conflict) => new(409, code, message);
 }

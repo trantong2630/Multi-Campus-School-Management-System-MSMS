@@ -31,7 +31,7 @@ public partial class Question
 
     public virtual Person CreatedByPerson { get; set; } = null!;
 
-    public virtual ICollection<ExamQuestion> ExamQuestion { get; set; } = new List<ExamQuestion>();
+    public virtual ICollection<AssignmentQuestion> AssignmentQuestion { get; set; } = new List<AssignmentQuestion>();
 
     public virtual ICollection<QuestionOption> QuestionOption { get; set; } = new List<QuestionOption>();
 
