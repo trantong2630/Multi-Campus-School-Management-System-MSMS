@@ -8,5 +8,6 @@ public static class PplModule
         => s.AddScoped<StaffService>()
             .AddScoped<StaffImportService>()
             .AddScoped<StudentImportService>()
-            .AddScoped<ResponsibilityService>();
+            .AddScoped<ResponsibilityService>()
+            .AddScoped<HomeroomService>();
 }

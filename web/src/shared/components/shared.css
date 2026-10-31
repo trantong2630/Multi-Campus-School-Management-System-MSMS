@@ -105,6 +105,12 @@
   width: 320px;
 }
 
+/* Ô nhập chữ thường (chủ đề, người tạo…) cùng độ rộng với ô chọn. */
+.filter-bar > .ant-input,
+.filter-bar > .ant-input-affix-wrapper {
+  width: 200px;
+}
+
 /* Lọc nhanh dạng segmented đứng đầu thanh lọc. */
 .filter-bar .ant-segmented {
   padding: 4px;

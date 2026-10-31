@@ -18,7 +18,7 @@ MSMS là hệ thống độc lập, tự quản lý dữ liệu của mình; kh�
 | Hồ sơ | Cán bộ, học sinh, phụ huynh, ghi danh, liên kết phụ huynh – học sinh |
 | Trách nhiệm | Trách nhiệm (phân hiệu, tổ, lớp chủ nhiệm) |
 | Vận hành | Thời khóa biểu, phụ trách chuyên môn (tính từ thời khóa biểu), lịch dạy thực tế, xử lý giáo viên vắng, điểm danh theo tiết |
-| Học tập | Ngân hàng câu hỏi, bài tập trắc nghiệm, chấm tự động, công bố điểm, phân tích AI, giám sát tổ |
+| Học tập | Ngân hàng câu hỏi, bài tập rèn luyện trắc nghiệm, chấm tự động, phân tích bằng AI (MSMS AI), tiến độ giao bài của tổ |
 | Dịch vụ phụ huynh | Đơn xin nghỉ, sổ liên lạc tuần, hộp thư phụ huynh – giáo viên |
 | Truyền thông | Thông báo trong ứng dụng, bảng tin |
 | Giám sát | Dashboard, Audit Log, xuất Excel |
@@ -36,7 +36,7 @@ Gửi file: không có, trừ **ảnh đính kèm bài đăng bảng tin**, **�
 3. **Không lưu thứ tính ra được.** Trạng thái suy được từ ngày giờ hoặc dữ liệu khác thì tính lúc đọc (mục 6.2). Nhờ vậy hệ thống không cần job cập nhật trạng thái.
 4. **Quyền luôn kiểm tra tại Backend**, không dựa vào giao diện.
 5. **Ngày nghiệp vụ theo giờ Việt Nam (Asia/Ho_Chi_Minh).** Backend quyết định "hôm nay", hạn nộp và mọi điều kiện thời gian.
-6. **Hệ thống gợi ý, con người quyết định.** MSMS không tự xếp giáo viên dạy thay, không tự tạo tiết bù, không tự công bố điểm hay phân tích.
+6. **Hệ thống gợi ý, con người quyết định.** MSMS không tự xếp giáo viên dạy thay, không tự tạo tiết bù.
 7. **Đủ dùng hơn đầy đủ.** Quy tắc nào làm luồng phức tạp hơn giá trị nó mang lại thì bỏ.
 
 ---
@@ -72,11 +72,11 @@ Có **6 loại tài khoản; một tài khoản mang đúng một loại** (BR-0
 
 | Actor | Đọc | Ghi |
 | --- | --- | --- |
-| **School Admin** | Mọi dữ liệu vận hành toàn trường, kể cả điểm và phân tích chưa công bố. **Không** đọc hội thoại phụ huynh – giáo viên | Mọi danh mục (kể cả thông tin trường), hồ sơ, tài khoản, trách nhiệm, ngày nghỉ cấp trường hoặc phân hiệu, **nhập bù và sửa điểm danh**. **Không** có Dashboard, **không** xuất Excel, **không** làm thời khóa biểu, **không** làm việc đứng tên người khác (mục 2.4) |
+| **School Admin** | Mọi dữ liệu vận hành toàn trường, kể cả điểm và phân tích bài tập. **Không** đọc hội thoại phụ huynh – giáo viên | Mọi danh mục (kể cả thông tin trường), hồ sơ, tài khoản, trách nhiệm, ngày nghỉ cấp trường hoặc phân hiệu, **nhập bù và sửa điểm danh**. **Không** có Dashboard, **không** xuất Excel, **không** làm thời khóa biểu, **không** làm việc đứng tên người khác (mục 2.4) |
 | **Principal** | Toàn trường: lịch dạy, điểm danh, Dashboard, bảng tin. **Không** đọc đơn nghỉ | Trách nhiệm (mục 2.2), thông tin trường, bài đăng bảng tin |
 | **Vice Principal** | Phân hiệu mình: lịch dạy, điểm danh, đơn nghỉ, Dashboard. Màn hình Lịch dạy chỉ cho xem phân hiệu mình; riêng khi chọn giáo viên cho tiết hoặc dạy thay thì **danh sách giáo viên là toàn trường**, kèm trạng thái rảnh hoặc bận, kiểm trùng lịch cũng toàn trường (BR-13); màn hình Phụ trách chuyên môn cũng xem **toàn trường** | Thời khóa biểu, điều chỉnh lịch, giáo viên vắng — cho phân hiệu mình. Bài đăng bảng tin. Xuất Excel phân hiệu mình. **Không** sửa điểm danh |
-| **Teacher** | Tiết mình dạy; lớp + môn mình phụ trách. Nếu chủ nhiệm: hồ sơ, chuyên cần, đơn nghỉ, sổ liên lạc của lớp chủ nhiệm. Nếu tổ trưởng: bài tập các môn của tổ | Điểm danh tiết mình dạy **trong ngày của tiết**; soạn câu hỏi và đề của mình; giao bài, công bố điểm và phân tích cho lớp + môn mình phụ trách; trả lời tin nhắn; bài đăng bảng tin. Nếu chủ nhiệm: duyệt đơn nghỉ |
-| **Student** | Lịch học, bài tập, điểm và phân tích đã công bố, chuyên cần, sổ liên lạc của chính mình; bài đăng Toàn trường | Làm và nộp bài |
+| **Teacher** | Tiết mình dạy; lớp + môn mình phụ trách. Nếu chủ nhiệm: hồ sơ, chuyên cần, đơn nghỉ, sổ liên lạc của lớp chủ nhiệm. Nếu tổ trưởng: bài tập các môn của tổ | Điểm danh tiết mình dạy **trong ngày của tiết**; soạn câu hỏi của mình; giao bài cho lớp + môn mình phụ trách; trả lời tin nhắn; bài đăng bảng tin. Nếu chủ nhiệm: duyệt đơn nghỉ |
+| **Student** | Lịch học, bài tập, điểm, đáp án và phân tích AI của bài mình đã nộp, chuyên cần, sổ liên lạc của chính mình; bài đăng Toàn trường | Làm và nộp bài |
 | **Parent** | Như Student, cho từng con được liên kết | Gửi và rút đơn nghỉ, tạo hội thoại và nhắn tin |
 
 Người vừa là cán bộ vừa là phụ huynh dùng **hai hồ sơ và hai tài khoản riêng** (BR-03).
@@ -92,9 +92,7 @@ Việc đứng tên người khác — chỉ đúng vai trò làm được:
 | Làm bài, nộp bài | Student, bằng tài khoản của mình |
 | Gửi, rút đơn nghỉ | Parent có liên kết với học sinh |
 | Tạo hội thoại, gửi tin nhắn | Parent có liên kết (tạo và gửi); cán bộ của hội thoại (chỉ gửi) |
-| Soạn, giao, nhân bản đề | Teacher — soạn đề của mình; giao thì cần phụ trách chuyên môn đang hiệu lực |
-| Công bố điểm | Teacher đang phụ trách chuyên môn |
-| Tạo lại, chỉnh, duyệt, công bố phân tích AI | Teacher đang phụ trách chuyên môn |
+| Soạn câu hỏi, giao bài | Teacher — soạn câu hỏi của mình; giao bài thì cần phụ trách chuyên môn đang hiệu lực |
 | Điểm danh với tư cách giáo viên dạy | Giáo viên của tiết, trong ngày của tiết |
 
 Việc duy nhất School Admin làm thay được trên dữ liệu giảng dạy là nhập bù và sửa điểm danh của tiết đã qua (ghi là người sửa, BR-17). School Admin không duyệt đơn nghỉ, không đọc hội thoại, không thao tác thời khóa biểu, không có Dashboard và không xuất Excel. Mọi thao tác ghi lưu người thực hiện ngay trên bản ghi nghiệp vụ.
@@ -113,12 +111,12 @@ Cả hai đều là **tiện ích, không phải điều kiện vận hành**: h
 
 |  |  |
 | --- | --- |
-| Dùng ở đâu | Sinh nháp câu hỏi trắc nghiệm (LRN-01); phân tích kết quả học tập của lớp và từng học sinh (LRN-04) |
-| Nhận vào | Chỉ dữ liệu **đã tính sẵn, gắn mã giả lập**: tỉ lệ đúng/sai theo câu, đáp án sai được chọn nhiều nhất, phân bố điểm, so sánh với tối đa 5 bài gần nhất cùng môn của chính học sinh đó |
-| Không bao giờ nhận | Tên, mã học sinh, ngày sinh, tên lớp, tên trường, bài làm nguyên văn |
-| Không bao giờ làm | Chấm điểm; quyết định đúng/sai; tự công bố; ghi trực tiếp vào dữ liệu nghiệp vụ |
+| Dùng ở đâu | Sinh nháp câu hỏi trắc nghiệm (LRN-01); phân tích từng bài làm của học sinh (LRN-04) |
+| Nhận vào | Nội dung câu hỏi, các lựa chọn, đáp án đúng, lựa chọn của học sinh ở từng câu và điểm — **không kèm danh tính** |
+| Không bao giờ nhận | Tên, mã học sinh, ngày sinh, tên lớp, tên trường |
+| Không bao giờ làm | Chấm điểm; quyết định đúng/sai; ghi trực tiếp vào dữ liệu nghiệp vụ ngoài phân tích của chính bài làm |
 
-Câu hỏi do AI sinh là **nháp** cho tới khi giáo viên xác nhận. Phân tích do AI sinh là **nháp** cho tới khi giáo viên duyệt và công bố. **AI hỏng hoặc thiếu dữ liệu:** chấm, nộp, công bố điểm vẫn chạy; giáo viên soạn đề thủ công.
+Trợ lý AI của hệ thống tên là **MSMS AI**. Câu hỏi do AI sinh là **nháp** cho tới khi giáo viên xác nhận. Phân tích bài làm do AI sinh **tự động khi học sinh nộp bài**, không qua giáo viên duyệt. **AI hỏng hoặc thiếu dữ liệu:** chấm, nộp bài, xem điểm vẫn chạy; phần phân tích để trống, không thử lại; giáo viên soạn câu hỏi thủ công.
 
 **Cần rà soát trước khi vận hành thật:** sự đồng ý của phụ huynh về việc gửi dữ liệu học tập cho nhà cung cấp AI, điều khoản không dùng dữ liệu để huấn luyện, quy định bảo vệ dữ liệu cá nhân.
 
@@ -157,11 +155,11 @@ Mọi tính năng phục vụ một trong bốn luồng. Tính năng không nằ
 
 Đây là **bài tập rèn luyện**, không phải sổ điểm chính thức.
 
-1. **Teacher** soạn câu hỏi trắc nghiệm 4 lựa chọn, ít nhất 1 đáp án đúng — thủ công hoặc từ nháp AI — và ghép thành đề (BR-20).
-2. **Teacher** giao đề của mình cho lớp mình phụ trách, kèm hạn nộp (BR-21).
+1. **Teacher** soạn câu hỏi trắc nghiệm 4 lựa chọn, ít nhất 1 đáp án đúng — thủ công hoặc từ nháp AI — vào ngân hàng câu hỏi (BR-20).
+2. **Teacher** giao bài cho lớp + môn mình phụ trách: chọn câu hỏi từ ngân hàng, hạn nộp, thời lượng làm bài tùy chọn (BR-21).
 3. **Student** làm bài, tự lưu nháp, nộp **một lượt** trước hạn; Backend chấm ngay (BR-21).
-4. Hết hạn, **Teacher** xem kết quả và thống kê câu sai nhiều nhất, rồi công bố điểm (BR-22).
-5. **Teacher** chạy phân tích AI, chỉnh, duyệt, công bố phân tích (BR-23).
+4. Nộp xong, **Student** thấy ngay điểm, đáp án đúng và giải thích; **Parent** xem được kết quả của con; **Teacher** xem điểm từng học sinh (BR-22).
+5. **MSMS AI** phân tích bài làm — điểm mạnh, điểm yếu, giải thích lỗi sai, gợi ý kiến thức — hiện cùng kết quả cho học sinh, phụ huynh và giáo viên (BR-23).
 6. **Tổ trưởng** theo dõi tiến độ của tổ ở chế độ đọc (LRN-05).
 
 ### Luồng C — Dịch vụ phụ huynh và truyền thông
@@ -247,18 +245,18 @@ Màn hình Thiết lập chỉ dành cho SA; HT chỉ có màn hình Thông tin 
 
 | ID | Feature | Nội dung chính | Ghi | Đọc | BR |
 | --- | --- | --- | --- | --- | --- |
-| LRN-01 | Ngân hàng câu hỏi & Đề | Câu hỏi dùng chung theo môn, nháp AI, ghép đề, nhân bản đề của người khác | GV (của mình) | mọi GV | BR-20 |
-| LRN-02 | Giao bài & Nộp bài | Giao đề mình sở hữu cho lớp mình phụ trách; học sinh làm bài, tự lưu nháp, nộp một lượt | GV giao · HS làm 📱 | HS 📱 | BR-21 |
-| LRN-03 | Chấm bài & Công bố điểm | Chấm ngay khi nộp, thống kê câu sai nhiều nhất, công bố điểm cho cả lớp | GV phụ trách | GV · sau công bố: HS 📱, PH 📱 | BR-22 |
-| LRN-04 | Phân tích học tập bằng AI | Tính chỉ số, ẩn danh, gọi AI, chỉnh – duyệt – công bố phân tích, nhắc khi bài đã đóng, chạy lại khi lỗi | GV phụ trách | sau công bố: HS 📱, PH 📱 | BR-23 |
-| LRN-05 | Giám sát cấp tổ | Tổ trưởng xem tiến độ bài tập của mọi lớp thuộc các môn trong tổ: trạng thái, hạn nộp, số nộp / sĩ số, đã công bố điểm chưa. Chỉ đọc, Backend chặn mọi đường ghi | — | TT | — |
+| LRN-01 | Ngân hàng câu hỏi | Câu hỏi dùng chung theo môn, khối 6–9, nháp AI | GV (của mình) | mọi GV | BR-20 |
+| LRN-02 | Giao bài & Làm bài | Giao bài cho (lớp, môn) mình phụ trách, thời lượng tùy chọn; học sinh bắt đầu, tự lưu nháp, nộp một lượt | GV giao · HS làm 📱 | HS 📱 | BR-21 |
+| LRN-03 | Kết quả bài làm | Chấm ngay khi nộp; điểm, đáp án đúng và giải thích hiện ngay; giáo viên xem điểm từng học sinh | — | GV phụ trách · HS 📱 · PH 📱 | BR-22 |
+| LRN-04 | Phân tích bài làm bằng AI | MSMS AI phân tích từng bài làm khi nộp: điểm mạnh, điểm yếu, giải thích lỗi sai, gợi ý kiến thức | — | GV phụ trách · HS 📱 · PH 📱 | BR-23 |
+| LRN-05 | Tiến độ giao bài của tổ | Tổ trưởng xem tiến độ bài tập của mọi lớp thuộc các môn trong tổ: hạn nộp, số nộp / sĩ số. Chỉ đọc, Backend chặn mọi đường ghi | — | TT | — |
 
 ### PAR — Parent Services (3)
 
 | ID | Feature | Nội dung chính | Ghi | Đọc | BR |
 | --- | --- | --- | --- | --- | --- |
 | PAR-01 | Đơn xin nghỉ | Gửi, rút, duyệt, từ chối | PH 📱, CN 📱 | PH 📱, CN 📱, HP, SA | BR-19 |
-| PAR-02 | Sổ liên lạc tuần | Chuyên cần, bài tập có hạn trong tuần, điểm và phân tích đã công bố — tính trực tiếp, chỉ đọc | — | HS 📱, PH 📱, CN 📱 | BR-24 |
+| PAR-02 | Sổ liên lạc tuần | Chuyên cần, bài tập có hạn trong tuần, điểm và phân tích — tính trực tiếp, chỉ đọc | — | HS 📱, PH 📱, CN 📱 | BR-24 |
 | PAR-03 | Hộp thư phụ huynh – giáo viên | Hội thoại 1–1 về một học sinh, chỉ văn bản | PH 📱, GV 📱 tạo và gửi | — | BR-25 |
 
 ### COM — Communication (2)
@@ -323,8 +321,7 @@ Lược đồ CSDL thiết kế sau, từ tài liệu này. Mục này chốt **
 | Điểm danh | Có mặt / Muộn / Vắng | Đúng ba giá trị giáo viên gửi |
 | Đơn xin nghỉ | Chờ duyệt / Đã duyệt / Đã từ chối / Đã rút | |
 | Câu hỏi | Nháp / Sẵn dùng | Nháp = nháp AI chưa xác nhận |
-| Bài được giao | Nháp / Đã giao | |
-| Phân tích AI | Nháp / Đã duyệt / Đã công bố / Lỗi | |
+| Phân tích bằng AI | Đang phân tích / Xong / Lỗi | Lỗi để trống, không thử lại |
 | Phiên bản thời khóa biểu | Nháp / Đã phát hành | Mỗi phiên bản là hồ sơ của một lần import, đọc lại được như lịch sử |
 | Bài đăng | Đã đăng / Đã ẩn | Không có trạng thái nháp |
 | Học sinh | Đang học / Đã chuyển trường / Đã tốt nghiệp | |
@@ -339,8 +336,7 @@ Lược đồ CSDL thiết kế sau, từ tài liệu này. Mục này chốt **
 | Tiết **bị khóa** | Đã diễn ra, hoặc ngày của tiết < hôm nay. Tiết bị khóa không đổi giáo viên, không hủy |
 | Điểm danh **có phép** | Vắng **và** có đơn Đã duyệt của học sinh phủ ngày của tiết, cùng buổi hoặc cả ngày |
 | Điểm danh **không phép** | Vắng và không có đơn như trên |
-| Bài **đã đóng** | Đã giao **và** thời điểm hiện tại > hạn nộp |
-| Điểm **đã công bố** | Có thời điểm công bố điểm |
+| Bài **đã đóng** | Thời điểm hiện tại > hạn nộp |
 | Ghi danh **hiệu lực tại ngày D** | Ngày bắt đầu ≤ D **và** (ngày kết thúc để trống **hoặc** ≥ D); để trống nghĩa là tới hết năm học |
 
 Nhãn cuối của điểm danh có bốn giá trị: **Có mặt / Muộn / Vắng có phép / Vắng không phép**. Đơn duyệt muộn tự đổi nhãn các buổi vắng đã ghi, không cần chạy lại gì.
@@ -483,26 +479,22 @@ Parent rút được khi còn Chờ duyệt. Khi gửi, đơn ghi lại **lớp 
 
 ### 7.6. Bài tập và phân tích
 
-**BR-20 — Câu hỏi và đề.** Câu hỏi thuộc một môn, có khối và chủ đề, gồm 4 lựa chọn (A–D) với **từ 1 đến 3 đáp án đúng**; giải thích tùy chọn. Soạn thủ công **hoặc từ nháp AI**: giáo viên chọn môn, khối, chủ đề, bộ sách (Kết nối tri thức với cuộc sống, Chân trời sáng tạo hoặc Cánh diều), số câu → AI trả về các câu Nháp gắn cờ AI → giáo viên sửa và xác nhận thành **Sẵn dùng**. Bộ sách chỉ đi kèm yêu cầu để AI bám đúng chương trình, không lưu trên câu hỏi. Chỉ câu Sẵn dùng mới đưa vào đề được.
+**BR-20 — Câu hỏi.** Câu hỏi thuộc một môn, có khối (6–9) và chủ đề, gồm 4 lựa chọn (A–D) với **từ 1 đến 3 đáp án đúng**; giải thích tùy chọn. Soạn thủ công **hoặc từ nháp AI**: giáo viên chọn môn, khối, chủ đề, bộ sách (Kết nối tri thức với cuộc sống, Chân trời sáng tạo hoặc Cánh diều), số câu → MSMS AI trả về các câu Nháp gắn cờ AI → giáo viên sửa và xác nhận thành **Sẵn dùng**. Bộ sách chỉ đi kèm yêu cầu để AI bám đúng chương trình, không lưu trên câu hỏi. Chỉ câu Sẵn dùng mới đưa vào bài tập được.
 
-Ngân hàng câu hỏi **dùng chung toàn trường**: mọi Teacher xem và dùng câu Sẵn dùng của mọi môn; **chỉ người tạo sửa** được. Câu hỏi đã nằm trong một đề **đã giao** thì không sửa được nữa — chỉ còn **ẩn khỏi ngân hàng**; ẩn không ảnh hưởng đề cũ; muốn phiên bản khác thì soạn câu mới.
+Ngân hàng câu hỏi **dùng chung toàn trường**: mọi Teacher xem và dùng câu Sẵn dùng của mọi môn; **chỉ người tạo sửa** được. Câu hỏi đã nằm trong một bài tập thì không sửa được nữa — chỉ còn **ẩn khỏi ngân hàng**; ẩn không ảnh hưởng bài cũ; muốn phiên bản khác thì soạn câu mới.
 
-Đề gồm các câu Sẵn dùng cùng môn, có thứ tự và điểm từng câu. **Đề thuộc về người tạo:** chỉ người tạo sửa hoặc xóa đề chưa khóa. Mọi Teacher đều xem được đề trong danh sách và **nhân bản** đề của người khác; bản nhân bản thuộc về người bấm nhân bản và chưa khóa; câu đã ẩn khỏi ngân hàng không được chép sang và hệ thống báo số câu bị loại. **Giao lần đầu thì đề khóa vĩnh viễn** — từ đó không ai sửa được, kể cả người tạo. Giáo viên tiếp quản lớp giữa năm vì vậy dùng lại được đề của người tiền nhiệm bằng cách nhân bản.
+**BR-21 — Giao bài và làm bài.** Teacher **đang phụ trách chuyên môn** ở (lớp, môn) giao bài cho lớp đó: chọn các câu Sẵn dùng **cùng môn** từ ngân hàng, thứ tự và điểm từng câu, thời điểm mở (mặc định ngay), hạn nộp (> hiện tại) và **thời lượng làm bài** (phút, tùy chọn — để trống là không giới hạn). Bài **giao ngay**, không có bước nháp: hệ thống kiểm bài có câu và tổng điểm lớn hơn 0, lưu danh sách được giao, tạo thông báo cho học sinh của lớp; từ đó bài **không sửa, không xóa, không gia hạn được nữa**.
 
-**BR-21 — Giao bài và nộp bài.** Teacher **đang phụ trách chuyên môn** ở (lớp, môn của đề) giao **đề mình sở hữu** cho lớp đó: chọn thời điểm mở (mặc định ngay) và hạn nộp (> hiện tại). Bài ở Nháp sửa và xóa được; bước chuyển sang **Đã giao** kiểm đề còn hợp lệ (có câu, tổng điểm lớn hơn 0), khóa đề, lưu danh sách được giao và tạo thông báo cho học sinh của lớp; từ đó bài **không sửa hay gia hạn được nữa**. Muốn cho làm lại: nhân bản đề, giao như bài mới.
+**Danh sách được giao:** lúc giao, hệ thống lưu lại danh sách học sinh có ghi danh hiệu lực ở lớp tại thời điểm đó. Danh sách này không đổi về sau: học sinh chuyển lớp hoặc vào lớp sau thời điểm giao không làm đổi người nhận bài, mẫu số tỉ lệ nộp, nhãn "Không nộp" và số liệu sổ liên lạc (BR-24). Học sinh vào lớp sau khi giao không được giao bài đó.
 
-**Danh sách được giao:** lúc bài chuyển sang Đã giao, hệ thống lưu lại danh sách học sinh có ghi danh hiệu lực ở lớp tại thời điểm đó. Danh sách này không đổi về sau: học sinh chuyển lớp hoặc vào lớp sau thời điểm giao không làm đổi người nhận bài, mẫu số tỉ lệ nộp, nhãn "Không nộp" và số liệu sổ liên lạc (BR-24). Học sinh vào lớp sau khi giao không được giao bài đó.
+Học sinh trong danh sách được giao mở bài từ thời điểm mở tới hạn nộp; bài tự lưu nháp. **Bài có thời lượng:** học sinh bấm **Bắt đầu**, đồng hồ tính từ lúc đó theo giờ Backend và vẫn chạy khi học sinh thoát ra rồi vào lại. **Hạn thực tế** của học sinh là mốc sớm hơn giữa hạn nộp và (giờ bắt đầu + thời lượng); bài không có thời lượng thì hạn thực tế là hạn nộp. **Tối đa một lần nộp**; Backend từ chối lưu nháp hoặc nộp sau hạn thực tế, và từ chối nộp lại; bài gửi lên trong **10 giây** sau hạn thực tế vẫn được nhận để bù độ trễ mạng. **Hết hạn thực tế mà học sinh chưa nộp:** nếu bản nháp đã có ít nhất một câu trả lời thì Backend **tự nộp và chấm bản nháp đó** ở lần đầu bài được truy cập sau hạn thực tế (không cần job nền); bản nháp rỗng hoặc chưa từng mở bài thì không phải 0 điểm — hiển thị "Không nộp".
 
-Học sinh trong danh sách được giao mở bài từ thời điểm mở tới hạn nộp. Mở đề không tính lượt. Bài tự lưu nháp; không giới hạn thời lượng. **Tối đa một lần nộp**; Backend từ chối lưu nháp hoặc nộp sau hạn, và từ chối nộp lại. Chấm ngay khi nộp: một câu chỉ được điểm khi học sinh chọn **đúng và đủ** các đáp án đúng, không chọn thừa; điểm = tổng điểm câu đúng / tổng điểm đề × 10, làm tròn 2 chữ số thập phân. **Nháp chưa nộp không được chấm. Chưa nộp không phải 0 điểm** — hiển thị "Không nộp".
+Chấm ngay khi nộp: một câu chỉ được điểm khi học sinh chọn **đúng và đủ** các đáp án đúng, không chọn thừa; điểm = tổng điểm câu đúng / tổng điểm bài × 10, làm tròn 2 chữ số thập phân.
 
-**BR-22 — Công bố điểm.** Chỉ khi bài **đã đóng** (mục 6.2), bởi Teacher đang phụ trách chuyên môn. Công bố cho cả lớp một lần, **không thu hồi**. Trước khi công bố, giáo viên xem điểm từng học sinh và **thống kê câu sai nhiều nhất** (số và tỉ lệ học sinh đã nộp làm sai mỗi câu, tính theo kết quả cả câu). Công bố tạo thông báo cho học sinh và phụ huynh.
+**BR-22 — Kết quả bài làm.** Không có bước công bố: ngay khi nộp, **Student thấy điểm, lựa chọn của mình, đáp án đúng và giải thích của từng câu**, kèm khung phân tích AI (BR-23). Student chỉ xem kết quả bài **mình đã nộp**. **Parent** xem được cùng nội dung của từng con được liên kết; **Teacher** đang phụ trách chuyên môn xem điểm và kết quả từng học sinh nộp bài của (lớp, môn) mình. Điểm chỉ là điểm bài tập rèn luyện, không vào sổ điểm chính thức.
 
-**BR-23 — Phân tích AI.** Teacher đang phụ trách chuyên môn chạy phân tích sau khi bài đã đóng và có ít nhất một bài nộp. Backend tính chỉ số, gắn **mã giả lập**, rồi gửi AI **một lần cho cả lớp** (mục 3.1):
+**BR-23 — Phân tích bằng AI.** Khi học sinh nộp bài (kể cả bị tự nộp), Backend tạo **một phân tích cho bài nộp đó** và gửi MSMS AI **một lần** (mục 3.1): nội dung câu hỏi, các lựa chọn, đáp án đúng, lựa chọn của học sinh ở từng câu và điểm, không kèm tên hay mã học sinh. Kết quả gồm **điểm mạnh, điểm yếu, giải thích lỗi sai và gợi ý kiến thức cần ôn**. Phân tích **tự động, không có bước duyệt hay công bố**: lưu kèm bài nộp rồi hiện cho Student, Parent và Teacher đang phụ trách chuyên môn. Trong lúc AI chạy, khung phân tích ở trạng thái Đang phân tích. AI lỗi hoặc trả kết quả rỗng → **Lỗi**, khung phân tích để trống, **không thử lại**; không ảnh hưởng chấm và nộp bài.
 
-- **Cấp lớp:** tỉ lệ đúng theo câu, đáp án sai được chọn nhiều nhất của từng câu, phân bố điểm. Chỉ giáo viên xem, không công bố cho học sinh hay phụ huynh.
-- **Cấp học sinh** (chỉ học sinh đã nộp): kết quả bài này, kèm **tối đa 5 bài gần nhất cùng môn đã công bố điểm** của chính học sinh đó. Có bao nhiêu bài trước thì gửi bấy nhiêu.
-
-Kết quả về ở **Nháp**. Giáo viên chỉnh, **duyệt**, rồi **công bố** từng phân tích hoặc hàng loạt; **tạo lại** được khi phân tích còn Nháp (nội dung Nháp cũ bị thay bằng kết quả mới; lần tạo lại chỉ chạy cho học sinh còn Nháp hoặc Lỗi). Phân tích Đã duyệt hoặc Đã công bố thì không tạo lại và không bị ghi đè. Phân tích học sinh chỉ công bố được **sau khi điểm của bài đã công bố**; Student và Parent chỉ thấy phân tích Đã công bố. Kết quả AI thiếu mã học sinh, thừa mã lạ hoặc rỗng → **Lỗi**; AI lỗi → **Lỗi** kèm lý do, giáo viên chạy lại; không ảnh hưởng chấm, nộp, công bố điểm. Bài đã đóng, có bài nộp mà chưa có phân tích thì giáo viên được nhắc khi mở danh sách bài (BR-26).
 
 ### 7.7. Dịch vụ phụ huynh, truyền thông, giám sát
 
@@ -510,7 +502,7 @@ Kết quả về ở **Nháp**. Giáo viên chỉnh, **duyệt**, rồi **công 
 
 - **Chuyên cần:** số tiết có mặt, muộn, vắng có phép, vắng không phép, chưa điểm danh — chỉ tiết Đã xếp lịch đã diễn ra.
 - **Bài tập có hạn nộp trong tuần:** số được giao, đã nộp, không nộp (đã đóng mà chưa nộp).
-- **Điểm và phân tích đã công bố** của các bài đó.
+- **Điểm và phân tích** của các bài đó.
 
 Không xếp hạng, không điểm trung bình lớp, không hạnh kiểm. Mục không có dữ liệu để trống. Số liệu luôn theo dữ liệu hiện tại — nhập bù điểm danh hay đơn duyệt muộn đều được phản ánh ngay lần mở sau.
 
@@ -526,8 +518,6 @@ Không xếp hạng, không điểm trung bình lớp, không hạnh kiểm. M�
 | Đơn nghỉ mới | Chủ nhiệm (BR-19) |
 | Đơn được duyệt hoặc từ chối | Parent gửi đơn |
 | Bài mới được giao | Học sinh của lớp |
-| Bài đã đóng, có bài nộp, chưa có phân tích | Teacher đang phụ trách chuyên môn — tạo khi họ mở danh sách bài, mỗi người mỗi bài một lần |
-| Điểm được công bố; phân tích được công bố | Học sinh và phụ huynh |
 | Tin nhắn mới | Người nhận trong hội thoại |
 
 **BR-27 — Bảng tin.** **Mọi cán bộ đăng được** — School Admin, Principal, Vice Principal, Teacher, kể cả khi đang giữ trách nhiệm chủ nhiệm hay tổ trưởng. Khi đăng, chọn một trong hai phạm vi:
@@ -558,7 +548,7 @@ Mỗi điều dưới đây nếu thêm vào sẽ làm lược đồ khó thiế
 - **Dạy thay không thành phụ trách chuyên môn:** phụ trách chuyên môn chỉ tính từ thời khóa biểu đã phát hành, không tính từ tiết điều chỉnh (BR-14).
 - **Không giới hạn sĩ số lớp**, không quy định số tiết mỗi môn mỗi tuần.
 - **Không kiểm lại ghi danh khi nộp bài** — chuyển lớp giữa chừng không làm mất bài đã nộp.
-- **Không sửa đáp án, không gia hạn, không thu hồi điểm sau khi giao** — đề đã giao có đáp án sai thì nhân bản đề và giao như bài mới.
+- **Không sửa, không xóa, không gia hạn bài sau khi giao** — giao nhầm thì chấp nhận, muốn bài khác thì giao bài mới.
 - **Khớp loại tài khoản với loại hồ sơ kiểm ở tầng dịch vụ**, không ở cơ sở dữ liệu.
 
 ---
@@ -577,7 +567,7 @@ Mỗi điều dưới đây nếu thêm vào sẽ làm lược đồ khó thiế
 | **Teacher** | Lịch dạy của mình · điểm danh và sửa trong ngày · hộp thư · thông báo · bảng tin (đọc) · hồ sơ cá nhân · nếu chủ nhiệm: hộp đơn nghỉ, duyệt và từ chối, sổ liên lạc lớp mình |
 | **School Admin, Principal, Vice Principal** | Không có mobile, dùng web |
 
-Chỉ có trên web: soạn câu hỏi và đề, giao bài, xem kết quả bài tập theo lớp, công bố điểm, chỉnh và duyệt phân tích AI, giám sát cấp tổ, soạn bài đăng; toàn bộ SCH, PPL, SCD (trừ màn hình xem lịch cá nhân) và ADM.
+Chỉ có trên web: soạn câu hỏi, giao bài, xem kết quả bài tập theo lớp, tiến độ giao bài của tổ, soạn bài đăng; toàn bộ SCH, PPL, SCD (trừ màn hình xem lịch cá nhân) và ADM.
 
 ### 8.2. Ký hiệu Platform trong WBS
 
@@ -592,7 +582,7 @@ Mọi Task có giao diện đều mang `Web`; `Mobile` chỉ thêm vào khi Task
 
 ### 8.3. Việc kỹ thuật còn để mở
 
-Thuộc Feature Spec / OpenAPI / hạ tầng, không suy diễn từ tài liệu này: lược đồ CSDL chi tiết; danh sách API, mã lỗi, wireframe, test case chi tiết; nơi lưu ảnh và quy ước đường dẫn; cấu hình Gmail SMTP và hạn mức gửi; nhà cung cấp AI và hạn mức gọi; yêu cầu phi chức năng (quy mô, hiệu năng giờ cao điểm nộp bài, sao lưu); rà soát pháp lý cho phân tích AI.
+Thuộc Feature Spec / OpenAPI / hạ tầng, không suy diễn từ tài liệu này: lược đồ CSDL chi tiết; danh sách API, mã lỗi, wireframe, test case chi tiết; nơi lưu ảnh và quy ước đường dẫn; cấu hình Gmail SMTP và hạn mức gửi; nhà cung cấp AI và hạn mức gọi; yêu cầu phi chức năng (quy mô, hiệu năng giờ cao điểm nộp bài, sao lưu); rà soát pháp lý cho phân tích bằng AI.
 
 ### 8.4. Quy tắc cho nhóm phát triển
 
