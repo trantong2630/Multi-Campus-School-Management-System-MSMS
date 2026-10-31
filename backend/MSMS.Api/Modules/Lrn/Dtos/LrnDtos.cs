@@ -20,7 +20,7 @@ public record QuestionDetailDto(
 
 public record SaveQuestionDto(int SubjectId, byte GradeLevel, string? Topic, string? Content, string? Explanation, List<OptionInputDto>? Options);
 
-public record GenerateQuestionsDto(int SubjectId, byte GradeLevel, string? Topic, string? Textbook, int Count);
+public record GenerateQuestionsDto(int SubjectId, byte GradeLevel, string? Topic, int Count);
 public record GenerateQuestionsResultDto(IReadOnlyList<QuestionDetailDto> Drafts, int Discarded);
 
 // ---- LRN-02: Giao bài (giáo viên) ----

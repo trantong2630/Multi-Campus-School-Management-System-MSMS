@@ -737,7 +737,7 @@ Người tạo ẩn câu Sẵn dùng khỏi ngân hàng chung; ẩn không ảnh
 
 **4.6.5 — Yêu cầu MSMS AI sinh nháp câu hỏi / Request AI Question Drafts**  
 `BE + Web` · 2.5 MD · dep: 4.6.2  
-Giáo viên chọn môn thuộc tổ chuyên môn của mình, khối, chủ đề và số câu; bộ sách cố định là Kết nối tri thức với cuộc sống (bộ dùng thống nhất toàn quốc), giao diện không cho đổi và Backend vẫn nhận thêm Chân trời sáng tạo hoặc Cánh diều; bộ sách chỉ đi kèm yêu cầu để AI bám đúng chương trình, không lưu trên câu hỏi. AI trả về các câu ở trạng thái Nháp gắn cờ AI; Backend loại câu không đủ 4 lựa chọn hoặc không có đáp án đúng. AI hỏng thì giáo viên soạn thủ công, không ảnh hưởng luồng nào khác (mục 3.1, BR-20).
+Giáo viên chọn môn thuộc tổ chuyên môn của mình, khối, chủ đề và số câu; bộ sách cố định là Kết nối tri thức với cuộc sống (bộ dùng thống nhất toàn quốc), không phải đầu vào của yêu cầu mà nằm trong chỉ dẫn hệ thống để AI bám đúng chương trình, không lưu trên câu hỏi. AI trả về các câu ở trạng thái Nháp gắn cờ AI; Backend loại câu không đủ 4 lựa chọn hoặc không có đáp án đúng. AI hỏng thì giáo viên soạn thủ công, không ảnh hưởng luồng nào khác (mục 3.1, BR-20).
 
 **4.6.6 — Xem và sửa nháp AI / Review and Edit AI Drafts**  
 `BE + Web` · 1.5 MD · dep: 4.6.5  
