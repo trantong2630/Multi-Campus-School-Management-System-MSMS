@@ -479,7 +479,7 @@ Parent rút được khi còn Chờ duyệt. Khi gửi, đơn ghi lại **lớp 
 
 ### 7.6. Bài tập và phân tích
 
-**BR-20 — Câu hỏi.** Câu hỏi thuộc một môn, có khối (6–9) và chủ đề, gồm 4 lựa chọn (A–D) với **từ 1 đến 3 đáp án đúng**; giải thích tùy chọn. Soạn thủ công **hoặc từ nháp AI**: giáo viên chọn môn, khối, chủ đề, bộ sách (Kết nối tri thức với cuộc sống, Chân trời sáng tạo hoặc Cánh diều), số câu → MSMS AI trả về các câu Nháp gắn cờ AI → giáo viên sửa và xác nhận thành **Sẵn dùng**. Bộ sách chỉ đi kèm yêu cầu để AI bám đúng chương trình, không lưu trên câu hỏi. Chỉ câu Sẵn dùng mới đưa vào bài tập được.
+**BR-20 — Câu hỏi.** Câu hỏi thuộc một môn, có khối (6–9) và chủ đề, gồm 4 lựa chọn (A–D) với **từ 1 đến 3 đáp án đúng**; giải thích tùy chọn. Soạn thủ công **hoặc từ nháp AI**: giáo viên chọn môn, khối, chủ đề, số câu → MSMS AI trả về các câu Nháp gắn cờ AI → giáo viên sửa và xác nhận thành **Sẵn dùng**. AI bám Chương trình giáo dục phổ thông 2018 và bộ sách giáo khoa Kết nối tri thức với cuộc sống (bộ dùng thống nhất toàn quốc theo Quyết định 3588/QĐ-BGDĐT); bộ sách không phải lựa chọn của người dùng và không lưu trên câu hỏi. Chỉ câu Sẵn dùng mới đưa vào bài tập được.
 
 Ngân hàng câu hỏi **dùng chung toàn trường**: mọi Teacher xem và dùng câu Sẵn dùng của mọi môn; **chỉ người tạo sửa** được. Câu hỏi đã nằm trong một bài tập thì không sửa được nữa — chỉ còn **ẩn khỏi ngân hàng**; ẩn không ảnh hưởng bài cũ; muốn phiên bản khác thì soạn câu mới.
 
