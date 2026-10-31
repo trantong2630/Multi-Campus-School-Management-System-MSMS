@@ -25,6 +25,8 @@ public partial class Post
 
     public DateTime? HiddenAt { get; set; }
 
+    public string? HiddenReason { get; set; }
+
     public virtual Person AuthorPerson { get; set; } = null!;
 
     public virtual Person? HiddenByPerson { get; set; }
