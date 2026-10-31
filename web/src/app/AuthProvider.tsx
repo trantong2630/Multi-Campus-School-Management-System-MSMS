@@ -22,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
   const logoutPending = useRef<Promise<void> | null>(null);
+  const scopePending = useRef<{ generation: number; promise: Promise<void> } | null>(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -81,11 +82,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(() => {
     const expectedGeneration = tokenStore.generation();
-    const info = await iamApi.me();
-    if (tokenStore.isCurrent(expectedGeneration)) setUser(info);
+    if (scopePending.current?.generation === expectedGeneration) return scopePending.current.promise;
+    const operation = iamApi.me().then((info) => {
+      if (tokenStore.isCurrent(expectedGeneration)) setUser(info);
+    });
+    const pending = { generation: expectedGeneration, promise: operation };
+    scopePending.current = pending;
+    pending.promise = operation.finally(() => { if (scopePending.current === pending) scopePending.current = null; });
+    return pending.promise;
   }, []);
+
+  const accountId = user?.accountId;
+  const mustChangePassword = user?.mustChangePassword;
+  useEffect(() => {
+    if (!accountId || mustChangePassword) return;
+    const update = () => {
+      if (document.visibilityState === 'visible') void refresh().catch(() => {});
+    };
+    const timer = window.setInterval(update, 30_000);
+    window.addEventListener('focus', update);
+    document.addEventListener('visibilitychange', update);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', update);
+      document.removeEventListener('visibilitychange', update);
+    };
+  }, [accountId, mustChangePassword, refresh]);
 
   const value = useMemo(() => ({ user, loading, loggingOut, login, logout, refresh }), [user, loading, loggingOut, login, logout, refresh]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

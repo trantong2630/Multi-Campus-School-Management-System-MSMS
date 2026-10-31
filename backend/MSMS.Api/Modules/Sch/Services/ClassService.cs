@@ -10,36 +10,26 @@ using MSMS.Api.Modules.Sch.Dtos;
 namespace MSMS.Api.Modules.Sch.Services;
 
 /// <summary>SCH-05: lớp theo phân hiệu và năm học. Ghi danh học sinh làm cùng danh bạ học sinh (PPL-02).</summary>
-public sealed class ClassService(MsmsDbContext db, IClock clock, CurrentUser user, ScopeResolver scope)
+public sealed class ClassService(MsmsDbContext db, IClock clock)
 {
-    /// <summary>
-    /// Danh sách lớp trong phạm vi của người gọi (BR-01, tầng 2): School Admin và Hiệu trưởng thấy mọi lớp, Hiệu phó thấy lớp của phân hiệu mình
-    /// phụ trách, giáo viên chỉ thấy lớp mình đang chủ nhiệm, các loại khác không thấy lớp nào.
-    /// </summary>
     public async Task<List<ClassDto>> ListAsync(int? campusId, int? yearId, bool includeInactive)
+        => await ListAsync(db.Class.AsNoTracking(), campusId, yearId, includeInactive);
+
+    /// <summary>Danh sách lớp trong phạm vi của người gọi (BR-01, tầng 2): lọc theo ScopeResolver trước khi trả sĩ số và chủ nhiệm.</summary>
+    public async Task<List<ClassDto>> ListVisibleAsync(int? campusId, int? yearId, bool includeInactive,
+        ScopeResolver scope)
+    {
+        var query = await scope.FilterClassesAsync(db.Class.AsNoTracking());
+        return await ListAsync(query, campusId, yearId, includeInactive);
+    }
+
+    private async Task<List<ClassDto>> ListAsync(IQueryable<Class> query, int? campusId, int? yearId, bool includeInactive)
     {
         var today = clock.Today;
-        var query = db.Class.AsNoTracking()
+        query = query
             .Where(c => (campusId == null || c.CampusId == campusId)
                         && (yearId == null || c.AcademicYearId == yearId)
                         && (includeInactive || c.IsActive));
-        switch (user.AccountType)
-        {
-            case AccountTypes.SchoolAdmin or AccountTypes.Principal:
-                break;
-            case AccountTypes.VicePrincipal:
-                var led = (await scope.LedCampusIdsAsync()).ToList();
-                query = query.Where(c => led.Contains(c.CampusId));
-                break;
-            case AccountTypes.Teacher:
-                var mine = await db.HomeroomAssignment.Where(EffectivePeriod.EffectiveAt<HomeroomAssignment>(today))
-                    .Where(h => h.StaffId == user.PersonId).Select(h => h.ClassId).ToListAsync();
-                query = query.Where(c => mine.Contains(c.ClassId));
-                break;
-            default:
-                query = query.Where(_ => false);
-                break;
-        }
 
         return await query
             .OrderBy(c => c.Campus.Name).ThenBy(c => c.GradeLevel).ThenBy(c => c.Name)

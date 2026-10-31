@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
 using MSMS.Api.Common.Rules;
 using MSMS.Api.Common.Time;
@@ -24,12 +25,12 @@ public static class Genders
 }
 
 /// <summary>PPL-01: danh bạ cán bộ. Import chỉ tạo hồ sơ, sửa hồ sơ luôn làm ở đây (BR-11).</summary>
-public sealed class StaffService(MsmsDbContext db, IClock clock)
+public sealed class StaffService(MsmsDbContext db, IClock clock, ScopeResolver scope)
 {
-    public Task<PagedResult<StaffDto>> ListAsync(int? campusId, int? departmentId, string? accountType, bool? hasAbbr,
+    public async Task<PagedResult<StaffDto>> ListAsync(int? campusId, int? departmentId, string? accountType, bool? hasAbbr,
         string? search, bool includeInactive, int page, int pageSize)
     {
-        var query = db.StaffProfile.AsNoTracking()
+        var query = (await scope.FilterStaffAsync(db.StaffProfile.AsNoTracking()))
             .Where(s => includeInactive || s.IsActive)
             .Where(s => campusId == null || s.PrimaryCampusId == campusId)
             .Where(s => departmentId == null || s.DepartmentId == departmentId)
@@ -45,7 +46,7 @@ public sealed class StaffService(MsmsDbContext db, IClock clock)
                                      || (s.TeacherAbbr != null && s.TeacherAbbr == term));
         }
 
-        return query.OrderBy(s => s.Staff.FullName)
+        return await query.OrderBy(s => s.Staff.FullName)
             .Select(s => new StaffDto(s.StaffId, s.Staff.PersonCode, s.Staff.FullName, s.Staff.DateOfBirth, s.Staff.NationalId, s.Staff.Gender,
                 s.Staff.PhoneNumber, s.Staff.Email, s.PrimaryCampusId, s.PrimaryCampus.Name, s.DepartmentId,
                 s.Department == null ? null : s.Department.Name, s.TeacherAbbr, s.Position, s.IsActive,

@@ -31,6 +31,8 @@ builder.Services.AddDbContext<MsmsDbContext>(o =>
 builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUser>();
+builder.Services.AddScoped<AccountAccessValidator>();
+builder.Services.AddScoped<AccountScopeResolver>();
 builder.Services.AddScoped<ScopeResolver>();
 builder.Services.AddScoped<AuditWriter>();
 builder.Services.AddScoped<NotificationSender>();
@@ -104,7 +106,7 @@ app.MapControllers();
 
 // Đăng ký SignalR Hub route
 // COM-4.8.6: Token được truyền qua query string: /signalr?access_token=...
-app.MapHub<CommunicationHub>("/signalr");
+app.MapHub<CommunicationHub>("/signalr", o => o.CloseOnAuthenticationExpiration = true);
 
 if (app.Environment.IsDevelopment())
 {

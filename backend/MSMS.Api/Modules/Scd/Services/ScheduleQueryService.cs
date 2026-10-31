@@ -10,7 +10,7 @@ namespace MSMS.Api.Modules.Scd.Services;
 /// <summary>Phần đọc của SCD-01: danh sách phiên bản, lưới phiên bản, lịch dạy theo ngày, lịch dạy của giáo viên.</summary>
 public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, ScopeResolver scope, TimetablePublishService publish)
 {
-    /// <summary>Phân hiệu người dùng được thao tác: School Admin và Principal thấy tất cả, Vice Principal chỉ phân hiệu đang phụ trách.</summary>
+    /// <summary>Phân hiệu được xem lịch: Principal thấy tất cả, Vice Principal chỉ phân hiệu đang phụ trách.</summary>
     public async Task<List<CampusOptionDto>> MyCampusesAsync()
     {
         var query = db.Campus.AsNoTracking().Where(c => c.IsActive);

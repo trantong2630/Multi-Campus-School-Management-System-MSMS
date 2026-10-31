@@ -46,7 +46,6 @@ export interface GenerateQuestionsInput {
   subjectId: number;
   gradeLevel: number;
   topic: string;
-  textbook: string;
   count: number;
 }
 export interface GenerateQuestionsResult { drafts: QuestionDetail[]; discarded: number }
