@@ -3,18 +3,26 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { AccountType } from '@/shared/lib/labels';
+import type { UserInfo } from '@/features/iam/types';
 
-export interface MenuLeaf {
-  key: string;
-  label: string;
-  path: string;
-  /** Loại tài khoản thấy được mục này. Mục không có quyền bị ẩn hẳn, không khóa (Conventions §4.7). */
+type ScopeRequirement = 'homeroom' | 'department' | 'subject' | 'campus';
+type NavigationUser = Pick<UserInfo, 'accountType' | 'scope'>;
+
+interface MenuAccess {
+  /** Mục không có quyền bị ẩn hẳn, không khóa (Conventions §4.7). */
   roles: AccountType[];
-  /** false = màn hình chưa làm, chưa đưa lên menu. Đổi thành true khi trang có thật. */
+  requires?: Partial<Record<AccountType, ScopeRequirement>>;
+  /** Chỉ đưa màn hình đã triển khai lên menu. */
   ready: boolean;
 }
 
-export interface MenuGroup {
+export interface MenuLeaf extends MenuAccess {
+  key: string;
+  label: string;
+  path: string;
+}
+
+export interface MenuGroup extends Partial<MenuAccess> {
   key: string;
   label: string;
   icon: LucideIcon;
@@ -22,8 +30,6 @@ export interface MenuGroup {
   section: MenuSection;
   /** Nhóm một màn hình thì không có cấp 2: dùng `path` thay `children`. */
   path?: string;
-  roles?: AccountType[];
-  ready?: boolean;
   children?: MenuLeaf[];
 }
 
@@ -63,11 +69,11 @@ export const menu: MenuGroup[] = [
   {
     key: 'scd', label: 'Thời khóa biểu', icon: CalendarDays, section: 'manage',
     children: [
-      { key: 'scd-timetable', label: 'Thời khóa biểu', path: '/scd/timetable', roles: ['VicePrincipal'], ready: true },
+      { key: 'scd-timetable', label: 'Thời khóa biểu', path: '/scd/timetable', roles: ['VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
       { key: 'scd-responsibility', label: 'Phụ trách chuyên môn', path: '/scd/responsibilities', roles: ['VicePrincipal'], ready: true },
-      { key: 'scd-schedule', label: 'Lịch dạy', path: '/scd/schedule', roles: ['Principal', 'VicePrincipal', 'Teacher'], ready: true },
+      { key: 'scd-schedule', label: 'Lịch dạy', path: '/scd/schedule', roles: ['Principal', 'VicePrincipal', 'Teacher'], requires: { VicePrincipal: 'campus' }, ready: true },
       { key: 'scd-my-class', label: 'Lịch học', path: '/scd/my-class', roles: ['Student', 'Parent'], ready: true },
-      { key: 'scd-absence', label: 'Giáo viên vắng', path: '/scd/absences', roles: ['VicePrincipal'], ready: true },
+      { key: 'scd-absence', label: 'Giáo viên vắng', path: '/scd/absences', roles: ['VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
     ],
   },
   { key: 'att', label: 'Điểm danh', icon: ClipboardCheck, section: 'manage', path: '/att', roles: [...STAFF, 'Student', 'Parent'], ready: false },
@@ -76,16 +82,16 @@ export const menu: MenuGroup[] = [
     children: [
       { key: 'lrn-bank', label: 'Ngân hàng câu hỏi', path: '/lrn/questions', roles: ['Teacher'], ready: false },
       { key: 'lrn-exam', label: 'Đề', path: '/lrn/exams', roles: ['Teacher'], ready: false },
-      { key: 'lrn-assign', label: 'Bài tập', path: '/lrn/assignments', roles: ['Teacher', 'Student'], ready: false },
-      { key: 'lrn-ai', label: 'Nhận xét AI', path: '/lrn/ai-feedback', roles: ['Teacher'], ready: false },
-      { key: 'lrn-dept', label: 'Giám sát tổ', path: '/lrn/department', roles: ['Teacher'], ready: false },
+      { key: 'lrn-assign', label: 'Bài tập', path: '/lrn/assignments', roles: ['Teacher', 'Student'], requires: { Teacher: 'subject' }, ready: false },
+      { key: 'lrn-ai', label: 'Nhận xét AI', path: '/lrn/ai-feedback', roles: ['Teacher'], requires: { Teacher: 'subject' }, ready: false },
+      { key: 'lrn-dept', label: 'Giám sát tổ', path: '/lrn/department', roles: ['Teacher'], requires: { Teacher: 'department' }, ready: false },
     ],
   },
   {
     key: 'par', label: 'Phụ huynh', icon: HeartHandshake, section: 'manage',
     children: [
-      { key: 'par-leave', label: 'Đơn xin nghỉ', path: '/par/leave-requests', roles: ['VicePrincipal', 'Teacher', 'Parent'], ready: true },
-      { key: 'par-report', label: 'Sổ liên lạc', path: '/par/weekly-reports', roles: ['Teacher', 'Student', 'Parent'], ready: false },
+      { key: 'par-leave', label: 'Đơn xin nghỉ', path: '/par/leave-requests', roles: ['VicePrincipal', 'Teacher', 'Parent'], requires: { Teacher: 'homeroom', VicePrincipal: 'campus' }, ready: true },
+      { key: 'par-report', label: 'Sổ liên lạc', path: '/par/weekly-reports', roles: ['Teacher', 'Student', 'Parent'], requires: { Teacher: 'homeroom' }, ready: false },
       { key: 'par-inbox', label: 'Hộp thư', path: '/par/inbox', roles: ['Teacher', 'Parent'], ready: true },
     ],
   },
@@ -95,21 +101,32 @@ export const menu: MenuGroup[] = [
     children: [
       { key: 'adm-account', label: 'Tài khoản', path: '/adm/accounts', roles: ['SchoolAdmin'], ready: true },
       { key: 'adm-audit', label: 'Nhật ký', path: '/adm/audit-log', roles: ['SchoolAdmin'], ready: false },
-      { key: 'adm-export', label: 'Xuất dữ liệu', path: '/adm/exports', roles: ['VicePrincipal', 'Teacher'], ready: false },
+      { key: 'adm-export', label: 'Xuất dữ liệu', path: '/adm/exports', roles: ['VicePrincipal', 'Teacher'], requires: { Teacher: 'homeroom', VicePrincipal: 'campus' }, ready: false },
     ],
   },
 ];
 
-/** Menu đã lọc theo loại tài khoản và theo trạng thái "đã có trang". Nhóm hết mục con thì ẩn cả nhóm. */
-export function visibleMenu(type: AccountType): MenuGroup[] {
+function canAccess(item: Pick<MenuGroup, 'roles' | 'requires' | 'ready'>, user: NavigationUser): boolean {
+  if (!item.ready || !item.roles?.includes(user.accountType)) return false;
+  switch (item.requires?.[user.accountType]) {
+    case 'homeroom': return !!user.scope?.homeroomClassIds.length;
+    case 'department': return !!user.scope?.headDepartmentIds.length;
+    case 'subject': return !!user.scope?.subjectResponsibilities.length;
+    case 'campus': return !!user.scope?.ledCampusIds.length;
+    default: return true;
+  }
+}
+
+/** Sidebar, tìm nhanh và chặn URL dùng cùng quyền và trách nhiệm đang hiệu lực từ /auth/me. */
+export function visibleMenu(user: NavigationUser): MenuGroup[] {
   const result: MenuGroup[] = [];
   for (const g of menu) {
     if (g.children) {
-      const children = g.children.filter((c) => c.ready && c.roles.includes(type));
+      const children = g.children.filter((c) => canAccess(c, user));
       // Nhóm chỉ còn một màn hình thì không có cấp 2 (Conventions §4.7): dùng thẳng tên và đường dẫn của màn hình đó.
       if (children.length === 1) result.push({ ...g, label: children[0].label, path: children[0].path, children: undefined });
       else if (children.length) result.push({ ...g, children });
-    } else if (g.ready && g.roles?.includes(type)) {
+    } else if (canAccess(g, user)) {
       result.push(g);
     }
   }
@@ -132,12 +149,14 @@ export function resolveCrumbs(pathname: string): string[] {
   return [];
 }
 
-/** Đường dẫn có nằm trong quyền của loại tài khoản không. Đường dẫn ngoài menu (hồ sơ cá nhân, đổi mật khẩu) ai cũng vào được. */
-export function isPathAllowed(pathname: string, type: AccountType): boolean {
+/** Mục bị ẩn không được mở bằng URL; hồ sơ cá nhân và đổi mật khẩu vẫn dành cho mọi người. */
+export function isPathAllowed(pathname: string, user: NavigationUser): boolean {
+  pathname = pathname.replace(/\/+$/, '') || '/';
+  if (extraCrumbs[pathname]) return true;
   for (const g of menu) {
-    if (g.path && (pathname === g.path || (g.path !== '/' && pathname.startsWith(g.path + '/')))) return !!g.roles?.includes(type);
+    if (g.path && (pathname === g.path || (g.path !== '/' && pathname.startsWith(g.path + '/')))) return canAccess(g, user);
     const leaf = g.children?.find((c) => pathname === c.path || pathname.startsWith(c.path + '/'));
-    if (leaf) return leaf.roles.includes(type);
+    if (leaf) return canAccess(leaf, user);
   }
-  return true;
+  return false;
 }

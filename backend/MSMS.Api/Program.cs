@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MSMS.Api.Common.Audit;
@@ -30,6 +31,7 @@ builder.Services.AddDbContext<MsmsDbContext>(o =>
 builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUser>();
+builder.Services.AddScoped<AccountAccessValidator>();
 builder.Services.AddScoped<AccountScopeResolver>();
 builder.Services.AddScoped<ScopeResolver>();
 builder.Services.AddScoped<AuditWriter>();
@@ -88,7 +90,7 @@ builder.Services.AddAdmModule();
 
 // Đăng ký SignalR Hub cho thông báo và tin nhắn realtime
 // COM-4.8.6: Hub xác thực bằng access_token qua query string
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(o => o.AddFilter<AccountStatusHubFilter>());
 
 builder.Services.AddControllers();
 
@@ -102,7 +104,7 @@ app.MapControllers();
 
 // Đăng ký SignalR Hub route
 // COM-4.8.6: Token được truyền qua query string: /signalr?access_token=...
-app.MapHub<CommunicationHub>("/signalr");
+app.MapHub<CommunicationHub>("/signalr", o => o.CloseOnAuthenticationExpiration = true);
 
 if (app.Environment.IsDevelopment())
 {

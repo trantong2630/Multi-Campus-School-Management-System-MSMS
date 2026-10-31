@@ -61,8 +61,8 @@ public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOpti
             throw ApiException.Unauthorized("Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Đăng nhập lại để tiếp tục.");
 
         var account = await db.Account.Include(a => a.Person).AsNoTracking()
-            .FirstAsync(a => a.AccountId == result.Session!.AccountId);
-        if (account.Status == AccountStatuses.Locked)
+            .FirstOrDefaultAsync(a => a.AccountId == result.Session!.AccountId);
+        if (account is null || account.Status is not (AccountStatuses.Active or AccountStatuses.PendingPasswordChange))
         {
             await sessions.RevokeAsync(result.Session!.SessionId);
             throw ApiException.Unauthorized("Tài khoản đã bị khóa. Liên hệ quản trị để được hỗ trợ.", ErrorCodes.AccountLocked);
@@ -89,11 +89,13 @@ public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOpti
         if (request.NewPassword == request.CurrentPassword)
             throw ApiException.BadRequest("Mật khẩu mới trùng mật khẩu cũ. Chọn mật khẩu khác.");
 
+        await using var tx = await db.Database.BeginTransactionAsync();
         account.PasswordHash = Hasher.HashPassword(account, request.NewPassword);
         account.Status = AccountStatuses.Active;   // đổi lần đầu xong thì Chờ đổi mật khẩu → Đang hoạt động (BR-04)
         account.UpdatedAt = clock.Now;
-        await db.SaveChangesAsync();
         await sessions.RevokeAllAsync(accountId, exceptSessionId: sessionId);   // thiết bị khác phải đăng nhập lại
+        await db.SaveChangesAsync();
+        await tx.CommitAsync();
     }
 
     public static string HashPassword(Account account, string password) => Hasher.HashPassword(account, password);
