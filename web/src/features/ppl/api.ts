@@ -1,5 +1,5 @@
 import { apiClient } from '@/app/apiClient';
-import type { Paged, ResponsibilityHistoryRow, ResponsibilityKind, ResponsibilityRow, Staff, StaffImportResult } from './types';
+import type { Paged, ResponsibilityHistoryRow, ResponsibilityKind, ResponsibilityRow, Staff, StaffImportResult, StudentImportResult } from './types';
 
 export interface StaffQuery {
   search?: string;
@@ -22,6 +22,13 @@ export const pplApi = {
       const fd = new FormData();
       fd.append('file', file);
       return apiClient.post<StaffImportResult>('/ppl/staff/import', fd).then((r) => r.data);
+    },
+  },
+  students: {
+    import: (file: File) => {
+      const fd = new FormData();
+      fd.append('file', file);
+      return apiClient.post<StudentImportResult>('/ppl/students/import', fd).then((r) => r.data);
     },
   },
   responsibilities: {

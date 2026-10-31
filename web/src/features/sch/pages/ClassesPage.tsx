@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Form, Input, Select, Switch } from 'antd';
 import { message } from '@/shared/lib/antdStatic';
-import { Pencil, Plus, Power, Users } from 'lucide-react';
+import { Pencil, Plus, Power, Upload, Users } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/app/AuthProvider';
+import { StudentImportModal } from '@/features/ppl/components/StudentImportModal';
 import { DataTable } from '@/shared/components/DataTable';
 import { FilterBar } from '@/shared/components/FilterBar';
 import { FormModal } from '@/shared/components/FormModal';
@@ -32,6 +33,7 @@ export function ClassesPage() {
   const [includeInactive, setIncludeInactive] = useState(false);
   const [editing, setEditing] = useState<SchoolClass | 'new' | null>(null);
   const [rosterOf, setRosterOf] = useState<SchoolClass | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
   const [form] = Form.useForm<FormValues>();
 
   const effectiveYear = yearId ?? current?.academicYearId;
@@ -60,7 +62,12 @@ export function ClassesPage() {
       <PageHeader
         title="Lớp & Ghi danh"
         description="Tên lớp duy nhất trong phạm vi (phân hiệu, năm học). Ghi danh học sinh làm cùng danh bạ học sinh."
-        extra={canWrite && <Button type="primary" icon={<Plus size={16} />} onClick={() => setEditing('new')}>Thêm lớp</Button>}
+        extra={canWrite && (
+          <>
+            <Button icon={<Upload size={16} />} onClick={() => setImportOpen(true)}>Import học sinh</Button>
+            <Button type="primary" icon={<Plus size={16} />} onClick={() => setEditing('new')}>Thêm lớp</Button>
+          </>
+        )}
       />
       <FilterBar>
         <Select
@@ -107,6 +114,8 @@ export function ClassesPage() {
           ]}
         />
       </Card>
+
+      <StudentImportModal open={importOpen} onClose={() => setImportOpen(false)} yearId={effectiveYear} campusId={campusId} />
 
       <ClassRosterDrawer key={rosterOf?.classId} cls={rosterOf} canWrite={canWrite} onClose={() => setRosterOf(null)} />
 

@@ -1,13 +1,13 @@
 import { GraduationCap } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useSchool } from '../hooks/useSchool';
 import './school.css';
 
 /** Logo trường; chưa có logo hoặc ảnh lỗi thì hiện biểu tượng mặc định trên nền xanh. */
 export function SchoolLogo({ size = 32 }: { size?: number }) {
   const { logoSrc, name } = useSchool();
-  const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [logoSrc]);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const failed = failedSrc === logoSrc;   // ảnh mới có đường dẫn khác nên tự thử lại, không cần đặt lại trạng thái
 
   if (logoSrc && !failed) {
     return (
@@ -16,7 +16,7 @@ export function SchoolLogo({ size = 32 }: { size?: number }) {
         style={{ width: size, height: size }}
         src={logoSrc}
         alt={`Logo ${name}`}
-        onError={() => setFailed(true)}
+        onError={() => setFailedSrc(logoSrc)}
       />
     );
   }

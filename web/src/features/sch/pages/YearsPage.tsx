@@ -77,13 +77,9 @@ export function YearsPage() {
     message.success('Đã lưu năm học.');
   };
 
-  // Mốc kết thúc muộn nhất: học kỳ 1 là 18/01, học kỳ 2 là 31/05 của năm kết thúc năm học (không quá ngày kết thúc năm học).
-  const latestOf = (no: 1 | 2) => {
-    if (!semesterOf) return undefined;
-    const yearEnd = dayjs(semesterOf.endDate);
-    const mark = dayjs(`${yearEnd.year()}-${no === 1 ? '01-18' : '05-31'}`);
-    return mark.isBefore(yearEnd) ? mark : yearEnd;
-  };
+  // Mốc kết thúc muộn nhất do backend trả về (SemesterRules): giao diện chỉ hiển thị và khóa ô chọn ngày theo mốc đó.
+  const latestOf = (no: 1 | 2) =>
+    semesterOf ? dayjs(no === 1 ? semesterOf.semester1LatestEnd : semesterOf.semester2LatestEnd) : undefined;
   const outsideYear = (d: Dayjs, no: 1 | 2) => !semesterOf || d.isBefore(semesterOf.startDate, 'day') || d.isAfter(latestOf(no), 'day');
 
   const saveSemesters = async (v: SemesterValues) => {
@@ -100,7 +96,7 @@ export function YearsPage() {
     const text = semesterText(sem(y, no));
     if (!canWrite) return text ?? <span className="muted">Chưa khai</span>;
     return text
-      ? <Button type="link" className="cell-link" title="Sửa học kỳ" onClick={() => setSemesterOf(y)}>{text}</Button>
+      ? <Button type="text" size="small" icon={<Pencil size={14} />} title="Sửa học kỳ" onClick={() => setSemesterOf(y)}>{text}</Button>
       : <Button size="small" icon={<Plus size={14} />} onClick={() => setSemesterOf(y)}>Khai báo học kỳ</Button>;
   };
   const range = (a: string, b: string): [Dayjs, Dayjs] => [dayjs(a), dayjs(b)];

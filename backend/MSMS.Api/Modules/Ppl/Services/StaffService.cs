@@ -146,7 +146,7 @@ public sealed class StaffService(MsmsDbContext db, IClock clock, ScopeResolver s
         if (gender == "?") throw ApiException.BadRequest("Giới tính chỉ gồm Nam, Nữ hoặc Khác.");
 
         var email = Guard.Optional(r.Email, "Email", 150);
-        if (email is not null && !email.Contains('@')) throw ApiException.BadRequest("Email chưa đúng định dạng. Kiểm tra lại địa chỉ email.");
+        if (email is not null && !Guard.IsEmail(email)) throw ApiException.BadRequest("Email chưa đúng định dạng. Kiểm tra lại địa chỉ email.");
 
         var campus = await db.Campus.FindAsync(r.PrimaryCampusId) ?? throw ApiException.BadRequest("Chọn phân hiệu chính cho cán bộ.");
         if (!campus.IsActive) throw ApiException.BadRequest("Phân hiệu chính đã ngừng hoạt động. Chọn phân hiệu khác.");

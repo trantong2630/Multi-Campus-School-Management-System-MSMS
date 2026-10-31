@@ -34,6 +34,16 @@ export interface StaffImportResult {
   totalErrors: number;
 }
 
+export interface StudentImportResult {
+  accepted: boolean;
+  students: number;
+  enrollments: number;
+  parents: number;
+  skipped: SkippedRow[];
+  errors: ImportError[];
+  totalErrors: number;
+}
+
 export type ResponsibilityKind = 'campus' | 'department' | 'homeroom';
 
 export interface ResponsibilityRow {
