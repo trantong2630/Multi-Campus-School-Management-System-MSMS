@@ -20,9 +20,9 @@ public sealed class LeaveRequestService(MsmsDbContext db, IClock clock, CurrentU
             throw ApiException.Forbidden("Bạn không có quyền tạo đơn xin nghỉ cho học sinh này.");
 
         // Kiểm tra học sinh phải có ghi danh mở (Enrollment.Status == "Studying")
-        var enrollment = await db.Enrollment
+        var enrollment = await db.Enrollment.Where(EnrollmentRules.ActiveAt(clock.Today))
             .FirstOrDefaultAsync(e => e.StudentId == dto.StudentId);
-        if (enrollment is null || enrollment.EndDate < clock.Today)
+        if (enrollment is null)
             throw ApiException.BadRequest("Học sinh không có ghi danh mở. Không thể tạo đơn xin nghỉ.");
 
         // BR-19: FromDate >= clock.Today (không cho xin nghỉ ngày đã qua)
@@ -109,7 +109,7 @@ public sealed class LeaveRequestService(MsmsDbContext db, IClock clock, CurrentU
         // Kiểm tra quyền: phụ huynh chỉ rút được đơn của con
         var link = await db.ParentStudentLink
             .FirstOrDefaultAsync(l => l.StudentId == leaveRequest.StudentId && l.ParentId == currentUser.PersonId);
-        if (link is null)
+        if (link is null || leaveRequest.ParentId != currentUser.PersonId)
             throw ApiException.Forbidden("Bạn không có quyền rút đơn xin nghỉ này.");
 
         // Chỉ rút được khi đơn còn ở Pending
@@ -129,12 +129,12 @@ public sealed class LeaveRequestService(MsmsDbContext db, IClock clock, CurrentU
                 l.Student.Student.PersonCode,
                 l.Student.Student.FullName,
                 l.Student.Enrollment
-                    .Where(e => e.EndDate == null || e.EndDate >= clock.Today)
+                    .AsQueryable().Where(EnrollmentRules.ActiveAt(clock.Today))
                     .OrderByDescending(e => e.StartDate)
                     .Select(e => e.Class.Name)
                     .FirstOrDefault(),
                 l.Student.Enrollment
-                    .Where(e => e.EndDate == null || e.EndDate >= clock.Today)
+                    .AsQueryable().Where(EnrollmentRules.ActiveAt(clock.Today))
                     .OrderByDescending(e => e.StartDate)
                     .Select(e => (int?)e.ClassId)
                     .FirstOrDefault()

@@ -18,31 +18,41 @@ public static class Policies
     public const string StaffOrFamily = nameof(StaffOrFamily);   // cán bộ, học sinh, phụ huynh: đọc dữ liệu cấu hình dùng chung (khung giờ tiết)
     public const string Student = nameof(Student);
     public const string Parent = nameof(Parent);
+    public const string StudentOrParent = nameof(StudentOrParent);   // xem điểm và phân tích đã công bố (LRN-03, LRN-04)
+    public const string ConversationParticipant = nameof(ConversationParticipant); // hộp thư chỉ dành cho Teacher và Parent
 
 
     public static void Register(AuthorizationOptions o)
     {
-        o.AddPolicy(SchoolAdmin, p => p.RequireClaim(CurrentUser.TypeClaim, AccountTypes.SchoolAdmin));
-        o.AddPolicy(Management, p => p.RequireClaim(CurrentUser.TypeClaim,
+        // Các chức năng dùng chung ghi rõ Authorize; đường công khai ghi rõ AllowAnonymous.
+        o.DefaultPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser()
+            .RequireClaim(CurrentUser.TypeClaim, AccountTypes.SchoolAdmin, AccountTypes.Principal,
+                AccountTypes.VicePrincipal, AccountTypes.Teacher, AccountTypes.Student, AccountTypes.Parent).Build();
+        // Quên khai báo quyết định phân quyền thì từ chối, không tự cấp chức năng cho mọi vai trò.
+        o.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser()
+            .RequireAssertion(_ => false).Build();
+        o.AddPolicy(SchoolAdmin, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.SchoolAdmin));
+        o.AddPolicy(Management, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim,
             AccountTypes.SchoolAdmin, AccountTypes.Principal, AccountTypes.VicePrincipal));
-        o.AddPolicy(TimetableManager, p => p.RequireClaim(CurrentUser.TypeClaim, AccountTypes.VicePrincipal));
-        o.AddPolicy(TimetableReader, p => p.RequireClaim(CurrentUser.TypeClaim,
+        o.AddPolicy(TimetableManager, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.VicePrincipal));
+        o.AddPolicy(TimetableReader, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim,
             AccountTypes.Principal, AccountTypes.VicePrincipal));
-        o.AddPolicy(ResponsibilityManager, p => p.RequireClaim(CurrentUser.TypeClaim,
+        o.AddPolicy(ResponsibilityManager, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim,
             AccountTypes.SchoolAdmin, AccountTypes.Principal));
-        o.AddPolicy(SchoolProfileManager, p => p.RequireClaim(CurrentUser.TypeClaim,
+        o.AddPolicy(SchoolProfileManager, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim,
             AccountTypes.SchoolAdmin, AccountTypes.Principal));
-        o.AddPolicy(CampusReader, p => p.RequireClaim(CurrentUser.TypeClaim,
+        o.AddPolicy(CampusReader, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim,
             AccountTypes.SchoolAdmin, AccountTypes.Principal, AccountTypes.VicePrincipal));
-        o.AddPolicy(DashboardReader, p => p.RequireClaim(CurrentUser.TypeClaim,
+        o.AddPolicy(DashboardReader, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim,
             AccountTypes.Principal, AccountTypes.VicePrincipal));
-        o.AddPolicy(Staff, p => p.RequireClaim(CurrentUser.TypeClaim,
+        o.AddPolicy(Staff, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim,
             AccountTypes.SchoolAdmin, AccountTypes.Principal, AccountTypes.VicePrincipal, AccountTypes.Teacher));
-        o.AddPolicy(StaffOrFamily, p => p.RequireClaim(CurrentUser.TypeClaim,
+        o.AddPolicy(StaffOrFamily, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim,
             AccountTypes.SchoolAdmin, AccountTypes.Principal, AccountTypes.VicePrincipal, AccountTypes.Teacher, AccountTypes.Student, AccountTypes.Parent));
-        o.AddPolicy(Teacher, p => p.RequireClaim(CurrentUser.TypeClaim, AccountTypes.Teacher));
-        o.AddPolicy(Student, p => p.RequireClaim(CurrentUser.TypeClaim, AccountTypes.Student));
-        o.AddPolicy(Parent, p => p.RequireClaim(CurrentUser.TypeClaim, AccountTypes.Parent));
-
+        o.AddPolicy(Teacher, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.Teacher));
+        o.AddPolicy(Student, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.Student));
+        o.AddPolicy(Parent, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.Parent));
+        o.AddPolicy(StudentOrParent, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.Student, AccountTypes.Parent));
+        o.AddPolicy(ConversationParticipant, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.Teacher, AccountTypes.Parent));
     }
 }
