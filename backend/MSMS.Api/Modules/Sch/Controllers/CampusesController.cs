@@ -9,7 +9,7 @@ namespace MSMS.Api.Modules.Sch.Controllers;
 [ApiController, Route("api/sch/campuses")]
 public class CampusesController(CampusService service) : ControllerBase
 {
-    [HttpGet, Authorize(Policy = Policies.Staff)]
+    [HttpGet, Authorize(Policy = Policies.CampusReader)]   // SCH-01: School Admin, Hiệu trưởng, Hiệu phó
     public Task<List<CampusDto>> List() => service.ListAsync();
 
     [HttpPost, Authorize(Policy = Policies.SchoolAdmin)]

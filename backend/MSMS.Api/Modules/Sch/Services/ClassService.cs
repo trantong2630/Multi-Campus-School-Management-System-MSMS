@@ -15,6 +15,7 @@ public sealed class ClassService(MsmsDbContext db, IClock clock)
     public async Task<List<ClassDto>> ListAsync(int? campusId, int? yearId, bool includeInactive)
         => await ListAsync(db.Class.AsNoTracking(), campusId, yearId, includeInactive);
 
+    /// <summary>Danh sách lớp trong phạm vi của người gọi (BR-01, tầng 2): lọc theo ScopeResolver trước khi trả sĩ số và chủ nhiệm.</summary>
     public async Task<List<ClassDto>> ListVisibleAsync(int? campusId, int? yearId, bool includeInactive,
         ScopeResolver scope)
     {
@@ -25,14 +26,16 @@ public sealed class ClassService(MsmsDbContext db, IClock clock)
     private async Task<List<ClassDto>> ListAsync(IQueryable<Class> query, int? campusId, int? yearId, bool includeInactive)
     {
         var today = clock.Today;
-        return await query
+        query = query
             .Where(c => (campusId == null || c.CampusId == campusId)
                         && (yearId == null || c.AcademicYearId == yearId)
-                        && (includeInactive || c.IsActive))
+                        && (includeInactive || c.IsActive));
+
+        return await query
             .OrderBy(c => c.Campus.Name).ThenBy(c => c.GradeLevel).ThenBy(c => c.Name)
             .Select(c => new ClassDto(c.ClassId, c.CampusId, c.Campus.Name, c.AcademicYearId, c.AcademicYear.Name,
                 c.Name, c.GradeLevel, c.IsActive,
-                c.Enrollment.AsQueryable().Count(EnrollmentRules.ActiveAt(today)),
+                c.Enrollment.AsQueryable().Count(EnrollmentRules.ActiveAsOf(today)),
                 c.HomeroomAssignment
                     .Where(h => h.StartDate <= today && (h.EndDate == null || h.EndDate >= today))
                     .Select(h => h.Staff.Staff.FullName).FirstOrDefault()))
@@ -77,9 +80,9 @@ public sealed class ClassService(MsmsDbContext db, IClock clock)
         if (!isActive)
         {
             var today = clock.Today;
-            var open = await db.Enrollment.Where(EnrollmentRules.ActiveAt(today)).CountAsync(e => e.ClassId == id);
+            var open = await db.Enrollment.Where(EnrollmentRules.OpenOrUpcoming(today)).CountAsync(e => e.ClassId == id);
             if (open > 0)
-                throw ApiException.BadRequest($"Lớp còn {open} học sinh có ghi danh đang mở. Chuyển hoặc kết thúc ghi danh trước.");
+                throw ApiException.BadRequest($"Lớp còn {open} học sinh có ghi danh đang mở hoặc sắp bắt đầu. Chuyển hoặc kết thúc ghi danh trước.");
         }
         cls.IsActive = isActive;
         await db.SaveChangesAsync();
