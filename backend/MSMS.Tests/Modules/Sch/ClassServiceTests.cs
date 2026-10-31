@@ -1,3 +1,4 @@
+using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
 using MSMS.Api.Data;
 using MSMS.Api.Data.Entities;
@@ -23,6 +24,30 @@ public class ClassServiceTests
     }
 
     private static ClassRequest Req(int campus, int year, string name, byte grade = 6) => new(campus, year, name, grade);
+
+    [Theory]
+    [InlineData(null, true)]
+    [InlineData(-1, false)]
+    [InlineData(0, false)]
+    [InlineData(1, true)]
+    public async Task ListVisible_TeacherOnlySeesCurrentHomeroomClasses(int? endOffset, bool visible)
+    {
+        var (db, svc) = Create();
+        var own = await svc.CreateAsync(Req(Campus1, Year1, "6A1"));
+        await svc.CreateAsync(Req(Campus2, Year1, "6B1"));
+        AddStaff(db, 50, "Giáo viên chủ nhiệm");
+        db.HomeroomAssignment.Add(new HomeroomAssignment
+        {
+            ClassId = own.ClassId, StaffId = 50, StartDate = Today.AddDays(-10),
+            EndDate = endOffset is int offset ? Today.AddDays(offset) : null, CreatedAt = DateTime.UtcNow,
+        });
+        await db.SaveChangesAsync();
+        var scope = new ScopeResolver(db, UserOf(AccountTypes.Teacher, 50), ClockAt());
+
+        var classes = await svc.ListVisibleAsync(null, null, false, scope);
+
+        Assert.Equal(visible ? new[] { own.ClassId } : Array.Empty<int>(), classes.Select(c => c.ClassId));
+    }
 
     [Fact]
     public async Task Create_StoresClassAsActive_WithNormalizedName()

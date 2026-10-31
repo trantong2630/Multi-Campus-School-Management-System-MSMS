@@ -76,7 +76,11 @@ public class AuthController(IAuthService auth, CurrentUser user) : ControllerBas
 
     [Authorize]
     [HttpGet("me")]
-    public Task<UserInfo> Me() => auth.GetMeAsync(user.AccountId);
+    public Task<UserInfo> Me()
+    {
+        PreventTokenCaching();
+        return auth.GetMeAsync(user.AccountId);
+    }
 
     /// <summary>Thu hồi phiên của thiết bị hiện tại: access token và refresh token đều mất hiệu lực ngay (BR-05).</summary>
     [Authorize]

@@ -1,6 +1,4 @@
-using Microsoft.EntityFrameworkCore;
 using MSMS.Api.Common.Errors;
-using MSMS.Api.Common.Rules;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
 using MSMS.Api.Data.Entities;
@@ -13,19 +11,46 @@ namespace MSMS.Api.Common.Auth;
 /// </summary>
 public sealed class ScopeResolver(MsmsDbContext db, CurrentUser user, IClock clock)
 {
-    private List<int>? _ledCampuses;
+    private IReadOnlyList<int>? _ledCampuses;
 
     /// <summary>Các phân hiệu mà Vice Principal đang phụ trách tại hôm nay.</summary>
     public async Task<IReadOnlyList<int>> LedCampusIdsAsync()
     {
+        if (user.AccountType != AccountTypes.VicePrincipal) return [];
         if (_ledCampuses is not null) return _ledCampuses;
-        var today = clock.Today;
-        _ledCampuses = await db.CampusLeadership
-            .Where(EffectivePeriod.EffectiveAt<CampusLeadership>(today))
-            .Where(x => x.StaffId == user.PersonId)
-            .Select(x => x.CampusId)
-            .ToListAsync();
+        _ledCampuses = (await new AccountScopeResolver(db, clock).ResolveAsync(user.PersonId, user.AccountType)).LedCampusIds;
         return _ledCampuses;
+    }
+
+    /// <summary>Phạm vi danh bạ: SA và HT toàn trường; HP theo phân hiệu đang phụ trách.</summary>
+    public async Task<IQueryable<StaffProfile>> FilterStaffAsync(IQueryable<StaffProfile> query)
+    {
+        if (user.AccountType is AccountTypes.SchoolAdmin or AccountTypes.Principal) return query;
+        if (user.AccountType == AccountTypes.VicePrincipal)
+        {
+            var campuses = await LedCampusIdsAsync();
+            return query.Where(s => campuses.Contains(s.PrimaryCampusId));
+        }
+        throw ApiException.Forbidden("Không có quyền xem danh bạ cán bộ.");
+    }
+
+    /// <summary>Danh sách lớp cũng phải lọc trước khi trả sĩ số và chủ nhiệm.</summary>
+    public async Task<IQueryable<Class>> FilterClassesAsync(IQueryable<Class> query)
+    {
+        if (user.AccountType is AccountTypes.SchoolAdmin or AccountTypes.Principal) return query;
+        if (user.AccountType == AccountTypes.VicePrincipal)
+        {
+            var campuses = await LedCampusIdsAsync();
+            return query.Where(c => campuses.Contains(c.CampusId));
+        }
+        if (user.AccountType == AccountTypes.Teacher)
+        {
+            var accountScope = await new AccountScopeResolver(db, clock).ResolveAsync(user.PersonId, user.AccountType);
+            var classIds = accountScope.HomeroomClassIds
+                .Concat(accountScope.SubjectResponsibilities.Select(x => x.ClassId)).Distinct().ToList();
+            return query.Where(c => classIds.Contains(c.ClassId));
+        }
+        throw ApiException.Forbidden("Không có quyền xem danh sách lớp.");
     }
 
     /// <summary>Có đọc được lịch dạy và thời khóa biểu của phân hiệu này không. School Admin không làm thời khóa biểu.</summary>

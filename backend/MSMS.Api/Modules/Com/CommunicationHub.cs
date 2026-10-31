@@ -36,6 +36,8 @@ public class CommunicationHub(MsmsDbContext db, CurrentUser currentUser, Presenc
     /// <summary>Nhóm cá nhân để đẩy thông báo: "user_{personId}".</summary>
     private string UserGroup => $"user_{PersonId}";
 
+    private string AccountType => Context.User?.FindFirst(CurrentUser.TypeClaim)?.Value ?? currentUser.AccountType;
+
     /// <summary>Nhóm hội thoại để chuyển sự kiện sang bên kia: "conversation_{conversationId}".</summary>
     private static string ConversationGroup(int conversationId) => $"conversation_{conversationId}";
 
@@ -74,6 +76,9 @@ public class CommunicationHub(MsmsDbContext db, CurrentUser currentUser, Presenc
     /// Client gọi khi bắt đầu hoặc ngừng soạn tin. Chuyển `UserTyping` cho bên kia, không lưu CSDL;
     /// client tự tắt chỉ báo sau vài giây (COM-4.8.8).
     /// </summary>
+    /// <param name="conversationId">ID hội thoại</param>
+    /// <param name="isTyping">true = đang soạn, false = ngừng soạn</param>
+    [Authorize(Policy = Policies.ConversationParticipant)]
     public async Task SendTyping(int conversationId, bool isTyping)
     {
         if (IsSchoolAdmin || !await IsUserInConversationAsync(conversationId))
@@ -88,6 +93,8 @@ public class CommunicationHub(MsmsDbContext db, CurrentUser currentUser, Presenc
     /// Client gọi khi mở hội thoại: kiểm người gọi thuộc hội thoại rồi thêm connection vào nhóm hội thoại.
     /// Trả trạng thái online hiện tại của bên kia để hiện chấm online ngay khi mở.
     /// </summary>
+    /// <param name="conversationId">ID hội thoại</param>
+    [Authorize(Policy = Policies.ConversationParticipant)]
     public async Task<bool> JoinConversation(int conversationId)
     {
         if (IsSchoolAdmin)
@@ -96,7 +103,7 @@ public class CommunicationHub(MsmsDbContext db, CurrentUser currentUser, Presenc
         var c = await db.Conversation.AsNoTracking().Where(x => x.ConversationId == conversationId)
             .Select(x => new { x.ParentId, x.StaffId }).FirstOrDefaultAsync();
         var me = PersonId;
-        if (c is null || (c.ParentId != me && c.StaffId != me))
+        if (c is null || !ConversationAccess.IsParticipant(AccountType, me, c.ParentId, c.StaffId))
             throw new HubException("Bạn không thuộc hội thoại này.");
 
         await Groups.AddToGroupAsync(Context.ConnectionId, ConversationGroup(conversationId));
@@ -105,8 +112,12 @@ public class CommunicationHub(MsmsDbContext db, CurrentUser currentUser, Presenc
 
     private async Task<bool> IsUserInConversationAsync(int conversationId)
     {
-        var me = PersonId;
-        return await db.Conversation.AsNoTracking()
-            .AnyAsync(c => c.ConversationId == conversationId && (c.ParentId == me || c.StaffId == me));
+        var conversation = await db.Conversation.AsNoTracking().FirstOrDefaultAsync(c => c.ConversationId == conversationId);
+        if (conversation == null)
+            return false;
+
+        // Người dùng là ParentId hoặc StaffId của hội thoại
+        var pid = PersonId;
+        return ConversationAccess.IsParticipant(AccountType, pid, conversation.ParentId, conversation.StaffId);
     }
 }
