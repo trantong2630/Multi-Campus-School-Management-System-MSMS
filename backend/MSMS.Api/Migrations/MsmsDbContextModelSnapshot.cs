@@ -1145,6 +1145,10 @@ namespace MSMS.Api.Migrations
                     b.Property<int?>("HiddenByPersonId")
                         .HasColumnType("int");
 
+                    b.Property<string>("HiddenReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
