@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { Drawer, Skeleton } from 'antd';
-import { Clock3, ListChecks } from 'lucide-react';
+import { Clock3, ListChecks, Search, Sparkles, UserRound } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { getErrorMessage } from '@/app/apiClient';
+import { PersonAvatar } from '@/shared/components/PersonAvatar';
 import { formatDateTime } from '@/shared/lib/format';
 import { lrnApi } from '../api';
 import { durationText, fmtScore } from '../time';
@@ -12,7 +13,8 @@ import { ResultView } from './ResultView';
 import './lrn.css';
 
 type Tab = 'students' | 'paper';
-type Sort = 'name' | 'low';
+/** Bỏ dấu và chữ hoa để gõ "minh anh" vẫn ra "Đỗ Minh Anh". */
+const fold = (v: string) => v.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase();
 
 /** Một học sinh trong ngăn kéo: kết quả đầy đủ, hỏi lại vài giây một lần khi phân tích AI còn đang chạy. */
 function StudentDrawer({ assignmentId, studentId, onClose }: { assignmentId: number; studentId: number | null; onClose: () => void }) {
@@ -36,17 +38,17 @@ function StudentDrawer({ assignmentId, studentId, onClose }: { assignmentId: num
  */
 export function AssignmentPanel({ id }: { id: number }) {
   const [tab, setTab] = useState<Tab>('students');
-  const [sort, setSort] = useState<Sort>('name');
+  const [search, setSearch] = useState('');
   const [student, setStudent] = useState<number | null>(null);
 
   const detail = useQuery({ queryKey: ['lrn', 'assignment', id], queryFn: () => lrnApi.assignments.get(id), retry: false });
   const results = useQuery({ queryKey: ['lrn', 'assignment-results', id], queryFn: () => lrnApi.assignments.results(id), retry: false });
 
   const rows = useMemo(() => {
-    const list = [...(results.data?.rows ?? [])];
-    if (sort === 'low') list.sort((a, b) => (a.score ?? 99) - (b.score ?? 99));
-    return list;
-  }, [results.data, sort]);
+    const key = fold(search.trim());
+    const list = results.data?.rows ?? [];
+    return key ? list.filter((s) => fold(`${s.studentName} ${s.studentCode}`).includes(key)) : list;
+  }, [results.data, search]);
 
   if (detail.isLoading || results.isLoading) return <Skeleton active paragraph={{ rows: 8 }} />;
   if (detail.isError || !detail.data || !results.data) {
@@ -60,44 +62,55 @@ export function AssignmentPanel({ id }: { id: number }) {
   return (
     <div className="ap" style={subjectVars(a.subjectId)}>
       <header className="ap__head">
-        <span className="chip chip--subject">{a.subjectName} · lớp {a.className}</span>
+        <div className="ap__class">
+          <div>
+            <strong>Lớp {a.className}</strong>
+            <span>{a.subjectName}</span>
+          </div>
+          <em>{a.isClosed ? 'Đã đóng' : 'Đang mở'}</em>
+        </div>
         <h2>{a.title}</h2>
-        <p className="ap__meta">
-          <span><Clock3 size={14} />Hạn nộp {formatDateTime(a.dueAt)}</span>
-          <span><ListChecks size={14} />{a.questionCount} câu · {durationText(a.durationMinutes)}</span>
-          <span>Giao bởi {a.assignedByName}</span>
-        </p>
+        <dl className="ap__meta">
+          <div><dt><Clock3 size={14} />Hạn nộp</dt><dd>{formatDateTime(a.dueAt)}</dd></div>
+          <div><dt><ListChecks size={14} />Đề bài</dt><dd>{a.questionCount} câu · {durationText(a.durationMinutes)}</dd></div>
+          <div><dt><UserRound size={14} />Giao bởi</dt><dd>{a.assignedByName}</dd></div>
+        </dl>
         {detail.data.instruction && <p className="ap__note">{detail.data.instruction}</p>}
       </header>
 
       <div className="ap__figs">
         <div><strong className="tabular">{r.submittedCount}<small>/{r.recipientCount}</small></strong><span>đã nộp · {pct}%</span><i><b style={{ width: `${pct}%` }} /></i></div>
         <div><strong className="tabular" style={{ color: bandColor(r.averageScore) }}>{fmtScore(r.averageScore)}</strong><span>điểm trung bình</span></div>
-        <div><strong className="tabular">{a.isClosed ? 'Đã đóng' : 'Đang mở'}</strong><span>{a.isClosed ? 'quá hạn nộp' : 'còn nhận bài'}</span></div>
       </div>
 
       <div className="ap__tabs" role="tablist">
         <button type="button" role="tab" aria-selected={tab === 'students'} className={tab === 'students' ? 'is-on' : ''} onClick={() => setTab('students')}>Học sinh</button>
         <button type="button" role="tab" aria-selected={tab === 'paper'} className={tab === 'paper' ? 'is-on' : ''} onClick={() => setTab('paper')}>Đề bài</button>
         {tab === 'students' && (
-          <span className="ap__sort">
-            <button type="button" className={sort === 'name' ? 'is-on' : ''} onClick={() => setSort('name')}>Theo tên</button>
-            <button type="button" className={sort === 'low' ? 'is-on' : ''} onClick={() => setSort('low')}>Điểm thấp trước</button>
-          </span>
+          <label className="ap__search">
+            <Search size={14} aria-hidden />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm học sinh" aria-label="Tìm học sinh" />
+          </label>
         )}
       </div>
 
       {tab === 'students' ? (
         <ul className="roster">
+          {rows.length === 0 && <li className="roster__none">Không tìm thấy học sinh nào.</li>}
           {rows.map((s) => (
             <li key={s.studentId}>
               <button type="button" disabled={!s.submitted} onClick={() => setStudent(s.studentId)} className={s.submitted ? '' : 'is-none'}>
-                <span className="roster__who"><strong>{s.studentName}</strong><em>{s.studentCode}</em></span>
+                <span className="roster__who">
+                  <PersonAvatar name={s.studentName} size={34} muted={!s.submitted} />
+                  <span><strong>{s.studentName}</strong><em>{s.studentCode}</em></span>
+                </span>
                 <span className="roster__bar" aria-hidden>{s.submitted && <b style={{ width: `${(s.score ?? 0) * 10}%`, background: bandColor(s.score) }} />}</span>
                 <span className="roster__score tabular" style={{ color: s.submitted ? bandColor(s.score) : undefined }}>
                   {s.submitted ? fmtScore(s.score) : a.isClosed ? 'Không nộp' : 'Chưa nộp'}
                 </span>
-                <span className="roster__ai">{s.analysisStatus === 'Done' ? 'Có phân tích' : s.analysisStatus === 'Pending' ? 'Đang phân tích' : ''}</span>
+                {s.analysisStatus === 'Done' || s.analysisStatus === 'Pending' ? (
+                  <span className="chip chip--ai roster__ai"><Sparkles size={12} />{s.analysisStatus === 'Done' ? 'Có phân tích' : 'Đang phân tích'}</span>
+                ) : <span />}
               </button>
             </li>
           ))}

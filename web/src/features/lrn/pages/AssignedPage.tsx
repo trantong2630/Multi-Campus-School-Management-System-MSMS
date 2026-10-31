@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from 'antd';
 import { useMemo } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { lrnApi } from '../api';
 import { AssignmentPanel } from '../components/AssignmentPanel';
 import { AiEmpty } from '../components/parts';
@@ -63,14 +63,12 @@ export function AssignedPage() {
       <aside className="assigned__list">
         <header>
           <h1>Bài tập đã giao</h1>
-          <Link to="/lrn/assign" className="linkbtn">+ Giao bài mới</Link>
         </header>
         {list.isLoading ? <Skeleton active paragraph={{ rows: 6 }} /> : items.length === 0 ? (
           <AiEmpty title="Chưa giao bài nào" hint="Giao bài đầu tiên ở mục Giao bài tập." />
         ) : (
           <>
-            {open.length > 0 && <><h3>Đang mở · {open.length}</h3><ul>{open.map(card)}</ul></>}
-            {closed.length > 0 && <><h3>Đã đóng · {closed.length}</h3><ul>{closed.map(card)}</ul></>}
+            <ul>{[...open, ...closed].map(card)}</ul>
           </>
         )}
       </aside>

@@ -17,19 +17,24 @@ namespace MSMS.Api.Modules.Lrn.Services;
 /// của giáo viên đang gọi. Backend loại câu không đủ 4 lựa chọn hoặc ngoài 1–3 đáp án đúng. AI hỏng thì giáo viên soạn thủ công,
 /// không ảnh hưởng luồng nào khác (mục 3.1, BR-20).
 /// </summary>
-public sealed class QuestionDraftService(MsmsDbContext db, IAiClient ai, CurrentUser user, IClock clock, ILogger<QuestionDraftService> logger)
+public sealed class QuestionDraftService(MsmsDbContext db, IAiClient ai, QuestionService questions, CurrentUser user, IClock clock, ILogger<QuestionDraftService> logger)
 {
     public const int MaxCount = 10;
 
     private const string SystemInstruction =
         "Bạn là giáo viên Việt Nam giàu kinh nghiệm, soạn câu hỏi trắc nghiệm cho học sinh phổ thông. " +
         "Chỉ trả về JSON hợp lệ đúng cấu trúc yêu cầu, không thêm lời dẫn, không dùng markdown. " +
-        "Viết bằng tiếng Việt, đúng kiến thức, bám sát chương trình và sách giáo khoa được nêu.";
+        "Viết bằng tiếng Việt, đúng kiến thức, bám sát Chương trình giáo dục phổ thông 2018 và bộ sách giáo khoa được nêu " +
+        "(sách do Nhà xuất bản Giáo dục Việt Nam phát hành; bộ \"Kết nối tri thức với cuộc sống\" là bộ dùng thống nhất toàn quốc từ năm học 2026–2027 theo Quyết định 3588/QĐ-BGDĐT, " +
+        "hãy theo ấn bản mới nhất của bộ sách): " +
+        "dùng đúng thuật ngữ, kí hiệu, cách diễn đạt và mức độ kiến thức của bộ sách đó ở đúng khối. " +
+        "Chỉ hỏi những gì chắc chắn thuộc chủ đề và khối được nêu, không đưa kiến thức của khối khác vào, không bịa dữ kiện hay số liệu.";
 
     public async Task<GenerateQuestionsResultDto> GenerateAsync(GenerateQuestionsDto dto, CancellationToken ct)
     {
         var subject = await db.Subject.AsNoTracking().FirstOrDefaultAsync(s => s.SubjectId == dto.SubjectId && s.IsActive)
             ?? throw ApiException.BadRequest("Môn học không tồn tại hoặc đã ngừng hoạt động. Chọn môn khác.");
+        await questions.EnsureOwnSubjectAsync(subject.SubjectId);
         if (dto.GradeLevel is < QuizRules.MinGrade or > QuizRules.MaxGrade) throw ApiException.BadRequest("Khối phải từ 6 đến 9. Chọn lại khối.");
         var topic = Guard.Required(dto.Topic, "Chủ đề", 150);
         var textbook = QuestionService.CheckBook(TextNormalizer.Normalize(dto.Textbook))
@@ -39,7 +44,7 @@ public sealed class QuestionDraftService(MsmsDbContext db, IAiClient ai, Current
         var prompt =
             $"Soạn {dto.Count} câu hỏi trắc nghiệm.\n" +
             $"- Môn: {subject.Name}\n- Khối: {dto.GradeLevel}\n- Chủ đề: {topic}\n- Bộ sách: {textbook}\n" +
-            "Mỗi câu có đúng 4 lựa chọn A, B, C, D và từ 1 đến 3 đáp án đúng; câu có nhiều đáp án đúng phải nêu rõ trong nội dung câu hỏi. " +
+            "Mỗi câu có đúng 4 lựa chọn A, B, C, D và từ 1 đến 3 đáp án đúng; không ghi gợi ý số đáp án như \"(Chọn 1 hoặc 2 đáp án)\" vào nội dung câu hỏi vì giao diện tự báo. " +
             "Các lựa chọn sai phải hợp lý, không trùng nhau. Giải thích ngắn gọn vì sao đáp án đúng là đúng.\n" +
             "Trả về JSON dạng: {\"questions\":[{\"content\":\"...\",\"explanation\":\"...\",\"options\":[" +
             "{\"label\":\"A\",\"content\":\"...\",\"isCorrect\":false},{\"label\":\"B\",\"content\":\"...\",\"isCorrect\":true}," +
