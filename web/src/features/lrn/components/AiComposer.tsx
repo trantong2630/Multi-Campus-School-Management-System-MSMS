@@ -1,12 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { AutoComplete, Input, Select } from 'antd';
+import { Input, Select } from 'antd';
 import { Minus, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getErrorMessage } from '@/app/apiClient';
 import { composeSteps } from '../aiLines';
 import { lrnApi } from '../api';
 import { GRADES, TEXTBOOK } from '../labels';
-import { topicSuggestions } from '../textbookToc';
 import { AiAvatar, AiBubble, AiDots, TypedText } from './MsmsAi';
 import type { AiMood, AiTone } from './MsmsAi';
 import './lrn.css';
@@ -37,8 +36,7 @@ export function AiComposer({ subjects, defaultSubjectId, onDone }: Props) {
     return () => clearInterval(t);
   }, [phase.kind]);
 
-  const lessons = topicSuggestions(subjects.find((s) => s.subjectId === subjectId)?.name, grade).map((t) => ({ value: t }));
-  const ready =subjectId !== undefined && topic.trim().length > 0;
+  const ready = subjectId !== undefined && topic.trim().length > 0;
   const working = phase.kind === 'working';
 
   const run = async () => {
@@ -46,7 +44,7 @@ export function AiComposer({ subjects, defaultSubjectId, onDone }: Props) {
     setStep(0);
     setPhase({ kind: 'working' });
     try {
-      const r = await lrnApi.questions.generate({ subjectId: subjectId!, gradeLevel: grade, topic: topic.trim(), textbook: TEXTBOOK, count });
+      const r = await lrnApi.questions.generate({ subjectId: subjectId!, gradeLevel: grade, topic: topic.trim(), count });
       await qc.invalidateQueries({ queryKey: ['lrn', 'questions'] });
       setPhase({
         kind: 'done',
@@ -91,12 +89,7 @@ export function AiComposer({ subjects, defaultSubjectId, onDone }: Props) {
           </div>
         </div>
         <label>Chủ đề
-          <AutoComplete
-            value={topic} options={lessons} disabled={working} onChange={setTopic}
-            filterOption={(input, o) => (o?.value ?? '').toLowerCase().includes(input.trim().toLowerCase())}
-          >
-            <Input maxLength={150} placeholder={lessons.length > 0 ? 'Gõ để tìm bài hoặc nhập chủ đề tự do' : 'Ví dụ: Phân số, Quang hợp'} />
-          </AutoComplete>
+          <Input value={topic} maxLength={150} disabled={working} placeholder="Ví dụ: Phân số, Quang hợp" onChange={(e) => setTopic(e.target.value)} />
         </label>
         <div className="composer__field">
           <span>Bộ sách</span>

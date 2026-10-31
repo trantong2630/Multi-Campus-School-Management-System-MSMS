@@ -13,7 +13,7 @@ using MSMS.Api.Modules.Lrn.Dtos;
 namespace MSMS.Api.Modules.Lrn.Services;
 
 /// <summary>
-/// LRN-01 (4.6.5): AI sinh nháp câu hỏi. AI chỉ nhận môn, khối, chủ đề, bộ sách và số câu; kết quả là câu Nháp gắn cờ AI
+/// LRN-01 (4.6.5): AI sinh nháp câu hỏi. AI chỉ nhận môn, khối, chủ đề và số câu (bộ sách cố định trong chỉ dẫn hệ thống); kết quả là câu Nháp gắn cờ AI
 /// của giáo viên đang gọi. Backend loại câu không đủ 4 lựa chọn hoặc ngoài 1–3 đáp án đúng. AI hỏng thì giáo viên soạn thủ công,
 /// không ảnh hưởng luồng nào khác (mục 3.1, BR-20).
 /// </summary>
@@ -24,11 +24,11 @@ public sealed class QuestionDraftService(MsmsDbContext db, IAiClient ai, Questio
     private const string SystemInstruction =
         "Bạn là giáo viên Việt Nam giàu kinh nghiệm, soạn câu hỏi trắc nghiệm cho học sinh phổ thông. " +
         "Chỉ trả về JSON hợp lệ đúng cấu trúc yêu cầu, không thêm lời dẫn, không dùng markdown. " +
-        "Viết bằng tiếng Việt, đúng kiến thức, bám sát Chương trình giáo dục phổ thông 2018 và bộ sách giáo khoa được nêu " +
-        "(sách do Nhà xuất bản Giáo dục Việt Nam phát hành; bộ \"Kết nối tri thức với cuộc sống\" là bộ dùng thống nhất toàn quốc từ năm học 2026–2027 theo Quyết định 3588/QĐ-BGDĐT, " +
-        "hãy theo ấn bản mới nhất của bộ sách): " +
+        "Viết bằng tiếng Việt, đúng kiến thức, bám sát Chương trình giáo dục phổ thông 2018 và sách giáo khoa \"Kết nối tri thức với cuộc sống\" " +
+        "(Nhà xuất bản Giáo dục Việt Nam), bộ sách được sử dụng thống nhất toàn quốc theo Quyết định 3588/QĐ-BGDĐT ngày 26/12/2025, áp dụng từ năm học 2026–2027: " +
         "dùng đúng thuật ngữ, kí hiệu, cách diễn đạt và mức độ kiến thức của bộ sách đó ở đúng khối. " +
-        "Chỉ hỏi những gì chắc chắn thuộc chủ đề và khối được nêu, không đưa kiến thức của khối khác vào, không bịa dữ kiện hay số liệu.";
+        "Chỉ hỏi những gì chắc chắn thuộc chủ đề và khối được nêu, không đưa kiến thức của khối khác vào, không bịa dữ kiện hay số liệu; " +
+        "không chắc chủ đề có trong sách ở khối đó thì ra câu cơ bản, đừng đoán.";
 
     public async Task<GenerateQuestionsResultDto> GenerateAsync(GenerateQuestionsDto dto, CancellationToken ct)
     {
@@ -37,13 +37,11 @@ public sealed class QuestionDraftService(MsmsDbContext db, IAiClient ai, Questio
         await questions.EnsureOwnSubjectAsync(subject.SubjectId);
         if (dto.GradeLevel is < QuizRules.MinGrade or > QuizRules.MaxGrade) throw ApiException.BadRequest("Khối phải từ 6 đến 9. Chọn lại khối.");
         var topic = Guard.Required(dto.Topic, "Chủ đề", 150);
-        var textbook = QuestionService.CheckBook(TextNormalizer.Normalize(dto.Textbook))
-            ?? throw ApiException.BadRequest("Chọn một trong ba bộ sách: Kết nối tri thức với cuộc sống, Chân trời sáng tạo, Cánh diều.");
         if (dto.Count < 1 || dto.Count > MaxCount) throw ApiException.BadRequest($"Số câu mỗi lần sinh từ 1 đến {MaxCount}.");
 
         var prompt =
             $"Soạn {dto.Count} câu hỏi trắc nghiệm.\n" +
-            $"- Môn: {subject.Name}\n- Khối: {dto.GradeLevel}\n- Chủ đề: {topic}\n- Bộ sách: {textbook}\n" +
+            $"- Môn: {subject.Name}\n- Khối: {dto.GradeLevel}\n- Chủ đề: {topic}\n" +
             "Mỗi câu có đúng 4 lựa chọn A, B, C, D và từ 1 đến 3 đáp án đúng; không ghi gợi ý số đáp án như \"(Chọn 1 hoặc 2 đáp án)\" vào nội dung câu hỏi vì giao diện tự báo. " +
             "Các lựa chọn sai phải hợp lý, không trùng nhau. Giải thích ngắn gọn vì sao đáp án đúng là đúng.\n" +
             "Trả về JSON dạng: {\"questions\":[{\"content\":\"...\",\"explanation\":\"...\",\"options\":[" +
