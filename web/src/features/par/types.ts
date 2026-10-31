@@ -117,6 +117,8 @@ export interface ConversationItem {
   staffName: string;
   staffAbbr: string | null;
   roleDescription: string;
+  parentId?: number;
+  parentName?: string;
   lastMessageContent: string | null;
   lastMessageAt: string | null;
   unreadCount: number;

@@ -1,13 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace MSMS.Api.Data.Entities;
 
-public partial class ExamQuestion
+/// <summary>Câu hỏi của một bài tập: thứ tự và điểm từng câu, chụp lúc giao bài (BR-20).</summary>
+public partial class AssignmentQuestion
 {
-    public int ExamQuestionId { get; set; }
+    public int AssignmentQuestionId { get; set; }
 
-    public int ExamId { get; set; }
+    public int AssignmentId { get; set; }
 
     public int QuestionId { get; set; }
 
@@ -15,7 +16,7 @@ public partial class ExamQuestion
 
     public decimal Points { get; set; }
 
-    public virtual Exam Exam { get; set; } = null!;
+    public virtual Assignment Assignment { get; set; } = null!;
 
     public virtual Question Question { get; set; } = null!;
 

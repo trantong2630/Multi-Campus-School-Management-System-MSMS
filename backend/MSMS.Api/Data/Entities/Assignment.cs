@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace MSMS.Api.Data.Entities;
@@ -7,7 +7,7 @@ public partial class Assignment
 {
     public int AssignmentId { get; set; }
 
-    public int ExamId { get; set; }
+    public int SubjectId { get; set; }
 
     public int ClassId { get; set; }
 
@@ -19,19 +19,14 @@ public partial class Assignment
 
     public DateTime DueAt { get; set; }
 
-    public string Status { get; set; } = null!;
+    /// <summary>Thời lượng làm bài (phút), tính từ lúc học sinh bấm Bắt đầu. Null là không giới hạn (BR-21).</summary>
+    public short? DurationMinutes { get; set; }
 
     public int AssignedByPersonId { get; set; }
 
-    public DateTime? AssignedAt { get; set; }
-
-    public int? ScorePublishedByPersonId { get; set; }
-
-    public DateTime? ScorePublishedAt { get; set; }
-
     public DateTime CreatedAt { get; set; }
 
-    public virtual ICollection<AiFeedback> AiFeedback { get; set; } = new List<AiFeedback>();
+    public virtual ICollection<AssignmentQuestion> AssignmentQuestion { get; set; } = new List<AssignmentQuestion>();
 
     public virtual ICollection<AssignmentRecipient> AssignmentRecipient { get; set; } = new List<AssignmentRecipient>();
 
@@ -39,9 +34,7 @@ public partial class Assignment
 
     public virtual Class Class { get; set; } = null!;
 
-    public virtual Exam Exam { get; set; } = null!;
-
-    public virtual Person? ScorePublishedByPerson { get; set; }
+    public virtual Subject Subject { get; set; } = null!;
 
     public virtual ICollection<Submission> Submission { get; set; } = new List<Submission>();
 }

@@ -11,6 +11,7 @@ using MSMS.Api.Data;
 using MSMS.Api.Modules.Adm;
 using MSMS.Api.Modules.Com;
 using MSMS.Api.Modules.Iam;
+using MSMS.Api.Modules.Lrn;
 using MSMS.Api.Modules.Ppl;
 using MSMS.Api.Modules.Sch;
 using MSMS.Api.Modules.Scd;
@@ -82,6 +83,7 @@ builder.Services.AddPplModule();
 builder.Services.AddScdModule();
 builder.Services.AddComModule();
 builder.Services.AddParModule();
+builder.Services.AddLrnModule(builder.Configuration);
 
 builder.Services.AddAdmModule();
 
