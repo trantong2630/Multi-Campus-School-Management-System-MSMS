@@ -1,6 +1,5 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MSMS.Api.Common.Audit;
@@ -92,7 +91,7 @@ builder.Services.AddAdmModule();
 
 // Đăng ký SignalR Hub cho thông báo và tin nhắn realtime
 // COM-4.8.6: Hub xác thực bằng access_token qua query string
-builder.Services.AddSignalR(o => o.AddFilter<AccountStatusHubFilter>());
+builder.Services.AddSignalR();
 
 builder.Services.AddControllers();
 

@@ -20,7 +20,11 @@ public static class DevSeeder
 
     public static async Task RunAsync(MsmsDbContext db, IClock clock, ILogger logger)
     {
-        if (await db.Account.AnyAsync()) return;
+        if (await db.Account.AnyAsync())
+        {
+            await EnsureMissingParentsAsync(db, clock, logger);
+            return;
+        }
         var now = clock.Now;
 
         // ---- Phân hiệu ----
@@ -143,19 +147,21 @@ public static class DevSeeder
             teachers.Add((person, t.Subject));
         }
 
-        // Học sinh: 3 em mỗi lớp. Phụ huynh liên kết với em đầu tiên của mỗi lớp.
+        // Học sinh: 3 em mỗi lớp. Phụ huynh liên kết: lớp 6A1 có phụ huynh cho cả 3 em (Hoàng Gia Bảo, Đỗ Minh Anh, Ngô Quang Huy), lớp 6A2 và 7A1 liên kết em đầu tiên.
         (string Name, DateOnly Dob, string Gender)[][] studentDefs =
         [
             [("Hoàng Gia Bảo", new(2014, 5, 30), "Male"), ("Đỗ Minh Anh", new(2014, 2, 11), "Female"), ("Ngô Quang Huy", new(2014, 9, 23), "Male")],
             [("Phan Khánh Linh", new(2014, 7, 8), "Female"), ("Trịnh Đức Long", new(2014, 1, 19), "Male"), ("Vương Thảo Nhi", new(2014, 11, 2), "Female")],
             [("Mai Anh Khoa", new(2013, 3, 15), "Male"), ("Cao Bảo Ngọc", new(2013, 10, 27), "Female"), ("Lương Gia Hân", new(2013, 6, 6), "Female")],
         ];
-        (string Name, DateOnly Dob, string Gender, string Phone)[] parentDefs =
-        [
-            ("Vũ Thị Lan", new(1985, 9, 12), "Female", "0900000001"),
-            ("Phan Văn Nam", new(1982, 5, 20), "Male", "0900000002"),
-            ("Mai Thị Hương", new(1983, 8, 9), "Female", "0900000003"),
-        ];
+        var parentDefsByStudent = new Dictionary<string, (string Name, DateOnly Dob, string Gender, string Phone)>
+        {
+            ["Hoàng Gia Bảo"] = ("Vũ Thị Lan", new(1985, 9, 12), "Female", "0900000001"),
+            ["Đỗ Minh Anh"] = ("Đỗ Minh Tuấn", new(1984, 3, 15), "Male", "0900000004"),
+            ["Ngô Quang Huy"] = ("Ngô Quang Hải", new(1982, 11, 20), "Male", "0900000005"),
+            ["Phan Khánh Linh"] = ("Phan Văn Nam", new(1982, 5, 20), "Male", "0900000002"),
+            ["Mai Anh Khoa"] = ("Mai Thị Hương", new(1983, 8, 9), "Female", "0900000003"),
+        };
         var students = new List<(Person Person, int ClassIdx)>();
         var parentLinks = new List<(Person Parent, Person Student)>();
         for (var ci = 0; ci < classes.Length; ci++)
@@ -165,9 +171,8 @@ public static class DevSeeder
                 var student = await AddPersonAsync(d.Name, "Student", "HS", AccountTypes.Student, d.Dob, d.Gender);
                 db.StudentProfile.Add(new StudentProfile { Student = student, Status = "Studying", AdmissionDate = yearStart });
                 students.Add((student, ci));
-                if (si == 0)
+                if (parentDefsByStudent.TryGetValue(d.Name, out var p))
                 {
-                    var p = parentDefs[ci];
                     parentLinks.Add((await AddPersonAsync(p.Name, "Parent", "PH", AccountTypes.Parent, p.Dob, p.Gender, p.Phone), student));
                 }
             }
@@ -199,5 +204,69 @@ public static class DevSeeder
                 ParentId = parent.PersonId, StudentId = student.PersonId, Relationship = "Phụ huynh", IsPrimary = true, CreatedAt = now,
             });
         await db.SaveChangesAsync();
+    }
+
+    private static async Task EnsureMissingParentsAsync(MsmsDbContext db, IClock clock, ILogger logger)
+    {
+        (string StudentName, string ParentName, DateOnly Dob, string Gender, string Phone)[] targets =
+        [
+            ("Đỗ Minh Anh", "Đỗ Minh Tuấn", new(1984, 3, 15), "Male", "0900000004"),
+            ("Ngô Quang Huy", "Ngô Quang Hải", new(1982, 11, 20), "Male", "0900000005"),
+        ];
+
+        var now = clock.Now;
+        foreach (var (studentName, parentName, dob, gender, phone) in targets)
+        {
+            var student = await db.Person.FirstOrDefaultAsync(p => p.FullName == studentName && p.PersonType == "Student");
+            if (student is null) continue;
+
+            var hasLink = await db.ParentStudentLink.AnyAsync(l => l.StudentId == student.PersonId);
+            if (hasLink) continue;
+
+            var parent = await db.Person.FirstOrDefaultAsync(p => p.FullName == parentName && p.PersonType == "Parent");
+            if (parent is null)
+            {
+                var number = (await db.Database.SqlQuery<int>($"SELECT NEXT VALUE FOR dbo.seq_PersonCode AS Value").ToListAsync())[0];
+                var code = $"PH{number}";
+                parent = new Person
+                {
+                    PersonType = "Parent",
+                    PersonCode = code,
+                    FullName = parentName,
+                    DateOfBirth = dob,
+                    Gender = gender,
+                    PhoneNumber = phone,
+                    CreatedAt = now,
+                };
+                db.Person.Add(parent);
+
+                var account = new Account
+                {
+                    Person = parent,
+                    Username = UsernameGenerator.Build(parentName, code),
+                    AccountType = AccountTypes.Parent,
+                    Status = AccountStatuses.Active,
+                    CreatedAt = now,
+                    PasswordHash = "",
+                };
+                account.PasswordHash = AuthService.HashPassword(account, DefaultPassword);
+                db.Account.Add(account);
+                await db.SaveChangesAsync();
+
+                logger.LogInformation("EnsureMissingParents: Tạo phụ huynh {Username} ({ParentName})", account.Username, parentName);
+            }
+
+            db.ParentStudentLink.Add(new ParentStudentLink
+            {
+                ParentId = parent.PersonId,
+                StudentId = student.PersonId,
+                Relationship = "Phụ huynh",
+                IsPrimary = true,
+                CreatedAt = now,
+            });
+            await db.SaveChangesAsync();
+
+            logger.LogInformation("EnsureMissingParents: Đã liên kết phụ huynh {ParentName} với học sinh {StudentName}", parentName, studentName);
+        }
     }
 }

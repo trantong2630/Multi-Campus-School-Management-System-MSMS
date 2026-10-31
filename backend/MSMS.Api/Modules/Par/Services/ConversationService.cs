@@ -9,6 +9,8 @@ using MSMS.Api.Data;
 using MSMS.Api.Data.Entities;
 using MSMS.Api.Modules.Com;
 using MSMS.Api.Modules.Par.Dtos;
+using MSMS.Api.Modules.Ppl.Services;
+using MSMS.Api.Modules.Scd.Services;
 
 namespace MSMS.Api.Modules.Par.Services;
 
@@ -17,7 +19,9 @@ public sealed class ConversationService(
     IClock clock,
     CurrentUser currentUser,
     NotificationSender notifier,
-    IHubContext<CommunicationHub> hubContext)
+    IHubContext<CommunicationHub> hubContext,
+    SubjectResponsibilityService responsibility,
+    HomeroomService homeroomService)
 {
     public async Task<List<AvailableTeacherDto>> GetAvailableTeachersAsync(int studentId)
     {
@@ -26,7 +30,7 @@ public sealed class ConversationService(
         var hasLink = await db.ParentStudentLink.AsNoTracking()
             .AnyAsync(l => l.StudentId == studentId && l.ParentId == currentUser.PersonId);
         if (!hasLink)
-            throw ApiException.Forbidden("Bạn không có liên kết với học sinh này.");
+            throw ApiException.Forbidden("Không có liên kết với học sinh này.");
 
         var today = clock.Today;
         var enrollment = await db.Enrollment.AsNoTracking()
@@ -38,82 +42,26 @@ public sealed class ConversationService(
         if (enrollment is null)
             return [];
 
-        var homeroom = await db.HomeroomAssignment.AsNoTracking()
-            .Include(h => h.Staff).ThenInclude(s => s.Staff)
-            .Where(h => h.ClassId == enrollment.ClassId && h.StartDate <= today && (h.EndDate == null || h.EndDate >= today))
-            .OrderByDescending(h => h.StartDate)
-            .FirstOrDefaultAsync();
+        var homeroom = await homeroomService.GetHomeroomAsync(enrollment.ClassId, today);
 
-        var teacherSubjects = new Dictionary<int, List<string>>();
-        var staffInfo = new Dictionary<int, (string FullName, string? TeacherAbbr)>();
+        var teaching = await responsibility.ListAsync(null, null);
+        var result = teaching.Teachers
+            .Where(t => t.Items.Any(i => i.ClassId == enrollment.ClassId))
+            .Select(t => new AvailableTeacherDto(
+                t.TeacherId,
+                t.TeacherName,
+                t.TeacherAbbr,
+                RoleDescription(
+                    t.TeacherId == homeroom?.StaffId,
+                    t.Items.Where(i => i.ClassId == enrollment.ClassId).Select(i => i.SubjectName).ToList())))
+            .ToList();
 
-        if (homeroom is not null)
-        {
-            staffInfo[homeroom.StaffId] = (homeroom.Staff.Staff.FullName, homeroom.Staff.TeacherAbbr);
-        }
-
-        var semester = await CurrentSemesterAsync();
-        if (semester is not null)
-        {
-            var latestVersionId = await db.TimetableVersionClass.AsNoTracking()
-                .Where(vc => vc.ClassId == enrollment.ClassId && vc.Version.Status == "Published" && vc.Version.SemesterId == semester.SemesterId)
-                .OrderByDescending(vc => vc.Version.PublishedAt)
-                .ThenByDescending(vc => vc.VersionId)
-                .Select(vc => vc.VersionId)
-                .FirstOrDefaultAsync();
-
-            if (latestVersionId > 0)
-            {
-                var entries = await db.TimetableEntry.AsNoTracking()
-                    .Where(e => e.VersionId == latestVersionId && e.ClassId == enrollment.ClassId)
-                    .Select(e => new
-                    {
-                        e.TeacherId,
-                        TeacherName = e.Teacher.Staff.FullName,
-                        e.Teacher.TeacherAbbr,
-                        SubjectName = e.Subject.Name
-                    })
-                    .ToListAsync();
-
-                foreach (var entry in entries)
-                {
-                    if (!teacherSubjects.TryGetValue(entry.TeacherId, out var subList))
-                    {
-                        subList = [];
-                        teacherSubjects[entry.TeacherId] = subList;
-                    }
-                    if (!subList.Contains(entry.SubjectName))
-                    {
-                        subList.Add(entry.SubjectName);
-                    }
-
-                    if (!staffInfo.ContainsKey(entry.TeacherId))
-                    {
-                        staffInfo[entry.TeacherId] = (entry.TeacherName, entry.TeacherAbbr);
-                    }
-                }
-            }
-        }
-
-        var result = new List<AvailableTeacherDto>();
-        foreach (var (staffId, (fullName, teacherAbbr)) in staffInfo)
-        {
-            var isHomeroom = homeroom?.StaffId == staffId;
-            teacherSubjects.TryGetValue(staffId, out var subjects);
-            var hasSubjects = subjects != null && subjects.Count > 0;
-
-            string roleDesc;
-            if (isHomeroom && hasSubjects)
-                roleDesc = $"Giáo viên chủ nhiệm, GV bộ môn {string.Join(", ", subjects!)}";
-            else if (isHomeroom)
-                roleDesc = "Giáo viên chủ nhiệm";
-            else if (hasSubjects)
-                roleDesc = $"GV bộ môn {string.Join(", ", subjects!)}";
-            else
-                roleDesc = "Giáo viên";
-
-            result.Add(new AvailableTeacherDto(staffId, fullName, teacherAbbr, roleDesc));
-        }
+        if (homeroom is not null && result.All(t => t.StaffId != homeroom.StaffId))
+            result.Add(new AvailableTeacherDto(
+                homeroom.StaffId,
+                homeroom.StaffName,
+                homeroom.TeacherAbbr,
+                RoleDescription(true, null)));
 
         return result
             .OrderByDescending(t => t.RoleDescription.Contains("chủ nhiệm"))
@@ -128,41 +76,11 @@ public sealed class ConversationService(
         var staffPersonId = currentUser.PersonId;
         var today = clock.Today;
 
-        var homeroomClassIds = await db.HomeroomAssignment.AsNoTracking()
-            .Where(h => h.StaffId == staffPersonId && h.StartDate <= today && (h.EndDate == null || h.EndDate >= today))
-            .Select(h => h.ClassId)
-            .ToListAsync();
+        var homeroomClassIds = await homeroomService.ListHomeroomClassIdsAsync(staffPersonId, today);
 
-        var semester = await CurrentSemesterAsync();
-        var timetableClassIds = new List<int>();
-        if (semester is not null)
-        {
-            var published = await db.TimetableVersionClass.AsNoTracking()
-                .Where(vc => vc.Version.Status == "Published" && vc.Version.SemesterId == semester.SemesterId)
-                .Select(vc => new { vc.ClassId, vc.VersionId, vc.Version.PublishedAt })
-                .ToListAsync();
+        var teachingClassIds = (await responsibility.ForTeacherAsync(staffPersonId)).Select(x => x.ClassId);
 
-            var latest = published.GroupBy(x => x.ClassId)
-                .Select(g => g.OrderByDescending(x => x.PublishedAt).ThenByDescending(x => x.VersionId).First())
-                .ToDictionary(x => x.ClassId, x => x.VersionId);
-
-            if (latest.Count > 0)
-            {
-                var versionIds = latest.Values.Distinct().ToList();
-                var teacherEntries = await db.TimetableEntry.AsNoTracking()
-                    .Where(e => versionIds.Contains(e.VersionId) && e.TeacherId == staffPersonId)
-                    .Select(e => new { e.VersionId, e.ClassId })
-                    .ToListAsync();
-
-                timetableClassIds = teacherEntries
-                    .Where(e => latest.TryGetValue(e.ClassId, out var vId) && vId == e.VersionId)
-                    .Select(e => e.ClassId)
-                    .Distinct()
-                    .ToList();
-            }
-        }
-
-        var activeClassIds = homeroomClassIds.Union(timetableClassIds).Distinct().ToList();
+        var activeClassIds = homeroomClassIds.Union(teachingClassIds).Distinct().ToList();
         if (activeClassIds.Count == 0)
             return [];
 
@@ -211,7 +129,7 @@ public sealed class ConversationService(
 
         var isTeaching = await IsTeacherOfClassAsync(staffPersonId, enrollment.ClassId, today);
         if (!isTeaching)
-            throw ApiException.Forbidden("Bạn không giảng dạy học sinh này.");
+            throw ApiException.Forbidden("Không giảng dạy học sinh này.");
 
         var rawParents = await db.ParentStudentLink.AsNoTracking()
             .Where(l => l.StudentId == studentId)
@@ -296,6 +214,7 @@ public sealed class ConversationService(
                 c.StudentId,
                 c.CreatedAt,
                 c.LastMessageAt,
+                ParentName = c.Parent.FullName,
                 StudentName = c.Student.Student.FullName,
                 StudentCode = c.Student.Student.PersonCode,
                 StaffName = c.Staff.Staff.FullName,
@@ -335,51 +254,13 @@ public sealed class ConversationService(
 
         var activeClassIds = studentActiveEnrollmentMap.Values.Select(e => e.ClassId).Distinct().ToList();
 
-        var homerooms = await db.HomeroomAssignment.AsNoTracking()
-            .Where(h => activeClassIds.Contains(h.ClassId) && h.StartDate <= today && (h.EndDate == null || h.EndDate >= today))
-            .Select(h => new { h.ClassId, h.StaffId })
-            .ToListAsync();
+        var homerooms = await homeroomService.ListHomeroomsAsync(activeClassIds, today);
         var homeroomSet = homerooms.Select(h => (h.ClassId, h.StaffId)).ToHashSet();
 
-        var semester = await CurrentSemesterAsync();
-        var timetableTeacherSubjects = new Dictionary<(int ClassId, int StaffId), List<string>>();
-        if (semester is not null && activeClassIds.Count > 0)
-        {
-            var published = await db.TimetableVersionClass.AsNoTracking()
-                .Where(vc => activeClassIds.Contains(vc.ClassId) && vc.Version.Status == "Published" && vc.Version.SemesterId == semester.SemesterId)
-                .Select(vc => new { vc.ClassId, vc.VersionId, vc.Version.PublishedAt })
-                .ToListAsync();
-
-            var latest = published.GroupBy(x => x.ClassId)
-                .Select(g => g.OrderByDescending(x => x.PublishedAt).ThenByDescending(x => x.VersionId).First())
-                .ToDictionary(x => x.ClassId, x => x.VersionId);
-
-            if (latest.Count > 0)
-            {
-                var versionIds = latest.Values.Distinct().ToList();
-                var entries = await db.TimetableEntry.AsNoTracking()
-                    .Where(e => versionIds.Contains(e.VersionId))
-                    .Select(e => new { e.VersionId, e.ClassId, e.TeacherId, SubjectName = e.Subject.Name })
-                    .ToListAsync();
-
-                foreach (var entry in entries)
-                {
-                    if (latest.TryGetValue(entry.ClassId, out var vId) && vId == entry.VersionId)
-                    {
-                        var key = (entry.ClassId, entry.TeacherId);
-                        if (!timetableTeacherSubjects.TryGetValue(key, out var subList))
-                        {
-                            subList = [];
-                            timetableTeacherSubjects[key] = subList;
-                        }
-                        if (!subList.Contains(entry.SubjectName))
-                        {
-                            subList.Add(entry.SubjectName);
-                        }
-                    }
-                }
-            }
-        }
+        var teachingSubjects = (await responsibility.ListAsync(null, null)).Teachers
+            .SelectMany(t => t.Items.Select(i => (i.ClassId, t.TeacherId, i.SubjectName)))
+            .GroupBy(x => (x.ClassId, x.TeacherId))
+            .ToDictionary(g => g.Key, g => g.Select(x => x.SubjectName).ToList());
 
         var items = new List<ConversationItemDto>(convos.Count);
         foreach (var c in convos)
@@ -389,21 +270,10 @@ public sealed class ConversationService(
             var classId = activeEnr?.ClassId ?? 0;
 
             var isHomeroom = activeEnr != null && homeroomSet.Contains((classId, c.StaffId));
-            timetableTeacherSubjects.TryGetValue((classId, c.StaffId), out var subjects);
-            var hasSubjects = subjects != null && subjects.Count > 0;
-            var isTeaching = isHomeroom || hasSubjects;
+            teachingSubjects.TryGetValue((classId, c.StaffId), out var subjects);
+            var isTeaching = isHomeroom || subjects is not null;
 
             var isReadOnly = !(hasLink && hasActiveEnr && isTeaching);
-
-            string roleDesc;
-            if (isHomeroom && hasSubjects)
-                roleDesc = $"Giáo viên chủ nhiệm, GV bộ môn {string.Join(", ", subjects!)}";
-            else if (isHomeroom)
-                roleDesc = "Giáo viên chủ nhiệm";
-            else if (hasSubjects)
-                roleDesc = $"GV bộ môn {string.Join(", ", subjects!)}";
-            else
-                roleDesc = "Giáo viên";
 
             var className = activeEnr?.Class.Name
                 ?? (studentLatestEnrollmentMap.TryGetValue(c.StudentId, out var latestEnr) ? latestEnr.Class.Name : "N/A");
@@ -417,7 +287,9 @@ public sealed class ConversationService(
                 c.StaffId,
                 c.StaffName,
                 c.StaffAbbr,
-                roleDesc,
+                RoleDescription(isHomeroom, subjects),
+                c.ParentId,
+                c.ParentName,
                 c.LastMessageContent,
                 c.LastMessageAt,
                 c.UnreadCount,
@@ -550,7 +422,7 @@ public sealed class ConversationService(
         // BR-25, COM-4.8.7, COM-4.8.8: Gửi sự kiện realtime sau SaveChanges thành công
         // Sự kiện MessageReceived: Đẩy tin nhắn mới tức thì tới nhóm hội thoại
         // Sự kiện NotificationCreated: Đẩy thông báo chuông tới người nhận
-        
+
         var messagePayload = new
         {
             messageId = message.MessageId,
@@ -636,39 +508,24 @@ public sealed class ConversationService(
 
     private async Task<bool> IsTeacherOfClassAsync(int staffId, int classId, DateOnly today)
     {
-        var isHomeroom = await db.HomeroomAssignment.AsNoTracking()
-            .AnyAsync(h => h.StaffId == staffId && h.ClassId == classId && h.StartDate <= today && (h.EndDate == null || h.EndDate >= today));
-        if (isHomeroom)
+        var homeroom = await homeroomService.GetHomeroomAsync(classId, today);
+        if (homeroom?.StaffId == staffId)
             return true;
 
-        var semester = await CurrentSemesterAsync();
-        if (semester is null)
-            return false;
-
-        var latestVersionId = await db.TimetableVersionClass.AsNoTracking()
-            .Where(vc => vc.ClassId == classId && vc.Version.Status == "Published" && vc.Version.SemesterId == semester.SemesterId)
-            .OrderByDescending(vc => vc.Version.PublishedAt)
-            .ThenByDescending(vc => vc.VersionId)
-            .Select(vc => vc.VersionId)
-            .FirstOrDefaultAsync();
-
-        if (latestVersionId == 0)
-            return false;
-
-        return await db.TimetableEntry.AsNoTracking()
-            .AnyAsync(e => e.VersionId == latestVersionId && e.ClassId == classId && e.TeacherId == staffId);
+        var teaching = await responsibility.ForTeacherAsync(staffId);
+        return teaching.Any(x => x.ClassId == classId);
     }
 
-    private async Task<Semester?> CurrentSemesterAsync()
+    private static string RoleDescription(bool isHomeroom, IReadOnlyList<string>? subjects)
     {
-        var today = clock.Today;
-        var semesters = await db.Semester.AsNoTracking()
-            .Where(s => s.AcademicYear.IsCurrent)
-            .OrderBy(s => s.StartDate)
-            .ToListAsync();
+        var subjectText = subjects is { Count: > 0 } ? string.Join(", ", subjects) : null;
 
-        return semesters.FirstOrDefault(s => s.StartDate <= today && today <= s.EndDate)
-               ?? semesters.LastOrDefault(s => s.StartDate <= today)
-               ?? semesters.FirstOrDefault();
+        if (isHomeroom && subjectText is not null)
+            return $"Giáo viên chủ nhiệm, phụ trách chuyên môn {subjectText}";
+        if (isHomeroom)
+            return "Giáo viên chủ nhiệm";
+        if (subjectText is not null)
+            return $"Phụ trách chuyên môn {subjectText}";
+        return "Giáo viên";
     }
 }

@@ -313,18 +313,19 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Cấp 1 | Cấp 2 |
 | --- | --- |
 | Trang chủ | — |
+| Tiến độ giao bài của tổ | — |
 | Dashboard | — |
 | Thiết lập | Thông tin trường · Phân hiệu · Tổ chuyên môn & Môn học · Năm học & Học kỳ · Ngày nghỉ · Khung giờ tiết · Lớp & Ghi danh · Kết chuyển năm học |
 | Hồ sơ | Cán bộ · Học sinh · Phụ huynh · Trách nhiệm |
 | Thời khóa biểu | Thời khóa biểu · Phụ trách chuyên môn · Lịch dạy · Giáo viên vắng |
 | Điểm danh | — |
-| Bài tập rèn luyện | Kho câu hỏi · Giao bài tập · Bài tập đã giao · Tiến độ giao bài của tổ · Bài tập được giao · Danh sách bài tập · Kết quả của con |
+| Bài tập rèn luyện | Kho câu hỏi · Giao bài tập · Bài tập đã giao · Bài tập được giao · Danh sách bài tập · Kết quả của con |
 | Phụ huynh | Đơn xin nghỉ · Sổ liên lạc · Hộp thư |
 | Bảng tin | — |
 | Quản trị | Tài khoản · Nhật ký · Xuất dữ liệu |
 
 - Nhóm chỉ có một màn hình thì không có cấp 2. Áp dụng cả sau khi lọc theo quyền: nhóm chỉ còn một mục con hiển thị cho loại tài khoản đó thì hiện thẳng thành mục cấp 1 (ví dụ giáo viên chỉ thấy **Lịch dạy**; chủ nhiệm chỉ có quyền xuất điểm danh thì nhóm Quản trị hiện thẳng thành **Xuất dữ liệu**). School Admin không thấy Dashboard, Thời khóa biểu và Xuất dữ liệu; nhóm Quản trị của School Admin gồm **Tài khoản** và **Nhật ký**.
-- **Trang chủ** là mục cấp 1 đầu tiên, mọi loại tài khoản đều thấy. Trang chủ chỉ chào và hiện thông tin chung (hôm nay, năm học, liên hệ trường — Business Spec §5.1); không đặt số liệu, lối tắt hay bảng tin ở Trang chủ (số liệu ở **Dashboard**, chỉ Principal và Vice Principal).
+- **Trang chủ** là mục cấp 1 đầu tiên, mọi loại tài khoản đều thấy; ngay dưới là **Tiến độ giao bài của tổ** (mục cấp 1 riêng, cùng cụm Tổng quan) cho giáo viên. Trang chủ chỉ chào và hiện thông tin chung (hôm nay, năm học, liên hệ trường — Business Spec §5.1); không đặt số liệu, lối tắt hay bảng tin ở Trang chủ (số liệu ở **Dashboard**, chỉ Principal và Vice Principal).
 - Mục cha **không điều hướng**, chỉ xổ ra; vào trang con thì cha tự xổ và sáng lên.
 - Icon chỉ ở cấp 1; mục con thụt vào, không icon, không chấm đầu dòng.
 - **Ẩn hẳn mục không có quyền**, không hiện rồi khóa.
@@ -335,6 +336,7 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Mục | Ai thấy |
 | --- | --- |
 | Trang chủ · Bảng tin | Mọi loại |
+| Tiến độ giao bài của tổ | GV (chỉ tổ trưởng) |
 | Dashboard | HT, HP |
 | Thiết lập › Thông tin trường | SA, HT |
 | Thiết lập › mọi mục còn lại | SA |
@@ -344,7 +346,6 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Thời khóa biểu › Lịch dạy | HT, HP, GV |
 | Điểm danh | SA, HT, HP, GV, HS, PH |
 | Bài tập rèn luyện › Kho câu hỏi · Giao bài tập · Bài tập đã giao | GV |
-| Bài tập rèn luyện › Tiến độ giao bài của tổ | GV (chỉ tổ trưởng) |
 | Bài tập rèn luyện › Bài tập được giao · Danh sách bài tập | HS |
 | Bài tập rèn luyện › Kết quả của con | PH |
 | Phụ huynh › Đơn xin nghỉ | HP, GV, PH |
