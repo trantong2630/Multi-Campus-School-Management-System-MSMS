@@ -93,7 +93,8 @@ builder.Services.AddAdmModule();
 // COM-4.8.6: Hub xác thực bằng access_token qua query string
 builder.Services.AddSignalR();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(o => o.InvalidModelStateResponseFactory = ModelStateErrorResponse.Create);
 
 var app = builder.Build();
 

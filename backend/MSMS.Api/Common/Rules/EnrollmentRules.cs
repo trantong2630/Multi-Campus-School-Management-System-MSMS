@@ -26,6 +26,24 @@ public static class EnrollmentRules
     public static Expression<Func<Enrollment, bool>> ActiveAt(DateOnly date) =>
         e => e.StartDate <= date && (e.EndDate ?? e.Class.AcademicYear.EndDate) >= date;
 
+    /// <summary>
+    /// Ngày dùng để xem sĩ số và danh sách mặc định của một lớp: hôm nay, hoặc ngày bắt đầu năm học nếu năm học của lớp chưa bắt đầu
+    /// (ghi danh của năm sau chỉ có hiệu lực từ ngày đó nên xem theo hôm nay sẽ thấy lớp trống).
+    /// </summary>
+    public static DateOnly DefaultViewDate(DateOnly today, DateOnly yearStart) => today < yearStart ? yearStart : today;
+
+    /// <summary>Giống <see cref="ActiveAt"/> nhưng ngày xét là <see cref="DefaultViewDate"/> của năm học của lớp. Dùng cho sĩ số hiển thị.</summary>
+    public static Expression<Func<Enrollment, bool>> ActiveAsOf(DateOnly today) => e =>
+        e.StartDate <= (today < e.Class.AcademicYear.StartDate ? e.Class.AcademicYear.StartDate : today)
+        && (e.EndDate ?? e.Class.AcademicYear.EndDate) >= (today < e.Class.AcademicYear.StartDate ? e.Class.AcademicYear.StartDate : today);
+
+    /// <summary>
+    /// Ghi danh chưa kết thúc tính đến hôm nay: đang hiệu lực hoặc sắp bắt đầu (ngày kết thúc, hoặc cuối năm học nếu để trống, chưa qua).
+    /// Dùng để chặn ngừng hoạt động lớp và để đóng hết ghi danh còn lại khi học sinh rời trường.
+    /// </summary>
+    public static Expression<Func<Enrollment, bool>> OpenOrUpcoming(DateOnly today) =>
+        e => (e.EndDate ?? e.Class.AcademicYear.EndDate) >= today;
+
     /// <summary>Học sinh đang học của lớp tại ngày D (xem <see cref="ActiveAt"/>).</summary>
     public static IQueryable<Enrollment> RosterAt(this IQueryable<Enrollment> enrollments, int classId, DateOnly date) =>
         enrollments.Where(e => e.ClassId == classId).Where(ActiveAt(date));
