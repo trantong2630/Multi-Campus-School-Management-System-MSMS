@@ -15,6 +15,8 @@ public static class ComModule
     {
         services.AddScoped<NotificationService>();
         services.AddScoped<NotificationPushInterceptor>();
+        services.AddScoped<PostService>();   // COM-02 bảng tin
+        services.AddScoped<PostImageStorage>();
         // COM-4.8.7: gắn interceptor vào DbContext từ module Com, không đụng tới Program.cs.
         services.ConfigureDbContext<MsmsDbContext>((sp, o) => o.AddInterceptors(sp.GetRequiredService<NotificationPushInterceptor>()));
         services.AddSingleton<PresenceTracker>();

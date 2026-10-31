@@ -655,6 +655,7 @@ public partial class MsmsDbContext : DbContext
                 .HasPrecision(0)
                 .HasDefaultValueSql("(CONVERT([datetime2](0),(sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time')))");
             entity.Property(e => e.HiddenAt).HasPrecision(0);
+            entity.Property(e => e.HiddenReason).HasMaxLength(500);
             entity.Property(e => e.Status)
                 .HasMaxLength(10)
                 .HasDefaultValue("Posted");
