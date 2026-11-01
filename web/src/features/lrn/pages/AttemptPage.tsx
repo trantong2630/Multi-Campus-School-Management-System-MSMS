@@ -231,7 +231,7 @@ export function AttemptPage() {
       return (
         <div className="focus__center focus__intro" style={subjectVars(data.subjectId)}>
           <AiAvatar mood="happy" size={120} />
-          <span className="focus__kicker">{data.subjectName} · {data.className}</span>
+          <span className="focus__kicker"><i />{data.subjectName}<b>{data.className}</b></span>
           <h1>{data.title}</h1>
           <p>
             Bài có <strong>{data.questionCount} câu</strong> và giới hạn <strong>{durationText(data.durationMinutes)}</strong>.
