@@ -57,6 +57,9 @@ public record TeacherOptionDto(int TeacherId, string Name, string? Abbr);
 public record ViewSessionDto(long SessionId, DateOnly Date, int PeriodSlotId, string SessionOfDay, byte PeriodNo, TimeOnly StartTime, TimeOnly EndTime,
     string ClassName, string CampusName, int SubjectId, string SubjectName, string SubjectAbbr, string? TeacherName, string Status, string Source);
 
+/// <summary>Lớp học sinh đang học (hoặc gần nhất) và phân hiệu của lớp, để hiện đầu trang lịch học kể cả tuần không có tiết.</summary>
+public record StudentClassDto(string ClassName, string CampusName);
+
 // ---- SCD-04: Phụ trách chuyên môn (tính từ thời khóa biểu đã phát hành, BR-14) ----
 public record ResponsibilityItemDto(int SubjectId, string SubjectAbbr, string SubjectName, int ClassId, string ClassName, int PeriodsPerWeek);
 public record ResponsibilityTeacherDto(int TeacherId, string TeacherName, string? TeacherAbbr, int TotalPeriods, IReadOnlyList<ResponsibilityItemDto> Items);

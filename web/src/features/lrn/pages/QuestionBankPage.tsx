@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ConfigProvider, Input, Select } from 'antd';
 import { FILTER_THEME } from '@/shared/components/FilterBar';
-import { Check, ChevronDown, Eye, EyeOff, ListChecks, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { Check, ChevronDown, Eye, EyeOff, ListChecks, Lock, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { message } from '@/shared/lib/antdStatic';
 import { confirmAction, showError } from '@/shared/lib/feedback';
@@ -10,6 +10,7 @@ import { AiComposer } from '../components/AiComposer';
 import { AiEmpty } from '../components/parts';
 import { subjectVars } from '../components/tone';
 import { QuestionEditor } from '../components/QuestionEditor';
+import { QuestionPreview } from '../components/QuestionPreview';
 import { useDebounced, useMySubjects, useSubjects } from '../hooks';
 import { GRADE_OPTIONS } from '../labels';
 import type { QuestionDetail, QuestionItem, QuestionQuery } from '../types';
@@ -17,22 +18,6 @@ import '../components/lrn.css';
 
 type Tab = 'all' | 'mine' | 'draft' | 'hidden';
 const PAGE = 15;
-
-/** Câu hỏi mở rộng: lấy chi tiết (có đáp án) khi giáo viên bấm vào một dòng. */
-function Expanded({ id }: { id: number }) {
-  const q = useQuery({ queryKey: ['lrn', 'questions', 'detail', id], queryFn: () => lrnApi.questions.get(id) });
-  if (!q.data) return <div className="qrow__detail qrow__detail--wait">Đang tải…</div>;
-  return (
-    <div className="qrow__detail">
-      <ul>
-        {q.data.options.map((o) => (
-          <li key={o.optionId} className={o.isCorrect ? 'is-correct' : ''}><b>{o.label}</b><span>{o.content}</span>{o.isCorrect && <em>Đáp án đúng</em>}</li>
-        ))}
-      </ul>
-      {q.data.explanation && <p className="qrow__why"><strong>Giải thích: </strong>{q.data.explanation}</p>}
-    </div>
-  );
-}
 
 /**
  * Kho câu hỏi (LRN-01, BR-20): dùng chung toàn trường, chỉ người tạo sửa; câu đã nằm trong bài tập chỉ còn ẩn khỏi kho.
@@ -51,7 +36,7 @@ export function QuestionBankPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<QuestionDetail | null>(null);
 
-  const base: QuestionQuery = { subjectId, gradeLevel, search: dSearch || undefined, mine: tab !== 'all', includeHidden: tab === 'hidden' || undefined, status: tab === 'draft' ? 'Draft' : tab === 'all' ? 'Ready' : undefined };
+  const base: QuestionQuery = { subjectId, gradeLevel, topic: dSearch || undefined, mine: tab !== 'all', includeHidden: tab === 'hidden' || undefined, status: tab === 'draft' ? 'Draft' : tab === 'all' ? 'Ready' : undefined };
   const list = useInfiniteQuery({
     queryKey: ['lrn', 'questions', 'list', base],
     initialPageParam: 1,
@@ -111,7 +96,7 @@ export function QuestionBankPage() {
             <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} className={tab === t.key ? 'is-on' : ''} onClick={() => setTab(t.key)}>{t.label}</button>
           ))}
           <ConfigProvider theme={FILTER_THEME}><span className="bank__filters">
-            <Input.Search allowClear placeholder="Tìm câu hỏi" value={search} onChange={(e) => setSearch(e.target.value)} style={{ width: 190 }} />
+            <Input.Search allowClear placeholder="Tìm theo chủ đề" value={search} onChange={(e) => setSearch(e.target.value)} style={{ width: 200 }} />
             <Select allowClear placeholder="Môn" value={subjectId} onChange={setSubjectId} style={{ width: 130 }} showSearch optionFilterProp="label"
               options={subjects.active.map((s) => ({ value: s.subjectId, label: s.name }))} />
             <Select allowClear placeholder="Khối" value={gradeLevel} onChange={setGradeLevel} style={{ width: 92 }} options={GRADE_OPTIONS} />
@@ -141,7 +126,7 @@ export function QuestionBankPage() {
                       {!q.isMine && <span className="qrow__by">{q.createdByName}</span>}
                       {q.isMultiple && <span className="chip chip--warn"><ListChecks size={12} />Chọn nhiều</span>}
                       {q.isAiGenerated && <span className="chip chip--ai"><Sparkles size={12} />AI soạn</span>}
-                      {q.isLocked && <span className="chip chip--used"><Check size={12} strokeWidth={3} />Đã giao</span>}
+                      {q.isLocked && <span className="chip chip--used" title="Câu đã nằm trong bài tập, không sửa được, chỉ có thể ẩn"><Lock size={12} />Đã giao</span>}
                     </span>
                     <ChevronDown size={18} className="qrow__chev" />
                   </button>
@@ -175,7 +160,7 @@ export function QuestionBankPage() {
                       )}
                     </span>
                   )}
-                  {expanded && <Expanded id={q.questionId} />}
+                  {expanded && <QuestionPreview id={q.questionId} />}
                   </div>
                 </li>
               );

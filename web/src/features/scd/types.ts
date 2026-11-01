@@ -168,6 +168,8 @@ export interface TeacherOption {
   abbr: string | null;
 }
 
+export interface StudentClass { className: string; campusName: string }
+
 export interface ViewSession extends Omit<MySession, 'status'> {
   teacherName: string | null;
   status: MySession['status'];

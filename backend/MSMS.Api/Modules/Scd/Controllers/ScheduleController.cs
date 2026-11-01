@@ -32,6 +32,12 @@ public class ScheduleController(ScheduleQueryService query) : ControllerBase
     [HttpGet("student"), Authorize(Policy = Policies.Student)]
     public Task<List<ViewSessionDto>> Student([FromQuery] DateOnly from, [FromQuery] DateOnly to) => query.GetStudentSessionsAsync(from, to);
 
+    [HttpGet("student/class"), Authorize(Policy = Policies.Student)]
+    public Task<StudentClassDto?> StudentClass([FromQuery] DateOnly date) => query.GetMyClassAsync(date);
+
+    [HttpGet("child/class"), Authorize(Policy = Policies.Parent)]
+    public Task<StudentClassDto?> ChildClass([FromQuery] int studentId, [FromQuery] DateOnly date) => query.GetChildClassAsync(studentId, date);
+
     [HttpGet("child"), Authorize(Policy = Policies.Parent)]
     public Task<List<ViewSessionDto>> Child([FromQuery] int studentId, [FromQuery] DateOnly from, [FromQuery] DateOnly to) =>
         query.GetChildSessionsAsync(studentId, from, to);
