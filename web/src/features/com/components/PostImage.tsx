@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { postApi } from '../api';
 import './posts.css';
 
-function useObjectUrl(blob: Blob | undefined) {
+export function useObjectUrl(blob: Blob | undefined) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!blob) { setUrl(null); return; }
