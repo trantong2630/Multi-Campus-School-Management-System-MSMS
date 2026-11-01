@@ -17,23 +17,16 @@ import { DeclareAbsenceModal, ResolveModal } from '../components/AbsenceModals';
 import type { ResolveTarget } from '../components/AbsenceModals';
 import { absenceScopeLabel } from '../labels';
 import type { Absence, PendingSession } from '../types';
+import { useScdCampus } from '../useScdCampus';
 
 /** SCD-03: giáo viên vắng. Khai báo không tự đổi lịch — tiết bị ảnh hưởng về Chờ xử lý, hiệu phó quyết định từng tiết (BR-16). */
 export function AbsencePage() {
   const qc = useQueryClient();
-  const campuses = useQuery({ queryKey: ['scd', 'campuses'], queryFn: scdApi.campuses });
-  const [campusId, setCampusId] = useState<number | undefined>();
-  const effectiveCampus = campusId ?? campuses.data?.[0]?.campusId;
+  const { campuses, effective: effectiveCampus, select: campusSelect, head: campusHead } = useScdCampus();
   const [declareOpen, setDeclareOpen] = useState(false);
   const [tab, setTab] = useState('pending');
 
   const refresh = () => qc.invalidateQueries({ queryKey: ['scd'] });
-  const campusSelect = (
-    <Select
-      placeholder="Phân hiệu" value={effectiveCampus} onChange={setCampusId}
-      options={campuses.data?.map((c) => ({ value: c.campusId, label: c.name }))}
-    />
-  );
 
   return (
     <>
@@ -46,6 +39,7 @@ export function AbsencePage() {
           </Button>
         }
       />
+      {campusHead}
       {campuses.isSuccess && campuses.data.length === 0 && (
         <InlineAlert type="warning" title="Chưa có phân hiệu nào để thao tác" description="Hiệu phó cần được gán phụ trách phân hiệu ở Hồ sơ → Trách nhiệm." />
       )}
