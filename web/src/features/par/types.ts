@@ -23,6 +23,7 @@ export interface LeaveRequestItem {
   fromDate: string;
   toDate: string;
   sessionOfDay: LeaveSessionOfDay;
+  slotIds?: string | null;
   reason?: string;
   status: string;
   createdAt: string;
@@ -39,7 +40,23 @@ export interface CreateLeaveRequestInput {
   fromDate: string;
   toDate: string;
   sessionOfDay: LeaveSessionOfDay | string;
+  slotIds?: number[];
   reason?: string;
+} (or some periods of one day) in a bulk leave request
+ */
+export interface LeaveDayInput {
+  date: string;
+  sessionOfDay: LeaveSessionOfDay | string;
+  slotIds?: number[];
+}
+
+/**
+ * Input data for creating leave requests for several days at once
+ */
+export interface BulkCreateLeaveRequestInput {
+  studentId: number;
+  reason?: string;
+  days: LeaveDayInput[];
 }
 
 /**
@@ -56,6 +73,7 @@ export interface HomeroomLeaveItem {
   fromDate: string;
   toDate: string;
   sessionOfDay: LeaveSessionOfDay | string;
+  slotIds?: string | null;
   reason?: string;
   status: string;
   createdAt: string;
