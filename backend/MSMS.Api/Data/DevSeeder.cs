@@ -10,8 +10,10 @@ namespace MSMS.Api.Data;
 
 /// <summary>
 /// Dữ liệu tạm cho môi trường Development, đủ để demo từ đăng nhập đến import và phát hành thời khóa biểu:
-/// 1 phân hiệu, năm học 2026-2027 (2 học kỳ), 10 khung giờ tiết (5 sáng + 5 chiều), 3 tổ, 6 môn,
-/// 3 lớp, 6 giáo viên có viết tắt, chủ nhiệm, phân công giảng dạy, học sinh được ghi danh và phụ huynh liên kết.
+/// 1 phân hiệu, năm học 2026-2027 (hiện hành) và 2027-2028 (2 học kỳ mỗi năm), 10 khung giờ tiết (5 sáng + 5 chiều), 4 tổ, 6 môn,
+/// 6 lớp năm 2026-2027: 6A1 (20 em), 6A2 (15), 7A1 (20), 7A2 (trống), 8A1 (10), 9A1 (10), cộng 32 học sinh chưa xếp lớp để demo ghi danh
+/// hàng loạt vào 7A2, chuyển lớp và kết thúc ghi danh theo nhóm. 6 giáo viên có viết tắt làm chủ nhiệm, phụ huynh liên kết.
+/// Năm 2027-2028 có sẵn 6A1, 6A2, 7A1, 7A2 (chưa có học sinh) để demo kết chuyển năm học.
 /// Chỉ chạy khi chưa có tài khoản nào.
 /// </summary>
 public static class DevSeeder
@@ -83,11 +85,25 @@ public static class DevSeeder
             s => s.Abbr, s => new Subject { DepartmentId = depts[s.Dept].DepartmentId, Name = s.Name, Abbreviation = s.Abbr, IsActive = true });
         db.Subject.AddRange(subjects.Values);
 
-        // ---- Lớp ----
-        var classes = new[] { ("6A1", (byte)6), ("6A2", (byte)6), ("7A1", (byte)7) }
+        // ---- Năm học kế tiếp (để demo kết chuyển): chỉ tạo sẵn một số lớp, các lớp còn lại tạo bằng "Tạo lớp năm mới" ----
+        var nextStart = new DateOnly(2027, 9, 5);
+        var nextYear = await db.AcademicYear.FirstOrDefaultAsync(y => y.Name == "2027-2028");
+        if (nextYear is null)
+        {
+            nextYear = new AcademicYear { Name = "2027-2028", StartDate = nextStart, EndDate = new(2028, 5, 31), IsCurrent = false };
+            nextYear.Semester.Add(new Semester { SemesterNo = 1, Name = "Học kỳ 1", StartDate = nextStart, EndDate = new(2028, 1, 15) });
+            nextYear.Semester.Add(new Semester { SemesterNo = 2, Name = "Học kỳ 2", StartDate = new(2028, 1, 18), EndDate = new(2028, 5, 31) });
+            db.AcademicYear.Add(nextYear);
+        }
+
+        // ---- Lớp năm 2026-2027: 6 lớp, mỗi lớp 8 học sinh ----
+        var classes = new[] { ("6A1", (byte)6), ("6A2", (byte)6), ("7A1", (byte)7), ("7A2", (byte)7), ("8A1", (byte)8), ("9A1", (byte)9) }
             .Select(c => new Class { Campus = campus, AcademicYear = year, Name = c.Item1, GradeLevel = c.Item2, IsActive = true, CreatedAt = now })
             .ToArray();
         db.Class.AddRange(classes);
+        // Năm 2027-2028 có sẵn 6A1, 6A2 (lưu ban lớp 6), 7A1, 7A2 (lên lớp từ lớp 6); thiếu 8A1, 9A1 để demo tạo lớp.
+        foreach (var (name, grade) in new[] { ("6A1", (byte)6), ("6A2", (byte)6), ("7A1", (byte)7), ("7A2", (byte)7) })
+            db.Class.Add(new Class { Campus = campus, AcademicYear = nextYear, Name = name, GradeLevel = grade, IsActive = true, CreatedAt = now });
         await db.SaveChangesAsync();
 
         // ---- Người dùng: cán bộ, giáo viên, học sinh, phụ huynh ----
@@ -153,7 +169,37 @@ public static class DevSeeder
             [("Hoàng Gia Bảo", new(2014, 5, 30), "Male"), ("Đỗ Minh Anh", new(2014, 2, 11), "Female"), ("Ngô Quang Huy", new(2014, 9, 23), "Male")],
             [("Phan Khánh Linh", new(2014, 7, 8), "Female"), ("Trịnh Đức Long", new(2014, 1, 19), "Male"), ("Vương Thảo Nhi", new(2014, 11, 2), "Female")],
             [("Mai Anh Khoa", new(2013, 3, 15), "Male"), ("Cao Bảo Ngọc", new(2013, 10, 27), "Female"), ("Lương Gia Hân", new(2013, 6, 6), "Female")],
+            [], [], [], [],   // 7A2, 8A1, 9A1 và nhóm cuối (chưa xếp lớp): sinh tên bên dưới
         ];
+        // Sĩ số từng lớp (6A1, 6A2, 7A1, 7A2, 8A1, 9A1) và số học sinh chưa xếp lớp. 7A2 để trống để demo ghi danh hàng loạt.
+        int[] sizes = [20, 15, 20, 0, 10, 10, 32];
+        // Ngoài các em đặt tên sẵn, phần còn lại sinh tên tiếng Việt không trùng nhau.
+        string[] ho = ["Nguyễn", "Trần", "Lê", "Phạm", "Võ", "Huỳnh", "Vũ", "Đặng", "Bùi", "Lâm"];
+        string[] demNam = ["Văn", "Minh", "Gia", "Quốc", "Hữu"];
+        string[] demNu = ["Thị", "Ngọc", "Thanh", "Hoài", "Khánh"];
+        string[] tenNam = ["An", "Bình", "Cường", "Dũng", "Hải", "Khang", "Lâm", "Nam", "Phúc", "Tài", "Thịnh", "Việt"];
+        string[] tenNu = ["Anh", "Chi", "Diệp", "Giang", "Hạnh", "Lan", "My", "Ngân", "Như", "Quyên", "Trâm", "Uyên"];
+        var used = studentDefs.SelectMany(c => c).Select(s => s.Name).ToHashSet();
+        var counter = 0;
+        for (var ci = 0; ci < studentDefs.Length; ci++)
+        {
+            var list = studentDefs[ci].ToList();
+            var birthYear = ci < classes.Length ? 2014 - (classes[ci].GradeLevel - 6) : 2014;
+            while (list.Count < sizes[ci])
+            {
+                var female = list.Count % 2 == 1;
+                string name;
+                do
+                {
+                    var n = counter++;
+                    name = female
+                        ? $"{ho[n % ho.Length]} {demNu[n / 2 % demNu.Length]} {tenNu[n * 5 % tenNu.Length]}"
+                        : $"{ho[n % ho.Length]} {demNam[n / 2 % demNam.Length]} {tenNam[n * 5 % tenNam.Length]}";
+                } while (!used.Add(name));
+                list.Add((name, new DateOnly(birthYear, 1 + (list.Count + ci) % 12, 1 + (list.Count * 3 + ci) % 28), female ? "Female" : "Male"));
+            }
+            studentDefs[ci] = list.ToArray();
+        }
         var parentDefsByStudent = new Dictionary<string, (string Name, DateOnly Dob, string Gender, string Phone)>
         {
             ["Hoàng Gia Bảo"] = ("Vũ Thị Lan", new(1985, 9, 12), "Female", "0900000001"),
@@ -164,7 +210,7 @@ public static class DevSeeder
         };
         var students = new List<(Person Person, int ClassIdx)>();
         var parentLinks = new List<(Person Parent, Person Student)>();
-        for (var ci = 0; ci < classes.Length; ci++)
+        for (var ci = 0; ci < studentDefs.Length; ci++)
             for (var si = 0; si < studentDefs[ci].Length; si++)
             {
                 var d = studentDefs[ci][si];
@@ -196,7 +242,7 @@ public static class DevSeeder
                 ClassId = classes[ci].ClassId, StaffId = teachers[ci].Person.PersonId, StartDate = yearStart, CreatedAt = now,
             });
         }
-        foreach (var (person, ci) in students)
+        foreach (var (person, ci) in students.Where(s => s.ClassIdx < classes.Length))   // nhóm cuối chưa xếp lớp
             db.Enrollment.Add(new Enrollment { StudentId = person.PersonId, ClassId = classes[ci].ClassId, StartDate = yearStart, CreatedAt = now });
         foreach (var (parent, student) in parentLinks)
             db.ParentStudentLink.Add(new ParentStudentLink

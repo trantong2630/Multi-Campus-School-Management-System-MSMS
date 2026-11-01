@@ -48,6 +48,16 @@ export interface Account {
   campusName: string | null;
 }
 
+export interface AccountDirectoryItem {
+  personId: number;
+  personCode: string;
+  fullName: string;
+  personType: string;
+  campusName: string | null;
+  hasAccount: boolean;
+  isActive: boolean;
+}
+
 export interface TempPasswordItem {
   personId: number;
   personCode: string;

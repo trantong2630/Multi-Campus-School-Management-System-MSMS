@@ -336,6 +336,66 @@ public class RolloverTests
         Assert.Equal(enrollmentsBefore, await db.Enrollment.CountAsync());
     }
 
+    // ---- Chuyển từng học sinh (lên lớp / lưu ban) ----
+    [Fact]
+    public async Task Students_ListsOnlyStudentsStillStudying_AndMarksTheOnesAlreadyPlaced()
+    {
+        var (_, svc, target) = await WithTarget();
+        await svc.MoveSelectedAsync(new RolloverStudentsMoveRequest(C6A1, target, [101]));
+
+        var list = await svc.StudentsAsync(C6A1, Year2);
+
+        Assert.Equal([101, 102], list.Select(s => s.StudentId));
+        Assert.Equal(target, list.Single(s => s.StudentId == 101).NewClassId);
+        Assert.Null(list.Single(s => s.StudentId == 102).NewClassId);
+    }
+
+    [Fact]
+    public async Task MoveSelected_MovesOnlyTheChosenStudents_AndSkipsThoseAlreadyPlaced()
+    {
+        var (db, svc, target) = await WithTarget();
+
+        var first = await svc.MoveSelectedAsync(new RolloverStudentsMoveRequest(C6A1, target, [101]));
+        var again = await svc.MoveSelectedAsync(new RolloverStudentsMoveRequest(C6A1, target, [101, 102]));
+
+        Assert.Equal(1, first.Moved);
+        Assert.Equal(1, again.Moved);
+        Assert.Equal(1, again.Skipped);
+        Assert.Equal(2, await db.Enrollment.CountAsync(e => e.ClassId == target && e.StartDate == Year2Start));
+    }
+
+    [Fact]
+    public async Task MoveSelected_Invalid_IsRejected()
+    {
+        var (_, svc, target) = await WithTarget();
+
+        await Assert.ThrowsAsync<ApiException>(() => svc.MoveSelectedAsync(new RolloverStudentsMoveRequest(C6A1, target, [])));
+        await Assert.ThrowsAsync<ApiException>(() => svc.MoveSelectedAsync(new RolloverStudentsMoveRequest(C6A1, target, [Left])));     // đã chuyển đi
+        await Assert.ThrowsAsync<ApiException>(() => svc.MoveSelectedAsync(new RolloverStudentsMoveRequest(C6A1, target, [105])));      // học lớp khác
+        await Assert.ThrowsAsync<ApiException>(() => svc.MoveSelectedAsync(new RolloverStudentsMoveRequest(target, C6A1, [101])));     // chiều ngược
+    }
+
+    [Fact]
+    public async Task Undo_RemovesRolloverEnrollments_BeforeTheNewYearStarts()
+    {
+        var (db, svc, target) = await WithTarget();
+        await svc.MoveSelectedAsync(new RolloverStudentsMoveRequest(C6A1, target, [101, 102]));
+        var ids = await db.Enrollment.Where(e => e.ClassId == target).Select(e => e.EnrollmentId).ToListAsync();
+
+        Assert.Equal(2, await svc.UndoAsync(new RolloverUndoRequest(ids)));
+
+        Assert.Empty(db.Enrollment.Where(e => e.ClassId == target));
+        Assert.Equal(2, (await svc.StudentsAsync(C6A1, Year2)).Count(s => s.NewClassId == null));
+    }
+
+    [Fact]
+    public async Task Undo_OldYearEnrollment_IsRejected()
+    {
+        var (db, svc, _) = await WithTarget();
+        var old = await db.Enrollment.Where(e => e.ClassId == C6A1).Select(e => e.EnrollmentId).FirstAsync();
+        await Assert.ThrowsAsync<ApiException>(() => svc.UndoAsync(new RolloverUndoRequest([old])));
+    }
+
     [Fact]
     public async Task Overview_AfterMoving_ShowsTheStudentsAsAlreadyEnrolled()
     {

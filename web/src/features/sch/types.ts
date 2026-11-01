@@ -138,6 +138,16 @@ export interface RolloverCreateResult {
   classes: SchoolClass[];
 }
 
+/** Học sinh còn học ở cuối năm cũ của một lớp, kèm lớp năm mới đã xếp (nếu có). */
+export interface RolloverStudent {
+  studentId: number;
+  personCode: string;
+  fullName: string;
+  newClassId: number | null;
+  newClassName: string | null;
+  graduated: boolean;
+}
+
 export interface RolloverMoveResult {
   moved: number;
   skipped: number;

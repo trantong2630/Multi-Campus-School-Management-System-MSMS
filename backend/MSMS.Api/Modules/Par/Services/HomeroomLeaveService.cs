@@ -48,6 +48,7 @@ public sealed class HomeroomLeaveService(MsmsDbContext db, IClock clock, Current
                 lr.FromDate,
                 lr.ToDate,
                 lr.SessionOfDay,
+                lr.SlotIds,
                 lr.Reason,
                 lr.Status,
                 lr.CreatedAt,

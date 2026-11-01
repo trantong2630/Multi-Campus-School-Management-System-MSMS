@@ -16,6 +16,16 @@ public class RolloverController(RolloverService service) : ControllerBase
     [HttpPost("classes"), Authorize(Policy = Policies.SchoolAdmin)]
     public Task<RolloverCreateResult> CreateClasses(RolloverCreateRequest r) => service.CreateClassesAsync(r);
 
+    [HttpGet("students"), Authorize(Policy = Policies.SchoolAdmin)]
+    public Task<List<RolloverStudentDto>> Students([FromQuery] int fromClassId, [FromQuery] int toYearId)
+        => service.StudentsAsync(fromClassId, toYearId);
+
+    [HttpPost("move-students"), Authorize(Policy = Policies.SchoolAdmin)]
+    public Task<RolloverMoveResult> MoveSelected(RolloverStudentsMoveRequest r) => service.MoveSelectedAsync(r);
+
+    [HttpPost("undo"), Authorize(Policy = Policies.SchoolAdmin)]
+    public Task<int> Undo(RolloverUndoRequest r) => service.UndoAsync(r);
+
     [HttpPost("move"), Authorize(Policy = Policies.SchoolAdmin)]
     public Task<RolloverMoveResult> Move(RolloverMoveRequest r) => service.MoveStudentsAsync(r);
 }
