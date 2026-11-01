@@ -26,7 +26,6 @@ export function useRealtime() {
       .build();
 
     connection.on('NotificationCreated', refresh);
-    // Tin nhắn mới cũng sinh thông báo; ConversationService đẩy NotificationCreated riêng nên chỉ cần làm mới chuông.
     connection.onreconnected(refresh);
     connection.start().catch(() => { /* Mất kết nối: chuông vẫn tự làm mới theo chu kỳ chậm (polling dự phòng). */ });
 

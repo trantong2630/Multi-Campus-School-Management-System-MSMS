@@ -20,7 +20,7 @@ public sealed class NotificationService(MsmsDbContext db, CurrentUser user, IClo
     public async Task<NotificationListResultDto> ListAsync(NotificationQueryDto q)
     {
         var me = user.PersonId;
-        var mine = db.Notification.AsNoTracking().Where(n => n.RecipientPersonId == me);
+        var mine = Mine(me).AsNoTracking();
         var unread = await mine.CountAsync(n => !n.IsRead);
 
         var filtered = q.IsRead is { } read ? mine.Where(n => n.IsRead == read) : mine;
@@ -35,8 +35,14 @@ public sealed class NotificationService(MsmsDbContext db, CurrentUser user, IClo
     public async Task<UnreadCountDto> UnreadCountAsync()
     {
         var me = user.PersonId;
-        return new UnreadCountDto(await db.Notification.CountAsync(n => n.RecipientPersonId == me && !n.IsRead));
+        return new UnreadCountDto(await Mine(me).CountAsync(n => !n.IsRead));
     }
+
+    // Thông báo tin nhắn cũ (loại đã bỏ) còn trong DB thì không hiện nữa.
+    private static readonly string[] RetiredTypes = ["MessageReceived"];
+
+    private IQueryable<Data.Entities.Notification> Mine(int me) =>
+        db.Notification.Where(n => n.RecipientPersonId == me && !RetiredTypes.Contains(n.NotificationType));
 
     /// <summary>4.8.4 — Đánh dấu một thông báo đã đọc. Thông báo của người khác coi như không tồn tại.</summary>
     public async Task MarkReadAsync(long id)
@@ -51,7 +57,7 @@ public sealed class NotificationService(MsmsDbContext db, CurrentUser user, IClo
     {
         var me = user.PersonId;
         var now = clock.Now;
-        var unread = await db.Notification.Where(n => n.RecipientPersonId == me && !n.IsRead).ToListAsync();
+        var unread = await Mine(me).Where(n => !n.IsRead).ToListAsync();
         foreach (var n in unread) { n.IsRead = true; n.ReadAt = now; }
         await db.SaveChangesAsync();
         return unread.Count;
@@ -158,16 +164,6 @@ public sealed class NotificationService(MsmsDbContext db, CurrentUser user, IClo
                     return await db.AssignmentRecipient.AnyAsync(r => r.AssignmentId == a && myStudentIds.Contains(r.StudentId))
                         ? (true, "/lrn/children", null) : (false, null, Denied);
                 return isTeacher && exists.AssignedByPersonId == me ? (true, "/lrn/assigned", null) : (false, null, Denied);
-            }
-
-            case NotificationTypes.MessageReceived when n.RefEntityId is { } cid:
-            {
-                var c = (int)cid;
-                var c0 = await db.Conversation.AsNoTracking().Where(x => x.ConversationId == c)
-                    .Select(x => new { x.ParentId, x.StaffId }).FirstOrDefaultAsync();
-                if (c0 is null) return (false, null, Gone);
-                return !user.IsSchoolAdmin && (c0.ParentId == me || c0.StaffId == me)
-                    ? (true, $"/par/inbox?conversationId={c}", null) : (false, null, Denied);
             }
 
             case NotificationTypes.LeaveRequestSubmitted or NotificationTypes.LeaveRequestDecided when n.RefEntityId is { } lid:
