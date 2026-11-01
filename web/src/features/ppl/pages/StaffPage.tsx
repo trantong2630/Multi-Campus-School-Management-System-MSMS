@@ -37,7 +37,6 @@ interface FormValues {
   primaryCampusId: number;
   departmentId?: number;
   teacherAbbr?: string;
-  position?: string;
 }
 
 const PAGE_SIZE = 20;
@@ -210,7 +209,7 @@ export function StaffPage() {
         initialValues={editing && editing !== 'new'
           ? { ...editing, nationalId: editing.nationalId ?? undefined, dateOfBirth: editing.dateOfBirth ? dayjs(editing.dateOfBirth) : undefined, gender: editing.gender ?? undefined,
             phoneNumber: editing.phoneNumber ?? undefined, email: editing.email ?? undefined, departmentId: editing.departmentId ?? undefined,
-            teacherAbbr: editing.teacherAbbr ?? undefined, position: editing.position ?? undefined } as Partial<FormValues>
+            teacherAbbr: editing.teacherAbbr ?? undefined } as Partial<FormValues>
           : undefined}
       >
         <div className="form-grid">
@@ -232,7 +231,6 @@ export function StaffPage() {
             <Select allowClear options={departments.data?.filter((d) => d.isActive).map((d) => ({ value: d.departmentId, label: d.name }))} />
           </Form.Item>
           <Form.Item label="Giới tính" name="gender"><Select allowClear options={GENDERS} /></Form.Item>
-          <Form.Item label="Chức danh" name="position"><Input maxLength={100} /></Form.Item>
           <Form.Item label="Số điện thoại" name="phoneNumber"><Input maxLength={20} /></Form.Item>
           <Form.Item label="Email nhận mã OTP" name="email" rules={[{ type: 'email', message: 'Email chưa đúng định dạng.' }]}>
             <Input maxLength={150} />

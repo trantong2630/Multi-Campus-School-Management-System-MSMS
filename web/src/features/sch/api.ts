@@ -1,5 +1,5 @@
 import { apiClient } from '@/app/apiClient';
-import type { AcademicYear, Campus, Department, Holiday, PeriodSlot, Roster, RolloverCreateResult, RolloverMoveResult, RolloverRow, SchoolClass, SchoolProfile, StudentCandidate, Subject } from './types';
+import type { AcademicYear, Campus, Department, Holiday, PeriodSlot, Roster, RolloverCreateResult, RolloverMoveResult, RolloverRow, RolloverStudent, SchoolClass, SchoolProfile, StudentCandidate, Subject } from './types';
 
 /** Đường dẫn ảnh logo; tham số v đổi theo lần cập nhật để trình duyệt không giữ logo cũ. */
 export const schoolLogoUrl = (version: number | null) => `/api/school/logo?v=${version ?? 0}`;
@@ -66,10 +66,17 @@ export const schApi = {
     overview: (params: { fromYearId: number; toYearId: number; campusId?: number }) => get<RolloverRow[]>('/sch/rollover', params),
     createClasses: (b: object) => post<RolloverCreateResult>('/sch/rollover/classes', b),
     move: (b: object) => post<RolloverMoveResult>('/sch/rollover/move', b),
+    students: (fromClassId: number, toYearId: number) => get<RolloverStudent[]>('/sch/rollover/students', { fromClassId, toYearId }),
+    moveStudents: (b: { fromClassId: number; toClassId: number; studentIds: number[] }) => post<RolloverMoveResult>('/sch/rollover/move-students', b),
+    graduate: (classId: number, studentIds: number[]) => post<number>(`/sch/classes/${classId}/graduate`, { studentIds }),
+    undo: (enrollmentIds: number[]) => post<number>('/sch/rollover/undo', { enrollmentIds }),
   },
   enrollments: {
     roster: (classId: number, date: string) => get<Roster>(`/sch/classes/${classId}/roster`, { date }),
-    candidates: (yearId: number, search: string) => get<StudentCandidate[]>('/sch/enrollments/candidates', { yearId, search }),
+    candidates: (yearId: number, search: string, limit?: number) => get<StudentCandidate[]>('/sch/enrollments/candidates', { yearId, search, limit }),
+    enrollMany: (classId: number, b: object) => post(`/sch/classes/${classId}/enrollments/bulk`, b),
+    transferMany: (b: object) => post('/sch/enrollments/transfer-bulk', b),
+    closeMany: (b: object) => post('/sch/enrollments/close-bulk', b),
     enroll: (classId: number, b: object) => post(`/sch/classes/${classId}/enrollments`, b),
     transfer: (id: number, b: object) => post(`/sch/enrollments/${id}/transfer`, b),
     close: (id: number, b: object) => post(`/sch/enrollments/${id}/close`, b),
