@@ -91,6 +91,13 @@ export function AdjustView({ campusId, lead }: { campusId: number; lead: React.R
 
   return (
     <>
+      {classes.isSuccess && classes.data.length === 0 && (
+        <InlineAlert type="info" title="Phân hiệu chưa có lớp nào trong năm học hiện hành" />
+      )}
+      {w && !w.canManage && <InlineAlert type="info" title="Bạn chỉ xem được lịch của phân hiệu này, không thao tác." />}
+      {w && w.canManage && w.sessions.length === 0 && (
+        <InlineAlert type="info" title="Tuần này lớp chưa có tiết nào" description="Tuần nghỉ, tuần chưa phát hành thời khóa biểu hoặc đã qua trước lần phát hành. Vẫn thêm được tiết bù vào ô trống." />
+      )}
       <FilterBar>
         {lead}
         <Select
@@ -100,13 +107,6 @@ export function AdjustView({ campusId, lead }: { campusId: number; lead: React.R
         <WeekNav monday={monday} onChange={setMonday} />
       </FilterBar>
 
-      {classes.isSuccess && classes.data.length === 0 && (
-        <InlineAlert type="info" title="Phân hiệu chưa có lớp nào trong năm học hiện hành" />
-      )}
-      {w && !w.canManage && <InlineAlert type="info" title="Bạn chỉ xem được lịch của phân hiệu này, không thao tác." />}
-      {w && w.canManage && w.sessions.length === 0 && (
-        <InlineAlert type="info" title="Tuần này lớp chưa có tiết nào" description="Tuần nghỉ, tuần chưa phát hành thời khóa biểu hoặc đã qua trước lần phát hành. Vẫn thêm được tiết bù vào ô trống." />
-      )}
 
       {effectiveClass !== undefined && (
         <Card className="table-card">

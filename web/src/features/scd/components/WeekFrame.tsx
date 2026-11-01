@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { Button, DatePicker } from 'antd';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
@@ -29,6 +28,8 @@ export function WeekFrame({ monday, loading, usedSlotIds, renderCell, renderDayH
 
   if (slots.isLoading || loading) return <DataTable<object> rowKey="x" loading dataSource={[]} columns={[]} />;
   return (
+    <>
+    <WeekTitle monday={monday} />
     <div className="tt-scroll">
       <table className="tt-grid tt-week">
         <thead>
@@ -69,20 +70,37 @@ export function WeekFrame({ monday, loading, usedSlotIds, renderCell, renderDayH
         </tbody>
       </table>
     </div>
+    </>
   );
 }
 
-export function WeekNav({ monday, onChange }: { monday: Dayjs; onChange: (m: Dayjs) => void }) {
+/** Khoảng ngày của tuần đang xem, đặt giữa ngay trên khung lịch. */
+function WeekTitle({ monday }: { monday: Dayjs }) {
   const end = monday.add(5, 'day');
   return (
-    <>
-      <Button icon={<ChevronLeft size={16} />} aria-label="Tuần trước" onClick={() => onChange(monday.subtract(1, 'week'))} />
-      <DatePicker
-        picker="week" allowClear={false} value={monday}
-        format={() => `${monday.format('DD/MM')} – ${end.format('DD/MM/YYYY')}`}
-        onChange={(d) => d && onChange(d.startOf('week'))}
-      />
-      <Button icon={<ChevronRight size={16} />} aria-label="Tuần sau" onClick={() => onChange(monday.add(1, 'week'))} />
-    </>
+    <div className="wk-title">
+      <span className="wk-title__pill">
+        <b>{monday.format('DD/MM/YYYY')}</b>
+        <i aria-hidden />
+        <b>{end.format('DD/MM/YYYY')}</b>
+      </span>
+    </div>
+  );
+}
+
+/** Chuyển tuần: Tuần trước · Tuần này · Tuần sau. Khoảng ngày hiện ở giữa khung lịch (WeekFrame). */
+export function WeekNav({ monday, onChange }: { monday: Dayjs; onChange: (m: Dayjs) => void }) {
+  const thisMonday = dayjs().startOf('week');
+  const isCurrent = monday.isSame(thisMonday, 'day');
+  return (
+    <div className="wk-nav" role="group" aria-label="Chuyển tuần">
+      <button type="button" className="wk-nav__btn" onClick={() => onChange(monday.subtract(1, 'week'))}>
+        <ChevronLeft size={18} />Tuần trước
+      </button>
+      <button type="button" className="wk-nav__now" disabled={isCurrent} onClick={() => onChange(thisMonday)}>Tuần này</button>
+      <button type="button" className="wk-nav__btn" onClick={() => onChange(monday.add(1, 'week'))}>
+        Tuần sau<ChevronRight size={18} />
+      </button>
+    </div>
   );
 }
