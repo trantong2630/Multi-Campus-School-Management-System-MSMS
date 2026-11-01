@@ -3,16 +3,17 @@ import { ConfigProvider, DatePicker, Input, InputNumber } from 'antd';
 import { FILTER_THEME } from '@/shared/components/FilterBar';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
-import { ArrowDown, ArrowUp, Check, ListChecks, Plus, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ChevronDown, ListChecks, Plus, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { confirmAction, showError } from '@/shared/lib/feedback';
 import { message } from '@/shared/lib/antdStatic';
 import { lrnApi } from '../api';
 import { AiEmpty } from '../components/parts';
+import { QuestionPreview } from '../components/QuestionPreview';
 import { subjectVars } from '../components/tone';
 import { useDebounced } from '../hooks';
-import { DURATION_PRESETS } from '../labels';
+import { DURATION_PRESETS, GRADES } from '../labels';
 import type { ClassSubjectOption, QuestionItem } from '../types';
 import '../components/lrn.css';
 
@@ -50,16 +51,20 @@ export function AssignBuilderPage() {
   const [duration, setDuration] = useState<number | null>(null);
   const [customDuration, setCustomDuration] = useState(false);
   const [search, setSearch] = useState('');
-  const [onlyMine, setOnlyMine] = useState(false);
+  // undefined: theo khối của lớp đang chọn; null: mọi khối; số: khối do giáo viên chọn.
+  const [peekId, setPeekId] = useState<number | null>(null);
+  const [pickedGrade, setPickedGrade] = useState<number | null | undefined>(undefined);
   const [saving, setSaving] = useState(false);
   const dSearch = useDebounced(search);
 
   const title = titleTouched ? typedTitle : target ? `Rèn luyện ${target.subjectName} ${target.className}` : '';
 
+  const grade = pickedGrade === undefined ? target?.gradeLevel : pickedGrade ?? undefined;
+
   const bank = useInfiniteQuery({
-    queryKey: ['lrn', 'questions', 'picker', target?.subjectId, dSearch, onlyMine],
+    queryKey: ['lrn', 'questions', 'picker', target?.subjectId, grade, dSearch],
     enabled: !!target, initialPageParam: 1,
-    queryFn: ({ pageParam }) => lrnApi.questions.list({ subjectId: target!.subjectId, status: 'Ready', mine: onlyMine, search: dSearch || undefined, page: pageParam, pageSize: 12 }),
+    queryFn: ({ pageParam }) => lrnApi.questions.list({ subjectId: target!.subjectId, status: 'Ready', gradeLevel: grade, topic: dSearch || undefined, page: pageParam, pageSize: 15 }),
     getNextPageParam: (last, pages) => (pages.flatMap((p) => p.items).length < last.total ? pages.length + 1 : undefined),
   });
   const pool = useMemo(() => bank.data?.pages.flatMap((p) => p.items) ?? [], [bank.data]);
@@ -68,6 +73,7 @@ export function AssignBuilderPage() {
   const pickTarget = (p: ClassSubjectOption) => {
     // Đổi sang môn khác thì các câu đã chọn không còn hợp lệ (bài chỉ gồm câu cùng môn).
     if (target && target.subjectId !== p.subjectId) setLines([]);
+    setPickedGrade(undefined);
     setTarget(p);
   };
 
@@ -169,32 +175,51 @@ export function AssignBuilderPage() {
             {target && (
               <>
                 <div className="picker__bar">
-                  <ConfigProvider theme={FILTER_THEME}><Input.Search allowClear placeholder="Tìm trong kho" value={search} onChange={(e) => setSearch(e.target.value)} /></ConfigProvider>
-                  <button type="button" className={`pill${onlyMine ? ' is-on' : ''}`} onClick={() => setOnlyMine(!onlyMine)} aria-pressed={onlyMine}>Chỉ câu của tôi</button>
+                  <ConfigProvider theme={FILTER_THEME}><Input.Search allowClear placeholder="Tìm theo chủ đề, ví dụ: Phân số" value={search} onChange={(e) => setSearch(e.target.value)} /></ConfigProvider>
+                  <div className="picker__grades" role="group" aria-label="Lọc theo khối">
+                    <span>Khối</span>
+                    {GRADES.map((g) => (
+                      <button key={g} type="button" className={`pill${grade === g ? ' is-on' : ''}`} aria-pressed={grade === g} onClick={() => setPickedGrade(grade === g ? null : g)}>{g}</button>
+                    ))}
+                  </div>
                 </div>
+                {grade !== target.gradeLevel && (
+                  <p className="picker__note">{grade ? `Đang xem câu Khối ${grade}, khác khối của lớp ${target.className} (Khối ${target.gradeLevel}).` : `Đang xem câu của mọi khối. Lớp ${target.className} là Khối ${target.gradeLevel}.`}</p>
+                )}
                 {pool.length === 0 && !bank.isLoading ? (
-                  <p className="picker__none">Kho chưa có câu Sẵn dùng nào của môn này. Soạn thêm ở mục Kho câu hỏi.</p>
+                  <p className="picker__none">Không có câu Sẵn dùng nào khớp. Thử đổi khối, bỏ bớt từ khóa chủ đề, hoặc soạn thêm ở mục Kho câu hỏi.</p>
                 ) : (
                   <ul className="picker">
                     {pool.map((q) => {
                       const on = picked.has(q.questionId);
                       return (
-                        <li key={q.questionId}>
-                          <button type="button" className={on ? 'is-on' : ''} onClick={() => toggle(q)} aria-pressed={on}>
-                            <span className="picker__check">{on ? <Check size={14} strokeWidth={3} /> : <Plus size={14} />}</span>
-                            <span className="picker__text">{q.content}</span>
-                            <span className="picker__tags">
-                              {q.gradeLevel && <span className="tagtext">Khối {q.gradeLevel}</span>}
-                              {q.topic && <span className="tagtext">{q.topic}</span>}
-                              {q.isMultiple && <span className="chip chip--warn"><ListChecks size={12} />Chọn nhiều</span>}
-                            </span>
+                        <li key={q.questionId} className={`picker__item${on ? ' is-on' : ''}${peekId === q.questionId ? ' is-peek' : ''}`}>
+                          <button type="button" className="picker__check" aria-pressed={on} aria-label={on ? 'Bỏ chọn câu này' : 'Chọn câu này'} onClick={() => toggle(q)}>
+                            {on ? <Check size={18} strokeWidth={3} /> : <Plus size={18} />}
                           </button>
+                          <div className="picker__card">
+                            <button type="button" className="picker__body" aria-expanded={peekId === q.questionId} onClick={() => setPeekId(peekId === q.questionId ? null : q.questionId)}>
+                              <span className="picker__text">{q.content}</span>
+                              <span className="picker__tags">
+                                {q.gradeLevel && <span className="tagtext">Khối {q.gradeLevel}</span>}
+                                {q.topic && <span className="tagtext">{q.topic}</span>}
+                                {q.isMultiple && <span className="chip chip--warn"><ListChecks size={12} />Chọn nhiều</span>}
+                              </span>
+                              <ChevronDown size={18} className="picker__chev" aria-hidden />
+                            </button>
+                            {peekId === q.questionId && <QuestionPreview id={q.questionId} />}
+                          </div>
                         </li>
                       );
                     })}
                   </ul>
                 )}
-                {bank.hasNextPage && <button type="button" className="linkbtn" disabled={bank.isFetchingNextPage} onClick={() => void bank.fetchNextPage()}>Xem thêm câu hỏi</button>}
+                {pool.length > 0 && (
+                  <div className="picker__foot">
+                    <span className="tabular">Đang hiện {pool.length}/{bank.data?.pages[0]?.total ?? pool.length} câu</span>
+                    {bank.hasNextPage && <button type="button" className="linkbtn" disabled={bank.isFetchingNextPage} onClick={() => void bank.fetchNextPage()}>Xem thêm câu hỏi</button>}
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -231,11 +256,11 @@ export function AssignBuilderPage() {
                 <span>Thời gian làm</span>
                 <div className="when__ctl when__ctl--col">
                 <div className="pillset pillset--wrap">
-                  <button type="button" className={duration === null && !customDuration ? 'is-on' : ''} onClick={() => { setDuration(null); setCustomDuration(false); }}>Không giới hạn</button>
-                  <button type="button" className={customDuration ? 'is-on' : ''} onClick={() => { setCustomDuration(true); setDuration((d) => d ?? 20); }}>Tự nhập</button>
                   {DURATION_PRESETS.map((m) => (
                     <button key={m} type="button" className={duration === m && !customDuration ? 'is-on' : ''} onClick={() => { setDuration(m); setCustomDuration(false); }}>{m} phút</button>
                   ))}
+                  <button type="button" className={customDuration ? 'is-on' : ''} onClick={() => { setCustomDuration(true); setDuration((d) => d ?? 20); }}>Tự nhập</button>
+                  <button type="button" className={duration === null && !customDuration ? 'is-on' : ''} onClick={() => { setDuration(null); setCustomDuration(false); }}>Không giới hạn</button>
                 </div>
                 {customDuration && <InputNumber min={1} max={600} precision={0} value={duration} onChange={(v) => setDuration(v)} addonAfter="phút" />}
                 </div>

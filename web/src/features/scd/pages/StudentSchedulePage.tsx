@@ -39,8 +39,12 @@ export function StudentSchedulePage() {
     enabled: ready,
   });
 
-  const first = sessions.data?.[0];
-  const className = first?.className ?? (isParent ? children.data?.find((c) => c.studentId === childId)?.className : undefined);
+  const classInfo = useQuery({
+    queryKey: ['scd', 'student-class', isParent ? childId : 'me', from],
+    queryFn: () => (isParent ? scdApi.childClass(childId!, from) : scdApi.studentClass(from)),
+    enabled: ready,
+  });
+  const className = classInfo.data?.className;
 
   return (
     <>
@@ -52,10 +56,16 @@ export function StudentSchedulePage() {
         <div className="tt-class-head">
           <div className="tt-class-head__text">
             <span className="tt-class-head__name">Lớp {className}</span>
-            {first && <span className="tt-class-head__campus">{first.campusName}</span>}
+            <span className="tt-class-head__campus">{classInfo.data?.campusName}</span>
           </div>
           <span className="tt-class-head__week">Tuần {monday.format('DD/MM')} – {monday.add(5, 'day').format('DD/MM')}</span>
         </div>
+      )}
+      {isParent && children.isSuccess && children.data.length === 0 && (
+        <InlineAlert type="info" title="Chưa có học sinh nào liên kết" description="Liên hệ nhà trường để liên kết tài khoản với con." />
+      )}
+      {sessions.isSuccess && sessions.data.length === 0 && (
+        <InlineAlert type="info" title="Tuần này không có tiết nào" description="Tuần nghỉ, tuần chưa phát hành thời khóa biểu hoặc chưa được xếp lớp." />
       )}
       <FilterBar>
         {isParent && (
@@ -66,12 +76,6 @@ export function StudentSchedulePage() {
         )}
         <WeekNav monday={monday} onChange={setMonday} />
       </FilterBar>
-      {isParent && children.isSuccess && children.data.length === 0 && (
-        <InlineAlert type="info" title="Chưa có học sinh nào liên kết" description="Liên hệ nhà trường để liên kết tài khoản với con." />
-      )}
-      {sessions.isSuccess && sessions.data.length === 0 && (
-        <InlineAlert type="info" title="Tuần này không có tiết nào" description="Tuần nghỉ, tuần chưa phát hành thời khóa biểu hoặc chưa được xếp lớp." />
-      )}
       {ready && (
         <Card className="table-card">
           <WeekFrame
