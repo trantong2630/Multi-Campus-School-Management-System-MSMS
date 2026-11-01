@@ -41,6 +41,7 @@ export function TempPasswordModal({ open, title, items, skipped = [], onClose }:
       open={open}
       title={title}
       width={720}
+      destroyOnHidden
       onCancel={onClose}
       mask={{ closable: false }}
       footer={[
