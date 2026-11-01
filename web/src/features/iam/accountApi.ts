@@ -1,6 +1,6 @@
 import { apiClient } from '@/app/apiClient';
 import type { Paged } from '@/features/ppl/types';
-import type { Account, BulkCreateResult, LockImpact, ResetPasswordResult, TempPasswordItem } from './types';
+import type { Account, AccountDirectoryItem, BulkCreateResult, LockImpact, ResetPasswordResult, TempPasswordItem } from './types';
 
 export interface AccountQuery {
   search?: string;
@@ -13,6 +13,10 @@ export interface AccountQuery {
 
 export const accountApi = {
   list: (params: AccountQuery) => apiClient.get<Paged<Account>>('/iam/accounts', { params }).then((r) => r.data),
+  directory: (params: { personType: string; search?: string; page: number; pageSize: number }) =>
+    apiClient.get<Paged<AccountDirectoryItem>>('/iam/accounts/directory', { params }).then((r) => r.data),
+  create: (personId: number, accountType: string) =>
+    apiClient.post<TempPasswordItem>('/iam/accounts', { personId, accountType }).then((r) => r.data),
   bulkCreate: (personIds: number[], accountType?: string) =>
     apiClient.post<BulkCreateResult>('/iam/accounts/bulk', { personIds, accountType }).then((r) => r.data),
   lockImpact: (id: number) => apiClient.get<LockImpact>(`/iam/accounts/${id}/lock-impact`).then((r) => r.data),

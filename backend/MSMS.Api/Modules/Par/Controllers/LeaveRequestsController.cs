@@ -13,6 +13,9 @@ public class LeaveRequestsController(LeaveRequestService parentService, Homeroom
     [HttpPost, Authorize(Policy = Policies.Parent)]
     public Task<LeaveRequest> Submit(CreateLeaveRequestDto dto) => parentService.SubmitAsync(dto);
 
+    [HttpPost("bulk"), Authorize(Policy = Policies.Parent)]
+    public Task<IReadOnlyList<LeaveRequest>> SubmitBulk(BulkCreateLeaveRequestDto dto) => parentService.SubmitBulkAsync(dto);
+
     [HttpGet("student/{studentId:int}"), Authorize(Policy = Policies.Parent)]
     public Task<IEnumerable<ParentLeaveItemDto>> GetParentLeaves(int studentId) => parentService.GetParentLeavesAsync(studentId);
 

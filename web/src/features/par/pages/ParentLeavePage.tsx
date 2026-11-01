@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, Card, DatePicker, Form, Input, Radio, Select } from 'antd';
+import { Button, Card, DatePicker, Form, Input, Modal, Segmented, Select } from 'antd';
 import { message } from '@/shared/lib/antdStatic';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import { Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { DataTable } from '@/shared/components/DataTable';
 import { FormModal } from '@/shared/components/FormModal';
 import { PageHeader } from '@/shared/components/PageHeader';
@@ -13,12 +14,24 @@ import { StatusBadge } from '@/shared/components/StatusBadge';
 import { confirmAction, showError } from '@/shared/lib/feedback';
 import { formatDate, formatDateTime, toDateString } from '@/shared/lib/format';
 import { parApi } from '../api';
-import type { LeaveRequestItem } from '../types';
+import type { LeaveDayInput, LeaveRequestItem } from '../types';
+
+type SubmitMode = 'range' | 'flexible';
+
+type DayKind = 'AllDay' | 'Morning' | 'Afternoon' | 'MorningPeriods' | 'AfternoonPeriods';
+
+interface LeaveDayFormValue {
+  date?: Dayjs;
+  kind?: DayKind;
+  slotIds?: number[];
+}
 
 interface SubmitLeaveValues {
   studentId: number;
-  range: [Dayjs, Dayjs];
-  sessionOfDay: string;
+  range?: [Dayjs, Dayjs];
+  kind?: DayKind;
+  slotIds?: number[];
+  days: LeaveDayFormValue[];
   reason?: string;
 }
 
@@ -28,12 +41,48 @@ const SESSION_OF_DAY_LABEL: Record<string, string> = {
   Afternoon: 'Buổi chiều',
 };
 
+const DAY_KIND_OPTIONS: { label: string; value: DayKind }[] = [
+  { label: 'Cả ngày', value: 'AllDay' },
+  { label: 'Buổi sáng', value: 'Morning' },
+  { label: 'Buổi chiều', value: 'Afternoon' },
+  { label: 'Tiết lẻ - buổi sáng', value: 'MorningPeriods' },
+  { label: 'Tiết lẻ - buổi chiều', value: 'AfternoonPeriods' },
+];
+
+const PERIOD_OPTIONS = [1, 2, 3, 4, 5].map((no) => ({ label: `Tiết ${no}`, value: no }));
+
+const MODE_OPTIONS: { label: string; value: SubmitMode }[] = [
+  { label: 'Nghỉ liên tiếp (Khoảng ngày)', value: 'range' },
+  { label: 'Nghỉ linh hoạt (Theo từng ngày)', value: 'flexible' },
+];
+
+const isPeriodKind = (kind?: DayKind) => kind === 'MorningPeriods' || kind === 'AfternoonPeriods';
+
+const ellipsisStyle: CSSProperties = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
+
+/** Tách kiểu nghỉ trên form thành (buổi, tiết) đúng với hợp đồng API. */
+const toSessionAndSlots = (kind: DayKind = 'AllDay', slotIds?: number[]) => ({
+  sessionOfDay: kind === 'AllDay' ? 'AllDay' : kind.startsWith('Morning') ? 'Morning' : 'Afternoon',
+  slotIds: isPeriodKind(kind) ? slotIds ?? [] : undefined,
+});
+
+const toLeaveDayInput = (day: LeaveDayFormValue): LeaveDayInput => ({
+  date: toDateString(day.date!),
+  ...toSessionAndSlots(day.kind, day.slotIds),
+});
+
+const formatSession = (record: LeaveRequestItem) => {
+  const session = SESSION_OF_DAY_LABEL[record.sessionOfDay] || record.sessionOfDay;
+  if (!record.slotIds) return session;
+  return `${session} - Tiết ${record.slotIds.split(',').join(', ')}`;
+};
+
 /**
  * PAR-01: Parent view leave requests for their children.
  * Features:
  * - View list of children
- * - View leave requests for selected child
- * - Submit new leave request
+ * - View leave requests for selected child (kể cả tiết lẻ)
+ * - Submit one continuous range (1 đơn) or flexible per-day rows (N đơn, một lần gửi)
  * - Withdraw pending leave request
  */
 export function ParentLeavePage() {
@@ -41,6 +90,8 @@ export function ParentLeavePage() {
   const [form] = Form.useForm<SubmitLeaveValues>();
   const [selectedStudentId, setSelectedStudentId] = useState<number | undefined>();
   const [modalOpen, setModalOpen] = useState(false);
+  const [mode, setMode] = useState<SubmitMode>('range');
+  const [detail, setDetail] = useState<LeaveRequestItem | null>(null);
 
   // Get list of parent's children
   const { data: children = [], isLoading: childrenLoading } = useQuery({
@@ -62,15 +113,29 @@ export function ParentLeavePage() {
     enabled: !!selectedStudentId,
   });
 
-  // Submit leave request: FormModal handles modal closing and inline error presentation
+  // Chế độ range: 1 đơn duy nhất cho cả khoảng ngày; chế độ flexible: N đơn (mỗi ngày một đơn)
   const handleSubmit = async (values: SubmitLeaveValues) => {
-    await parApi.leave.submitLeaveRequest({
-      studentId: values.studentId,
-      fromDate: toDateString(values.range[0]),
-      toDate: toDateString(values.range[1]),
-      sessionOfDay: values.sessionOfDay,
-      reason: values.reason?.trim() || undefined,
-    });
+    const reason = values.reason?.trim() || undefined;
+
+    if (mode === 'range') {
+      const [from, to] = values.range!;
+      const { sessionOfDay, slotIds } = toSessionAndSlots(values.kind, values.slotIds);
+      await parApi.leave.submitLeaveRequest({
+        studentId: values.studentId,
+        fromDate: toDateString(from),
+        toDate: toDateString(to),
+        sessionOfDay,
+        slotIds,
+        reason,
+      });
+    } else {
+      await parApi.leave.submitBulkLeaveRequests({
+        studentId: values.studentId,
+        reason,
+        days: values.days.map(toLeaveDayInput),
+      });
+    }
+
     void qc.invalidateQueries({ queryKey: ['par', 'leave', 'student', selectedStudentId] });
     message.success('Gửi đơn xin nghỉ thành công.');
   };
@@ -94,6 +159,17 @@ export function ParentLeavePage() {
     });
   };
 
+  const openModal = () => {
+    form.resetFields();
+    setMode('range');
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setMode('range');
+  };
+
   return (
     <>
       <PageHeader
@@ -115,10 +191,7 @@ export function ParentLeavePage() {
               type="primary"
               icon={<Plus size={16} />}
               disabled={!selectedStudentId || childrenLoading}
-              onClick={() => {
-                form.resetFields();
-                setModalOpen(true);
-              }}
+              onClick={openModal}
             >
               Gửi đơn xin nghỉ
             </Button>
@@ -129,6 +202,8 @@ export function ParentLeavePage() {
       <Card>
         <DataTable<LeaveRequestItem>
           rowKey="leaveRequestId"
+          tableLayout="fixed"
+          scroll={{ x: 1010 }}
           loading={leavesLoading}
           dataSource={leaveRequests}
           emptyText={
@@ -150,24 +225,24 @@ export function ParentLeavePage() {
               render: (_: unknown, record: LeaveRequestItem) => formatDate(record.toDate),
             },
             {
-              title: 'Buổi',
+              title: 'Buổi / Tiết',
               key: 'sessionOfDay',
-              width: 110,
-              render: (_: unknown, record: LeaveRequestItem) =>
-                SESSION_OF_DAY_LABEL[record.sessionOfDay] || record.sessionOfDay,
+              width: 180,
+              render: (_: unknown, record: LeaveRequestItem) => formatSession(record),
             },
             {
               title: 'Lý do',
               key: 'reason',
+              width: 180,
               render: (_: unknown, record: LeaveRequestItem) => (
-                <div>
-                  <div>{record.reason || '—'}</div>
-                  {record.decisionNote && (
-                    <div style={{ fontSize: 12, color: 'var(--text-secondary, #666)', marginTop: 4 }}>
-                      <strong>Phản hồi GV:</strong> {record.decisionNote}
-                    </div>
-                  )}
-                </div>
+                <Button
+                  type="link"
+                  size="small"
+                  onClick={() => setDetail(record)}
+                  style={{ padding: 0, height: 'auto', maxWidth: '100%', textAlign: 'left' }}
+                >
+                  <span style={{ ...ellipsisStyle, display: 'block' }}>{record.reason || 'Xem chi tiết'}</span>
+                </Button>
               ),
             },
             {
@@ -220,14 +295,25 @@ export function ParentLeavePage() {
         open={modalOpen}
         title="Gửi đơn xin nghỉ học"
         form={form}
-        onClose={() => setModalOpen(false)}
+        width={640}
+        onClose={closeModal}
         onSubmit={handleSubmit}
         okText="Gửi đơn"
         initialValues={{
           studentId: selectedStudentId,
-          sessionOfDay: 'AllDay',
+          kind: 'AllDay',
+          days: [{ kind: 'AllDay' }],
         }}
       >
+        <Form.Item label="Chế độ gửi">
+          <Segmented<SubmitMode>
+            block
+            value={mode}
+            onChange={setMode}
+            options={MODE_OPTIONS}
+          />
+        </Form.Item>
+
         <Form.Item
           label="Học sinh"
           name="studentId"
@@ -242,31 +328,119 @@ export function ParentLeavePage() {
           />
         </Form.Item>
 
-        <Form.Item
-          label="Khoảng ngày"
-          name="range"
-          rules={[{ required: true, message: 'Chọn ngày bắt đầu và ngày kết thúc.' }]}
-        >
-          <DatePicker.RangePicker
-            format="DD/MM/YYYY"
-            style={{ width: '100%' }}
-            disabledDate={(current) => current && current < dayjs().startOf('day')}
-          />
-        </Form.Item>
+        {mode === 'range' ? (
+          <>
+            <Form.Item
+              label="Khoảng ngày"
+              name="range"
+              rules={[{ required: true, message: 'Chọn ngày bắt đầu và ngày kết thúc.' }]}
+            >
+              <DatePicker.RangePicker
+                format="DD/MM/YYYY"
+                style={{ width: '100%' }}
+                disabledDate={(current) => current && current < dayjs().startOf('day')}
+              />
+            </Form.Item>
 
-        <Form.Item
-          label="Buổi"
-          name="sessionOfDay"
-          rules={[{ required: true, message: 'Chọn buổi xin nghỉ.' }]}
-        >
-          <Radio.Group
-            options={[
-              { label: 'Cả ngày', value: 'AllDay' },
-              { label: 'Buổi sáng', value: 'Morning' },
-              { label: 'Buổi chiều', value: 'Afternoon' },
-            ]}
-          />
-        </Form.Item>
+            <Form.Item label="Kiểu nghỉ" name="kind" rules={[{ required: true, message: 'Chọn kiểu nghỉ.' }]}>
+              <Select options={DAY_KIND_OPTIONS} />
+            </Form.Item>
+
+            <Form.Item
+              noStyle
+              shouldUpdate={(prev, cur) => prev.kind !== cur.kind}
+            >
+              {({ getFieldValue }) =>
+                isPeriodKind(getFieldValue('kind')) ? (
+                  <Form.Item
+                    label="Các tiết nghỉ"
+                    name="slotIds"
+                    rules={[{ required: true, message: 'Chọn ít nhất một tiết.' }]}
+                  >
+                    <Select mode="multiple" options={PERIOD_OPTIONS} placeholder="Chọn tiết" />
+                  </Form.Item>
+                ) : null
+              }
+            </Form.Item>
+          </>
+        ) : (
+          <Form.Item label="Các ngày nghỉ" required>
+            <Form.List
+              name="days"
+              rules={[
+                {
+                  validator: async (_, days: LeaveDayFormValue[] | undefined) => {
+                    if (!days || days.length === 0) throw new Error('Thêm ít nhất một ngày nghỉ.');
+                  },
+                },
+              ]}
+            >
+              {(fields, { add, remove }, { errors }) => (
+                <>
+                  {fields.map((field) => (
+                    <div key={field.key} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                      <Form.Item
+                        name={[field.name, 'date']}
+                        rules={[{ required: true, message: 'Chọn ngày.' }]}
+                        style={{ flex: '0 0 160px' }}
+                      >
+                        <DatePicker
+                          format="DD/MM/YYYY"
+                          style={{ width: '100%' }}
+                          placeholder="Ngày nghỉ"
+                          disabledDate={(current) => current && current < dayjs().startOf('day')}
+                        />
+                      </Form.Item>
+
+                      <Form.Item name={[field.name, 'kind']} style={{ flex: '0 0 190px' }}>
+                        <Select options={DAY_KIND_OPTIONS} />
+                      </Form.Item>
+
+                      <Form.Item
+                        noStyle
+                        shouldUpdate={(prev, cur) =>
+                          prev.days?.[field.name]?.kind !== cur.days?.[field.name]?.kind}
+                      >
+                        {({ getFieldValue }) =>
+                          isPeriodKind(getFieldValue(['days', field.name, 'kind'])) ? (
+                            <Form.Item
+                              name={[field.name, 'slotIds']}
+                              rules={[{ required: true, message: 'Chọn ít nhất một tiết.' }]}
+                              style={{ flex: 1 }}
+                            >
+                              <Select mode="multiple" options={PERIOD_OPTIONS} placeholder="Chọn tiết" />
+                            </Form.Item>
+                          ) : null
+                        }
+                      </Form.Item>
+
+                      {fields.length > 1 && (
+                        <Button
+                          type="text"
+                          danger
+                          icon={<Trash2 size={16} />}
+                          onClick={() => remove(field.name)}
+                          aria-label="Xóa ngày nghỉ"
+                        />
+                      )}
+                    </div>
+                  ))}
+
+                  <Form.ErrorList errors={errors} />
+
+                  <Button
+                    type="dashed"
+                    block
+                    icon={<Plus size={16} />}
+                    onClick={() => add({ kind: 'AllDay' })}
+                  >
+                    Thêm ngày nghỉ
+                  </Button>
+                </>
+              )}
+            </Form.List>
+          </Form.Item>
+        )}
 
         <Form.Item
           label="Lý do"
@@ -280,6 +454,34 @@ export function ParentLeavePage() {
           />
         </Form.Item>
       </FormModal>
+
+      <Modal
+        open={!!detail}
+        title="Chi tiết đơn xin nghỉ"
+        onCancel={() => setDetail(null)}
+        footer={<Button onClick={() => setDetail(null)}>Đóng</Button>}
+      >
+        {detail && (
+          <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', rowGap: 8 }}>
+            <span>Thời gian</span>
+            <span>{formatDate(detail.fromDate)} – {formatDate(detail.toDate)}</span>
+            <span>Buổi / Tiết</span>
+            <span>{formatSession(detail)}</span>
+            <span>Lý do</span>
+            <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{detail.reason || '—'}</span>
+            <span>Trạng thái</span>
+            <span><StatusBadge domain="leave" value={detail.status} /></span>
+            {detail.decisionNote && (
+              <>
+                <span>Phản hồi GV</span>
+                <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{detail.decisionNote}</span>
+              </>
+            )}
+            <span>Ngày gửi</span>
+            <span>{formatDateTime(detail.createdAt)}</span>
+          </div>
+        )}
+      </Modal>
     </>
   );
 }
