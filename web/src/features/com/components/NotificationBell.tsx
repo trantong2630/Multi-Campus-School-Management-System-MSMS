@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Badge, Button, Empty, Popover, Spin } from 'antd';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Bell, BookOpen, CalendarClock, CalendarDays, CheckCheck, FileText, Hourglass } from 'lucide-react';
+import { Bell, BookOpen, CalendarClock, CalendarDays, CheckCheck, FileText, Hourglass, MessageSquare } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatDateTime } from '@/shared/lib/format';
@@ -26,6 +26,7 @@ const typeIcon: Record<string, ReactNode> = {
   LeaveRequestSubmitted: <FileText size={18} />,
   LeaveRequestDecided: <FileText size={18} />,
   AssignmentAssigned: <BookOpen size={18} />,
+  MessageReceived: <MessageSquare size={18} />,
 };
 
 /** Chuông thông báo ở góc phải header (Conventions §4.7): số chưa đọc, danh sách, mở kiểm quyền lại (BR-26). */
