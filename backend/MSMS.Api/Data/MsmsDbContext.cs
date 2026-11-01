@@ -494,6 +494,7 @@ public partial class MsmsDbContext : DbContext
             entity.Property(e => e.DecisionNote).HasMaxLength(255);
             entity.Property(e => e.Reason).HasMaxLength(500);
             entity.Property(e => e.SessionOfDay).HasMaxLength(10);
+            entity.Property(e => e.SlotIds).HasMaxLength(100);
             entity.Property(e => e.Status)
                 .HasMaxLength(15)
                 .HasDefaultValue("Pending");

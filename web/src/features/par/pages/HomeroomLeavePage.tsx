@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Form, Input, Modal, Popconfirm } from 'antd';
 import { message } from '@/shared/lib/antdStatic';
 import { Check, X } from 'lucide-react';
+import type { CSSProperties } from 'react';
 import { useState } from 'react';
 import { DataTable } from '@/shared/components/DataTable';
 import { PageHeader } from '@/shared/components/PageHeader';
@@ -17,6 +18,8 @@ const SESSION_OF_DAY_LABEL: Record<string, string> = {
   Morning: 'Buổi sáng',
   Afternoon: 'Buổi chiều',
 };
+
+const ellipsisStyle: CSSProperties = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
 
 interface RejectValues {
   decisionNote: string;
@@ -35,6 +38,7 @@ export function HomeroomLeavePage() {
   const [form] = Form.useForm<RejectValues>();
   const [rejectingId, setRejectingId] = useState<number | null>(null);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [detail, setDetail] = useState<HomeroomLeaveItem | null>(null);
 
   // Get homeroom leave requests
   const { data: leaves = [], isLoading } = useQuery({
@@ -131,6 +135,8 @@ export function HomeroomLeavePage() {
       <Card>
         <DataTable<HomeroomLeaveItem>
           rowKey="leaveRequestId"
+          tableLayout="fixed"
+          scroll={{ x: 1130 }}
           loading={isLoading}
           dataSource={leaves}
           emptyText="Lớp chủ nhiệm hiện chưa có đơn xin nghỉ nào."
@@ -138,7 +144,7 @@ export function HomeroomLeavePage() {
             {
               title: 'Học sinh',
               key: 'studentName',
-              width: 200,
+              width: 180,
               render: (_: unknown, record: HomeroomLeaveItem) => (
                 <PersonCell name={record.studentName} sub={record.studentCode} />
               ),
@@ -146,33 +152,43 @@ export function HomeroomLeavePage() {
             {
               title: 'Thời gian nghỉ',
               key: 'timeRange',
-              width: 180,
+              width: 170,
               render: (_: unknown, record: HomeroomLeaveItem) =>
                 `${formatDate(record.fromDate)} – ${formatDate(record.toDate)}`,
             },
             {
               title: 'Buổi',
               key: 'sessionOfDay',
-              width: 100,
+              width: 110,
               render: (_: unknown, record: HomeroomLeaveItem) =>
                 SESSION_OF_DAY_LABEL[record.sessionOfDay] || record.sessionOfDay,
             },
             {
               title: 'Lý do',
               key: 'reason',
-              render: (_: unknown, record: HomeroomLeaveItem) => record.reason || '—',
+              width: 180,
+              render: (_: unknown, record: HomeroomLeaveItem) => (
+                <Button
+                  type="link"
+                  size="small"
+                  onClick={() => setDetail(record)}
+                  style={{ padding: 0, height: 'auto', maxWidth: '100%', textAlign: 'left' }}
+                >
+                  <span style={{ ...ellipsisStyle, display: 'block' }}>{record.reason || 'Xem chi tiết'}</span>
+                </Button>
+              ),
             },
             {
               title: 'Ngày gửi',
               key: 'createdAt',
-              width: 160,
+              width: 150,
               className: 'tabular',
               render: (_: unknown, record: HomeroomLeaveItem) => formatDateTime(record.createdAt),
             },
             {
               title: 'Trạng thái',
               key: 'status',
-              width: 130,
+              width: 120,
               render: (_: unknown, record: HomeroomLeaveItem) => (
                 <StatusBadge domain="leave" value={record.status} />
               ),
@@ -187,6 +203,32 @@ export function HomeroomLeavePage() {
           ]}
         />
       </Card>
+
+      <Modal
+        title="Chi tiết đơn xin nghỉ"
+        open={!!detail}
+        onCancel={() => setDetail(null)}
+        footer={<Button onClick={() => setDetail(null)}>Đóng</Button>}
+      >
+        {detail && (
+          <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', rowGap: 8 }}>
+            <span>Học sinh</span>
+            <span>{detail.studentName} ({detail.studentCode})</span>
+            <span>Phụ huynh</span>
+            <span>{detail.parentName}</span>
+            <span>Thời gian</span>
+            <span>{formatDate(detail.fromDate)} – {formatDate(detail.toDate)}</span>
+            <span>Buổi</span>
+            <span>{SESSION_OF_DAY_LABEL[detail.sessionOfDay] || detail.sessionOfDay}</span>
+            <span>Lý do</span>
+            <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{detail.reason || '—'}</span>
+            <span>Trạng thái</span>
+            <span><StatusBadge domain="leave" value={detail.status} /></span>
+            <span>Ngày gửi</span>
+            <span>{formatDateTime(detail.createdAt)}</span>
+          </div>
+        )}
+      </Modal>
 
       <Modal
         title="Từ chối đơn xin nghỉ"

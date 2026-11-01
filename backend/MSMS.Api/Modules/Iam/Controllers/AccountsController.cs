@@ -18,6 +18,11 @@ public class AccountsController(AccountService service) : ControllerBase
     [HttpPost]
     public Task<TempPasswordItem> Create(CreateAccountRequest r) => service.CreateAsync(r);
 
+    [HttpGet("directory")]
+    public Task<PagedResult<AccountDirectoryItem>> Directory([FromQuery] string personType, [FromQuery] string? search,
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        => service.DirectoryAsync(personType, search, page, pageSize);
+
     [HttpPost("bulk")]
     public Task<BulkCreateResult> BulkCreate(BulkCreateAccountsRequest r) => service.BulkCreateAsync(r);
 
