@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { Popover } from 'antd';
 import dayjs from 'dayjs';
 import { ChevronDown } from 'lucide-react';
@@ -31,6 +32,9 @@ interface Props {
  * Bức tường điểm: mỗi bài một ô với con số lớn, màu theo mức điểm và dải ô đúng/sai theo từng câu.
  * Học sinh và phụ huynh dùng chung. Chỉ hiện bộ lọc môn khi có từ hai môn trở lên.
  */
+/** Vòng điểm: phần vòng được tô tỉ lệ với điểm trên thang 10, màu theo mức điểm. */
+const ringVars = (score: number | null | undefined) => ({ '--p': `${Math.max(0, Math.min(10, score ?? 0)) * 10}%`, '--c': bandColor(score) }) as CSSProperties;
+
 export function ScoreWall({ items, onOpen, averageLabel }: Props) {
   const [subjectId, setSubjectId] = useState<number | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -48,13 +52,13 @@ export function ScoreWall({ items, onOpen, averageLabel }: Props) {
   return (
     <div className="wall">
       <div className="wall__summary">
+        <div className="ring ring--lg" style={ringVars(avg)}><strong className="tabular">{fmtScore(avg === null ? null : Math.round(avg * 100) / 100)}</strong></div>
         <div className="wall__avg">
           <span>{averageLabel}</span>
-          <strong className="tabular" style={{ color: bandColor(avg) }}>{fmtScore(avg === null ? null : Math.round(avg * 100) / 100)}</strong>
-        </div>
-        <div className="wall__facts">
-          <span><strong>{scored.length}</strong> bài đã có điểm</span>
-          {missed > 0 && <span><strong>{missed}</strong> bài không nộp</span>}
+          <div className="wall__facts">
+            <span><strong>{scored.length}</strong> bài đã có điểm</span>
+            {missed > 0 && <span className="is-miss"><strong>{missed}</strong> bài không nộp</span>}
+          </div>
         </div>
         {subjects.length > 1 && (
           <Popover
@@ -87,16 +91,19 @@ export function ScoreWall({ items, onOpen, averageLabel }: Props) {
             key={i.assignmentId} type="button" className={`tile${i.submitted ? '' : ' is-missed'}`} style={subjectVars(i.subjectId)}
             onClick={() => onOpen(i)}
           >
-            <span className="tile__subject">{i.subjectName}</span>
             {i.submitted ? (
-              <strong className="tile__score tabular" style={{ color: bandColor(i.score) }}>{fmtScore(i.score)}</strong>
+              <span className="ring" style={ringVars(i.score)}><strong className="tabular">{fmtScore(i.score)}</strong></span>
             ) : (
-              <strong className="tile__score tile__score--none">Không nộp</strong>
+              <span className="ring ring--none"><strong>—</strong></span>
             )}
-            <span className="tile__title">{i.title}</span>
+            <span className="tile__info">
+              <span className="tile__subject">{i.subjectName}<em>{i.className}</em></span>
+              <span className="tile__title">{i.title}</span>
+              {!i.submitted && <span className="tile__miss">Không nộp</span>}
+            </span>
             <span className="tile__foot">
               {i.submitted && <AnswerStrip correct={i.correctCount} total={i.questionCount} />}
-              <span>{dayjs(i.at).format('DD/MM')} · {i.className}</span>
+              <span>{dayjs(i.at).format('DD/MM/YYYY')}</span>
             </span>
           </button>
         ))}

@@ -1,14 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
-import { Skeleton } from 'antd';
-import { ArrowRight, Clock3, ListChecks } from 'lucide-react';
-import { useMemo } from 'react';
+import { Dropdown, Skeleton } from 'antd';
+import { ArrowRight, ChevronDown, Filter, Lock } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/app/AuthProvider';
 import { formatDateTime } from '@/shared/lib/format';
 import { todoLine } from '../aiLines';
 import { lrnApi } from '../api';
 import { MsmsAi } from '../components/MsmsAi';
-import { AiEmpty, SubjectMark } from '../components/parts';
+import { AiEmpty } from '../components/parts';
 import { subjectVars } from '../components/tone';
 import { useNow } from '../hooks';
 import type { MyAssignmentItem } from '../types';
@@ -32,14 +32,26 @@ export function TodoPage() {
     [list.data],
   );
 
+  const subjects = useMemo(() => {
+    const map = new Map<number, { id: number; name: string; count: number }>();
+    for (const a of todo) {
+      const cur = map.get(a.subjectId);
+      map.set(a.subjectId, { id: a.subjectId, name: a.subjectName, count: (cur?.count ?? 0) + 1 });
+    }
+    return [...map.values()];
+  }, [todo]);
+  const [subjectId, setSubjectId] = useState<number | null>(null);
+  const activeSubject = subjects.some((s) => s.id === subjectId) ? subjectId : null;
+  const shown = useMemo(() => (activeSubject == null ? todo : todo.filter((a) => a.subjectId === activeSubject)), [todo, activeSubject]);
+
   const groups = useMemo(() => {
     const map = new Map<string, MyAssignmentItem[]>();
-    for (const a of todo) {
+    for (const a of shown) {
       const key = dayLabel(a.dueAt, nowMs);
       map.set(key, [...(map.get(key) ?? []), a]);
     }
     return [...map.entries()];
-  }, [todo, nowMs]);
+  }, [shown, nowMs]);
 
   const first = todo.find((a) => a.state !== 'NotOpen');
   const firstHint = first ? dueHint(first.dueAt, nowMs) : null;
@@ -59,6 +71,26 @@ export function TodoPage() {
         />
       </header>
 
+      <div className="todo__bar">
+        <span>{shown.length} bài{activeSubject != null ? ` · ${subjects.find((s) => s.id === activeSubject)?.name}` : ''}</span>
+        <Dropdown
+          trigger={['click']} placement="bottomRight"
+          menu={{
+            selectable: true,
+            selectedKeys: [String(activeSubject ?? 'all')],
+            onClick: ({ key }) => setSubjectId(key === 'all' ? null : Number(key)),
+            items: [
+              { key: 'all', label: `Tất cả môn (${todo.length})` },
+              ...subjects.map((s) => ({ key: String(s.id), label: `${s.name} (${s.count})` })),
+            ],
+          }}
+        >
+          <button type="button" className={`todo__filterbtn${activeSubject != null ? ' is-on' : ''}`}>
+            <Filter size={16} />Lọc theo môn<ChevronDown size={14} />
+          </button>
+        </Dropdown>
+      </div>
+
       {list.isLoading ? <Skeleton active paragraph={{ rows: 5 }} /> : groups.length === 0 ? (
         <AiEmpty mood="happy" title="Không có bài nào cần làm" hint="Khi giáo viên giao bài mới, mình sẽ báo cho bạn ở đây." />
       ) : (
@@ -70,31 +102,32 @@ export function TodoPage() {
                 {items.map((a) => {
                   const hint = dueHint(a.dueAt, nowMs);
                   const locked = a.state === 'NotOpen';
+                  const m = /(\d+) (\S+)$/.exec(hint.text);
+                  const stub = m ? { big: m[1], unit: m[2] } : { big: '!', unit: 'quá hạn' };
                   return (
-                    <button
-                      key={a.assignmentId} type="button" className={`task${locked ? ' is-locked' : ''}`} style={subjectVars(a.subjectId)}
-                      disabled={locked} onClick={() => navigate(`/lrn/todo/${a.assignmentId}`)}
-                    >
-                      <SubjectMark id={a.subjectId} name={a.subjectName} size={52} />
-                      <span className="task__main">
-                        <strong>{a.title}</strong>
-                        <span className="task__meta">
-                          {a.subjectName} · {a.className}
-                          <span><ListChecks size={14} />{a.questionCount} câu</span>
-                          <span><Clock3 size={14} />{durationText(a.durationMinutes)}</span>
+                    <div key={a.assignmentId} className={`ticket ticket--${locked ? 'locked' : hint.tone}`} style={subjectVars(a.subjectId)}>
+                      <button type="button" className="task" disabled={locked} onClick={() => navigate(`/lrn/todo/${a.assignmentId}`)}>
+                        <span className="task__stub">
+                          {locked ? <Lock size={26} /> : <>
+                            <b>{stub.big}</b>
+                            <small>{stub.unit}</small>
+                          </>}
                         </span>
-                      </span>
-                      <span className="task__side">
-                        {locked ? (
-                          <span className="task__due">Mở lúc {formatDateTime(a.openAt)}</span>
-                        ) : (
-                          <>
-                            <span className={`task__due task__due--${hint.tone}`}>{hint.text}</span>
-                            <span className="task__go">{a.state === 'InProgress' ? 'Làm tiếp' : 'Làm bài'}<ArrowRight size={16} /></span>
-                          </>
+                        <span className="task__body">
+                          <span className="task__subject">{a.subjectName}<em>{a.className}</em></span>
+                          <strong className="task__title">{a.title}</strong>
+                          <span className="task__meta">
+                            {a.questionCount} câu <i /> {durationText(a.durationMinutes)}
+                            {locked && <> <i /> Mở lúc {formatDateTime(a.openAt)}</>}
+                          </span>
+                        </span>
+                        {!locked && (
+                          <span className="task__go" aria-label={a.state === 'InProgress' ? 'Làm tiếp' : 'Làm bài'}>
+                            {a.state === 'InProgress' && <em>Làm tiếp</em>}<ArrowRight size={20} />
+                          </span>
                         )}
-                      </span>
-                    </button>
+                      </button>
+                    </div>
                   );
                 })}
               </div>

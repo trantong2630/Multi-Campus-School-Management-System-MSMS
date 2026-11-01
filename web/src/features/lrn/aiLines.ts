@@ -46,3 +46,11 @@ export function todoLine(opts: { total: number; soonest?: { title: string; hint:
   if (opts.soonest) return `Bài “${opts.soonest.title}” ${opts.soonest.hint.toLowerCase()}. Làm trước nhé!`;
   return `Bạn có ${opts.total} bài đang chờ.`;
 }
+
+/** Lời nhận xét của MSMS AI trên màn tiến độ giao bài của tổ (soạn sẵn theo số liệu, không phải phân tích của AI). */
+export function deptLine(o: { total: number; open: number; low: number; teachers: number }): string {
+  if (o.total === 0) return 'Tổ mình chưa giao bài nào. Có bài mới là mình báo ngay!';
+  if (o.low > 0) return `Có ${o.low} bài đã đóng mà chưa đến nửa lớp nộp. Bạn nhắc thầy cô xem sao nhé!`;
+  if (o.open > 0) return `${o.teachers} thầy cô đang có ${o.open} bài mở. Hiện chưa bài nào đáng lo.`;
+  return 'Các bài đã đóng đều được lớp nộp khá đầy đủ. Tổ mình làm tốt lắm!';
+}
