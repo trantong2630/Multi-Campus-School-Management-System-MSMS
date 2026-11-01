@@ -15,6 +15,8 @@ interface Props {
   /** Các lớp năm cũ chưa có lớp tương ứng ở năm mới. */
   rows: RolloverRow[];
   onClose: () => void;
+  /** Gọi sau khi tạo lớp thành công (trước onClose). */
+  onCreated?: (sourceClassIds: number[]) => void;
 }
 
 interface Draft { include: boolean; name: string; grade: number }
@@ -23,9 +25,9 @@ const GRADES = [6, 7, 8, 9].map((g) => ({ value: g, label: `Khối ${g}` }));
 
 /**
  * SCH-06 (4.2.35–4.2.36): danh sách lớp gợi ý cho năm học mới. Sửa tên, đổi khối hoặc bỏ bớt lớp ngay tại đây rồi mới tạo.
- * Khối 9 không có khối 10 (học sinh tốt nghiệp) nên không được chọn sẵn. Chỉ tạo lớp, không sao chép thời khóa biểu hay trách nhiệm.
+ * Khối 9 không có khối 10 (học sinh tốt nghiệp) nên không được chọn sẵn, chỉ tích khi có em học lại lớp 9. Chỉ tạo lớp, không sao chép thời khóa biểu hay trách nhiệm.
  */
-export function RolloverSuggestModal({ fromYear, toYear, rows, onClose }: Props) {
+export function RolloverSuggestModal({ fromYear, toYear, rows, onClose, onCreated }: Props) {
   const qc = useQueryClient();
   const [drafts, setDrafts] = useState<Record<number, Draft>>(() => Object.fromEntries(
     rows.map((r) => [r.sourceClassId, { include: r.suggestedGrade !== null, name: r.suggestedName, grade: r.suggestedGrade ?? r.gradeLevel }]),
@@ -34,7 +36,15 @@ export function RolloverSuggestModal({ fromYear, toYear, rows, onClose }: Props)
   const [error, setError] = useState<string | null>(null);
 
   const chosen = rows.filter((r) => drafts[r.sourceClassId].include);
-  const canSave = chosen.length > 0 && chosen.every((r) => drafts[r.sourceClassId].name.trim().length > 0);
+  // Tên lớp phải duy nhất trong cùng phân hiệu (không phân biệt hoa thường): báo ngay tại đây thay vì đợi bấm Tạo.
+  const seen = new Map<string, number>();
+  for (const r of chosen) {
+    const key = `${r.campusId}|${drafts[r.sourceClassId].name.trim().toLowerCase()}`;
+    seen.set(key, (seen.get(key) ?? 0) + 1);
+  }
+  const isDuplicate = (r: RolloverRow) => (seen.get(`${r.campusId}|${drafts[r.sourceClassId].name.trim().toLowerCase()}`) ?? 0) > 1;
+  const hasDuplicate = chosen.some(isDuplicate);
+  const canSave = chosen.length > 0 && !hasDuplicate && chosen.every((r) => drafts[r.sourceClassId].name.trim().length > 0);
   const patch = (id: number, p: Partial<Draft>) => {
     setDrafts((d) => ({ ...d, [id]: { ...d[id], ...p } }));
     setError(null);
@@ -51,6 +61,7 @@ export function RolloverSuggestModal({ fromYear, toYear, rows, onClose }: Props)
       });
       await qc.invalidateQueries({ queryKey: ['sch'] });
       message.success(`Đã tạo ${res.created} lớp cho năm học ${toYear.name}.`);
+      onCreated?.(chosen.map((r) => r.sourceClassId));
       onClose();
     } catch (e) {
       setError(getErrorMessage(e));
@@ -97,6 +108,7 @@ export function RolloverSuggestModal({ fromYear, toYear, rows, onClose }: Props)
             title: 'Tên lớp mới', key: 'name', width: 200,
             render: (_: unknown, r: RolloverRow) => (
               <Input
+                status={drafts[r.sourceClassId].include && isDuplicate(r) ? 'error' : undefined}
                 maxLength={50} value={drafts[r.sourceClassId].name} disabled={!drafts[r.sourceClassId].include}
                 onChange={(e) => patch(r.sourceClassId, { name: e.target.value })}
               />
@@ -114,8 +126,12 @@ export function RolloverSuggestModal({ fromYear, toYear, rows, onClose }: Props)
         ]}
       />
       {rows.some((r) => r.suggestedGrade === null) && (
-        <p className="muted">Khối 9 không có khối 10 (học sinh tốt nghiệp) nên các lớp khối 9 không được chọn sẵn. Tích chọn nếu muốn tạo lại một lớp khối 9.</p>
+        <p className="muted">
+          Lớp khối 9 không có khối 10 (học sinh tốt nghiệp) nên không được chọn sẵn. Học sinh lớp 9 lưu ban vẫn xếp được vào lớp 9 sinh từ lớp 8,
+          nên chỉ tích hàng này khi muốn mở một lớp 9 riêng cho các em học lại, và đặt tên khác (ví dụ 9A2).
+        </p>
       )}
+      {hasDuplicate &&<InlineAlert type="warning" title="Có hai lớp trùng tên trong cùng phân hiệu (ô viền đỏ). Đổi tên hoặc bỏ tích một trong hai." />}
       {error && <InlineAlert type="error" title={error} />}
     </Modal>
   );

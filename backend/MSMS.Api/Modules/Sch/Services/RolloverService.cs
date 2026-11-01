@@ -155,6 +155,95 @@ public sealed class RolloverService(MsmsDbContext db, IClock clock)
         return new RolloverMoveResult(results.Sum(x => x.Moved), results.Sum(x => x.Skipped), results);
     }
 
+    /// <summary>
+    /// Học sinh còn học của một lớp năm cũ tại ngày cuối năm cũ, kèm lớp năm mới em đã được xếp (để hiện ở cột giữa
+    /// và biết em nào chưa xếp lớp).
+    /// </summary>
+    public async Task<List<RolloverStudentDto>> StudentsAsync(int fromClassId, int toYearId)
+    {
+        var source = await db.Class.AsNoTracking().Include(c => c.AcademicYear).FirstOrDefaultAsync(c => c.ClassId == fromClassId)
+                     ?? throw ApiException.NotFound("Không tìm thấy lớp.");
+        var (_, to) = await LoadYearsAsync(source.AcademicYearId, toYearId);
+
+        var students = await db.Enrollment.AsNoTracking().Where(EnrollmentRules.ActiveAt(source.AcademicYear.EndDate))
+            .Where(e => e.ClassId == fromClassId && (e.Student.Status == Studying || (e.Student.Status == "Graduated" && e.Reason == EnrollmentCloseReasons.Graduated)))
+            .Select(e => new { e.StudentId, e.Student.Student.PersonCode, e.Student.Student.FullName, Graduated = e.Student.Status == "Graduated" })
+            .Distinct().ToListAsync();
+        var ids = students.Select(s => s.StudentId).ToList();
+        var placed = await db.Enrollment.AsNoTracking()
+            .Where(e => ids.Contains(e.StudentId) && e.Class.AcademicYearId == to.AcademicYearId)
+            .Select(e => new { e.StudentId, e.ClassId, ClassName = e.Class.Name })
+            .ToListAsync();
+        var byStudent = placed.GroupBy(p => p.StudentId).ToDictionary(g => g.Key, g => g.First());
+
+        return students.OrderBy(s => s.FullName).Select(s => byStudent.TryGetValue(s.StudentId, out var p)
+            ? new RolloverStudentDto(s.StudentId, s.PersonCode, s.FullName, p.ClassId, p.ClassName, s.Graduated)
+            : new RolloverStudentDto(s.StudentId, s.PersonCode, s.FullName, null, null, s.Graduated)).ToList();
+    }
+
+    /// <summary>
+    /// Chuyển các học sinh được chọn của một lớp năm cũ sang một lớp năm mới (lên lớp hoặc lưu ban do người dùng tự chọn lớp đích).
+    /// Chỉ nhận học sinh còn học ở ngày cuối năm cũ trong lớp nguồn; em đã có ghi danh năm mới thì bỏ qua nên chạy lại không tạo trùng.
+    /// </summary>
+    public async Task<RolloverMoveResult> MoveSelectedAsync(RolloverStudentsMoveRequest r)
+    {
+        if (r.StudentIds is not { Count: > 0 }) throw ApiException.BadRequest("Chọn ít nhất một học sinh để chuyển.");
+        var classes = await db.Class.Include(c => c.AcademicYear).Where(c => c.ClassId == r.FromClassId || c.ClassId == r.ToClassId)
+            .ToDictionaryAsync(c => c.ClassId);
+        if (!classes.TryGetValue(r.FromClassId, out var source) || !classes.TryGetValue(r.ToClassId, out var target))
+            throw ApiException.BadRequest("Có lớp không tồn tại. Tải lại danh sách rồi chọn lại.");
+        if (source.ClassId == target.ClassId) throw ApiException.BadRequest("Lớp chuyển đến trùng lớp nguồn.");
+        if (!target.IsActive) throw ApiException.BadRequest($"Lớp {target.Name} đã ngừng hoạt động nên không chuyển học sinh vào được.");
+        if (target.AcademicYear.StartDate <= source.AcademicYear.StartDate)
+            throw ApiException.BadRequest($"Lớp {target.Name} (năm học {target.AcademicYear.Name}) không thuộc năm học sau năm học {source.AcademicYear.Name}.");
+
+        var wanted = r.StudentIds.Distinct().ToList();
+        var eligible = await db.Enrollment.Where(EnrollmentRules.ActiveAt(source.AcademicYear.EndDate))
+            .Where(e => e.ClassId == source.ClassId && e.Student.Status == Studying && wanted.Contains(e.StudentId))
+            .Select(e => e.StudentId).Distinct().ToListAsync();
+        if (eligible.Count != wanted.Count)
+            throw ApiException.BadRequest("Có học sinh không còn học ở lớp nguồn. Tải lại danh sách rồi chọn lại.");
+
+        var alreadyEnrolled = await db.Enrollment
+            .Where(e => eligible.Contains(e.StudentId) && e.Class.AcademicYearId == target.AcademicYearId)
+            .Select(e => e.StudentId).Distinct().ToListAsync();
+        var toMove = eligible.Except(alreadyEnrolled).ToList();
+
+        db.Enrollment.AddRange(toMove.Select(id => new Enrollment
+        {
+            StudentId = id, ClassId = target.ClassId, StartDate = target.AcademicYear.StartDate, CreatedAt = clock.Now,
+        }));
+        await db.SaveChangesAsync();
+        var item = new RolloverMoveItemResult(source.ClassId, target.ClassId, toMove.Count, alreadyEnrolled.Count);
+        return new RolloverMoveResult(item.Moved, item.Skipped, [item]);
+    }
+
+    /// <summary>
+    /// Bỏ ghi danh năm mới đã tạo khi kết chuyển (gỡ học sinh khỏi cột lên lớp / lưu ban). Chỉ gỡ được ghi danh mở từ ngày đầu năm mới
+    /// khi năm mới chưa bắt đầu; sau đó dùng Chuyển lớp hoặc Kết thúc ghi danh để dữ liệu điểm danh không bị mồ côi.
+    /// </summary>
+    public async Task<int> UndoAsync(RolloverUndoRequest r)
+    {
+        if (r.EnrollmentIds is not { Count: > 0 }) throw ApiException.BadRequest("Chọn ít nhất một học sinh để gỡ.");
+        var ids = r.EnrollmentIds.Distinct().ToList();
+        var items = await db.Enrollment.Include(e => e.Class).ThenInclude(c => c.AcademicYear)
+            .Where(e => ids.Contains(e.EnrollmentId)).ToListAsync();
+        if (items.Count != ids.Count) throw ApiException.NotFound("Không tìm thấy ghi danh. Tải lại danh sách rồi chọn lại.");
+
+        var today = clock.Today;
+        foreach (var e in items)
+        {
+            var year = e.Class.AcademicYear;
+            if (e.EndDate != null || e.StartDate != year.StartDate)
+                throw ApiException.BadRequest("Chỉ gỡ được ghi danh do kết chuyển tạo ra (mở từ ngày đầu năm học).");
+            if (year.StartDate <= today)
+                throw ApiException.BadRequest($"Năm học {year.Name} đã bắt đầu nên không gỡ được. Dùng Chuyển lớp hoặc Kết thúc ghi danh ở màn Lớp & Ghi danh.");
+        }
+        db.Enrollment.RemoveRange(items);
+        await db.SaveChangesAsync();
+        return items.Count;
+    }
+
     private async Task<(AcademicYear From, AcademicYear To)> LoadYearsAsync(int fromYearId, int toYearId)
     {
         var from = await db.AcademicYear.AsNoTracking().FirstOrDefaultAsync(y => y.AcademicYearId == fromYearId)

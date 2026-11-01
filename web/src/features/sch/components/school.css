@@ -238,6 +238,56 @@ button.hol-chip {
   width: 110px;
 }
 
+/* Kết chuyển năm học: ba cột lưu ban – năm cũ – được lên lớp, mũi tên chuyển ở giữa */
+.rollover-board {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 48px minmax(420px, 1.6fr) 48px minmax(260px, 1fr);
+  align-items: start;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.rollover-board .ant-table-cell {
+  white-space: nowrap;
+}
+
+.rollover-arrows {
+  display: flex;
+  justify-content: center;
+  padding-top: 120px;
+}
+
+.rollover-panel__bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.rollover-panel__select.ant-select {
+  flex: 1;
+  min-width: 0;
+}
+
+.rollover-panel__hint {
+  margin: 0 0 8px;
+}
+
+.rollover-panel__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 24px;
+  margin-top: 8px;
+}
+
+.rollover-result--up {
+  color: var(--c-green500);
+}
+
+.rollover-result--stay {
+  color: var(--c-amberFg);
+}
+
 .school-logo-hint {
   margin: 0 0 16px;
   text-align: center;
@@ -247,4 +297,18 @@ button.hol-chip {
 .school-logo-note {
   margin-top: 12px;
   text-align: center;
+}
+
+.roster-bulkbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--c-skyBg);
+}
+
+.roster-bulkbar > span {
+  margin-right: auto;
 }
