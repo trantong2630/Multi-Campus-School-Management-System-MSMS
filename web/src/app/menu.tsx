@@ -45,7 +45,7 @@ const STAFF: AccountType[] = [...MGMT, 'Teacher'];
 export const menu: MenuGroup[] = [
   { key: 'home', label: 'Trang chủ', icon: House, section: 'overview', path: '/', roles: ALL, ready: true },
   { key: 'lrn-dept', label: 'Tiến độ giao bài của tổ', icon: ChartColumn, section: 'overview', path: '/lrn/department', roles: ['Teacher'], requires: { Teacher: 'department' }, ready: true },
-  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, section: 'overview', path: '/dashboard', roles: ['Principal', 'VicePrincipal'], ready: true },
+  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, section: 'overview', path: '/dashboard', roles: ['Principal', 'VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
   {
     key: 'sch', label: 'Thiết lập', icon: Settings2, section: 'manage',
     children: [
@@ -62,7 +62,7 @@ export const menu: MenuGroup[] = [
   {
     key: 'ppl', label: 'Hồ sơ', icon: Users, section: 'manage',
     children: [
-      { key: 'ppl-staff', label: 'Cán bộ', path: '/ppl/staff', roles: MGMT, ready: true },
+      { key: 'ppl-staff', label: 'Cán bộ', path: '/ppl/staff', roles: MGMT, requires: { VicePrincipal: 'campus' }, ready: true },
       { key: 'ppl-student', label: 'Học sinh', path: '/ppl/students', roles: MGMT, ready: false },
       { key: 'ppl-parent', label: 'Phụ huynh', path: '/ppl/parents', roles: MGMT, ready: false },
       { key: 'ppl-resp', label: 'Trách nhiệm', path: '/ppl/responsibilities', roles: ['SchoolAdmin', 'Principal'], ready: true },
@@ -72,7 +72,7 @@ export const menu: MenuGroup[] = [
     key: 'scd', label: 'Thời khóa biểu', icon: CalendarDays, section: 'manage',
     children: [
       { key: 'scd-timetable', label: 'Thời khóa biểu', path: '/scd/timetable', roles: ['VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
-      { key: 'scd-responsibility', label: 'Phụ trách chuyên môn', path: '/scd/responsibilities', roles: ['VicePrincipal'], ready: true },
+      { key: 'scd-responsibility', label: 'Phụ trách chuyên môn', path: '/scd/responsibilities', roles: ['VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
       { key: 'scd-schedule', label: 'Lịch dạy', path: '/scd/schedule', roles: ['Principal', 'VicePrincipal', 'Teacher'], requires: { VicePrincipal: 'campus' }, ready: true },
       { key: 'scd-my-class', label: 'Lịch học', path: '/scd/my-class', roles: ['Student', 'Parent'], ready: true },
       { key: 'scd-absence', label: 'Giáo viên vắng', path: '/scd/absences', roles: ['VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
@@ -83,7 +83,7 @@ export const menu: MenuGroup[] = [
     key: 'lrn', label: 'Bài tập rèn luyện', icon: BookOpen, section: 'manage',
     children: [
       { key: 'lrn-bank', label: 'Kho câu hỏi', path: '/lrn/questions', roles: ['Teacher'], ready: true },
-      { key: 'lrn-assign', label: 'Giao bài tập', path: '/lrn/assign', roles: ['Teacher'], ready: true },
+      { key: 'lrn-assign', label: 'Giao bài tập', path: '/lrn/assign', roles: ['Teacher'], requires: { Teacher: 'subject' }, ready: true },
       { key: 'lrn-assigned', label: 'Bài tập đã giao', path: '/lrn/assigned', roles: ['Teacher'], ready: true },
       { key: 'lrn-todo', label: 'Bài tập được giao', path: '/lrn/todo', roles: ['Student'], ready: true },
       { key: 'lrn-done', label: 'Danh sách bài tập', path: '/lrn/done', roles: ['Student'], ready: true },
