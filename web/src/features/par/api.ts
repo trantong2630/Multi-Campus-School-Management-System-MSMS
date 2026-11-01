@@ -2,6 +2,7 @@ import { apiClient } from '@/app/apiClient';
 import type {
   AvailableParentItem,
   AvailableTeacherItem,
+  BulkCreateLeaveRequestInput,
   ConversationItem,
   CreateConversationInput,
   CreateLeaveRequestInput,
@@ -31,6 +32,12 @@ export const parApi = {
      */
     submitLeaveRequest: (data: CreateLeaveRequestInput) =>
       apiClient.post('/par/leave-requests', data).then((r) => r.data),
+
+    /**
+     * Submit leave for several days or periods at once (PAR-01)
+     */
+    submitBulkLeaveRequests: (data: BulkCreateLeaveRequestInput) =>
+      apiClient.post('/par/leave-requests/bulk', data).then((r) => r.data),
 
     /**
      * Withdraw a leave request

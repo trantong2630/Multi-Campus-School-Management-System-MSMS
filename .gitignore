@@ -22,3 +22,6 @@ test/
 Multi-Campus-School-Management-System-MSMS/
 
 doc2/
+
+# Test folder for PAR
+backend/MSMS.Tests/ParTests/

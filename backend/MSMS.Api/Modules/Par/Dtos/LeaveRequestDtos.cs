@@ -1,6 +1,10 @@
 namespace MSMS.Api.Modules.Par.Dtos;
 
-public record CreateLeaveRequestDto(int StudentId, DateOnly FromDate, DateOnly ToDate, string SessionOfDay, string? Reason);
+public record CreateLeaveRequestDto(int StudentId, DateOnly FromDate, DateOnly ToDate, string SessionOfDay, IReadOnlyList<int>? SlotIds, string? Reason);
+
+public record LeaveDayItemDto(DateOnly Date, string SessionOfDay, IReadOnlyList<int>? SlotIds);
+
+public record BulkCreateLeaveRequestDto(int StudentId, string? Reason, List<LeaveDayItemDto> Days);
 
 public record ParentLeaveItemDto(
     int LeaveRequestId,
@@ -11,6 +15,7 @@ public record ParentLeaveItemDto(
     DateOnly FromDate,
     DateOnly ToDate,
     string SessionOfDay,
+    string? SlotIds,
     string? Reason,
     string Status,
     DateTime CreatedAt,
@@ -33,6 +38,7 @@ public record HomeroomLeaveItemDto(
     DateOnly FromDate,
     DateOnly ToDate,
     string SessionOfDay,
+    string? SlotIds,
     string? Reason,
     string Status,
     DateTime CreatedAt,
@@ -42,4 +48,3 @@ public record HomeroomLeaveItemDto(
     string? DecisionNote);
 
 public record MyChildDto(int StudentId, string StudentCode, string FullName, string? ClassName, int? ClassId);
-
