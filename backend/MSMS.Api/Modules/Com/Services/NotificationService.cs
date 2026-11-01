@@ -38,11 +38,11 @@ public sealed class NotificationService(MsmsDbContext db, CurrentUser user, IClo
         return new UnreadCountDto(await Mine(me).CountAsync(n => !n.IsRead));
     }
 
-    // Thông báo tin nhắn cũ (loại đã bỏ) còn trong DB thì không hiện nữa.
-    private static readonly string[] RetiredTypes = ["MessageReceived"];
+    // Tin nhắn phụ huynh - giáo viên (PAR) có hộp thư riêng nên không hiện ở chuông. PAR vẫn ghi dòng thông báo như cũ.
+    private static readonly string[] HiddenFromBell = [NotificationTypes.MessageReceived];
 
     private IQueryable<Data.Entities.Notification> Mine(int me) =>
-        db.Notification.Where(n => n.RecipientPersonId == me && !RetiredTypes.Contains(n.NotificationType));
+        db.Notification.Where(n => n.RecipientPersonId == me && !HiddenFromBell.Contains(n.NotificationType));
 
     /// <summary>4.8.4 — Đánh dấu một thông báo đã đọc. Thông báo của người khác coi như không tồn tại.</summary>
     public async Task MarkReadAsync(long id)
@@ -164,6 +164,16 @@ public sealed class NotificationService(MsmsDbContext db, CurrentUser user, IClo
                     return await db.AssignmentRecipient.AnyAsync(r => r.AssignmentId == a && myStudentIds.Contains(r.StudentId))
                         ? (true, "/lrn/children", null) : (false, null, Denied);
                 return isTeacher && exists.AssignedByPersonId == me ? (true, "/lrn/assigned", null) : (false, null, Denied);
+            }
+
+            case NotificationTypes.MessageReceived when n.RefEntityId is { } cid:
+            {
+                var c = (int)cid;
+                var c0 = await db.Conversation.AsNoTracking().Where(x => x.ConversationId == c)
+                    .Select(x => new { x.ParentId, x.StaffId }).FirstOrDefaultAsync();
+                if (c0 is null) return (false, null, Gone);
+                return !user.IsSchoolAdmin && (c0.ParentId == me || c0.StaffId == me)
+                    ? (true, $"/par/inbox?conversationId={c}", null) : (false, null, Denied);
             }
 
             case NotificationTypes.LeaveRequestSubmitted or NotificationTypes.LeaveRequestDecided when n.RefEntityId is { } lid:

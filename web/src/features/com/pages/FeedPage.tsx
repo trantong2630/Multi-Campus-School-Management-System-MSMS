@@ -1,16 +1,24 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { Button, Empty, Skeleton } from 'antd';
+import { Button, Empty, Image, Skeleton } from 'antd';
 import { useEffect, useRef } from 'react';
 import { useAuth } from '@/app/AuthProvider';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { formatDateTime } from '@/shared/lib/format';
 import { postVisibilityLabel } from '@/shared/lib/labels';
 import { postApi } from '../api';
-import { PostImage } from '../components/PostImage';
+import { useObjectUrl } from '../components/PostImage';
 import type { PostListItem } from '../types';
 import '../components/posts.css';
 
 const PAGE_SIZE = 8;
+
+/** Ảnh trong bảng tin: bấm để xem phóng to, cả nhóm ảnh của bài xem được bằng nút trước/sau. `hidden` là ảnh thứ 5 trở đi, chỉ hiện trong chế độ xem. */
+function FeedImage({ postId, imageId, alt, hidden }: { postId: number; imageId: number; alt: string; hidden?: boolean }) {
+  const q = useQuery({ queryKey: ['com', 'post-image', postId, imageId], queryFn: () => postApi.image(postId, imageId), staleTime: Infinity });
+  const url = useObjectUrl(q.data);
+  if (!url) return hidden ? null : <span className="post-img post-img--empty" aria-hidden />;
+  return <Image src={url} alt={alt} className="post-img" rootClassName={hidden ? 'feed-image--hidden' : 'feed-image'} preview={{ cover: null }} />;
+}
 
 const initial = (name: string) => name.trim().split(/\s+/).pop()?.[0]?.toUpperCase() ?? '?';
 
@@ -37,14 +45,19 @@ function FeedCard({ item, showScope }: { item: PostListItem; showScope: boolean 
         <p className="feed-card__content">{p?.content ?? item.excerpt}</p>
       )}
       {images.length > 0 && (
-        <div className={`feed-gallery feed-gallery--${Math.min(images.length, 4)}`}>
-          {images.slice(0, 4).map((img, i) => (
-            <div key={img.postImageId} className="feed-gallery__cell">
-              <PostImage postId={item.postId} imageId={img.postImageId} alt={`Ảnh ${i + 1} của bài ${item.title}`} />
-              {i === 3 && images.length > 4 && <span className="feed-gallery__more">+{images.length - 4}</span>}
-            </div>
+        <Image.PreviewGroup>
+          <div className={`feed-gallery feed-gallery--${Math.min(images.length, 4)}`}>
+            {images.slice(0, 4).map((img, i) => (
+              <div key={img.postImageId} className="feed-gallery__cell">
+                <FeedImage postId={item.postId} imageId={img.postImageId} alt={`Ảnh ${i + 1} của bài ${item.title}`} />
+                {i === 3 && images.length > 4 && <span className="feed-gallery__more">+{images.length - 4}</span>}
+              </div>
+            ))}
+          </div>
+          {images.slice(4).map((img, i) => (
+            <FeedImage key={img.postImageId} hidden postId={item.postId} imageId={img.postImageId} alt={`Ảnh ${i + 5} của bài ${item.title}`} />
           ))}
-        </div>
+        </Image.PreviewGroup>
       )}
     </article>
   );
