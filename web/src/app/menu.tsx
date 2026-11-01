@@ -47,6 +47,14 @@ export const menu: MenuGroup[] = [
   { key: 'lrn-dept', label: 'Tiến độ giao bài của tổ', icon: ChartColumn, section: 'overview', path: '/lrn/department', roles: ['Teacher'], requires: { Teacher: 'department' }, ready: true },
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, section: 'overview', path: '/dashboard', roles: ['Principal', 'VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
   {
+    // Cán bộ thấy cả Đăng tin lẫn Bảng tin; học sinh, phụ huynh chỉ còn Bảng tin nên nhóm tự thu về một mục (xem visibleMenu).
+    key: 'com', label: 'Bảng tin', icon: Newspaper, section: 'overview',
+    children: [
+      { key: 'com-manage', label: 'Đăng tin', path: '/com/posts', roles: STAFF, ready: true },
+      { key: 'com-feed', label: 'Bảng tin', path: '/com/feed', roles: ALL, ready: true },
+    ],
+  },
+  {
     key: 'sch', label: 'Thiết lập', icon: Settings2, section: 'manage',
     children: [
       { key: 'sch-school', label: 'Thông tin trường', path: '/sch/school', roles: ['SchoolAdmin', 'Principal'], ready: true },
@@ -98,7 +106,6 @@ export const menu: MenuGroup[] = [
       { key: 'par-inbox', label: 'Hộp thư', path: '/par/inbox', roles: ['Teacher', 'Parent'], ready: true, icon: Mail },
     ],
   },
-  { key: 'com', label: 'Bảng tin', icon: Newspaper, section: 'manage', path: '/com/posts', roles: ALL, ready: true },
   {
     key: 'adm', label: 'Quản trị', icon: ShieldCheck, section: 'system',
     children: [

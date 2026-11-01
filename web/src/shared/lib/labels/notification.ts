@@ -6,7 +6,6 @@ export const notificationTypeLabel: Record<string, string> = {
   LeaveRequestSubmitted: 'Đơn xin nghỉ',
   LeaveRequestDecided: 'Kết quả đơn nghỉ',
   AssignmentAssigned: 'Bài tập mới',
-  MessageReceived: 'Tin nhắn',
 };
 
 export const notificationTitle = 'Thông báo';
