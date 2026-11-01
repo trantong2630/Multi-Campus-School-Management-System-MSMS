@@ -15,11 +15,24 @@ public static class LeaveRequestRules
         DateOnly toDate,
         string sessionOfDay,
         IEnumerable<(DateOnly From, DateOnly To, string Session)> existingLeaves)
+        => HasConflict(fromDate, toDate, sessionOfDay, null,
+            existingLeaves.Select(e => (e.From, e.To, e.Session, (string?)null)));
+
+    /// <summary>
+    /// BR-19 mở rộng theo tiết: đơn không có tiết (SlotIds trống) nghỉ cả buổi nên chồng mọi tiết của buổi đó.
+    /// </summary>
+    public static bool HasConflict(
+        DateOnly fromDate,
+        DateOnly toDate,
+        string sessionOfDay,
+        string? slotIds,
+        IEnumerable<(DateOnly From, DateOnly To, string Session, string? SlotIds)> existingLeaves)
     {
         foreach (var existing in existingLeaves)
         {
             if (HasDateOverlap(fromDate, toDate, existing.From, existing.To) &&
-                HasSessionOverlap(sessionOfDay, existing.Session))
+                HasSessionOverlap(sessionOfDay, existing.Session) &&
+                HasSlotOverlap(slotIds, existing.SlotIds))
             {
                 return true;
             }
@@ -30,6 +43,14 @@ public static class LeaveRequestRules
 
     private static bool HasDateOverlap(DateOnly from1, DateOnly to1, DateOnly from2, DateOnly to2)
         => from1 <= to2 && from2 <= to1;
+
+    private static bool HasSlotOverlap(string? slots1, string? slots2)
+    {
+        if (string.IsNullOrEmpty(slots1) || string.IsNullOrEmpty(slots2))
+            return true;
+
+        return slots1.Split(',').Intersect(slots2.Split(',')).Any();
+    }
 
     private static bool HasSessionOverlap(string session1, string session2)
     {
