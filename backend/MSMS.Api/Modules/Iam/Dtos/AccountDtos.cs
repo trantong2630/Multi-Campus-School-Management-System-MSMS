@@ -5,6 +5,8 @@ public record AccountDto(
     string AccountType, string Status, DateTime? LastLoginAt, string? CampusName);
 
 public record CreateAccountRequest(int PersonId, string AccountType);
+public record AccountDirectoryItem(int PersonId, string PersonCode, string FullName, string PersonType,
+    string? CampusName, bool HasAccount, bool IsActive);
 public record BulkCreateAccountsRequest(IReadOnlyList<int> PersonIds, string? AccountType);
 public record ChangeAccountTypeRequest(string AccountType);
 

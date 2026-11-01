@@ -83,19 +83,24 @@ public sealed class SessionService(MsmsDbContext db, IClock clock, IOptions<JwtO
             s.SessionId == sessionId && s.AccountId == accountId && s.RevokedAt == null && s.ExpiresAt > now);
     }
 
-    public async Task RevokeAsync(Guid sessionId)
-    {
-        var now = clock.Now;
-        await db.AccountSession.Where(s => s.SessionId == sessionId && s.RevokedAt == null)
-            .ExecuteUpdateAsync(u => u.SetProperty(s => s.RevokedAt, now));
-    }
+    public Task RevokeAsync(Guid sessionId) =>
+        RevokeQueryAsync(db.AccountSession.Where(s => s.SessionId == sessionId && s.RevokedAt == null));
 
     /// <summary>Khóa, reset mật khẩu, đổi loại, đổi mật khẩu: hủy mọi phiên của tài khoản (trừ phiên đang dùng nếu có).</summary>
-    public async Task RevokeAllAsync(int accountId, Guid? exceptSessionId = null)
+    public Task RevokeAllAsync(int accountId, Guid? exceptSessionId = null) =>
+        RevokeQueryAsync(db.AccountSession.Where(s => s.AccountId == accountId && s.RevokedAt == null && s.SessionId != exceptSessionId));
+
+    private async Task RevokeQueryAsync(IQueryable<AccountSession> query)
     {
         var now = clock.Now;
-        await db.AccountSession.Where(s => s.AccountId == accountId && s.RevokedAt == null && s.SessionId != exceptSessionId)
-            .ExecuteUpdateAsync(u => u.SetProperty(s => s.RevokedAt, now));
+        if (db.Database.IsRelational())
+            await query.ExecuteUpdateAsync(u => u.SetProperty(s => s.RevokedAt, now));
+        else
+        {
+            // Cùng cách với RefreshAsync: InMemory không hỗ trợ ExecuteUpdate.
+            foreach (var session in await query.ToListAsync()) session.RevokedAt = now;
+            await db.SaveChangesAsync();
+        }
     }
 
     private string NewToken(Guid sessionId)
