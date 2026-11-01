@@ -57,6 +57,8 @@ export interface QuestionQuery {
   mine?: boolean;
   includeHidden?: boolean;
   search?: string;
+  /** Tìm theo chủ đề của câu hỏi (không tìm trong nội dung câu). */
+  topic?: string;
   page?: number;
   pageSize?: number;
 }
