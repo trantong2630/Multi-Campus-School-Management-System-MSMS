@@ -42,7 +42,10 @@ export interface CreateLeaveRequestInput {
   sessionOfDay: LeaveSessionOfDay | string;
   slotIds?: number[];
   reason?: string;
-} (or some periods of one day) in a bulk leave request
+}
+
+/**
+ * One day (or some periods of one day) in a bulk leave request
  */
 export interface LeaveDayInput {
   date: string;
