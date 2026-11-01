@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Badge, Button, Empty, Popover, Spin } from 'antd';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Bell, CheckCheck } from 'lucide-react';
+import { Bell, BookOpen, CalendarClock, CalendarDays, CheckCheck, FileText, Hourglass } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatDateTime } from '@/shared/lib/format';
 import { showError } from '@/shared/lib/feedback';
@@ -17,6 +18,15 @@ import './notification.css';
 const PAGE = 20;
 // Dự phòng khi SignalR không nối được: làm mới chậm (COM-4.8.10 áp dụng tương tự cho web).
 const FALLBACK_POLL_MS = 60_000;
+
+const typeIcon: Record<string, ReactNode> = {
+  TimetablePublished: <CalendarDays size={18} />,
+  SessionPending: <Hourglass size={18} />,
+  ScheduleChanged: <CalendarClock size={18} />,
+  LeaveRequestSubmitted: <FileText size={18} />,
+  LeaveRequestDecided: <FileText size={18} />,
+  AssignmentAssigned: <BookOpen size={18} />,
+};
 
 /** Chuông thông báo ở góc phải header (Conventions §4.7): số chưa đọc, danh sách, mở kiểm quyền lại (BR-26). */
 export function NotificationBell() {
@@ -73,10 +83,16 @@ export function NotificationBell() {
             {items.map((n) => (
               <li key={n.notificationId}>
                 <button type="button" className={n.isRead ? 'notif-item' : 'notif-item notif-item--unread'} onClick={() => openItem.mutate(n)}>
-                  <span className="notif-item__type">{notificationTypeLabel[n.notificationType] ?? n.notificationType}</span>
-                  <span className="notif-item__title">{n.title}</span>
-                  {n.body && <span className="notif-item__body">{n.body}</span>}
-                  <span className="notif-item__time">{formatDateTime(n.createdAt)}</span>
+                  <span className="notif-item__icon">{typeIcon[n.notificationType] ?? <Bell size={18} />}</span>
+                  <span className="notif-item__main">
+                    <span className="notif-item__title">{n.title}</span>
+                    {n.body && <span className="notif-item__body">{n.body}</span>}
+                    <span className="notif-item__meta">
+                      <span className="notif-item__type">{notificationTypeLabel[n.notificationType] ?? n.notificationType}</span>
+                      <span className="notif-item__time">{formatDateTime(n.createdAt)}</span>
+                    </span>
+                  </span>
+                  {!n.isRead && <span className="notif-item__dot" aria-label="Chưa đọc" />}
                 </button>
               </li>
             ))}
