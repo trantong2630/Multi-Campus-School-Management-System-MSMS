@@ -2,7 +2,7 @@ import { apiClient } from '@/app/apiClient';
 import type {
   Absence, AdjustResult, AdjustWeek, CampusOption, DaySchedule, DeclareAbsenceBody, DraftOptions,
   GridClass, MakeUpBody, MySession, PendingSession, PublishPreview, PublishResult, ResolveBody, ResponsibilityList, TeacherAvailability, TeacherOption,
-  TimetableImportResult, TimetableVersion, VersionGrid, ViewSession,
+  StudentClass, TimetableImportResult, TimetableVersion, VersionGrid, ViewSession,
 } from './types';
 
 export const scdApi = {
@@ -41,6 +41,10 @@ export const scdApi = {
     apiClient.get<ViewSession[]>('/scd/schedule/student', { params: { from, to } }).then((r) => r.data),
   childWeek: (studentId: number, from: string, to: string) =>
     apiClient.get<ViewSession[]>('/scd/schedule/child', { params: { studentId, from, to } }).then((r) => r.data),
+  studentClass: (date: string) =>
+    apiClient.get<StudentClass | null>('/scd/schedule/student/class', { params: { date } }).then((r) => r.data),
+  childClass: (studentId: number, date: string) =>
+    apiClient.get<StudentClass | null>('/scd/schedule/child/class', { params: { studentId, date } }).then((r) => r.data),
   responsibilities: (campusId?: number, subjectId?: number) =>
     apiClient.get<ResponsibilityList>('/scd/responsibilities', { params: { campusId, subjectId } }).then((r) => r.data),
   byTeacher: (teacherId: number, from: string, to: string) =>

@@ -8,14 +8,13 @@ import { PageHeader } from '@/shared/components/PageHeader';
 import { scdApi } from '../api';
 import { subjectColorStyle } from '../subjectColor';
 import type { ResponsibilityItem, ResponsibilityTeacher } from '../types';
+import { useScdCampus } from '../useScdCampus';
 import '../components/scd.css';
 
 /** SCD-04: phụ trách chuyên môn tính từ thời khóa biểu đã phát hành, chỉ đọc. Muốn đổi thì sửa thời khóa biểu rồi Phát hành lại (BR-14). */
 export function ResponsibilityPage() {
-  const campuses = useQuery({ queryKey: ['scd', 'campuses'], queryFn: scdApi.campuses });
-  const [campusId, setCampusId] = useState<number | undefined>();
+  const { campuses, effective: effectiveCampus, select: campusSelect, head: campusHead } = useScdCampus();
   const [subjectId, setSubjectId] = useState<number | undefined>();
-  const effectiveCampus = campusId ?? campuses.data?.[0]?.campusId;
 
   const subjects = useQuery({
     queryKey: ['scd', 'draft-options', effectiveCampus],
@@ -36,14 +35,12 @@ export function ResponsibilityPage() {
           ? `Tính từ thời khóa biểu đã phát hành của ${list.data.semesterName}. Muốn đổi, sửa thời khóa biểu rồi Phát hành lại.`
           : 'Tính từ thời khóa biểu đã phát hành. Muốn đổi, sửa thời khóa biểu rồi Phát hành lại.'}
       />
+      {campusHead}
       {campuses.isSuccess && campuses.data.length === 0 && (
         <InlineAlert type="warning" title="Chưa có phân hiệu nào để xem" description="Hiệu phó cần được gán phụ trách phân hiệu ở Hồ sơ → Trách nhiệm." />
       )}
       <FilterBar>
-        <Select
-          placeholder="Phân hiệu" value={effectiveCampus} onChange={setCampusId}
-          options={campuses.data?.map((c) => ({ value: c.campusId, label: c.name }))}
-        />
+        {campusSelect}
         <Select
           allowClear showSearch optionFilterProp="label" placeholder="Môn" value={subjectId} onChange={setSubjectId}
           style={{ minWidth: 180 }}

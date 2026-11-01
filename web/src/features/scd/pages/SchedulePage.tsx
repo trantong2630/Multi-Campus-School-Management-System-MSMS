@@ -13,6 +13,7 @@ import { scdApi } from '../api';
 import { subjectColorStyle } from '../subjectColor';
 import type { DaySchedule, MySession, SessionCell } from '../types';
 import { AdjustView } from '../components/AdjustView';
+import { useScdCampus } from '../useScdCampus';
 import { WeekFrame, WeekNav } from '../components/WeekFrame';
 import '../components/scd.css';
 
@@ -28,10 +29,8 @@ type ViewMode = 'day' | 'class' | 'teacher' | 'adjust';
 function CampusSchedule() {
   const { user } = useAuth();
   const isVice = user?.accountType === 'VicePrincipal';
-  const campuses = useQuery({ queryKey: ['scd', 'campuses'], queryFn: scdApi.campuses });
-  const [campusId, setCampusId] = useState<number | undefined>();
+  const { campuses, effective: effectiveCampus, select: campusSelect, head: campusHead } = useScdCampus();
   const [mode, setMode] = useState<ViewMode>('day');
-  const effectiveCampus = campusId ?? campuses.data?.[0]?.campusId;
 
   const modeSwitch = (
     <Segmented
@@ -40,12 +39,6 @@ function CampusSchedule() {
         { value: 'day', label: 'Theo ngày' }, { value: 'class', label: 'Theo lớp' }, { value: 'teacher', label: 'Theo giáo viên' },
         ...(isVice ? [{ value: 'adjust', label: 'Điều chỉnh' }] : []),
       ]}
-    />
-  );
-  const campusSelect = (
-    <Select
-      placeholder="Phân hiệu" value={effectiveCampus} onChange={setCampusId}
-      options={campuses.data?.map((c) => ({ value: c.campusId, label: c.name }))}
     />
   );
   const lead = <>{modeSwitch}{campusSelect}</>;
@@ -60,6 +53,7 @@ function CampusSchedule() {
             ? 'Nhấp vào tiết để đổi giáo viên hoặc hủy, nhấp vào ô trống để thêm tiết bù. Tiết đã qua hoặc đã điểm danh bị khóa.'
             : 'Lịch dạy theo tuần của một lớp hoặc một giáo viên. Tiết đã hủy gạch ngang, tiết chờ xử lý nền vàng.'}
       />
+      {campusHead}
       {campuses.isSuccess && campuses.data.length === 0 && (
         <InlineAlert type="warning" title="Chưa có phân hiệu nào để xem" description="Hiệu phó cần được gán phụ trách phân hiệu ở Hồ sơ → Trách nhiệm." />
       )}
@@ -177,10 +171,10 @@ function MySchedule() {
   return (
     <>
       <PageHeader title="Lịch dạy của tôi" description="Gồm tiết bù và tiết được phân dạy thay. Tiết đã hủy gạch ngang, tiết chờ xử lý nền vàng." />
-      <FilterBar><WeekNav monday={monday} onChange={setMonday} /></FilterBar>
       {sessions.isSuccess && sessions.data.length === 0 && (
         <InlineAlert type="info" title="Tuần này không có tiết dạy nào" description="Tuần nghỉ, tuần chưa phát hành thời khóa biểu hoặc bạn chưa được phân công dạy." />
       )}
+      <FilterBar><WeekNav monday={monday} onChange={setMonday} /></FilterBar>
       <Card className="table-card">
         <WeekGrid monday={monday} sessions={sessions.data} loading={sessions.isLoading} detail={(s) => s.className} />
       </Card>
@@ -210,6 +204,9 @@ function EntityWeekView({ mode, campusId, lead }: { mode: 'class' | 'teacher'; c
 
   return (
     <>
+      {entityId !== undefined && sessions.isSuccess && sessions.data.length === 0 && (
+        <InlineAlert type="info" title="Tuần này không có tiết nào" description="Tuần nghỉ hoặc tuần chưa phát hành thời khóa biểu." />
+      )}
       <FilterBar>
         {lead}
         <Select
@@ -222,9 +219,6 @@ function EntityWeekView({ mode, campusId, lead }: { mode: 'class' | 'teacher'; c
         <InlineAlert type="info" title={isClass ? 'Chọn một lớp để xem lịch' : 'Chọn một giáo viên để xem lịch'} description="Lịch hiện theo tuần, Thứ 2 đến Thứ 7." />
       ) : (
         <>
-          {sessions.isSuccess && sessions.data.length === 0 && (
-            <InlineAlert type="info" title="Tuần này không có tiết nào" description="Tuần nghỉ hoặc tuần chưa phát hành thời khóa biểu." />
-          )}
           <Card className="table-card">
             <WeekGrid
               monday={monday} sessions={sessions.data} loading={sessions.isLoading}
