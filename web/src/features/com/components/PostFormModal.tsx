@@ -35,13 +35,16 @@ export function PostFormModal({ open, post, onClose, onSaved }: Props) {
   const kept = (post?.images ?? []).filter((i) => !removed.includes(i.postImageId));
   const total = kept.length + added.length;
 
-  const pick = (file: File) => {
-    if (file.size > MAX_POST_IMAGE_BYTES) {
-      showError({ response: { data: { message: `Ảnh "${file.name}" lớn hơn 2 MB. Chọn ảnh nhỏ hơn.` } } }, 'Không thêm được ảnh');
-      return;
-    }
-    if (total >= MAX_POST_IMAGES) return;
-    setAdded((prev) => [...prev, file]);
+  const pick = (files: File[]) => {
+    const ok = files.filter((f) => f.size <= MAX_POST_IMAGE_BYTES);
+    const tooBig = files.filter((f) => f.size > MAX_POST_IMAGE_BYTES);
+    const room = MAX_POST_IMAGES - total;
+    const accepted = ok.slice(0, Math.max(room, 0));
+    if (accepted.length > 0) setAdded((prev) => [...prev, ...accepted]);
+    const problems: string[] = [];
+    if (tooBig.length > 0) problems.push(`Ảnh ${tooBig.map((f) => `"${f.name}"`).join(', ')} lớn hơn 2 MB. Chọn ảnh nhỏ hơn.`);
+    if (ok.length > accepted.length) problems.push(`Chỉ thêm được tối đa ${MAX_POST_IMAGES} ảnh, ${ok.length - accepted.length} ảnh bị bỏ qua.`);
+    if (problems.length > 0) showError({ response: { data: { message: problems.join(' ') } } }, 'Không thêm được một số ảnh');
   };
 
   const submit = async (values: PostInput) => {
@@ -92,7 +95,7 @@ export function PostFormModal({ open, post, onClose, onSaved }: Props) {
             </div>
           ))}
         </div>
-        <FileButton forceHideInput accept=".png,.jpg,.jpeg" icon={<ImagePlus size={16} />} disabled={total >= MAX_POST_IMAGES} onFile={pick}>
+        <FileButton forceHideInput accept=".png,.jpg,.jpeg" icon={<ImagePlus size={16} />} disabled={total >= MAX_POST_IMAGES} multiple onFiles={pick}>
           Thêm ảnh
         </FileButton>
       </Form.Item>
