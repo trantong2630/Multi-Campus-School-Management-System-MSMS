@@ -107,11 +107,11 @@ public sealed class StaffService(MsmsDbContext db, IClock clock, ScopeResolver s
         {
             var today = clock.Today;
             var duties = new List<string>();
-            if (await db.CampusLeadership.Where(EffectivePeriod.EffectiveAt<CampusLeadership>(today)).AnyAsync(x => x.StaffId == id))
+            if (await db.CampusLeadership.Where(EffectivePeriod.CurrentResponsibility<CampusLeadership>(today)).AnyAsync(x => x.StaffId == id))
                 duties.Add("phụ trách phân hiệu");
-            if (await db.DepartmentHead.Where(EffectivePeriod.EffectiveAt<DepartmentHead>(today)).AnyAsync(x => x.StaffId == id))
+            if (await db.DepartmentHead.Where(EffectivePeriod.CurrentResponsibility<DepartmentHead>(today)).AnyAsync(x => x.StaffId == id))
                 duties.Add("tổ trưởng");
-            if (await db.HomeroomAssignment.Where(EffectivePeriod.EffectiveAt<HomeroomAssignment>(today)).AnyAsync(x => x.StaffId == id))
+            if (await db.HomeroomAssignment.Where(EffectivePeriod.CurrentResponsibility<HomeroomAssignment>(today)).AnyAsync(x => x.StaffId == id))
                 duties.Add("chủ nhiệm");
             if (duties.Count > 0)
                 throw ApiException.BadRequest($"Cán bộ đang giữ: {string.Join(", ", duties)}. Chuyển giao hoặc kết thúc các trách nhiệm đó trước.");

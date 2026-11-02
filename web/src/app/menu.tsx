@@ -75,8 +75,8 @@ export const menu: MenuGroup[] = [
     key: 'ppl', label: 'Hồ sơ', icon: Users, section: 'manage',
     children: [
       { key: 'ppl-staff', label: 'Cán bộ', path: '/ppl/staff', roles: MGMT, requires: { VicePrincipal: 'campus' }, ready: true },
-      { key: 'ppl-student', label: 'Học sinh', path: '/ppl/students', roles: MGMT, ready: false },
-      { key: 'ppl-parent', label: 'Phụ huynh', path: '/ppl/parents', roles: MGMT, ready: false },
+      { key: 'ppl-student', label: 'Học sinh', path: '/ppl/students', roles: MGMT, ready: true },
+      { key: 'ppl-parent', label: 'Phụ huynh', path: '/ppl/parents', roles: MGMT, ready: true },
       { key: 'ppl-resp', label: 'Trách nhiệm', path: '/ppl/responsibilities', roles: ['SchoolAdmin', 'Principal'], ready: true },
     ],
   },

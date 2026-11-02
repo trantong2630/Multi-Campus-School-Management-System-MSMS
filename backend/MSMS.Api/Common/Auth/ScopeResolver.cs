@@ -34,6 +34,21 @@ public sealed class ScopeResolver(MsmsDbContext db, CurrentUser user, IClock clo
         throw ApiException.Forbidden("Không có quyền xem danh bạ cán bộ.");
     }
 
+    /// <summary>School Admin và Principal thấy toàn trường; vai trò khác bị giới hạn theo phạm vi.</summary>
+    public bool SeesWholeSchool => user.AccountType is AccountTypes.SchoolAdmin or AccountTypes.Principal;
+
+    /// <summary>Danh bạ học sinh: SA và HT toàn trường; HP chỉ học sinh từng ghi danh ở phân hiệu mình phụ trách.</summary>
+    public async Task<IQueryable<StudentProfile>> FilterStudentsAsync(IQueryable<StudentProfile> query)
+    {
+        if (user.AccountType is AccountTypes.SchoolAdmin or AccountTypes.Principal) return query;
+        if (user.AccountType == AccountTypes.VicePrincipal)
+        {
+            var campuses = await LedCampusIdsAsync();
+            return query.Where(s => s.Enrollment.Any(e => campuses.Contains(e.Class.CampusId)));
+        }
+        throw ApiException.Forbidden("Không có quyền xem danh bạ học sinh.");
+    }
+
     /// <summary>Danh sách lớp cũng phải lọc trước khi trả sĩ số và chủ nhiệm.</summary>
     public async Task<IQueryable<Class>> FilterClassesAsync(IQueryable<Class> query)
     {

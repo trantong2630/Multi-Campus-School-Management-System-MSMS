@@ -29,8 +29,10 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
         {
             case ResponsibilityKinds.Campus:
             {
-                var holders = await db.CampusLeadership.AsNoTracking().Where(EffectivePeriod.EffectiveAt<CampusLeadership>(today))
+                var holders = await db.CampusLeadership.AsNoTracking().Where(EffectivePeriod.CurrentResponsibility<CampusLeadership>(today))
                     .Select(x => new { x.Id, x.CampusId, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
+                var upcoming = await db.CampusLeadership.AsNoTracking().Where(x => x.StartDate > today).OrderBy(x => x.StartDate)
+                    .Select(x => new { x.CampusId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
                 var campusesQuery = db.Campus.AsNoTracking().Where(c => c.IsActive);
                 if (user.AccountType == AccountTypes.VicePrincipal)
                 {
@@ -41,13 +43,16 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
                 return campuses.Select(c =>
                 {
                     var h = holders.FirstOrDefault(x => x.CampusId == c.CampusId);
-                    return new ResponsibilityRow(kind, c.CampusId, c.Name, null, h?.Id, h?.StaffId, h?.Name, h?.StartDate);
+                    var u = upcoming.FirstOrDefault(x => x.CampusId == c.CampusId);
+                    return new ResponsibilityRow(kind, c.CampusId, c.Name, null, h?.Id, h?.StaffId, h?.Name, h?.StartDate, u?.Name, u?.StartDate);
                 }).ToList();
             }
             case ResponsibilityKinds.Department:
             {
-                var holders = await db.DepartmentHead.AsNoTracking().Where(EffectivePeriod.EffectiveAt<DepartmentHead>(today))
+                var holders = await db.DepartmentHead.AsNoTracking().Where(EffectivePeriod.CurrentResponsibility<DepartmentHead>(today))
                     .Select(x => new { x.Id, x.DepartmentId, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
+                var upcoming = await db.DepartmentHead.AsNoTracking().Where(x => x.StartDate > today).OrderBy(x => x.StartDate)
+                    .Select(x => new { x.DepartmentId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
                 var departmentsQuery = db.SubjectDepartment.AsNoTracking().Where(d => d.IsActive);
                 if (user.AccountType == AccountTypes.VicePrincipal)
                 {
@@ -60,14 +65,17 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
                 return departments.Select(d =>
                 {
                     var h = holders.FirstOrDefault(x => x.DepartmentId == d.DepartmentId);
-                    return new ResponsibilityRow(kind, d.DepartmentId, d.Name, null, h?.Id, h?.StaffId, h?.Name, h?.StartDate);
+                    var u = upcoming.FirstOrDefault(x => x.DepartmentId == d.DepartmentId);
+                    return new ResponsibilityRow(kind, d.DepartmentId, d.Name, null, h?.Id, h?.StaffId, h?.Name, h?.StartDate, u?.Name, u?.StartDate);
                 }).ToList();
             }
             case ResponsibilityKinds.Homeroom:
             {
                 var year = yearId ?? await db.AcademicYear.Where(y => y.IsCurrent).Select(y => (int?)y.AcademicYearId).FirstOrDefaultAsync();
-                var holders = await db.HomeroomAssignment.AsNoTracking().Where(EffectivePeriod.EffectiveAt<HomeroomAssignment>(today))
+                var holders = await db.HomeroomAssignment.AsNoTracking().Where(EffectivePeriod.CurrentResponsibility<HomeroomAssignment>(today))
                     .Select(x => new { x.Id, x.ClassId, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
+                var upcoming = await db.HomeroomAssignment.AsNoTracking().Where(x => x.StartDate > today).OrderBy(x => x.StartDate)
+                    .Select(x => new { x.ClassId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
                 var visibleClasses = await scope.FilterClassesAsync(db.Class.AsNoTracking());
                 var classes = await visibleClasses.Where(c => c.IsActive && c.AcademicYearId == year)
                     .OrderBy(c => c.Campus.Name).ThenBy(c => c.GradeLevel).ThenBy(c => c.Name)
@@ -75,7 +83,8 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
                 return classes.Select(c =>
                 {
                     var h = holders.FirstOrDefault(x => x.ClassId == c.ClassId);
-                    return new ResponsibilityRow(kind, c.ClassId, c.Name, c.Campus, h?.Id, h?.StaffId, h?.Name, h?.StartDate);
+                    var u = upcoming.FirstOrDefault(x => x.ClassId == c.ClassId);
+                    return new ResponsibilityRow(kind, c.ClassId, c.Name, c.Campus, h?.Id, h?.StaffId, h?.Name, h?.StartDate, u?.Name, u?.StartDate);
                 }).ToList();
             }
             default:
