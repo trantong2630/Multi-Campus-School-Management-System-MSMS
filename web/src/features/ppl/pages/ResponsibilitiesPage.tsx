@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Card, DatePicker, Drawer, Form, Select, Tabs } from 'antd';
+import { Card, DatePicker, Drawer, Form, Select, Switch, Tabs } from 'antd';
 import { InlineAlert } from '@/shared/components/InlineAlert';
 import { message } from '@/shared/lib/antdStatic';
 import type { Dayjs } from 'dayjs';
@@ -66,6 +66,7 @@ function KindTable({ kind, canWrite }: { kind: ResponsibilityKind; canWrite: boo
   const [assigning, setAssigning] = useState<ResponsibilityRow | null>(null);
   const [ending, setEnding] = useState<ResponsibilityRow | null>(null);
   const [history, setHistory] = useState<ResponsibilityRow | null>(null);
+  const [onlyMissing, setOnlyMissing] = useState(false);
   const historyData = useQuery({
     queryKey: ['ppl', 'resp-history', kind, history?.targetId],
     queryFn: () => pplApi.responsibilities.history(kind, history!.targetId),
@@ -73,6 +74,10 @@ function KindTable({ kind, canWrite }: { kind: ResponsibilityKind; canWrite: boo
   });
 
   const refresh = () => qc.invalidateQueries({ queryKey: ['ppl', 'resp'] });
+
+  // 4.3.34: lớp của năm hiện hành chưa có chủ nhiệm đang hiệu lực — đơn xin nghỉ của lớp đó nằm chờ tới khi có chủ nhiệm.
+  const missing = kind === 'homeroom' ? (rows.data?.filter((r) => !r.staffId && !r.nextStaffName) ?? []) : [];
+  const shown = onlyMissing ? missing : rows.data;
 
   const assign = async (v: AssignValues) => {
     await pplApi.responsibilities.assign({ kind, targetId: assigning!.targetId, staffId: v.staffId, startDate: toDateString(v.startDate) });
@@ -87,16 +92,29 @@ function KindTable({ kind, canWrite }: { kind: ResponsibilityKind; canWrite: boo
 
   return (
     <>
+      {missing.length > 0 && (
+        <InlineAlert
+          type="warning"
+          title={`${missing.length} lớp chưa có chủ nhiệm: ${missing.slice(0, 5).map((r) => r.targetName).join(', ')}${missing.length > 5 ? '…' : ''}`}
+          description="Đơn xin nghỉ của các lớp này nằm chờ tới khi có chủ nhiệm được gán."
+          action={<span>Chỉ hiện lớp chưa có chủ nhiệm <Switch size="small" checked={onlyMissing} onChange={setOnlyMissing} /></span>}
+        />
+      )}
       <Card className="table-card">
         <DataTable<ResponsibilityRow>
-          rowKey="targetId" loading={rows.isLoading} dataSource={rows.data}
+          rowKey="targetId" loading={rows.isLoading} dataSource={shown}
           emptyText={kind === 'homeroom' ? 'Chưa có lớp nào trong năm học hiện hành.' : `Chưa có ${meta.target.toLowerCase()} nào.`}
           columns={[
             { title: meta.target, dataIndex: 'targetName', render: (v: string) => <strong>{v}</strong> },
             ...(kind === 'homeroom' ? [{ title: 'Phân hiệu', dataIndex: 'targetGroup', width: 180 }] : []),
             {
               title: meta.holder, dataIndex: 'staffName',
-              render: (v: string | null) => v ?? <span className="muted">Chưa có</span>,
+              render: (v: string | null, r: ResponsibilityRow) => (
+                <div className="stack-cell">
+                  {v ?? <span className="muted">Chưa có</span>}
+                  {r.nextStaffName && <span className="muted">Sắp nhận: {r.nextStaffName} từ {formatDate(r.nextStartDate)}</span>}
+                </div>
+              ),
             },
             { title: 'Từ ngày', dataIndex: 'startDate', width: 130, className: 'tabular', render: (v: string | null) => formatDate(v) },
             {

@@ -13,5 +13,6 @@ public static class SchModule
             .AddScoped<EnrollmentService>()
             .AddScoped<SchoolDayService>()
             .AddScoped<RolloverService>()
-            .AddScoped<SchoolProfileService>();
+            .AddScoped<SchoolProfileService>()
+            .AddScoped<StructureStatsService>();
 }

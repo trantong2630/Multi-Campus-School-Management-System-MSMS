@@ -131,7 +131,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-width: 960px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -210,16 +210,32 @@
   border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 
+/* Bố cục giống Facebook: 1 ảnh hiện đủ khung ảnh; 2–4 ảnh chia ô, ảnh đầu lớn bên trái. */
 .feed-gallery--1 { grid-template-columns: 1fr; }
-.feed-gallery--2, .feed-gallery--3, .feed-gallery--4 { grid-template-columns: 1fr 1fr; }
+.feed-gallery--2 { grid-template-columns: 1fr 1fr; grid-auto-rows: 420px; }
+.feed-gallery--3, .feed-gallery--4 { grid-template-columns: 2fr 1fr; height: 520px; }
+.feed-gallery--3 { grid-template-rows: 1fr 1fr; }
+.feed-gallery--4 { grid-template-rows: 1fr 1fr 1fr; }
+.feed-gallery--3 .feed-gallery__cell:first-child { grid-row: 1 / 3; }
+.feed-gallery--4 .feed-gallery__cell:first-child { grid-row: 1 / 4; }
 
 .feed-gallery__cell {
   position: relative;
-  height: 300px;
+  min-height: 0;
 }
 
-.feed-gallery--1 .feed-gallery__cell { height: 520px; }
-.feed-gallery--3 .feed-gallery__cell:first-child { grid-column: 1 / -1; }
+/* Một ảnh: giữ nguyên tỉ lệ, không cắt; ảnh quá cao thì thu nhỏ vừa khung. */
+.feed-gallery--1 .feed-gallery__cell { background: var(--c-neutralBg); }
+.feed-gallery--1 .feed-gallery__cell .ant-image,
+.feed-gallery--1 .feed-gallery__cell .feed-image { height: auto; text-align: center; }
+.feed-gallery--1 .feed-gallery__cell .ant-image-img {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 640px;
+  margin: 0 auto;
+  object-fit: contain;
+}
 
 .feed-gallery__more {
   position: absolute;

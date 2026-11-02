@@ -1,5 +1,5 @@
 import {
-  BookOpen, CalendarDays, ChartColumn, ClipboardCheck, FileText, HeartHandshake, House, LayoutDashboard, Mail, Newspaper, Settings2, ShieldCheck, Users,
+  BookOpen, CalendarDays, ChartColumn, ClipboardCheck, FileText, HeartHandshake, House, LayoutDashboard, Mail, Newspaper, School, Settings2, ShieldCheck, Users,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { AccountType } from '@/shared/lib/labels';
@@ -44,8 +44,11 @@ const STAFF: AccountType[] = [...MGMT, 'Teacher'];
 // Cấu trúc menu theo Dev_Conventions §4.7.
 export const menu: MenuGroup[] = [
   { key: 'home', label: 'Trang chủ', icon: House, section: 'overview', path: '/', roles: ALL, ready: true },
+  // Một mục Dashboard, nội dung theo loại tài khoản (HT/HP vận hành, SA dữ liệu tổ chức, GV việc dạy của mình).
+  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, section: 'overview', path: '/dashboard', roles: STAFF, requires: { VicePrincipal: 'campus' }, ready: true },
+  // Màn theo dõi theo trách nhiệm: chỉ hiện khi trách nhiệm đang hiệu lực.
+  { key: 'homeroom', label: 'Lớp chủ nhiệm', icon: School, section: 'overview', path: '/homeroom', roles: ['Teacher'], requires: { Teacher: 'homeroom' }, ready: true },
   { key: 'lrn-dept', label: 'Tiến độ giao bài của tổ', icon: ChartColumn, section: 'overview', path: '/lrn/department', roles: ['Teacher'], requires: { Teacher: 'department' }, ready: true },
-  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, section: 'overview', path: '/dashboard', roles: ['Principal', 'VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
   {
     // Cán bộ thấy cả Đăng tin lẫn Bảng tin; học sinh, phụ huynh chỉ còn Bảng tin nên nhóm tự thu về một mục (xem visibleMenu).
     key: 'com', label: 'Bảng tin', icon: Newspaper, section: 'overview',
@@ -58,12 +61,13 @@ export const menu: MenuGroup[] = [
     key: 'sch', label: 'Thiết lập', icon: Settings2, section: 'manage',
     children: [
       { key: 'sch-school', label: 'Thông tin trường', path: '/sch/school', roles: ['SchoolAdmin', 'Principal'], ready: true },
-      { key: 'sch-campus', label: 'Phân hiệu', path: '/sch/campuses', roles: ['SchoolAdmin'], ready: true },
-      { key: 'sch-subject', label: 'Tổ chuyên môn & Môn học', path: '/sch/subjects', roles: ['SchoolAdmin'], ready: true },
-      { key: 'sch-year', label: 'Năm học & Học kỳ', path: '/sch/years', roles: ['SchoolAdmin'], ready: true },
+      // Màn cấu trúc kèm thống kê: School Admin sửa; Hiệu trưởng, Hiệu phó chỉ xem (Hiệu phó theo phân hiệu đang phụ trách).
+      { key: 'sch-campus', label: 'Phân hiệu', path: '/sch/campuses', roles: MGMT, requires: { VicePrincipal: 'campus' }, ready: true },
+      { key: 'sch-subject', label: 'Tổ chuyên môn & Môn học', path: '/sch/subjects', roles: MGMT, requires: { VicePrincipal: 'campus' }, ready: true },
+      { key: 'sch-year', label: 'Năm học & Học kỳ', path: '/sch/years', roles: MGMT, requires: { VicePrincipal: 'campus' }, ready: true },
       { key: 'sch-holiday', label: 'Ngày nghỉ', path: '/sch/holidays', roles: ['SchoolAdmin'], ready: true },
       { key: 'sch-slot', label: 'Khung giờ tiết', path: '/sch/period-slots', roles: ['SchoolAdmin'], ready: true },
-      { key: 'sch-class', label: 'Lớp & Ghi danh', path: '/sch/classes', roles: ['SchoolAdmin'], ready: true },
+      { key: 'sch-class', label: 'Lớp & Ghi danh', path: '/sch/classes', roles: MGMT, requires: { VicePrincipal: 'campus' }, ready: true },
       { key: 'sch-rollover', label: 'Kết chuyển năm học', path: '/sch/rollover', roles: ['SchoolAdmin'], ready: true },
     ],
   },
@@ -71,8 +75,8 @@ export const menu: MenuGroup[] = [
     key: 'ppl', label: 'Hồ sơ', icon: Users, section: 'manage',
     children: [
       { key: 'ppl-staff', label: 'Cán bộ', path: '/ppl/staff', roles: MGMT, requires: { VicePrincipal: 'campus' }, ready: true },
-      { key: 'ppl-student', label: 'Học sinh', path: '/ppl/students', roles: MGMT, ready: false },
-      { key: 'ppl-parent', label: 'Phụ huynh', path: '/ppl/parents', roles: MGMT, ready: false },
+      { key: 'ppl-student', label: 'Học sinh', path: '/ppl/students', roles: MGMT, ready: true },
+      { key: 'ppl-parent', label: 'Phụ huynh', path: '/ppl/parents', roles: MGMT, ready: true },
       { key: 'ppl-resp', label: 'Trách nhiệm', path: '/ppl/responsibilities', roles: ['SchoolAdmin', 'Principal'], ready: true },
     ],
   },

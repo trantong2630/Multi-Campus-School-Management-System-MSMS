@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Button, Card, Form, Input, Select, Tabs } from 'antd';
 import { message } from '@/shared/lib/antdStatic';
-import { Pencil, Plus, Power } from 'lucide-react';
+import { BookOpen, CalendarCheck, Library, Pencil, Plus, Power, UsersRound } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/app/AuthProvider';
 import { DataTable } from '@/shared/components/DataTable';
@@ -9,10 +9,15 @@ import { FilterBar } from '@/shared/components/FilterBar';
 import { FormModal } from '@/shared/components/FormModal';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { RowActions } from '@/shared/components/RowActions';
+import { StatCard } from '@/shared/components/StatCard';
+import { StatStrip } from '@/shared/components/StatStrip';
 import { StatusBadge } from '@/shared/components/StatusBadge';
 import { confirmAction, showError } from '@/shared/lib/feedback';
+import { formatNumber as fmt } from '@/shared/lib/format';
 import { schApi } from '../api';
-import { useDepartments } from '../hooks/useCatalogs';
+import { DataGapAlert } from '../components/DataGapAlert';
+import { useCatalogStats, useDepartments } from '../hooks/useCatalogs';
+import '../components/school.css';
 import type { Department, Subject } from '../types';
 
 interface DeptValues { name: string; description?: string }
@@ -26,6 +31,15 @@ export function SubjectsPage() {
   const [deptFilter, setDeptFilter] = useState<number | undefined>();
   const departments = useDepartments();
   const subjects = useQuery({ queryKey: ['sch', 'subjects', deptFilter], queryFn: () => schApi.subjects.list(deptFilter) });
+  const stats = useCatalogStats();
+  const deptStat = new Map((stats.data?.departments ?? []).map((d) => [d.departmentId, d]));
+  const subjectStat = new Map((stats.data?.subjects ?? []).map((s) => [s.subjectId, s]));
+  const activeDepts = departments.data?.filter((d) => d.isActive) ?? [];
+  const activeSubjects = (departments.data ?? []).reduce((n, d) => n + (d.isActive ? d.subjectCount : 0), 0);
+  const deptsWithoutHead = activeDepts.filter((d) => !deptStat.get(d.departmentId)?.headName).length;
+  const teacherCount = activeDepts.reduce((n, d) => n + (deptStat.get(d.departmentId)?.teacherCount ?? 0), 0);
+  const taughtSubjects = stats.data?.subjects.filter((s) => s.teacherCount > 0).length;
+  const loaded = !!departments.data && !!stats.data;
 
   const [deptForm] = Form.useForm<DeptValues>();
   const [subjectForm] = Form.useForm<SubjectValues>();
@@ -67,9 +81,25 @@ export function SubjectsPage() {
     <>
       <PageHeader
         title="Tổ chuyên môn & Môn học"
-        description="Viết tắt môn chỉ gồm chữ và số, duy nhất toàn trường — dùng trong ô MÔN-GV của file thời khóa biểu."
+        description={canWrite
+          ? 'Viết tắt môn chỉ gồm chữ và số, duy nhất toàn trường — dùng trong ô MÔN-GV của file thời khóa biểu.'
+          : 'Tổ chuyên môn, môn học và số giáo viên toàn trường. Phân công dạy theo thời khóa biểu đã phát hành.'}
         extra={addButton}
       />
+      <StatStrip>
+        <StatCard icon={Library} tone="green" label="Tổ chuyên môn" value={fmt(loaded ? activeDepts.length : undefined)}
+          attention={deptsWithoutHead > 0}
+          hint={loaded ? (deptsWithoutHead ? `${deptsWithoutHead} tổ chưa có tổ trưởng` : 'Tổ nào cũng có tổ trưởng') : undefined} />
+        <StatCard icon={BookOpen} tone="sky" label="Môn học đang dùng" value={fmt(loaded ? activeSubjects : undefined)} />
+        <StatCard icon={UsersRound} tone="violet" label="Giáo viên thuộc tổ" value={fmt(loaded ? teacherCount : undefined)}
+          hint={activeDepts.length && teacherCount ? `Bình quân ${Math.round(teacherCount / activeDepts.length)} người mỗi tổ` : undefined} />
+        <StatCard icon={CalendarCheck} tone="amber" label="Môn đang có giáo viên dạy" value={fmt(taughtSubjects)}
+          hint={stats.data ? (stats.data.semesterName ? `Theo thời khóa biểu ${stats.data.semesterName}` : 'Chưa có học kỳ hiện hành') : undefined} />
+      </StatStrip>
+      <DataGapAlert items={[
+        { key: 'head', label: 'tổ chuyên môn chưa có tổ trưởng', count: deptsWithoutHead, to: '/ppl/responsibilities' },
+        { key: 'teacher', label: 'giáo viên chưa thuộc tổ chuyên môn nào', count: stats.data?.teachersWithoutDepartment, to: '/ppl/staff' },
+      ]} />
       <Tabs
         activeKey={tab}
         onChange={(k) => setTab(k as typeof tab)}
@@ -93,6 +123,14 @@ export function SubjectsPage() {
                       { title: 'Viết tắt', dataIndex: 'abbreviation', width: 120, render: (v: string) => <code className="mono">{v}</code> },
                       { title: 'Môn học', dataIndex: 'name' },
                       { title: 'Tổ chuyên môn', dataIndex: 'departmentName' },
+                      {
+                        title: 'Giáo viên dạy', key: 'teachers', width: 130, align: 'right', className: 'tabular',
+                        render: (_: unknown, s: Subject) => fmt(subjectStat.get(s.subjectId)?.teacherCount ?? (stats.data ? 0 : undefined)),
+                      },
+                      {
+                        title: 'Lớp đang học', key: 'classes', width: 130, align: 'right', className: 'tabular',
+                        render: (_: unknown, s: Subject) => fmt(subjectStat.get(s.subjectId)?.classCount ?? (stats.data ? 0 : undefined)),
+                      },
                       { title: 'Trạng thái', dataIndex: 'isActive', width: 160, align: 'center', render: (v: boolean) => <StatusBadge domain="catalog" value={v ? 'Active' : 'Inactive'} /> },
                       ...(canWrite ? [{
                         title: 'Thao tác', key: 'actions', width: 120, align: 'center' as const, fixed: 'right' as const,
@@ -123,9 +161,21 @@ export function SubjectsPage() {
                   rowKey="departmentId" loading={departments.isLoading} dataSource={departments.data}
                   emptyText="Chưa có tổ chuyên môn nào."
                   columns={[
-                    { title: 'Tổ chuyên môn', dataIndex: 'name' },
+                    { title: 'Tổ chuyên môn', dataIndex: 'name', render: (v: string) => <b>{v}</b> },
+                    {
+                      title: 'Tổ trưởng', key: 'head',
+                      render: (_: unknown, d: Department) => {
+                        const head = deptStat.get(d.departmentId)?.headName;
+                        if (head) return head;
+                        return stats.data && d.isActive ? <span className="text-warn">Chưa có tổ trưởng</span> : <span className="muted">—</span>;
+                      },
+                    },
                     { title: 'Mô tả', dataIndex: 'description', render: (v: string | null) => v ?? <span className="muted">—</span> },
                     { title: 'Số môn', dataIndex: 'subjectCount', width: 100, align: 'right', className: 'tabular' },
+                    {
+                      title: 'Giáo viên', key: 'teachers', width: 110, align: 'right', className: 'tabular',
+                      render: (_: unknown, d: Department) => fmt(deptStat.get(d.departmentId)?.teacherCount ?? (stats.data ? 0 : undefined)),
+                    },
                     { title: 'Trạng thái', dataIndex: 'isActive', width: 160, align: 'center', render: (v: boolean) => <StatusBadge domain="catalog" value={v ? 'Active' : 'Inactive'} /> },
                     ...(canWrite ? [{
                       title: 'Thao tác', key: 'actions', width: 120, align: 'center' as const, fixed: 'right' as const,
