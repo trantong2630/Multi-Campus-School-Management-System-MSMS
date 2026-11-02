@@ -19,6 +19,9 @@ public partial class LeaveRequest
 
     public string SessionOfDay { get; set; } = null!;
 
+    /// <summary>Các tiết nghỉ trong buổi (số tiết 1-5), cách nhau bằng dấu phẩy. Trống nghĩa là nghỉ cả buổi.</summary>
+    public string? SlotIds { get; set; }
+
     public string? Reason { get; set; }
 
     public string Status { get; set; } = null!;

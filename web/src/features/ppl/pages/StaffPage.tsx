@@ -37,7 +37,6 @@ interface FormValues {
   primaryCampusId: number;
   departmentId?: number;
   teacherAbbr?: string;
-  position?: string;
 }
 
 const PAGE_SIZE = 20;
@@ -154,7 +153,11 @@ export function StaffPage() {
             getCheckboxProps: (s) => ({ disabled: s.accountId !== null || !s.isActive }),
           } : undefined}
           columns={[
-            { title: 'Họ và tên', dataIndex: 'fullName', width: 210, render: (v: string, s: Staff) => <PersonCell name={v} sub={s.personCode} muted={!s.isActive} /> },
+            {
+              title: 'Mã hồ sơ', dataIndex: 'personCode', width: 110, className: 'tabular',
+              render: (v: string, s: Staff) => s.isActive ? v : <span className="muted">{v}</span>,
+            },
+            { title: 'Họ và tên', dataIndex: 'fullName', width: 210, render: (v: string, s: Staff) => <PersonCell name={v} muted={!s.isActive} /> },
             { title: 'Ngày sinh', dataIndex: 'dateOfBirth', width: 104, className: 'tabular', render: (v: string | null) => formatDate(v) },
             { title: 'Số định danh', dataIndex: 'nationalId', width: 120, className: 'tabular', render: (v: string | null) => v ?? <span className="muted">—</span> },
             { title: 'Phân hiệu chính', dataIndex: 'primaryCampusName', width: 120, render: (v: string | null) => v ?? <span className="muted">—</span> },
@@ -206,7 +209,7 @@ export function StaffPage() {
         initialValues={editing && editing !== 'new'
           ? { ...editing, nationalId: editing.nationalId ?? undefined, dateOfBirth: editing.dateOfBirth ? dayjs(editing.dateOfBirth) : undefined, gender: editing.gender ?? undefined,
             phoneNumber: editing.phoneNumber ?? undefined, email: editing.email ?? undefined, departmentId: editing.departmentId ?? undefined,
-            teacherAbbr: editing.teacherAbbr ?? undefined, position: editing.position ?? undefined } as Partial<FormValues>
+            teacherAbbr: editing.teacherAbbr ?? undefined } as Partial<FormValues>
           : undefined}
       >
         <div className="form-grid">
@@ -228,7 +231,6 @@ export function StaffPage() {
             <Select allowClear options={departments.data?.filter((d) => d.isActive).map((d) => ({ value: d.departmentId, label: d.name }))} />
           </Form.Item>
           <Form.Item label="Giới tính" name="gender"><Select allowClear options={GENDERS} /></Form.Item>
-          <Form.Item label="Chức danh" name="position"><Input maxLength={100} /></Form.Item>
           <Form.Item label="Số điện thoại" name="phoneNumber"><Input maxLength={20} /></Form.Item>
           <Form.Item label="Email nhận mã OTP" name="email" rules={[{ type: 'email', message: 'Email chưa đúng định dạng.' }]}>
             <Input maxLength={150} />

@@ -10,7 +10,7 @@ namespace MSMS.Api.Modules.Scd.Services;
 /// <summary>Phần đọc của SCD-01: danh sách phiên bản, lưới phiên bản, lịch dạy theo ngày, lịch dạy của giáo viên.</summary>
 public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, ScopeResolver scope, TimetablePublishService publish)
 {
-    /// <summary>Phân hiệu người dùng được thao tác: School Admin và Principal thấy tất cả, Vice Principal chỉ phân hiệu đang phụ trách.</summary>
+    /// <summary>Phân hiệu được xem lịch: Principal thấy tất cả, Vice Principal chỉ phân hiệu đang phụ trách.</summary>
     public async Task<List<CampusOptionDto>> MyCampusesAsync()
     {
         var query = db.Campus.AsNoTracking().Where(c => c.IsActive);
@@ -125,13 +125,15 @@ public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, Sco
         return new DayScheduleDto(date, holiday, holiday is not null, classes, rows);
     }
 
-    /// <summary>Giáo viên xem lịch dạy của mình: gồm tiết bù và tiết dạy thay; tiết Chờ xử lý và Đã hủy hiện rõ trạng thái.</summary>
+    /// <summary>Giáo viên xem lịch dạy của mình: gồm tiết bù và tiết dạy thay; tiết Chờ xử lý và Đã hủy hiện rõ trạng thái, kể cả tiết bị bỏ trống do chính mình khai vắng. Tiết đã có người dạy thay thì không còn hiện.</summary>
     public async Task<List<MySessionDto>> GetMineAsync(DateOnly from, DateOnly to)
     {
         if (to < from) throw ApiException.BadRequest("Ngày kết thúc phải sau ngày bắt đầu.");
         if (to.DayNumber - from.DayNumber > 62) throw ApiException.BadRequest("Chỉ xem tối đa 62 ngày mỗi lần. Chọn khoảng ngắn hơn.");
         return await db.TeachingSession.AsNoTracking()
-            .Where(s => s.TeacherId == user.PersonId && s.SessionDate >= from && s.SessionDate <= to)
+            // Tiết còn giáo viên là tiết của mình; tiết bị bỏ trống vì mình khai vắng (Chờ xử lý hoặc Đã hủy) vẫn hiện để biết số phận của tiết.
+            .Where(s => (s.TeacherId == user.PersonId || (s.TeacherId == null && s.TeacherAbsence != null && s.TeacherAbsence.TeacherId == user.PersonId))
+                        && s.SessionDate >= from && s.SessionDate <= to)
             .OrderBy(s => s.SessionDate).ThenBy(s => s.PeriodSlot.StartTime)
             .Select(s => new MySessionDto(s.SessionId, s.SessionDate, s.PeriodSlotId, s.PeriodSlot.SessionOfDay, s.PeriodSlot.PeriodNo,
                 s.PeriodSlot.StartTime, s.PeriodSlot.EndTime, s.Class.Name, s.Class.Campus.Name, s.SubjectId, s.Subject.Name, s.Subject.Abbreviation, s.Status, s.Source))
@@ -180,6 +182,47 @@ public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, Sco
         }
         return await ProjectSessions(query);
     }
+
+    /// <summary>Học sinh xem lịch học của mình: các tiết của lớp em có ghi danh hiệu lực vào ngày của tiết (BR-17).</summary>
+    public async Task<List<ViewSessionDto>> GetStudentSessionsAsync(DateOnly from, DateOnly to)
+    {
+        CheckRange(from, to);
+        return await ProjectSessions(EnrolledSessions(user.PersonId, from, to));
+    }
+
+    /// <summary>Phụ huynh xem lịch học của con được liên kết; con không thuộc phụ huynh này thì bị từ chối.</summary>
+    public async Task<List<ViewSessionDto>> GetChildSessionsAsync(int studentId, DateOnly from, DateOnly to)
+    {
+        CheckRange(from, to);
+        if (!await db.ParentStudentLink.AnyAsync(l => l.ParentId == user.PersonId && l.StudentId == studentId))
+            throw ApiException.Forbidden("Học sinh này không được liên kết với tài khoản của bạn.");
+        return await ProjectSessions(EnrolledSessions(studentId, from, to));
+    }
+
+    /// <summary>Lớp của học sinh tại một ngày; học sinh chưa có ghi danh hiệu lực tại ngày đó thì lấy ghi danh gần nhất. Không có ghi danh thì trả null.</summary>
+    public async Task<StudentClassDto?> GetStudentClassAsync(int studentId, DateOnly date)
+    {
+        var rows = db.Enrollment.AsNoTracking().Where(e => e.StudentId == studentId);
+        var current = await rows.Where(e => e.StartDate <= date && (e.EndDate == null || e.EndDate >= date))
+                          .OrderByDescending(e => e.StartDate).FirstOrDefaultAsync()
+                      ?? await rows.OrderByDescending(e => e.StartDate).FirstOrDefaultAsync();
+        if (current is null) return null;
+        return await db.Class.AsNoTracking().Where(c => c.ClassId == current.ClassId)
+            .Select(c => new StudentClassDto(c.Name, c.Campus.Name)).FirstOrDefaultAsync();
+    }
+
+    public Task<StudentClassDto?> GetMyClassAsync(DateOnly date) => GetStudentClassAsync(user.PersonId, date);
+
+    public async Task<StudentClassDto?> GetChildClassAsync(int studentId, DateOnly date)
+    {
+        if (!await db.ParentStudentLink.AnyAsync(l => l.ParentId == user.PersonId && l.StudentId == studentId))
+            throw ApiException.Forbidden("Học sinh này không được liên kết với tài khoản của bạn.");
+        return await GetStudentClassAsync(studentId, date);
+    }
+
+    private IQueryable<Data.Entities.TeachingSession> EnrolledSessions(int studentId, DateOnly from, DateOnly to) =>
+        db.TeachingSession.AsNoTracking().Where(s => s.SessionDate >= from && s.SessionDate <= to
+            && s.Class.Enrollment.Any(e => e.StudentId == studentId && e.StartDate <= s.SessionDate && (e.EndDate == null || e.EndDate >= s.SessionDate)));
 
     private static void CheckRange(DateOnly from, DateOnly to)
     {

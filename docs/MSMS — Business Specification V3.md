@@ -17,8 +17,8 @@ MSMS là hệ thống độc lập, tự quản lý dữ liệu của mình; kh�
 | Thiết lập | Thông tin trường (tên, địa chỉ, liên hệ, logo), phân hiệu, tổ chuyên môn, môn học, năm học, học kỳ, ngày nghỉ, khung giờ tiết, lớp |
 | Hồ sơ | Cán bộ, học sinh, phụ huynh, ghi danh, liên kết phụ huynh – học sinh |
 | Trách nhiệm | Trách nhiệm (phân hiệu, tổ, lớp chủ nhiệm) |
-| Vận hành | Thời khóa biểu, phụ trách chuyên môn (tính từ thời khóa biểu), lịch dạy thực tế, xử lý giáo viên vắng, ngày nghỉ đột xuất, điểm danh theo tiết |
-| Học tập | Ngân hàng câu hỏi, bài tập trắc nghiệm, chấm tự động, công bố điểm, phân tích AI, giám sát tổ |
+| Vận hành | Thời khóa biểu, phụ trách chuyên môn (tính từ thời khóa biểu), lịch dạy thực tế, xử lý giáo viên vắng, điểm danh theo tiết |
+| Học tập | Ngân hàng câu hỏi, bài tập rèn luyện trắc nghiệm, chấm tự động, phân tích bằng AI (MSMS AI), tiến độ giao bài của tổ |
 | Dịch vụ phụ huynh | Đơn xin nghỉ, sổ liên lạc tuần, hộp thư phụ huynh – giáo viên |
 | Truyền thông | Thông báo trong ứng dụng, bảng tin |
 | Giám sát | Dashboard, Audit Log, xuất Excel |
@@ -36,7 +36,7 @@ Gửi file: không có, trừ **ảnh đính kèm bài đăng bảng tin**, **�
 3. **Không lưu thứ tính ra được.** Trạng thái suy được từ ngày giờ hoặc dữ liệu khác thì tính lúc đọc (mục 6.2). Nhờ vậy hệ thống không cần job cập nhật trạng thái.
 4. **Quyền luôn kiểm tra tại Backend**, không dựa vào giao diện.
 5. **Ngày nghiệp vụ theo giờ Việt Nam (Asia/Ho_Chi_Minh).** Backend quyết định "hôm nay", hạn nộp và mọi điều kiện thời gian.
-6. **Hệ thống gợi ý, con người quyết định.** MSMS không tự xếp giáo viên dạy thay, không tự tạo tiết bù, không tự công bố điểm hay nhận xét.
+6. **Hệ thống gợi ý, con người quyết định.** MSMS không tự xếp giáo viên dạy thay, không tự tạo tiết bù.
 7. **Đủ dùng hơn đầy đủ.** Quy tắc nào làm luồng phức tạp hơn giá trị nó mang lại thì bỏ.
 
 ---
@@ -72,11 +72,11 @@ Có **6 loại tài khoản; một tài khoản mang đúng một loại** (BR-0
 
 | Actor | Đọc | Ghi |
 | --- | --- | --- |
-| **School Admin** | Mọi dữ liệu vận hành toàn trường, kể cả điểm và nhận xét chưa công bố. **Không** đọc hội thoại phụ huynh – giáo viên | Mọi danh mục (kể cả thông tin trường), hồ sơ, tài khoản, trách nhiệm, ngày nghỉ cấp trường hoặc phân hiệu, **nhập bù và sửa điểm danh**. **Không** có Dashboard, **không** xuất Excel, **không** làm thời khóa biểu, **không** làm việc đứng tên người khác (mục 2.4) |
+| **School Admin** | Mọi dữ liệu vận hành toàn trường, kể cả điểm và phân tích bài tập. **Không** đọc hội thoại phụ huynh – giáo viên | Mọi danh mục (kể cả thông tin trường), hồ sơ, tài khoản, trách nhiệm, ngày nghỉ cấp trường hoặc phân hiệu, **nhập bù và sửa điểm danh**. **Không** có Dashboard, **không** xuất Excel, **không** làm thời khóa biểu, **không** làm việc đứng tên người khác (mục 2.4) |
 | **Principal** | Toàn trường: lịch dạy, điểm danh, Dashboard, bảng tin. **Không** đọc đơn nghỉ | Trách nhiệm (mục 2.2), thông tin trường, bài đăng bảng tin |
-| **Vice Principal** | Phân hiệu mình: lịch dạy, điểm danh, đơn nghỉ, Dashboard. Màn hình Lịch dạy chỉ cho xem phân hiệu mình; riêng khi chọn giáo viên cho tiết hoặc dạy thay thì **danh sách và lịch dạy của giáo viên là toàn trường**, kiểm trùng lịch cũng toàn trường (BR-13); màn hình Phụ trách chuyên môn cũng xem **toàn trường** | Thời khóa biểu, điều chỉnh lịch, giáo viên vắng, ngày nghỉ đột xuất — cho phân hiệu mình. Bài đăng bảng tin. Xuất Excel phân hiệu mình. **Không** sửa điểm danh |
-| **Teacher** | Tiết mình dạy; lớp + môn mình phụ trách. Nếu chủ nhiệm: hồ sơ, chuyên cần, đơn nghỉ, sổ liên lạc của lớp chủ nhiệm. Nếu tổ trưởng: bài tập các môn của tổ | Điểm danh tiết mình dạy **trong ngày của tiết**; soạn câu hỏi và đề của mình; giao bài, công bố điểm và nhận xét cho lớp + môn mình phụ trách; trả lời tin nhắn; bài đăng bảng tin. Nếu chủ nhiệm: duyệt đơn nghỉ |
-| **Student** | Lịch học, bài tập, điểm và nhận xét đã công bố, chuyên cần, sổ liên lạc của chính mình; bài đăng Toàn trường | Làm và nộp bài |
+| **Vice Principal** | Phân hiệu mình: lịch dạy, điểm danh, đơn nghỉ, Dashboard. Màn hình Lịch dạy chỉ cho xem phân hiệu mình; riêng khi chọn giáo viên cho tiết hoặc dạy thay thì **danh sách giáo viên là toàn trường**, kèm trạng thái rảnh hoặc bận, kiểm trùng lịch cũng toàn trường (BR-13); màn hình Phụ trách chuyên môn cũng xem **toàn trường** | Thời khóa biểu, điều chỉnh lịch, giáo viên vắng — cho phân hiệu mình. Bài đăng bảng tin. Xuất Excel phân hiệu mình. **Không** sửa điểm danh |
+| **Teacher** | Tiết mình dạy; lớp + môn mình phụ trách. Nếu chủ nhiệm: hồ sơ, chuyên cần, đơn nghỉ, sổ liên lạc của lớp chủ nhiệm. Nếu tổ trưởng: bài tập các môn của tổ | Điểm danh tiết mình dạy **trong ngày của tiết**; soạn câu hỏi của mình; giao bài cho lớp + môn mình phụ trách; trả lời tin nhắn; bài đăng bảng tin. Nếu chủ nhiệm: duyệt đơn nghỉ |
+| **Student** | Lịch học, bài tập, điểm, đáp án và phân tích AI của bài mình đã nộp, chuyên cần, sổ liên lạc của chính mình; bài đăng Toàn trường | Làm và nộp bài |
 | **Parent** | Như Student, cho từng con được liên kết | Gửi và rút đơn nghỉ, tạo hội thoại và nhắn tin |
 
 Người vừa là cán bộ vừa là phụ huynh dùng **hai hồ sơ và hai tài khoản riêng** (BR-03).
@@ -92,9 +92,7 @@ Việc đứng tên người khác — chỉ đúng vai trò làm được:
 | Làm bài, nộp bài | Student, bằng tài khoản của mình |
 | Gửi, rút đơn nghỉ | Parent có liên kết với học sinh |
 | Tạo hội thoại, gửi tin nhắn | Parent có liên kết (tạo và gửi); cán bộ của hội thoại (chỉ gửi) |
-| Soạn, giao, nhân bản đề | Teacher — soạn đề của mình; giao thì cần phụ trách chuyên môn đang hiệu lực |
-| Công bố điểm | Teacher đang phụ trách chuyên môn |
-| Tạo lại, chỉnh, duyệt, công bố nhận xét AI | Teacher đang phụ trách chuyên môn |
+| Soạn câu hỏi, giao bài | Teacher — soạn câu hỏi của mình; giao bài thì cần phụ trách chuyên môn đang hiệu lực |
 | Điểm danh với tư cách giáo viên dạy | Giáo viên của tiết, trong ngày của tiết |
 
 Việc duy nhất School Admin làm thay được trên dữ liệu giảng dạy là nhập bù và sửa điểm danh của tiết đã qua (ghi là người sửa, BR-17). School Admin không duyệt đơn nghỉ, không đọc hội thoại, không thao tác thời khóa biểu, không có Dashboard và không xuất Excel. Mọi thao tác ghi lưu người thực hiện ngay trên bản ghi nghiệp vụ.
@@ -113,12 +111,12 @@ Cả hai đều là **tiện ích, không phải điều kiện vận hành**: h
 
 |  |  |
 | --- | --- |
-| Dùng ở đâu | Sinh nháp câu hỏi trắc nghiệm (LRN-01); phân tích kết quả học tập của lớp và từng học sinh (LRN-04) |
-| Nhận vào | Chỉ dữ liệu **đã tính sẵn, gắn mã giả lập**: tỉ lệ đúng/sai theo câu, phân bố điểm, so sánh với tối đa 5 bài gần nhất cùng môn của chính học sinh đó |
-| Không bao giờ nhận | Tên, mã học sinh, ngày sinh, tên lớp, tên trường, bài làm nguyên văn |
-| Không bao giờ làm | Chấm điểm; quyết định đúng/sai; tự công bố; ghi trực tiếp vào dữ liệu nghiệp vụ |
+| Dùng ở đâu | Sinh nháp câu hỏi trắc nghiệm (LRN-01); phân tích từng bài làm của học sinh (LRN-04) |
+| Nhận vào | Nội dung câu hỏi, các lựa chọn, đáp án đúng, lựa chọn của học sinh ở từng câu và điểm — **không kèm danh tính** |
+| Không bao giờ nhận | Tên, mã học sinh, ngày sinh, tên lớp, tên trường |
+| Không bao giờ làm | Chấm điểm; quyết định đúng/sai; ghi trực tiếp vào dữ liệu nghiệp vụ ngoài phân tích của chính bài làm |
 
-Câu hỏi do AI sinh là **nháp** cho tới khi giáo viên xác nhận. Nhận xét do AI sinh là **nháp** cho tới khi giáo viên duyệt và công bố. **AI hỏng hoặc thiếu dữ liệu:** chấm, nộp, công bố điểm vẫn chạy; giáo viên soạn đề thủ công.
+Trợ lý AI của hệ thống tên là **MSMS AI**. Câu hỏi do AI sinh là **nháp** cho tới khi giáo viên xác nhận. Phân tích bài làm do AI sinh **tự động khi học sinh nộp bài**, không qua giáo viên duyệt. **AI hỏng hoặc thiếu dữ liệu:** chấm, nộp bài, xem điểm vẫn chạy; phần phân tích để trống, không thử lại; giáo viên soạn câu hỏi thủ công.
 
 **Cần rà soát trước khi vận hành thật:** sự đồng ý của phụ huynh về việc gửi dữ liệu học tập cho nhà cung cấp AI, điều khoản không dùng dữ liệu để huấn luyện, quy định bảo vệ dữ liệu cá nhân.
 
@@ -149,7 +147,7 @@ Mọi tính năng phục vụ một trong bốn luồng. Tính năng không nằ
 2. **Vice Principal** sửa bản Nháp ngay trên lưới — kéo tiết, thêm tiết, đổi giáo viên, xóa tiết — và xem các xung đột lịch toàn trường được đánh dấu tại ô (BR-12, BR-13).
 3. **Vice Principal** xem trước kết quả, xác nhận cảnh báo về tiết sẽ bị xóa, rồi Phát hành. Hệ thống sinh tiết học tới hết học kỳ cho các lớp trong bản Nháp, trừ ngày nghỉ (BR-14).
 4. Sau khi Phát hành, phụ trách chuyên môn của giáo viên tự có theo thời khóa biểu; **Vice Principal** xem ở màn hình Phụ trách chuyên môn, không nhập tay (BR-14, SCD-04).
-5. Khi có việc phát sinh, **Vice Principal** đổi giáo viên, hủy tiết, thêm tiết bù, hoặc khai ngày nghỉ đột xuất (BR-15).
+5. Khi có việc phát sinh, **Vice Principal** đổi giáo viên, hủy tiết hoặc thêm tiết bù (BR-15).
 6. Giáo viên vắng: **Vice Principal** khai báo, hệ thống đưa các tiết bị ảnh hưởng về Chờ xử lý và gợi ý giáo viên rảnh; Vice Principal quyết định từng tiết (BR-16).
 7. **Giáo viên của tiết** điểm danh trong ngày của tiết. Sau ngày đó chỉ **School Admin** nhập bù hoặc sửa (BR-17).
 
@@ -157,11 +155,11 @@ Mọi tính năng phục vụ một trong bốn luồng. Tính năng không nằ
 
 Đây là **bài tập rèn luyện**, không phải sổ điểm chính thức.
 
-1. **Teacher** soạn câu hỏi trắc nghiệm 4 lựa chọn, 1 đáp án — thủ công hoặc từ nháp AI — và ghép thành đề (BR-20).
-2. **Teacher** giao đề của mình cho lớp mình phụ trách, kèm hạn nộp (BR-21).
+1. **Teacher** soạn câu hỏi trắc nghiệm 4 lựa chọn, ít nhất 1 đáp án đúng — thủ công hoặc từ nháp AI — vào ngân hàng câu hỏi (BR-20).
+2. **Teacher** giao bài cho lớp + môn mình phụ trách: chọn câu hỏi từ ngân hàng, hạn nộp, thời lượng làm bài tùy chọn (BR-21).
 3. **Student** làm bài, tự lưu nháp, nộp **một lượt** trước hạn; Backend chấm ngay (BR-21).
-4. Hết hạn, **Teacher** xem kết quả và thống kê câu sai nhiều nhất, rồi công bố điểm (BR-22).
-5. **Teacher** chạy phân tích AI, chỉnh, duyệt, công bố nhận xét (BR-23).
+4. Nộp xong, **Student** thấy ngay điểm, đáp án đúng và giải thích; **Parent** xem được kết quả của con; **Teacher** xem điểm từng học sinh (BR-22).
+5. **MSMS AI** phân tích bài làm — điểm mạnh, điểm yếu, giải thích lỗi sai, gợi ý kiến thức — hiện cùng kết quả cho học sinh, phụ huynh và giáo viên (BR-23).
 6. **Tổ trưởng** theo dõi tiến độ của tổ ở chế độ đọc (LRN-05).
 
 ### Luồng C — Dịch vụ phụ huynh và truyền thông
@@ -233,8 +231,8 @@ Màn hình Thiết lập chỉ dành cho SA; HT chỉ có màn hình Thông tin 
 | ID | Feature | Nội dung chính | Ghi | Đọc | BR |
 | --- | --- | --- | --- | --- | --- |
 | SCD-01 | Import & Phát hành thời khóa biểu | Tải mẫu điền sẵn, import theo học kỳ (file gồm các lớp cần đổi), đối chiếu viết tắt, bảng lỗi theo ô, sửa bản Nháp bằng kéo thả, kiểm xung đột toàn trường, xem trước, Phát hành và Phát hành lại | HP | lưới TKB: HP · lịch cá nhân: GV 📱, HS 📱, PH 📱 | BR-06, 12, 13, 14 |
-| SCD-02 | Điều chỉnh lịch dạy | Đổi giáo viên của tiết, hủy tiết, thêm tiết bù, khai ngày nghỉ đột xuất, xem trước số tiết sẽ bị hủy | HP | GV 📱, HS 📱, PH 📱 | BR-13, 15 |
-| SCD-03 | Xử lý giáo viên vắng | Khai báo và xóa khai báo giáo viên vắng, danh sách tiết Chờ xử lý, gợi ý giáo viên rảnh, xử lý từng tiết theo ba lựa chọn | HP | HP | BR-13, 16 |
+| SCD-02 | Điều chỉnh lịch dạy | Đổi giáo viên của tiết, hủy tiết, thêm tiết bù | HP | GV 📱, HS 📱, PH 📱 | BR-13, 15 |
+| SCD-03 | Xử lý giáo viên vắng | Khai báo vắng theo ngày hoặc theo tiết, xóa khai báo, danh sách tiết Chờ xử lý, gợi ý giáo viên rảnh, xử lý từng tiết: dạy thay hoặc hủy | HP | HP | BR-13, 16 |
 | SCD-04 | Phụ trách chuyên môn | Màn hình chỉ đọc, tính từ thời khóa biểu đã phát hành: mỗi giáo viên một dòng, liệt kê các mục môn – lớp kèm số tiết mỗi tuần và tổng tiết; lọc theo phân hiệu và môn; xem toàn trường | — | HP | BR-14 |
 
 ### ATT — Attendance (1)
@@ -247,19 +245,19 @@ Màn hình Thiết lập chỉ dành cho SA; HT chỉ có màn hình Thông tin 
 
 | ID | Feature | Nội dung chính | Ghi | Đọc | BR |
 | --- | --- | --- | --- | --- | --- |
-| LRN-01 | Ngân hàng câu hỏi & Đề | Câu hỏi dùng chung theo môn, nháp AI, ghép đề, nhân bản đề của người khác | GV (của mình) | mọi GV | BR-20 |
-| LRN-02 | Giao bài & Nộp bài | Giao đề mình sở hữu cho lớp mình phụ trách; học sinh làm bài, tự lưu nháp, nộp một lượt | GV giao · HS làm 📱 | HS 📱 | BR-21 |
-| LRN-03 | Chấm bài & Công bố điểm | Chấm ngay khi nộp, thống kê câu sai nhiều nhất, công bố điểm cho cả lớp | GV phụ trách | GV · sau công bố: HS 📱, PH 📱 | BR-22 |
-| LRN-04 | Phân tích học tập bằng AI | Tính chỉ số, ẩn danh, gọi AI, chỉnh – duyệt – công bố nhận xét, chạy lại khi lỗi | GV phụ trách | sau công bố: HS 📱, PH 📱 | BR-23 |
-| LRN-05 | Giám sát cấp tổ | Tổ trưởng xem tiến độ bài tập của mọi lớp thuộc các môn trong tổ: trạng thái, hạn nộp, số nộp / sĩ số, đã công bố điểm chưa. Chỉ đọc, Backend chặn mọi đường ghi | — | TT | — |
+| LRN-01 | Ngân hàng câu hỏi | Câu hỏi dùng chung theo môn, khối 6–9, nháp AI | GV (của mình) | mọi GV | BR-20 |
+| LRN-02 | Giao bài & Làm bài | Giao bài cho (lớp, môn) mình phụ trách, thời lượng tùy chọn; học sinh bắt đầu, tự lưu nháp, nộp một lượt | GV giao · HS làm 📱 | HS 📱 | BR-21 |
+| LRN-03 | Kết quả bài làm | Chấm ngay khi nộp; điểm, đáp án đúng và giải thích hiện ngay; giáo viên xem điểm từng học sinh | — | GV phụ trách · HS 📱 · PH 📱 | BR-22 |
+| LRN-04 | Phân tích bài làm bằng AI | MSMS AI phân tích từng bài làm khi nộp: điểm mạnh, điểm yếu, giải thích lỗi sai, gợi ý kiến thức | — | GV phụ trách · HS 📱 · PH 📱 | BR-23 |
+| LRN-05 | Tiến độ giao bài của tổ | Tổ trưởng xem tiến độ bài tập của mọi lớp thuộc các môn trong tổ: hạn nộp, số nộp / sĩ số. Chỉ đọc, Backend chặn mọi đường ghi | — | TT | — |
 
 ### PAR — Parent Services (3)
 
 | ID | Feature | Nội dung chính | Ghi | Đọc | BR |
 | --- | --- | --- | --- | --- | --- |
 | PAR-01 | Đơn xin nghỉ | Gửi, rút, duyệt, từ chối | PH 📱, CN 📱 | PH 📱, CN 📱, HP, SA | BR-19 |
-| PAR-02 | Sổ liên lạc tuần | Chuyên cần, bài tập có hạn trong tuần, điểm và nhận xét đã công bố — tính trực tiếp, chỉ đọc | — | HS 📱, PH 📱, CN 📱 | BR-24 |
-| PAR-03 | Hộp thư phụ huynh – giáo viên | Hội thoại 1–1 về một học sinh, chỉ văn bản | PH 📱 tạo và gửi · GV 📱 gửi | — | BR-25 |
+| PAR-02 | Sổ liên lạc tuần | Chuyên cần, bài tập có hạn trong tuần, điểm và phân tích — tính trực tiếp, chỉ đọc | — | HS 📱, PH 📱, CN 📱 | BR-24 |
+| PAR-03 | Hộp thư phụ huynh – giáo viên | Hội thoại 1–1 về một học sinh, chỉ văn bản | PH 📱, GV 📱 tạo và gửi | — | BR-25 |
 
 ### COM — Communication (2)
 
@@ -323,8 +321,7 @@ Lược đồ CSDL thiết kế sau, từ tài liệu này. Mục này chốt **
 | Điểm danh | Có mặt / Muộn / Vắng | Đúng ba giá trị giáo viên gửi |
 | Đơn xin nghỉ | Chờ duyệt / Đã duyệt / Đã từ chối / Đã rút | |
 | Câu hỏi | Nháp / Sẵn dùng | Nháp = nháp AI chưa xác nhận |
-| Bài được giao | Nháp / Đã giao | |
-| Nhận xét AI | Nháp / Đã duyệt / Đã công bố / Lỗi | |
+| Phân tích bằng AI | Đang phân tích / Xong / Lỗi | Lỗi để trống, không thử lại |
 | Phiên bản thời khóa biểu | Nháp / Đã phát hành | Mỗi phiên bản là hồ sơ của một lần import, đọc lại được như lịch sử |
 | Bài đăng | Đã đăng / Đã ẩn | Không có trạng thái nháp |
 | Học sinh | Đang học / Đã chuyển trường / Đã tốt nghiệp | |
@@ -339,8 +336,7 @@ Lược đồ CSDL thiết kế sau, từ tài liệu này. Mục này chốt **
 | Tiết **bị khóa** | Đã diễn ra, hoặc ngày của tiết < hôm nay. Tiết bị khóa không đổi giáo viên, không hủy |
 | Điểm danh **có phép** | Vắng **và** có đơn Đã duyệt của học sinh phủ ngày của tiết, cùng buổi hoặc cả ngày |
 | Điểm danh **không phép** | Vắng và không có đơn như trên |
-| Bài **đã đóng** | Đã giao **và** thời điểm hiện tại > hạn nộp |
-| Điểm **đã công bố** | Có thời điểm công bố điểm |
+| Bài **đã đóng** | Thời điểm hiện tại > hạn nộp |
 | Ghi danh **hiệu lực tại ngày D** | Ngày bắt đầu ≤ D **và** (ngày kết thúc để trống **hoặc** ≥ D); để trống nghĩa là tới hết năm học |
 
 Nhãn cuối của điểm danh có bốn giá trị: **Có mặt / Muộn / Vắng có phép / Vắng không phép**. Đơn duyệt muộn tự đổi nhãn các buổi vắng đã ghi, không cần chạy lại gì.
@@ -375,7 +371,7 @@ Học sinh chuyển trường hoặc tốt nghiệp thì tài khoản học sinh
 
 **BR-07 — Danh mục nền.** Phân hiệu có mã và tên duy nhất — tên là thứ các file import tra cứu. Môn học thuộc một tổ chuyên môn và có **viết tắt duy nhất toàn trường, chỉ gồm chữ và số** (vì dấu `-` là dấu tách trong ô `MÔN-GV`). Khung giờ tiết **dùng chung toàn trường**, khóa là cặp **(Buổi, Tiết)** — Sáng tiết 1 và Chiều tiết 1 là hai khung khác nhau; số khung mỗi buổi do trường tự khai, không cố định; mọi tiết học kể cả tiết bù phải nằm đúng một khung. Lớp thuộc một phân hiệu và một năm học, tên lớp duy nhất trong phạm vi đó, khối 6–9. Danh mục đã có dữ liệu tham chiếu thì **ngừng hoạt động**, không xóa.
 
-**BR-08 — Năm học, học kỳ, ngày nghỉ.** Đúng một năm học được đánh dấu hiện hành. Mỗi năm có đúng hai học kỳ, nằm trong năm học, không chồng nhau, kỳ 1 trước kỳ 2. Học kỳ chỉ là mốc lọc và mốc Phát hành; không có quy trình chuyển kỳ. Ngày nghỉ gắn năm học, cấp **toàn trường** hoặc **một phân hiệu**. Ngày nghỉ khai trước khi Phát hành thì Phát hành bỏ qua; khai sau thì theo BR-15.
+**BR-08 — Năm học, học kỳ, ngày nghỉ.** Đúng một năm học được đánh dấu hiện hành. Mỗi năm có đúng hai học kỳ, nằm trong năm học, không chồng nhau, kỳ 1 trước kỳ 2. Học kỳ chỉ là mốc lọc và mốc Phát hành; không có quy trình chuyển kỳ. Ngày nghỉ gắn năm học, cấp **toàn trường** hoặc **một phân hiệu**. Ngày nghỉ khai trước khi Phát hành thì Phát hành bỏ qua; khai sau thì tiết đã sinh không tự đổi, Vice Principal hủy từng tiết (BR-15).
 
 **BR-09 — Khoảng hiệu lực.** Trách nhiệm và ghi danh đều có ngày bắt đầu và ngày kết thúc; **để trống ngày kết thúc nghĩa là còn hiệu lực** (với ghi danh là tới hết năm học). Mỗi đích có **tối đa một bản đang hiệu lực**:
 
@@ -425,9 +421,9 @@ Giáo viên được chọn phải đủ điều kiện như file import (BR-06,
 
 **BR-13 — Xung đột lịch.** Trùng lịch = cùng **ngày** và cùng **khung giờ**. Trong toàn trường, mỗi lớp có tối đa một tiết Đã xếp lịch hoặc Chờ xử lý, và mỗi giáo viên có tối đa một tiết Đã xếp lịch, tại một (ngày, khung giờ). Tiết Chờ xử lý để trống giáo viên nên không chiếm chỗ của ai (BR-16). Áp dụng cho bản Nháp (BR-12), Phát hành, mọi điều chỉnh tay, và lọc gợi ý giáo viên rảnh. Giáo viên dạy nhiều phân hiệu được kiểm chung. Khi kiểm bản Nháp, các lớp không có trong phiên bản vẫn được tính theo lịch hiện hành, vì chúng không bị ghi đè.
 
-**BR-14 — Phát hành và Phát hành lại.** Vice Principal Phát hành một phiên bản Nháp. Khi bấm Phát hành, hệ thống chạy **xem trước** trong hộp xác nhận và hiển thị: số tiết sẽ xóa và sẽ tạo, nhóm theo lớp và ngày; **cảnh báo số tiết Chỉnh tay, tiết bù và tiết Chờ xử lý sẽ bị xóa**, người dùng phải xác nhận; **danh sách lớp của (phân hiệu, năm học) vẫn không có tiết nào** trong học kỳ sau Phát hành (cảnh báo, không chặn); và danh sách xung đột giáo viên. Mỗi dòng xung đột ghi rõ **tiết đang chiếm chỗ thuộc phân hiệu nào và ai là Vice Principal phụ trách phân hiệu đó**, vì Vice Principal chỉ sửa được tiết của phân hiệu mình nên xung đột liên phân hiệu phải do Vice Principal phía kia sửa.
+**BR-14 — Phát hành và Phát hành lại.** Vice Principal Phát hành một phiên bản Nháp. Khi bấm Phát hành, hệ thống chạy **xem trước** trong hộp xác nhận và hiển thị: số tiết sẽ xóa và sẽ tạo, nhóm theo lớp và ngày; **cảnh báo số tiết Chỉnh tay, tiết bù và tiết Chờ xử lý sẽ bị xóa**, người dùng phải xác nhận; **danh sách lớp của (phân hiệu, năm học) vẫn không có tiết nào** trong học kỳ sau Phát hành (cảnh báo, không chặn); và danh sách xung đột giáo viên. Mỗi dòng xung đột ghi rõ **lớp và phân hiệu đang chiếm chỗ giáo viên**; Vice Principal xử lý bằng cách đổi sang giáo viên khác cho ô trùng trong bản Nháp.
 
-**Còn xung đột giáo viên là chặn Phát hành.**
+**Còn xung đột giáo viên là chặn Phát hành.** Phát hành cũng bị chặn khi bản Nháp có lớp đã ngừng hoạt động hoặc giáo viên không còn đủ điều kiện dạy (BR-06); thông báo nêu rõ lớp hoặc giáo viên để xử lý.
 
 Phát hành chạy trong **một transaction**, hai bước:
 
@@ -450,27 +446,22 @@ Ghi Audit (BR-28) và gửi một thông báo gộp cho **mỗi giáo viên có 
 
 - **Đổi giáo viên:** thay giáo viên của tiết. Không đổi phụ trách chuyên môn (BR-14).
 - **Hủy:** tiết → Đã hủy. Tiết Đã hủy không dạy, không điểm danh, không tính chuyên cần.
-- **Thêm tiết bù:** tạo tiết mới ở một (ngày, khung giờ) trống; ngày phải là ngày học của phân hiệu, ≥ hôm nay, trong cùng học kỳ. Nếu bù cho một tiết đã hủy thì ghi lại tiết gốc để truy vết.
+- **Thêm tiết bù:** tạo tiết mới ở một (ngày, khung giờ) trống của lớp, chọn môn và giáo viên; ngày phải là ngày học của phân hiệu (không Chủ nhật, không ngày nghỉ), ≥ hôm nay, trong một học kỳ của năm học. Tiết bù là một tiết thêm mới, không liên kết với tiết đã hủy nào.
 
 **Đổi giờ một tiết = hủy tiết cũ + thêm tiết bù**; không có thao tác "dời" riêng.
 
-**Ngày nghỉ đột xuất:** Vice Principal khai cho phân hiệu mình, với ngày ≥ hôm nay; nghỉ toàn trường thì Vice Principal mỗi phân hiệu khai cho phân hiệu mình. Mọi tiết Đã xếp lịch hoặc Chờ xử lý **chưa có điểm danh** của ngày đó trong phạm vi → Đã hủy (Chỉnh tay). Phát hành sau đó cũng bỏ qua ngày này. Một lần khai = một bản ghi Audit kèm danh sách tiết. Xóa ngày nghỉ **không khôi phục** tiết đã hủy — muốn dạy lại thì thêm tiết bù.
+**BR-16 — Giáo viên vắng.** Vice Principal có tiết của giáo viên đó trong phân hiệu mình khai báo, theo một trong hai cách: **theo ngày** (từ ngày – đến ngày, vắng cả ngày) hoặc **theo tiết** (một ngày, chọn các tiết vắng trong ngày, liền hay rời đều được), kèm lý do. Đây **không phải đơn xin nghỉ của cán bộ** — MSMS chỉ ghi nhận hệ quả lên lịch dạy.
 
-**BR-16 — Giáo viên vắng.** Vice Principal có tiết của giáo viên đó trong phân hiệu mình khai báo: giáo viên, từ ngày – đến ngày, buổi (sáng / chiều / cả ngày), lý do. Đây **không phải đơn xin nghỉ của cán bộ** — MSMS chỉ ghi nhận hệ quả lên lịch dạy.
-
-Khai báo **không tự đổi lịch**: mọi tiết Đã xếp lịch chưa bị khóa của giáo viên đó trong khoảng, ở **mọi phân hiệu**, chuyển sang **Chờ xử lý** (Chỉnh tay) và **để trống giáo viên**. Tiết trống không chiếm chỗ của giáo viên nào khi kiểm xung đột (BR-13). Mỗi tiết ghi lại khai báo đã đưa nó về Chờ xử lý. Khóa hoặc đổi loại tài khoản Teacher (BR-05) cũng đưa tiết về Chờ xử lý và để trống giáo viên theo cách này, nhưng không gắn với khai báo nào. Vice Principal của phân hiệu chứa tiết nhận thông báo và chọn cho từng tiết:
-
-**Xóa khai báo:** các tiết còn Chờ xử lý do khai báo đó được trả về giáo viên của khai báo (Đã xếp lịch) nếu giáo viên **không trùng lịch** (BR-13) và **vẫn đủ điều kiện dạy** (BR-06). Không đạt một trong hai thì tiết giữ Chờ xử lý và Vice Principal được báo; tiết đã xử lý không bị đụng tới.
+Khai báo **không tự đổi lịch** và **chỉ tác động tiết ở phân hiệu của người khai**: mọi tiết Đã xếp lịch chưa bị khóa của giáo viên đó trong phạm vi khai báo, ở phân hiệu mình phụ trách, chuyển sang **Chờ xử lý** (Chỉnh tay) và **để trống giáo viên**. Giáo viên dạy nhiều phân hiệu vắng thì Vice Principal mỗi phân hiệu khai phần của mình. Tiết trống không chiếm chỗ của giáo viên nào khi kiểm xung đột (BR-13). Mỗi tiết ghi lại khai báo đã đưa nó về Chờ xử lý. Khóa hoặc đổi loại tài khoản Teacher (BR-05) cũng đưa tiết về Chờ xử lý và để trống giáo viên theo cách này, nhưng không gắn với khai báo nào; Vice Principal của phân hiệu chứa tiết nhận thông báo trong trường hợp đó. Vice Principal chọn cho từng tiết Chờ xử lý một trong hai cách:
 
 1. **Chọn giáo viên dạy thay** → Đã xếp lịch với giáo viên được chọn, lấy từ danh sách gợi ý bên dưới.
-2. **Hủy** → Đã hủy.
-3. **Hủy và tạo tiết bù** → Đã hủy + tiết bù mới (BR-15).
+2. **Hủy** → Đã hủy. Muốn dạy lại thì thêm tiết bù (BR-15).
 
-Tiết Chờ xử lý **không điểm danh được**. Tiết Chờ xử lý đã qua ngày mà chưa xử lý vẫn nằm trong danh sách tiết Chờ xử lý của SCD-03 và xử lý theo cùng ba lựa chọn; nếu chọn giáo viên thì School Admin nhập bù điểm danh theo BR-17.
+Tiết Chờ xử lý **không điểm danh được**. Tiết Chờ xử lý cũng bị khóa khi qua ngày (mục 6.2): không còn trong danh sách của SCD-03, không dạy thay, không hủy được nữa.
 
-**Xóa khai báo vắng:** các tiết còn ở Chờ xử lý do khai báo đó được trả về giáo viên của khai báo, trở lại Đã xếp lịch, với điều kiện giáo viên không trùng lịch tại tiết đó (BR-13). Tiết trùng thì giữ nguyên Chờ xử lý và hệ thống báo cho Vice Principal. Tiết đã được xử lý (đã chọn người dạy thay, đã hủy, đã bù) không bị đụng tới. Tiết trống do khóa hoặc đổi loại tài khoản không thuộc khai báo nào nên không tự khôi phục.
+**Xóa khai báo vắng** theo kiểu tất cả hoặc không: chỉ xóa được khi **chưa có tiết nào** của khai báo bị xử lý (dạy thay, hủy), giáo viên **vẫn đủ điều kiện dạy** (BR-06) và **không trùng lịch** ở tiết nào (BR-13). Khi đó mọi tiết của khai báo từ hôm nay trở đi trở về giáo viên, trạng thái Đã xếp lịch; tiết đã qua ngày bị khóa nên giữ nguyên. Không đạt thì báo lỗi nêu rõ nguyên nhân và không xóa gì; Vice Principal xử lý các tiết còn lại rồi xóa lại. Tiết trống do khóa hoặc đổi loại tài khoản không thuộc khai báo nào nên không tự khôi phục.
 
-**Gợi ý giáo viên rảnh:** Teacher đủ điều kiện dạy (BR-06), không có tiết Đã xếp lịch tại (ngày, khung giờ) đó (BR-13), không có khai báo vắng phủ ngày và buổi đó. Trả danh sách sắp theo tên, tối đa 10 người; **không xếp hạng ưu tiên** — Vice Principal tự chọn.
+**Gợi ý giáo viên rảnh:** Teacher đủ điều kiện dạy (BR-06), không có tiết Đã xếp lịch tại (ngày, khung giờ) đó ở bất kỳ phân hiệu nào (BR-13), không có khai báo vắng phủ ngày và tiết đó. Trả danh sách sắp theo tên, tối đa 10 người; **không xếp hạng ưu tiên** — Vice Principal tự chọn.
 
 ### 7.5. Điểm danh và đơn xin nghỉ
 
@@ -488,26 +479,22 @@ Parent rút được khi còn Chờ duyệt. Khi gửi, đơn ghi lại **lớp 
 
 ### 7.6. Bài tập và phân tích
 
-**BR-20 — Câu hỏi và đề.** Câu hỏi thuộc một môn, 4 lựa chọn, đúng 1 đáp án, giải thích tùy chọn. Soạn thủ công **hoặc từ nháp AI**: giáo viên chọn môn, khối, chủ đề, số câu → AI trả về các câu Nháp gắn cờ AI → giáo viên sửa và xác nhận thành **Sẵn dùng**. Chỉ câu Sẵn dùng mới đưa vào đề được.
+**BR-20 — Câu hỏi.** Câu hỏi thuộc một môn, có khối (6–9) và chủ đề, gồm 4 lựa chọn (A–D) với **từ 1 đến 3 đáp án đúng**; giải thích tùy chọn. Soạn thủ công **hoặc từ nháp AI**: giáo viên chọn môn, khối, chủ đề, số câu → MSMS AI trả về các câu Nháp gắn cờ AI → giáo viên sửa và xác nhận thành **Sẵn dùng**. AI bám Chương trình giáo dục phổ thông 2018 và bộ sách giáo khoa Kết nối tri thức với cuộc sống (bộ dùng thống nhất toàn quốc theo Quyết định 3588/QĐ-BGDĐT); bộ sách không phải lựa chọn của người dùng và không lưu trên câu hỏi. Chỉ câu Sẵn dùng mới đưa vào bài tập được.
 
-Ngân hàng câu hỏi **dùng chung toàn trường**: mọi Teacher xem và dùng câu Sẵn dùng của mọi môn; **chỉ người tạo sửa** được. Câu hỏi đã nằm trong một đề **đã giao** thì không sửa được nữa — chỉ còn **ẩn khỏi ngân hàng**; ẩn không ảnh hưởng đề cũ; muốn phiên bản khác thì soạn câu mới.
+Ngân hàng câu hỏi **dùng chung toàn trường**: mọi Teacher xem và dùng câu Sẵn dùng của mọi môn; **chỉ người tạo sửa** được. Câu hỏi đã nằm trong một bài tập thì không sửa được nữa — chỉ còn **ẩn khỏi ngân hàng**; ẩn không ảnh hưởng bài cũ; muốn phiên bản khác thì soạn câu mới.
 
-Đề gồm các câu Sẵn dùng cùng môn, có thứ tự và điểm từng câu. **Đề thuộc về người tạo:** chỉ người tạo sửa hoặc xóa đề chưa khóa. Mọi Teacher đều xem được đề trong danh sách và **nhân bản** đề của người khác; bản nhân bản thuộc về người bấm nhân bản và chưa khóa. **Giao lần đầu thì đề khóa vĩnh viễn** — từ đó không ai sửa được, kể cả người tạo. Giáo viên tiếp quản lớp giữa năm vì vậy dùng lại được đề của người tiền nhiệm bằng cách nhân bản.
+**BR-21 — Giao bài và làm bài.** Teacher **đang phụ trách chuyên môn** ở (lớp, môn) giao bài cho lớp đó: chọn các câu Sẵn dùng **cùng môn** từ ngân hàng, thứ tự và điểm từng câu, thời điểm mở (mặc định ngay), hạn nộp (> hiện tại) và **thời lượng làm bài** (phút, tùy chọn — để trống là không giới hạn). Bài **giao ngay**, không có bước nháp: hệ thống kiểm bài có câu và tổng điểm lớn hơn 0, lưu danh sách được giao, tạo thông báo cho học sinh của lớp; từ đó bài **không sửa, không xóa, không gia hạn được nữa**.
 
-**BR-21 — Giao bài và nộp bài.** Teacher **đang phụ trách chuyên môn** ở (lớp, môn của đề) giao **đề mình sở hữu** cho lớp đó: chọn thời điểm mở (mặc định ngay) và hạn nộp (> hiện tại). Bài ở Nháp sửa và xóa được; chuyển **Đã giao** thì khóa đề, tạo thông báo cho học sinh của lớp, và **không sửa hay gia hạn được nữa**. Muốn cho làm lại: nhân bản đề, giao như bài mới.
+**Danh sách được giao:** lúc giao, hệ thống lưu lại danh sách học sinh có ghi danh hiệu lực ở lớp tại thời điểm đó. Danh sách này không đổi về sau: học sinh chuyển lớp hoặc vào lớp sau thời điểm giao không làm đổi người nhận bài, mẫu số tỉ lệ nộp, nhãn "Không nộp" và số liệu sổ liên lạc (BR-24). Học sinh vào lớp sau khi giao không được giao bài đó.
 
-**Danh sách được giao:** lúc bài chuyển sang Đã giao, hệ thống lưu lại danh sách học sinh có ghi danh hiệu lực ở lớp tại thời điểm đó. Danh sách này không đổi về sau: học sinh chuyển lớp hoặc vào lớp sau thời điểm giao không làm đổi người nhận bài, mẫu số tỉ lệ nộp, nhãn "Không nộp" và số liệu sổ liên lạc (BR-24). Học sinh vào lớp sau khi giao không được giao bài đó.
+Học sinh trong danh sách được giao mở bài từ thời điểm mở tới hạn nộp; bài tự lưu nháp. **Bài có thời lượng:** học sinh bấm **Bắt đầu**, đồng hồ tính từ lúc đó theo giờ Backend và vẫn chạy khi học sinh thoát ra rồi vào lại. **Hạn thực tế** của học sinh là mốc sớm hơn giữa hạn nộp và (giờ bắt đầu + thời lượng); bài không có thời lượng thì hạn thực tế là hạn nộp. **Tối đa một lần nộp**; Backend từ chối lưu nháp hoặc nộp sau hạn thực tế, và từ chối nộp lại; bài gửi lên trong **10 giây** sau hạn thực tế vẫn được nhận để bù độ trễ mạng. **Hết hạn thực tế mà học sinh chưa nộp:** nếu bản nháp đã có ít nhất một câu trả lời thì Backend **tự nộp và chấm bản nháp đó** ở lần đầu bài được truy cập sau hạn thực tế (không cần job nền); bản nháp rỗng hoặc chưa từng mở bài thì không phải 0 điểm — hiển thị "Không nộp".
 
-Học sinh trong danh sách được giao mở bài từ thời điểm mở tới hạn nộp. Mở đề không tính lượt. Bài tự lưu nháp; không giới hạn thời lượng. **Tối đa một lần nộp**; Backend từ chối nộp sau hạn và nộp lại. Chấm ngay khi nộp: điểm = tổng điểm câu đúng / tổng điểm đề × 10. **Nháp chưa nộp không được chấm. Chưa nộp không phải 0 điểm** — hiển thị "Không nộp".
+Chấm ngay khi nộp: một câu chỉ được điểm khi học sinh chọn **đúng và đủ** các đáp án đúng, không chọn thừa; điểm = tổng điểm câu đúng / tổng điểm bài × 10, làm tròn 2 chữ số thập phân.
 
-**BR-22 — Công bố điểm.** Chỉ khi bài **đã đóng** (mục 6.2), bởi Teacher đang phụ trách chuyên môn. Công bố cho cả lớp một lần, **không thu hồi**. Trước khi công bố, giáo viên xem điểm từng học sinh và **thống kê câu sai nhiều nhất** (số và tỉ lệ học sinh đã nộp chọn sai mỗi câu). Công bố tạo thông báo cho học sinh và phụ huynh.
+**BR-22 — Kết quả bài làm.** Không có bước công bố: ngay khi nộp, **Student thấy điểm, lựa chọn của mình, đáp án đúng và giải thích của từng câu**, kèm khung phân tích AI (BR-23). Student chỉ xem kết quả bài **mình đã nộp**. **Parent** xem được cùng nội dung của từng con được liên kết; **Teacher** đang phụ trách chuyên môn xem điểm và kết quả từng học sinh nộp bài của (lớp, môn) mình. Điểm chỉ là điểm bài tập rèn luyện, không vào sổ điểm chính thức.
 
-**BR-23 — Phân tích AI.** Teacher đang phụ trách chuyên môn chạy phân tích sau khi bài đã đóng và có ít nhất một bài nộp. Backend tính chỉ số, gắn **mã giả lập**, rồi gửi AI (mục 3.1):
+**BR-23 — Phân tích bằng AI.** Khi học sinh nộp bài (kể cả bị tự nộp), Backend tạo **một phân tích cho bài nộp đó** và gửi MSMS AI **một lần** (mục 3.1): nội dung câu hỏi, các lựa chọn, đáp án đúng, lựa chọn của học sinh ở từng câu và điểm, không kèm tên hay mã học sinh. Kết quả gồm **điểm mạnh, điểm yếu, giải thích lỗi sai và gợi ý kiến thức cần ôn**. Phân tích **tự động, không có bước duyệt hay công bố**: lưu kèm bài nộp rồi hiện cho Student, Parent và Teacher đang phụ trách chuyên môn. Trong lúc AI chạy, khung phân tích ở trạng thái Đang phân tích. AI lỗi hoặc trả kết quả rỗng → **Lỗi**, khung phân tích để trống, **không thử lại**; không ảnh hưởng chấm và nộp bài.
 
-- **Cấp lớp:** tỉ lệ đúng theo câu, phân bố điểm.
-- **Cấp học sinh** (chỉ học sinh đã nộp): kết quả bài này, kèm **tối đa 5 bài gần nhất cùng môn đã công bố điểm** của chính học sinh đó. Có bao nhiêu bài trước thì gửi bấy nhiêu.
-
-Kết quả về ở **Nháp**. Giáo viên chỉnh, **duyệt**, rồi **công bố** từng nhận xét hoặc hàng loạt; **tạo lại** được khi nhận xét còn Nháp (nội dung Nháp cũ bị thay bằng kết quả mới). Nhận xét đã Đã duyệt hoặc Đã công bố thì không tạo lại và không bị ghi đè. Student và Parent chỉ thấy nhận xét Đã công bố. Công bố nhận xét **độc lập** với công bố điểm. AI lỗi → **Lỗi** kèm lý do, giáo viên chạy lại; không ảnh hưởng chấm, nộp, công bố điểm.
 
 ### 7.7. Dịch vụ phụ huynh, truyền thông, giám sát
 
@@ -515,23 +502,22 @@ Kết quả về ở **Nháp**. Giáo viên chỉnh, **duyệt**, rồi **công 
 
 - **Chuyên cần:** số tiết có mặt, muộn, vắng có phép, vắng không phép, chưa điểm danh — chỉ tiết Đã xếp lịch đã diễn ra.
 - **Bài tập có hạn nộp trong tuần:** số được giao, đã nộp, không nộp (đã đóng mà chưa nộp).
-- **Điểm và nhận xét đã công bố** của các bài đó.
+- **Điểm và phân tích** của các bài đó.
 
 Không xếp hạng, không điểm trung bình lớp, không hạnh kiểm. Mục không có dữ liệu để trống. Số liệu luôn theo dữ liệu hiện tại — nhập bù điểm danh hay đơn duyệt muộn đều được phản ánh ngay lần mở sau.
 
-**BR-25 — Hộp thư.** Chỉ Parent **tạo** hội thoại, về một con được liên kết, với **chủ nhiệm** lớp con đang học hoặc **giáo viên đang phụ trách chuyên môn** ở lớp đó. Mỗi bộ (phụ huynh, cán bộ, học sinh) có một hội thoại. Hai bên nhắn văn bản tối đa 2.000 ký tự; không file, không gọi, không nhóm. Quan hệ được kiểm **mỗi lần gửi**: quan hệ đã kết thúc thì hội thoại thành **chỉ đọc**, lịch sử giữ nguyên. School Admin **không đọc và không nhắn** trong hội thoại. Tin nhắn mới hiện ngay ở bên nhận đang mở ứng dụng (web và mobile, qua SignalR), kèm chỉ báo **đang nhập**, **đã xem** (khi người nhận mở hội thoại) và **online/offline** của bên kia trong cùng hội thoại; School Admin không tham gia hội thoại nên không có trạng thái này. Realtime chỉ là kênh đẩy: việc gửi và kiểm quan hệ vẫn qua Backend như trên, mất kết nối thì tải lại phần đã lỡ.
+**BR-25 — Hộp thư.** Cả Parent và Teacher đều có thể **tạo** hội thoại về một học sinh: Phụ huynh tạo với **chủ nhiệm** lớp con đang học hoặc **giáo viên đang phụ trách chuyên môn** ở lớp đó; Giáo viên (chủ nhiệm hoặc đang phụ trách chuyên môn) tạo với phụ huynh của học sinh thuộc lớp mình đang dạy. Mỗi bộ (phụ huynh, cán bộ, học sinh) có đúng một hội thoại. Hai bên nhắn văn bản tối đa 2.000 ký tự; không file, không gọi, không nhóm. Quan hệ được kiểm **mỗi lần gửi**: quan hệ đã kết thúc thì hội thoại thành **chỉ đọc**, lịch sử giữ nguyên. School Admin **không đọc và không nhắn** trong hội thoại. Tin nhắn mới hiện ngay ở bên nhận đang mở ứng dụng (web và mobile, qua SignalR), kèm chỉ báo **đang nhập**, **đã xem** (khi người nhận mở hội thoại) và **online/offline** của bên kia trong cùng hội thoại; School Admin không tham gia hội thoại nên không có trạng thái này. Realtime chỉ là kênh đẩy: việc gửi và kiểm quan hệ vẫn qua Backend như trên, mất kết nối thì tải lại phần đã lỡ.
 
 **BR-26 — Thông báo.** Chỉ trong ứng dụng; không gửi email (ngoại lệ duy nhất là OTP quên mật khẩu ở BR-04, không phải thông báo). Thông báo mới hiện ngay trên web và mobile đang mở (SignalR); không có push khi app đóng. Có thông báo **không đồng nghĩa có quyền** — Backend kiểm lại khi người dùng bấm vào. Danh sách sự kiện là **danh sách đóng**:
 
 | Sự kiện | Người nhận |
 | --- | --- |
 | Phát hành thời khóa biểu | Giáo viên có tiết trong phiên bản và học sinh của các lớp trong phiên bản — một thông báo chung "đã có thời khóa biểu mới" mỗi người |
-| Tiết bị đổi giáo viên, hủy, thêm bù, ngày nghỉ đột xuất, trả lại giáo viên khi xóa khai báo vắng | Giáo viên liên quan; học sinh của lớp |
+| Tiết bị đổi giáo viên, hủy, thêm bù, có giáo viên dạy thay, trả lại giáo viên khi xóa khai báo vắng | Giáo viên liên quan; học sinh của lớp |
 | Tiết chuyển Chờ xử lý | Vice Principal của phân hiệu chứa tiết |
 | Đơn nghỉ mới | Chủ nhiệm (BR-19) |
 | Đơn được duyệt hoặc từ chối | Parent gửi đơn |
 | Bài mới được giao | Học sinh của lớp |
-| Điểm được công bố; nhận xét được công bố | Học sinh và phụ huynh |
 | Tin nhắn mới | Người nhận trong hội thoại |
 
 **BR-27 — Bảng tin.** **Mọi cán bộ đăng được** — School Admin, Principal, Vice Principal, Teacher, kể cả khi đang giữ trách nhiệm chủ nhiệm hay tổ trưởng. Khi đăng, chọn một trong hai phạm vi:
@@ -549,7 +535,7 @@ Bài kèm tối đa **5 ảnh** (JPG hoặc PNG, mỗi ảnh ≤ 2 MB); ảnh đ
 
 1. **Tài khoản:** tạo (đơn lẻ, hàng loạt), khóa, mở, đổi loại tài khoản, School Admin reset mật khẩu. Không ghi mật khẩu.
 2. **Phát hành thời khóa biểu:** phiên bản, số tiết xóa và tạo.
-3. **Điều chỉnh lịch:** đổi giáo viên, hủy, tiết bù, ngày nghỉ đột xuất, khai báo, xóa khai báo và xử lý giáo viên vắng.
+3. **Điều chỉnh lịch:** đổi giáo viên, hủy, tiết bù, khai báo, xóa khai báo và xử lý giáo viên vắng.
 
 Thao tác hàng loạt ghi **một bản ghi kèm danh sách ID**. Audit **chỉ ghi thêm** — không có API sửa hay xóa, quyền CSDL chặn UPDATE và DELETE. Việc khác (đăng nhập, nộp bài, điểm danh, trách nhiệm, kết chuyển) **không vào Audit** — người thực hiện và thời điểm đã lưu ngay trên bản ghi nghiệp vụ.
 
@@ -562,6 +548,7 @@ Mỗi điều dưới đây nếu thêm vào sẽ làm lược đồ khó thiế
 - **Dạy thay không thành phụ trách chuyên môn:** phụ trách chuyên môn chỉ tính từ thời khóa biểu đã phát hành, không tính từ tiết điều chỉnh (BR-14).
 - **Không giới hạn sĩ số lớp**, không quy định số tiết mỗi môn mỗi tuần.
 - **Không kiểm lại ghi danh khi nộp bài** — chuyển lớp giữa chừng không làm mất bài đã nộp.
+- **Không sửa, không xóa, không gia hạn bài sau khi giao** — giao nhầm thì chấp nhận, muốn bài khác thì giao bài mới.
 - **Khớp loại tài khoản với loại hồ sơ kiểm ở tầng dịch vụ**, không ở cơ sở dữ liệu.
 
 ---
@@ -580,7 +567,7 @@ Mỗi điều dưới đây nếu thêm vào sẽ làm lược đồ khó thiế
 | **Teacher** | Lịch dạy của mình · điểm danh và sửa trong ngày · hộp thư · thông báo · bảng tin (đọc) · hồ sơ cá nhân · nếu chủ nhiệm: hộp đơn nghỉ, duyệt và từ chối, sổ liên lạc lớp mình |
 | **School Admin, Principal, Vice Principal** | Không có mobile, dùng web |
 
-Chỉ có trên web: soạn câu hỏi và đề, giao bài, xem kết quả bài tập theo lớp, công bố điểm, chỉnh và duyệt nhận xét AI, giám sát cấp tổ, soạn bài đăng; toàn bộ SCH, PPL, SCD (trừ màn hình xem lịch cá nhân) và ADM.
+Chỉ có trên web: soạn câu hỏi, giao bài, xem kết quả bài tập theo lớp, tiến độ giao bài của tổ, soạn bài đăng; toàn bộ SCH, PPL, SCD (trừ màn hình xem lịch cá nhân) và ADM.
 
 ### 8.2. Ký hiệu Platform trong WBS
 
@@ -595,7 +582,7 @@ Mọi Task có giao diện đều mang `Web`; `Mobile` chỉ thêm vào khi Task
 
 ### 8.3. Việc kỹ thuật còn để mở
 
-Thuộc Feature Spec / OpenAPI / hạ tầng, không suy diễn từ tài liệu này: lược đồ CSDL chi tiết; danh sách API, mã lỗi, wireframe, test case chi tiết; nơi lưu ảnh và quy ước đường dẫn; cấu hình Gmail SMTP và hạn mức gửi; nhà cung cấp AI và hạn mức gọi; yêu cầu phi chức năng (quy mô, hiệu năng giờ cao điểm nộp bài, sao lưu); rà soát pháp lý cho phân tích AI.
+Thuộc Feature Spec / OpenAPI / hạ tầng, không suy diễn từ tài liệu này: lược đồ CSDL chi tiết; danh sách API, mã lỗi, wireframe, test case chi tiết; nơi lưu ảnh và quy ước đường dẫn; cấu hình Gmail SMTP và hạn mức gửi; nhà cung cấp AI và hạn mức gọi; yêu cầu phi chức năng (quy mô, hiệu năng giờ cao điểm nộp bài, sao lưu); rà soát pháp lý cho phân tích bằng AI.
 
 ### 8.4. Quy tắc cho nhóm phát triển
 

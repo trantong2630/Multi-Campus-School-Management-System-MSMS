@@ -198,7 +198,7 @@ Session card: 4px left border colored by status · subject 15/600 · class + roo
 
 ### 5.3 Weekly contact book (PAR-02)
 
-Week chosen with left/right arrows in the header. Three stacked cards: **Chuyên cần** (4 figures + a ratio ring) · **Bài tập** (assigned / submitted / not submitted) · **Điểm và nhận xét đã công bố** (list).
+Week chosen with left/right arrows in the header. Three stacked cards: **Chuyên cần** (4 figures + a ratio ring) · **Bài tập** (assigned / submitted / not submitted) · **Điểm và phân tích đã công bố** (list).
 
 Sections with no data render empty with one grey line. **Do not render `0`** — it reads as a real measurement.
 
@@ -220,7 +220,7 @@ When the underlying relationship has ended, replace the composer with a grey ban
 
 List cards: title · subject · **countdown to deadline** (switches to coral under 24h) · status badge.
 
-Attempt screen: question progress bar on top, one question per screen, four selectable option cards, Previous/Next at the bottom. A question-number grid in a bottom sheet allows jumping.
+Attempt screen: question progress bar on top, one question per screen, four selectable option cards (radio cards when the question has one correct answer; checkbox cards under a **Chọn nhiều đáp án** label when it has more), Previous/Next at the bottom. A question-number grid in a bottom sheet allows jumping.
 
 **Nộp bài** requires confirmation: `"Nộp một lần, không làm lại được."` (BR-21)
 

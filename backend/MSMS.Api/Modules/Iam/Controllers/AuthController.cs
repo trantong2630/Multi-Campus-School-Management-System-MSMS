@@ -24,46 +24,74 @@ public class AuthController(IAuthService auth, CurrentUser user) : ControllerBas
         if (!string.IsNullOrEmpty(token)) Response.Cookies.Append(RefreshCookie, token, RefreshCookieOptions());
     }
 
+    private void PreventTokenCaching()
+    {
+        Response.Headers.CacheControl = "no-store";
+        Response.Headers.Pragma = "no-cache";
+    }
+
     [AllowAnonymous]
     [HttpPost("login")]
-    public async Task<LoginResponse> Login(LoginRequest request)
+    public async Task<ActionResult<LoginResponse>> Login(LoginRequest request)
     {
-        var res = await auth.LoginAsync(request, Request.Headers.UserAgent.ToString());
-        SetRefreshCookie(res.RefreshToken);
-        return res;
+        PreventTokenCaching();
+        try
+        {
+            var res = await auth.LoginAsync(request, Request.Headers.UserAgent.ToString());
+            if (string.Equals(request.ClientType, "mobile", StringComparison.OrdinalIgnoreCase)) return res;
+
+            SetRefreshCookie(res.RefreshToken);
+            return res with { RefreshToken = null };
+        }
+        catch (ApiException ex) when (ex.StatusCode == StatusCodes.Status401Unauthorized)
+        {
+            // Lỗi xác thực là kết quả 401 bình thường, không để debugger dừng ở MVC.
+            return Unauthorized(new { code = ex.Code, message = ex.Message });
+        }
     }
 
     /// <summary>Đổi refresh token lấy access token mới; refresh token được xoay vòng mỗi lần.</summary>
     [AllowAnonymous]
     [HttpPost("refresh")]
-    public async Task<LoginResponse> Refresh(RefreshRequest? request)
+    public async Task<ActionResult<LoginResponse>> Refresh(RefreshRequest? request)
     {
+        PreventTokenCaching();
         // Web: refresh token nằm trong cookie HttpOnly; mobile: nằm trong body.
-        var token = request?.RefreshToken;
-        if (string.IsNullOrWhiteSpace(token)) token = Request.Cookies[RefreshCookie];
+        var mobile = !string.IsNullOrWhiteSpace(request?.RefreshToken);
+        var token = mobile ? request!.RefreshToken : Request.Cookies[RefreshCookie];
         try
         {
             var res = await auth.RefreshAsync(new RefreshRequest(token));
+            if (mobile) return res;
+
             SetRefreshCookie(res.RefreshToken);
-            return res;
+            return res with { RefreshToken = null };
         }
-        catch (ApiException)
+        catch (ApiException ex) when (ex.StatusCode == StatusCodes.Status401Unauthorized)
         {
-            Response.Cookies.Delete(RefreshCookie, RefreshCookieOptions());
-            throw;
+            if (!mobile) Response.Cookies.Delete(RefreshCookie, RefreshCookieOptions());
+            return Unauthorized(new { code = ex.Code, message = ex.Message });
         }
     }
 
     [Authorize]
     [HttpGet("me")]
-    public Task<UserInfo> Me() => auth.GetMeAsync(user.AccountId);
+    public Task<UserInfo> Me()
+    {
+        PreventTokenCaching();
+        return auth.GetMeAsync(user.AccountId);
+    }
 
     /// <summary>Thu hồi phiên của thiết bị hiện tại: access token và refresh token đều mất hiệu lực ngay (BR-05).</summary>
     [Authorize]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
-        if (user.SessionId is { } sid) await auth.LogoutAsync(sid);
+        PreventTokenCaching();
+        if (user.SessionId is not { } sid || sid == Guid.Empty)
+            return Unauthorized(new { code = ErrorCodes.Unauthorized, message = "Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Đăng nhập lại để tiếp tục." });
+
+        await auth.LogoutAsync(sid);
         Response.Cookies.Delete(RefreshCookie, RefreshCookieOptions());
         return NoContent();
     }

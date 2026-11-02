@@ -22,19 +22,18 @@ import { DraftEditorModal } from '../components/DraftEditorModal';
 import { PublishPreviewModal } from '../components/PublishPreviewModal';
 import { TimetableGrid } from '../components/TimetableGrid';
 import type { TimetableImportResult, TimetableVersion } from '../types';
+import { useScdCampus } from '../useScdCampus';
 
 /** SCD-01: tải mẫu → sửa → tải lên → sửa bản Nháp trên lưới → Phát hành. Mỗi phiên bản là hồ sơ của một lần import, đọc lại được như lịch sử. */
 export function TimetablePage() {
   const qc = useQueryClient();
-  const campuses = useQuery({ queryKey: ['scd', 'campuses'], queryFn: scdApi.campuses });
+  const { campuses, effective: effectiveCampus, select: campusSelect, head: campusHead } = useScdCampus();
   const years = useYears();
   const { current } = useCurrentYear();
 
-  const [campusId, setCampusId] = useState<number | undefined>();
   const [yearId, setYearId] = useState<number | undefined>();
   const [semesterId, setSemesterId] = useState<number | undefined>();
 
-  const effectiveCampus = campusId ?? campuses.data?.[0]?.campusId;
   const effectiveYearId = yearId ?? current?.academicYearId;
   const year = years.data?.find((y) => y.academicYearId === effectiveYearId);
   const defaultSemester = year?.semesters.find((s) => dayjs().isAfter(dayjs(s.startDate).subtract(1, 'day')) && dayjs().isBefore(dayjs(s.endDate).add(1, 'day')))
@@ -99,6 +98,7 @@ export function TimetablePage() {
           </>
         }
       />
+      {campusHead}
 
       {noCampus && (
         <InlineAlert
@@ -108,10 +108,7 @@ export function TimetablePage() {
       )}
 
       <FilterBar>
-        <Select
-          placeholder="Phân hiệu" value={effectiveCampus} onChange={setCampusId}
-          options={campuses.data?.map((c) => ({ value: c.campusId, label: c.name }))}
-        />
+        {campusSelect}
         <Select
           placeholder="Năm học" value={effectiveYearId} onChange={setYearId}
           options={years.data?.map((y) => ({ value: y.academicYearId, label: `Năm học ${y.name}` }))}

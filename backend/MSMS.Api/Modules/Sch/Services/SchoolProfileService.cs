@@ -29,7 +29,7 @@ public sealed class SchoolProfileService(MsmsDbContext db, CurrentUser user, ICl
     {
         var name = Guard.Required(r.Name, "Tên trường", 200);
         var email = Guard.Optional(r.Email, "Email", 150);
-        if (email is not null && !email.Contains('@')) throw ApiException.BadRequest("Email chưa đúng định dạng. Kiểm tra lại địa chỉ email.");
+        if (email is not null && !Guard.IsEmail(email)) throw ApiException.BadRequest("Email chưa đúng định dạng. Kiểm tra lại địa chỉ email.");
         var website = Guard.Optional(r.Website, "Website", 200);
         if (website is not null && !(Uri.TryCreate(website, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https"))
             throw ApiException.BadRequest("Website phải bắt đầu bằng http:// hoặc https://.");

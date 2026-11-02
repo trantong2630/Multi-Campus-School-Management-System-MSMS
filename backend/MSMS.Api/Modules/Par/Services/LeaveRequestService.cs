@@ -13,17 +13,7 @@ public sealed class LeaveRequestService(MsmsDbContext db, IClock clock, CurrentU
 {
     public async Task<LeaveRequest> SubmitAsync(CreateLeaveRequestDto dto)
     {
-        // Kiểm tra StudentId có liên kết với Parent hiện tại không
-        var link = await db.ParentStudentLink
-            .FirstOrDefaultAsync(l => l.StudentId == dto.StudentId && l.ParentId == currentUser.PersonId);
-        if (link is null)
-            throw ApiException.Forbidden("Bạn không có quyền tạo đơn xin nghỉ cho học sinh này.");
-
-        // Kiểm tra học sinh phải có ghi danh mở (Enrollment.Status == "Studying")
-        var enrollment = await db.Enrollment
-            .FirstOrDefaultAsync(e => e.StudentId == dto.StudentId);
-        if (enrollment is null || enrollment.EndDate < clock.Today)
-            throw ApiException.BadRequest("Học sinh không có ghi danh mở. Không thể tạo đơn xin nghỉ.");
+        var classId = await RequireEnrolledClassIdAsync(dto.StudentId);
 
         // BR-19: FromDate >= clock.Today (không cho xin nghỉ ngày đã qua)
         if (dto.FromDate < clock.Today)
@@ -33,33 +23,21 @@ public sealed class LeaveRequestService(MsmsDbContext db, IClock clock, CurrentU
         if (dto.ToDate < dto.FromDate)
             throw ApiException.BadRequest("Ngày kết thúc phải >= ngày bắt đầu.");
 
-        // Kiểm tra xung đột với các đơn đang Pending hoặc Approved
-        var existingLeaves = await db.LeaveRequest
-            .Where(lr => lr.StudentId == dto.StudentId && 
-                   (lr.Status == "Pending" || lr.Status == "Approved"))
-            .Select(lr => new { lr.FromDate, lr.ToDate, lr.SessionOfDay })
-            .ToListAsync();
+        var slotIds = ValidateDay(new LeaveDayItemDto(dto.FromDate, dto.SessionOfDay, dto.SlotIds));
 
-        var hasConflict = LeaveRequestRules.HasConflict(
-            dto.FromDate,
-            dto.ToDate,
-            dto.SessionOfDay,
-            existingLeaves.Select(lr => (lr.FromDate, lr.ToDate, lr.SessionOfDay)));
-
-        if (hasConflict)
+        var existingLeaves = await LoadActiveLeavesAsync(dto.StudentId);
+        if (LeaveRequestRules.HasConflict(dto.FromDate, dto.ToDate, dto.SessionOfDay, slotIds, existingLeaves))
             throw ApiException.BadRequest("Có xung đột với đơn xin nghỉ đã tồn tại của học sinh này.");
-
-        // Lấy ClassId hiện tại của học sinh từ enrollment
-        var currentClassId = enrollment.ClassId;
 
         var leaveRequest = new LeaveRequest
         {
             StudentId = dto.StudentId,
             ParentId = currentUser.PersonId,
-            ClassId = currentClassId,
+            ClassId = classId,
             FromDate = dto.FromDate,
             ToDate = dto.ToDate,
             SessionOfDay = dto.SessionOfDay,
+            SlotIds = slotIds,
             Reason = dto.Reason,
             Status = "Pending",
             CreatedAt = clock.Now,
@@ -69,6 +47,57 @@ public sealed class LeaveRequestService(MsmsDbContext db, IClock clock, CurrentU
         await db.SaveChangesAsync();
 
         return leaveRequest;
+    }
+
+    /// <summary>
+    /// PAR-01: mỗi ngày (hoặc tiết lẻ) trong đơn thành một LeaveRequest riêng (FromDate = ToDate).
+    /// Mọi dòng được kiểm tra xung đột với đơn đã có lẫn với các dòng khác trong cùng đơn trước khi lưu.
+    /// </summary>
+    public async Task<IReadOnlyList<LeaveRequest>> SubmitBulkAsync(BulkCreateLeaveRequestDto dto)
+    {
+        var classId = await RequireEnrolledClassIdAsync(dto.StudentId);
+
+        if (dto.Days.Count == 0)
+            throw ApiException.BadRequest("Chọn ít nhất một ngày nghỉ.");
+
+        var taken = await LoadActiveLeavesAsync(dto.StudentId);
+        var reason = string.IsNullOrWhiteSpace(dto.Reason) ? null : dto.Reason.Trim();
+        var now = clock.Now;
+        var leaves = new List<LeaveRequest>();
+
+        foreach (var day in dto.Days)
+        {
+            // BR-19: Ngày nghỉ >= clock.Today
+            if (day.Date < clock.Today)
+                throw ApiException.BadRequest($"Ngày {day.Date:dd/MM/yyyy} đã qua, không thể xin nghỉ.");
+
+            var slotIds = ValidateDay(day);
+
+            if (LeaveRequestRules.HasConflict(day.Date, day.Date, day.SessionOfDay, slotIds, taken))
+                throw ApiException.BadRequest($"Ngày {day.Date:dd/MM/yyyy} xung đột với đơn xin nghỉ đã có hoặc với dòng khác trong đơn.");
+
+            taken.Add((day.Date, day.Date, day.SessionOfDay, slotIds));
+            leaves.Add(new LeaveRequest
+            {
+                StudentId = dto.StudentId,
+                ParentId = currentUser.PersonId,
+                ClassId = classId,
+                FromDate = day.Date,
+                ToDate = day.Date,
+                SessionOfDay = day.SessionOfDay,
+                SlotIds = slotIds,
+                Reason = reason,
+                Status = "Pending",
+                CreatedAt = now,
+            });
+        }
+
+        await using var tx = await db.Database.BeginTransactionAsync();
+        db.LeaveRequest.AddRange(leaves);
+        await db.SaveChangesAsync();
+        await tx.CommitAsync();
+
+        return leaves;
     }
 
     public async Task<IEnumerable<ParentLeaveItemDto>> GetParentLeavesAsync(int studentId)
@@ -91,6 +120,7 @@ public sealed class LeaveRequestService(MsmsDbContext db, IClock clock, CurrentU
                 lr.FromDate,
                 lr.ToDate,
                 lr.SessionOfDay,
+                lr.SlotIds,
                 lr.Reason,
                 lr.Status,
                 lr.CreatedAt,
@@ -109,7 +139,7 @@ public sealed class LeaveRequestService(MsmsDbContext db, IClock clock, CurrentU
         // Kiểm tra quyền: phụ huynh chỉ rút được đơn của con
         var link = await db.ParentStudentLink
             .FirstOrDefaultAsync(l => l.StudentId == leaveRequest.StudentId && l.ParentId == currentUser.PersonId);
-        if (link is null)
+        if (link is null || leaveRequest.ParentId != currentUser.PersonId)
             throw ApiException.Forbidden("Bạn không có quyền rút đơn xin nghỉ này.");
 
         // Chỉ rút được khi đơn còn ở Pending
@@ -129,16 +159,60 @@ public sealed class LeaveRequestService(MsmsDbContext db, IClock clock, CurrentU
                 l.Student.Student.PersonCode,
                 l.Student.Student.FullName,
                 l.Student.Enrollment
-                    .Where(e => e.EndDate == null || e.EndDate >= clock.Today)
+                    .AsQueryable().Where(EnrollmentRules.ActiveAt(clock.Today))
                     .OrderByDescending(e => e.StartDate)
                     .Select(e => e.Class.Name)
                     .FirstOrDefault(),
                 l.Student.Enrollment
-                    .Where(e => e.EndDate == null || e.EndDate >= clock.Today)
+                    .AsQueryable().Where(EnrollmentRules.ActiveAt(clock.Today))
                     .OrderByDescending(e => e.StartDate)
                     .Select(e => (int?)e.ClassId)
                     .FirstOrDefault()
             ))
             .ToListAsync();
+    }
+
+    /// <summary>Kiểm tra phụ huynh được liên kết với học sinh và học sinh có ghi danh mở; trả về lớp hiện tại.</summary>
+    private async Task<int> RequireEnrolledClassIdAsync(int studentId)
+    {
+        var link = await db.ParentStudentLink
+            .FirstOrDefaultAsync(l => l.StudentId == studentId && l.ParentId == currentUser.PersonId);
+        if (link is null)
+            throw ApiException.Forbidden("Bạn không có quyền tạo đơn xin nghỉ cho học sinh này.");
+
+        var enrollment = await db.Enrollment.Where(EnrollmentRules.ActiveAt(clock.Today))
+            .FirstOrDefaultAsync(e => e.StudentId == studentId);
+        if (enrollment is null)
+            throw ApiException.BadRequest("Học sinh không có ghi danh mở. Không thể tạo đơn xin nghỉ.");
+
+        return enrollment.ClassId;
+    }
+
+    private async Task<List<(DateOnly From, DateOnly To, string Session, string? SlotIds)>> LoadActiveLeavesAsync(int studentId)
+    {
+        var rows = await db.LeaveRequest
+            .Where(lr => lr.StudentId == studentId && (lr.Status == "Pending" || lr.Status == "Approved"))
+            .Select(lr => new { lr.FromDate, lr.ToDate, lr.SessionOfDay, lr.SlotIds })
+            .ToListAsync();
+
+        return rows.Select(lr => (lr.FromDate, lr.ToDate, lr.SessionOfDay, lr.SlotIds)).ToList();
+    }
+
+    /// <summary>Kiểm tra buổi và tiết của một dòng; trả về chuỗi SlotIds đã chuẩn hóa (null nếu nghỉ cả buổi).</summary>
+    private static string? ValidateDay(LeaveDayItemDto day)
+    {
+        if (day.SessionOfDay is not ("AllDay" or "Morning" or "Afternoon"))
+            throw ApiException.BadRequest("Buổi nghỉ không hợp lệ.");
+
+        if (day.SlotIds is null || day.SlotIds.Count == 0)
+            return null;
+
+        if (day.SessionOfDay == "AllDay")
+            throw ApiException.BadRequest("Nghỉ theo tiết chỉ áp dụng cho buổi sáng hoặc buổi chiều.");
+
+        if (day.SlotIds.Any(s => s is < 1 or > 5) || day.SlotIds.Distinct().Count() != day.SlotIds.Count)
+            throw ApiException.BadRequest("Số tiết không hợp lệ hoặc bị trùng (tiết từ 1 đến 5).");
+
+        return string.Join(',', day.SlotIds.Order());
     }
 }

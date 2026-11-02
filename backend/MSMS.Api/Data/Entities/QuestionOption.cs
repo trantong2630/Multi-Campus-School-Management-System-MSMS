@@ -17,5 +17,5 @@ public partial class QuestionOption
 
     public virtual Question Question { get; set; } = null!;
 
-    public virtual ICollection<SubmissionAnswer> SubmissionAnswer { get; set; } = new List<SubmissionAnswer>();
+    public virtual ICollection<SubmissionAnswerOption> SubmissionAnswerOption { get; set; } = new List<SubmissionAnswerOption>();
 }

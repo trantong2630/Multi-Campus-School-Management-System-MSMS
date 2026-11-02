@@ -14,7 +14,8 @@ public record SubjectRequest(int DepartmentId, string Name, string Abbreviation)
 
 // SCH-03 Năm học, Học kỳ, Ngày nghỉ
 public record SemesterDto(int SemesterId, byte SemesterNo, string Name, DateOnly StartDate, DateOnly EndDate);
-public record AcademicYearDto(int AcademicYearId, string Name, DateOnly StartDate, DateOnly EndDate, bool IsCurrent, IReadOnlyList<SemesterDto> Semesters);
+public record AcademicYearDto(int AcademicYearId, string Name, DateOnly StartDate, DateOnly EndDate, bool IsCurrent, IReadOnlyList<SemesterDto> Semesters,
+    DateOnly Semester1LatestEnd, DateOnly Semester2LatestEnd);
 public record AcademicYearRequest(string Name, DateOnly StartDate, DateOnly EndDate);
 public record SemesterRange(DateOnly StartDate, DateOnly EndDate);
 public record SemestersRequest(SemesterRange Semester1, SemesterRange Semester2);
@@ -35,3 +36,32 @@ public record ClassUpdateRequest(string Name, byte GradeLevel);
 // SCH-07 Thông tin trường
 public record SchoolProfileDto(string? Name, string? Address, string? PhoneNumber, string? Email, string? Website, bool HasLogo, long? LogoVersion);
 public record SchoolProfileRequest(string Name, string? Address, string? PhoneNumber, string? Email, string? Website);
+
+// SCH-05 Ghi danh
+public record RosterItemDto(int EnrollmentId, int StudentId, string PersonCode, string FullName, DateOnly? DateOfBirth,
+    string? Gender, DateOnly StartDate, DateOnly? EndDate, string? Reason);
+public record RosterDto(int ClassId, string ClassName, DateOnly Date, IReadOnlyList<RosterItemDto> Students);
+public record StudentCandidateDto(int StudentId, string PersonCode, string FullName, DateOnly? DateOfBirth);
+public record EnrollRequest(int StudentId, DateOnly StartDate);
+public record TransferRequest(int ToClassId, DateOnly EffectiveDate);
+public record CloseEnrollmentRequest(string Reason);
+public record EnrollManyRequest(List<int> StudentIds, DateOnly StartDate);
+public record TransferManyRequest(List<int> EnrollmentIds, int ToClassId, DateOnly EffectiveDate);
+public record CloseManyRequest(List<int> EnrollmentIds, string Reason);
+
+// SCH-06 Kết chuyển năm học
+public record RolloverTargetDto(int ClassId, string Name, byte GradeLevel, bool IsActive);
+public record RolloverRowDto(int SourceClassId, string SourceName, int CampusId, string CampusName, byte GradeLevel,
+    int StudentCount, int AlreadyEnrolled, string SuggestedName, byte? SuggestedGrade, RolloverTargetDto? Target);
+public record RolloverClassItem(int SourceClassId, string Name, byte GradeLevel);
+public record RolloverCreateRequest(int FromYearId, int ToYearId, List<RolloverClassItem> Items);
+public record RolloverCreateResult(int Created, IReadOnlyList<ClassDto> Classes);
+public record RolloverMovePair(int SourceClassId, int TargetClassId);
+public record RolloverMoveRequest(List<RolloverMovePair> Pairs);
+public record RolloverMoveItemResult(int SourceClassId, int TargetClassId, int Moved, int Skipped);
+public record RolloverMoveResult(int Moved, int Skipped, IReadOnlyList<RolloverMoveItemResult> Items);
+/// <summary>Học sinh còn học ở cuối năm cũ của một lớp, kèm lớp năm mới em đã được xếp (nếu có).</summary>
+public record RolloverStudentDto(int StudentId, string PersonCode, string FullName, int? NewClassId, string? NewClassName, bool Graduated = false);
+public record GraduateRequest(List<int> StudentIds);
+public record RolloverStudentsMoveRequest(int FromClassId, int ToClassId, List<int> StudentIds);
+public record RolloverUndoRequest(List<int> EnrollmentIds);
