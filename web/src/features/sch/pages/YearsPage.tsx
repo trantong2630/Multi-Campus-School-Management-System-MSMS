@@ -1,20 +1,25 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, DatePicker, Form, Input } from 'antd';
 import { message } from '@/shared/lib/antdStatic';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import { Pencil, Plus, Star, Trash2 } from 'lucide-react';
+import { CalendarDays, CalendarOff, CalendarRange, Hourglass, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/app/AuthProvider';
+import { isPathAllowed } from '@/app/menu';
 import { DataTable } from '@/shared/components/DataTable';
 import { FormModal } from '@/shared/components/FormModal';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { RowActions } from '@/shared/components/RowActions';
+import { StatCard } from '@/shared/components/StatCard';
+import { StatStrip } from '@/shared/components/StatStrip';
 import { StatusBadge } from '@/shared/components/StatusBadge';
 import { confirmAction, showError } from '@/shared/lib/feedback';
 import { formatDate, toDateString } from '@/shared/lib/format';
 import { schApi } from '../api';
 import { useYears } from '../hooks/useCatalogs';
+import { nextSemester, semesterAt, semesterProgress } from '../semester';
 import type { AcademicYear, Semester } from '../types';
 import '../components/school.css';
 
@@ -29,6 +34,21 @@ export function YearsPage() {
   const canWrite = user?.accountType === 'SchoolAdmin';
   const qc = useQueryClient();
   const { data, isLoading } = useYears();
+  const navigate = useNavigate();
+  const current = data?.find((y) => y.isCurrent);
+  const holidays = useQuery({
+    queryKey: ['sch', 'holidays', current?.academicYearId, undefined],
+    queryFn: () => schApi.holidays.list({ yearId: current!.academicYearId }),
+    enabled: !!current,
+  });
+  const today = dayjs().startOf('day');
+  const semester = semesterAt(current, today);
+  const upcomingSemester = nextSemester(current, today);
+  const progress = semester ? semesterProgress(semester, today) : null;
+  // Ngày nghỉ cấp trường và cấp phân hiệu cùng ngày chỉ tính một lần.
+  const upcoming = [...new Set((holidays.data ?? []).map((h) => h.holidayDate.slice(0, 10)).filter((d) => !dayjs(d).isBefore(today)))].sort();
+  const nextHoliday = holidays.data?.find((h) => h.holidayDate.slice(0, 10) === upcoming[0]);
+  const canOpenHolidays = !!user && isPathAllowed('/sch/holidays', user);
   const [yearForm] = Form.useForm<YearValues>();
   const [semForm] = Form.useForm<SemesterValues>();
   const [editing, setEditing] = useState<AcademicYear | 'new' | null>(null);
@@ -108,6 +128,20 @@ export function YearsPage() {
         description="Đúng một năm học hiện hành. Mỗi năm có hai học kỳ nằm trong năm học, không chồng nhau."
         extra={canWrite && <Button type="primary" icon={<Plus size={16} />} onClick={() => setEditing('new')}>Thêm năm học</Button>}
       />
+      {!isLoading && (
+        <StatStrip>
+          <StatCard icon={CalendarRange} tone="green" label="Năm học hiện hành" value={current?.name ?? '—'}
+            hint={current ? `${formatDate(current.startDate)} – ${formatDate(current.endDate)}` : 'Chưa đặt năm học hiện hành'} />
+          <StatCard icon={CalendarDays} tone="sky" label="Học kỳ hiện tại" value={semester?.name ?? 'Ngoài học kỳ'}
+            hint={progress ? `Tuần ${progress.week} / ${progress.total}`
+              : upcomingSemester ? `${upcomingSemester.name} bắt đầu ${formatDate(upcomingSemester.startDate)}` : undefined} />
+          <StatCard icon={Hourglass} tone="violet" label="Còn lại của học kỳ" value={progress ? `${progress.total - progress.week} tuần` : '—'}
+            hint={semester ? `Kết thúc ${formatDate(semester.endDate)}` : undefined} />
+          <StatCard icon={CalendarOff} tone="amber" label="Ngày nghỉ còn lại trong năm" value={current ? upcoming.length : '—'}
+            hint={nextHoliday ? `Gần nhất ${formatDate(nextHoliday.holidayDate)}${nextHoliday.reason ? ` · ${nextHoliday.reason}` : ''}` : undefined}
+            onClick={canOpenHolidays ? () => navigate('/sch/holidays') : undefined} />
+        </StatStrip>
+      )}
       <Card className="table-card">
         <DataTable<AcademicYear>
           rowKey="academicYearId" loading={isLoading} dataSource={data}

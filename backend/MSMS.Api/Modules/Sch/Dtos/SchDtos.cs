@@ -49,6 +49,17 @@ public record EnrollManyRequest(List<int> StudentIds, DateOnly StartDate);
 public record TransferManyRequest(List<int> EnrollmentIds, int ToClassId, DateOnly EffectiveDate);
 public record CloseManyRequest(List<int> EnrollmentIds, string Reason);
 
+// Thống kê cấu trúc đặt ngay trên các màn Thiết lập (thay cho các bảng cấu trúc trước đây nằm ở Dashboard).
+// Tính tại hôm nay, năm học hiện hành; không lưu số liệu suy ra.
+public record CampusStatDto(int CampusId, int ClassCount, int StudentCount, int StaffCount, IReadOnlyList<string> Leaders);
+public record DepartmentStatDto(int DepartmentId, string? HeadName, int TeacherCount);
+/// <summary>Giáo viên và lớp đang học môn theo thời khóa biểu đã phát hành của học kỳ hiện hành (BR-14).</summary>
+public record SubjectStatDto(int SubjectId, int TeacherCount, int ClassCount);
+public record CatalogStatsDto(string? SemesterName, IReadOnlyList<DepartmentStatDto> Departments, IReadOnlyList<SubjectStatDto> Subjects,
+    int? TeachersWithoutDepartment);
+/// <summary>Số học sinh đang học mà chưa có ghi danh hiệu lực. Chỉ School Admin nhận (người ghi danh); vai trò khác nhận null.</summary>
+public record ClassStatsDto(int? StudentsWithoutClass);
+
 // SCH-06 Kết chuyển năm học
 public record RolloverTargetDto(int ClassId, string Name, byte GradeLevel, bool IsActive);
 public record RolloverRowDto(int SourceClassId, string SourceName, int CampusId, string CampusName, byte GradeLevel,

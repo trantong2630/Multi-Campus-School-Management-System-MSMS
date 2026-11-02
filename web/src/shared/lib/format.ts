@@ -15,3 +15,6 @@ export const sessionOfDayLabel = (value: string) => (value === 'Morning' ? 'Sán
 /** Giờ gửi lên Backend luôn có giây (HH:mm:ss). */
 export const toTimeString = (value: dayjs.Dayjs) => value.format('HH:mm:ss');
 export const toDateString = (value: dayjs.Dayjs) => value.format('YYYY-MM-DD');
+
+/** Số đếm theo vi-VN (1.234); "—" khi chưa có dữ liệu. */
+export const formatNumber = (v: number | undefined | null) => (v === undefined || v === null ? '—' : v.toLocaleString('vi-VN'));

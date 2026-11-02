@@ -115,6 +115,7 @@ public class SchAuthorizationTests
             var allowed = m.Name is "Candidates" or "Overview" or "Students" ? Policies.SchoolAdmin   // danh sách học sinh để ghi danh và tổng quan kết chuyển chỉ School Admin dùng
                 : m.DeclaringType!.Name == "CampusesController" ? Policies.CampusReader   // phân hiệu: School Admin, Hiệu trưởng, Hiệu phó (SCH-01)
                 : m.DeclaringType!.Name == "PeriodSlotsController" ? Policies.StaffOrFamily   // khung giờ tiết: học sinh/phụ huynh cần để xem TKB
+                : m.DeclaringType!.Name == "StructureStatsController" ? Policies.Management   // thống kê trên màn Thiết lập: SA sửa, HT/HP chỉ xem
                 : Policies.Staff;
             if (policy != allowed) wrong.Add($"{m.DeclaringType!.Name}.{m.Name} = {policy ?? "(none)"}");
         }

@@ -310,14 +310,14 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
     }
 
     /// <summary>Chỉ giữ chữ số (và dấu + đầu), đổi +84 thành 0 để cùng một số không bị hiểu thành hai phụ huynh.</summary>
-    private static string NormalizePhone(string raw)
+    internal static string NormalizePhone(string raw)
     {
         var s = new string(raw.Where(ch => char.IsAsciiDigit(ch) || ch == '+').ToArray());
         if (s.StartsWith("+84")) s = "0" + s[3..];
         return s;
     }
 
-    private static bool IsPhone(string phone) => phone.Length is >= 9 and <= 15 && phone.All(char.IsAsciiDigit);
+    internal static bool IsPhone(string phone) => phone.Length is >= 9 and <= 15 && phone.All(char.IsAsciiDigit);
 
     private static StudentImportResult Rejected(List<ImportError> errors, List<StudentImportSkipped> skipped) =>
         new(false, 0, 0, 0, skipped, errors.Take(ExcelHelpers.MaxReportedErrors).ToList(), errors.Count);
