@@ -153,3 +153,30 @@ export interface RolloverMoveResult {
   skipped: number;
   items: { sourceClassId: number; targetClassId: number; moved: number; skipped: number }[];
 }
+
+// ---- Thống kê cấu trúc trên màn Thiết lập (tính tại hôm nay, năm học hiện hành) ----
+
+export interface CampusStat {
+  campusId: number;
+  classCount: number;
+  studentCount: number;
+  staffCount: number;
+  leaders: string[];
+}
+
+export interface DepartmentStat { departmentId: number; headName: string | null; teacherCount: number }
+/** Theo thời khóa biểu đã phát hành của học kỳ hiện hành. */
+export interface SubjectStat { subjectId: number; teacherCount: number; classCount: number }
+
+export interface CatalogStats {
+  semesterName: string | null;
+  departments: DepartmentStat[];
+  subjects: SubjectStat[];
+  /** Chỉ School Admin nhận số; vai trò khác là null. */
+  teachersWithoutDepartment: number | null;
+}
+
+export interface ClassStats {
+  /** Chỉ School Admin nhận số; vai trò khác là null. */
+  studentsWithoutClass: number | null;
+}

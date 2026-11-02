@@ -8,6 +8,7 @@ import { useAuth } from '@/app/AuthProvider';
 import { schApi } from '@/features/sch/api';
 import { SchoolLogo } from '@/features/sch/components/SchoolLogo';
 import { useSchool } from '@/features/sch/hooks/useSchool';
+import { nextSemester as nextSemesterOf, semesterAt, semesterProgress } from '@/features/sch/semester';
 import type { AcademicYear, Holiday, PeriodSlot } from '@/features/sch/types';
 import { scdApi } from '@/features/scd/api';
 import type { MySession } from '@/features/scd/types';
@@ -149,16 +150,9 @@ function TodayCard({ now, slots, sessions, holidays, loading, showMine }: {
 
 function YearCard({ now, year, loading }: { now: Dayjs; year?: AcademicYear; loading: boolean }) {
   const today = dayjs(now.format('YYYY-MM-DD'));
-  const semester = year?.semesters.find((s) => !today.isBefore(dayjs(s.startDate)) && !today.isAfter(dayjs(s.endDate)));
-  const nextSemester = year?.semesters.find((s) => today.isBefore(dayjs(s.startDate)));
-
-  let progress: { week: number; total: number } | null = null;
-  if (semester) {
-    const start = dayjs(semester.startDate);
-    const days = dayjs(semester.endDate).diff(start, 'day') + 1;
-    const total = Math.ceil(days / 7);
-    progress = { week: Math.min(Math.floor(today.diff(start, 'day') / 7) + 1, total), total };
-  }
+  const semester = semesterAt(year, today);
+  const nextSemester = nextSemesterOf(year, today);
+  const progress = semester ? semesterProgress(semester, today) : null;
 
   return (
     <Card className="home-card home-bento__year" title="Năm học" extra={year && <span className="home-year tabular">{year.name}</span>}>

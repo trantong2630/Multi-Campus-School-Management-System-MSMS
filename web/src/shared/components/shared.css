@@ -681,3 +681,21 @@
   font-size: 12px;
   color: var(--c-text3);
 }
+
+/* ---------- Dải chỉ số đầu màn danh mục ---------- */
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.stat-strip .stat-card__value {
+  font-size: 30px;
+  line-height: 38px;
+}
+
+/* Ô có nội dung phụ thay cho số (vd. phân bổ theo khối) */
+.stat-strip .stat-card__value:empty {
+  display: none;
+}

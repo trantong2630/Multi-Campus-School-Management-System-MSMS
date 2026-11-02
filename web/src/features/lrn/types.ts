@@ -265,9 +265,22 @@ export interface DepartmentItem {
   recipientCount: number;
   submittedCount: number;
 }
+export interface DepartmentTeaching { subjectId: number; subjectName: string; classNames: string[] }
+/** Thầy cô thuộc tổ, cộng giáo viên tổ khác đang dạy môn của tổ (inDepartment = false). */
+export interface DepartmentMember {
+  personId: number;
+  name: string;
+  campusName: string | null;
+  inDepartment: boolean;
+  periodsPerWeek: number;
+  teaching: DepartmentTeaching[];
+}
 export interface DepartmentOverview {
   isHead: boolean;
   subjects: SubjectOption[];
   teachers: TeacherProgress[];
   items: DepartmentItem[];
+  /** Học kỳ dùng để suy phân công dạy (thời khóa biểu đã phát hành). */
+  semesterName: string | null;
+  members: DepartmentMember[];
 }

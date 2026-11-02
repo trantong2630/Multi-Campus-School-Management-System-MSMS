@@ -28,10 +28,11 @@ function paths(person) {
   return visibleMenu(person).flatMap((group) => group.children ? group.children.map((item) => item.path) : [group.path]);
 }
 
-test('School Admin sees account management and never sees dashboard, schedule or role-bound actions', () => {
+test('School Admin sees account management and its own dashboard, never schedule or role-bound actions', () => {
   const person = user('SchoolAdmin');
   assert.ok(paths(person).includes('/adm/accounts'));
-  for (const path of ['/dashboard', '/scd/timetable', '/scd/schedule', '/adm/exports', '/lrn/assign', '/lrn/todo', '/par/inbox', '/par/leave-requests']) {
+  assert.equal(isPathAllowed('/dashboard', person), true);
+  for (const path of ['/homeroom', '/scd/timetable', '/scd/schedule', '/adm/exports', '/lrn/assign', '/lrn/todo', '/par/inbox', '/par/leave-requests']) {
     assert.ok(!paths(person).includes(path), path);
     assert.equal(isPathAllowed(path, person), false, path);
   }
@@ -40,9 +41,27 @@ test('School Admin sees account management and never sees dashboard, schedule or
 test('Principal reads the dashboard and schedule without inheriting account management or timetable writes', () => {
   const person = user('Principal');
   assert.equal(isPathAllowed('/dashboard', person), true);
+  assert.equal(isPathAllowed('/homeroom', person), false);
+  for (const role of ['Student', 'Parent']) assert.equal(isPathAllowed('/dashboard', user(role)), false, role);
   assert.equal(isPathAllowed('/scd/schedule', person), true);
   assert.equal(isPathAllowed('/scd/timetable', person), false);
   assert.equal(isPathAllowed('/adm/accounts', person), false);
+});
+
+test('Structure screens with statistics: School Admin edits, Principal and campus-leading Vice Principal only read', () => {
+  const structure = ['/sch/campuses', '/sch/subjects', '/sch/years', '/sch/classes'];
+  const adminOnly = ['/sch/holidays', '/sch/period-slots', '/sch/rollover'];
+  for (const path of structure) {
+    assert.equal(isPathAllowed(path, user('SchoolAdmin')), true, path);
+    assert.equal(isPathAllowed(path, user('Principal')), true, path);
+    assert.equal(isPathAllowed(path, user('VicePrincipal', { ledCampusIds: [1] })), true, path);
+    assert.equal(isPathAllowed(path, user('VicePrincipal')), false, path);
+    for (const role of ['Teacher', 'Student', 'Parent']) assert.equal(isPathAllowed(path, user(role, { headDepartmentIds: [1], homeroomClassIds: [1] })), false, `${role}: ${path}`);
+  }
+  for (const path of adminOnly) {
+    assert.equal(isPathAllowed(path, user('SchoolAdmin')), true, path);
+    for (const role of ['Principal', 'VicePrincipal']) assert.equal(isPathAllowed(path, user(role, { ledCampusIds: [1] })), false, `${role}: ${path}`);
+  }
 });
 
 test('Vice Principal navigation follows current campus duty', () => {
@@ -58,6 +77,8 @@ test('Vice Principal navigation follows current campus duty', () => {
 test('Teacher gains only the navigation attached to each current responsibility', () => {
   const teacher = user('Teacher');
   assert.equal(isPathAllowed('/lrn/questions', teacher), true);
+  assert.equal(isPathAllowed('/dashboard', teacher), true);
+  assert.equal(isPathAllowed('/homeroom', teacher), false);
   assert.equal(isPathAllowed('/lrn/assign', teacher), false);
   assert.equal(isPathAllowed('/par/leave-requests', teacher), false);
   assert.equal(isPathAllowed('/lrn/department', teacher), false);
@@ -66,9 +87,11 @@ test('Teacher gains only the navigation attached to each current responsibility'
   assert.equal(isPathAllowed('/par/leave-requests', subjectTeacher), false);
   const homeroomTeacher = user('Teacher', { homeroomClassIds: [1] });
   assert.equal(isPathAllowed('/par/leave-requests', homeroomTeacher), true);
+  assert.equal(isPathAllowed('/homeroom', homeroomTeacher), true);
   assert.equal(isPathAllowed('/lrn/department', homeroomTeacher), false);
   const head = user('Teacher', { headDepartmentIds: [2] });
   assert.equal(isPathAllowed('/lrn/department', head), true);
+  assert.equal(isPathAllowed('/homeroom', head), false);
   assert.equal(isPathAllowed('/lrn/assign', head), false);
 });
 

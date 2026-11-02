@@ -1,9 +1,15 @@
 import { ArrowRight } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { accent } from '@/shared/lib/tokens';
+import type { AccentName } from '@/shared/lib/tokens';
 import './shared.css';
 
 interface Props {
   label: string;
+  /** Icon góc phải (Design_Web §9.4), nền nhạt theo tông; ô nhấn luôn nền trắng chữ xanh. */
+  icon?: LucideIcon;
+  tone?: AccentName;
   value: ReactNode;
   /** Dòng phụ dưới số: bối cảnh suy ra từ dữ liệu (bình quân, ngày…), không lặp lại nhãn. */
   hint?: ReactNode;
@@ -19,7 +25,7 @@ interface Props {
 }
 
 /** Ô chỉ số dạng bento của Dashboard (Design_Web §8.6): nhãn, số lớn, dòng phụ, lối "Xem". */
-export function StatCard({ label, value, hint, variant = 'default', attention = false, onClick, className, children }: Props) {
+export function StatCard({ label, icon: Icon, tone = 'green', value, hint, variant = 'default', attention = false, onClick, className, children }: Props) {
   const clickable = !!onClick;
   const cls = [
     'bento-tile', 'stat-card',
@@ -38,6 +44,11 @@ export function StatCard({ label, value, hint, variant = 'default', attention = 
     >
       <div className="stat-card__top">
         <div className="stat-card__label">{label}</div>
+        {Icon && (
+          <span className="stat-card__icon" style={variant === 'accent' ? undefined : { color: accent[tone].fg, background: accent[tone].bg }}>
+            <Icon size={20} strokeWidth={2} />
+          </span>
+        )}
       </div>
       <div className="stat-card__value tabular">{value}</div>
       {children}
