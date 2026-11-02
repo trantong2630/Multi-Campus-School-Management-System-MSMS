@@ -1,5 +1,5 @@
 import { apiClient } from '@/app/apiClient';
-import type { AcademicYear, Campus, Department, Holiday, PeriodSlot, Roster, RolloverCreateResult, RolloverMoveResult, RolloverRow, RolloverStudent, SchoolClass, SchoolProfile, StudentCandidate, Subject } from './types';
+import type { AcademicYear, Campus, CampusStat, CatalogStats, ClassStats, Department, Holiday, PeriodSlot, Roster, RolloverCreateResult, RolloverMoveResult, RolloverRow, RolloverStudent, SchoolClass, SchoolProfile, StudentCandidate, Subject } from './types';
 
 /** Đường dẫn ảnh logo; tham số v đổi theo lần cập nhật để trình duyệt không giữ logo cũ. */
 export const schoolLogoUrl = (version: number | null) => `/api/school/logo?v=${version ?? 0}`;
@@ -61,6 +61,12 @@ export const schApi = {
     create: (b: object) => post<SchoolClass>('/sch/classes', b),
     update: (id: number, b: object) => put(`/sch/classes/${id}`, b),
     setActive: (id: number, isActive: boolean) => put(`/sch/classes/${id}/active`, { isActive }),
+  },
+  /** Thống kê cấu trúc: School Admin, Hiệu trưởng toàn trường; Hiệu phó theo phân hiệu đang phụ trách. */
+  stats: {
+    campuses: () => get<CampusStat[]>('/sch/stats/campuses'),
+    catalog: () => get<CatalogStats>('/sch/stats/catalog'),
+    classes: () => get<ClassStats>('/sch/stats/classes'),
   },
   rollover: {
     overview: (params: { fromYearId: number; toYearId: number; campusId?: number }) => get<RolloverRow[]>('/sch/rollover', params),

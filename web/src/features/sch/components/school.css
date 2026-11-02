@@ -312,3 +312,67 @@ button.hol-chip {
 .roster-bulkbar > span {
   margin-right: auto;
 }
+
+/* Dữ liệu cần bổ sung trên màn danh mục */
+.gap-alert {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gap-alert li + li {
+  margin-top: 4px;
+}
+
+.gap-alert__go {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 10px;
+  font-weight: 600;
+}
+
+/* Ô bảng hai dòng: tên đậm, dòng phụ nhỏ (người phụ trách) */
+.cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cell-stack > span {
+  font-size: 12px;
+}
+
+.text-warn {
+  color: var(--c-amberInk);
+}
+
+/* Phân bổ học sinh theo khối trong ô chỉ số */
+.grade-mini {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 16px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grade-mini li {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--c-text2);
+}
+
+.grade-mini b {
+  margin-left: auto;
+  font-size: 15px;
+  color: var(--c-ink);
+}
+
+.grade-mini small {
+  min-width: 36px;
+  text-align: right;
+  color: var(--c-text3);
+}

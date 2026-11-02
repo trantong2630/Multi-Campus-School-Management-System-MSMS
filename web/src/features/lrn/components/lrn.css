@@ -897,3 +897,15 @@
 
 @media (max-width: 1100px) { .dept__grid { grid-template-columns: 1fr; } .dept__pulse { grid-template-columns: 1fr; } .dept__gauge { padding: 0 0 12px; border-right: 0; border-bottom: 1px dashed var(--c-border); } }
 @media (max-width: 760px) { .dept__stats { grid-template-columns: repeat(2, 1fr); } .dept__row { grid-template-columns: 54px minmax(0, 1fr) 84px; } .dept__rowDue, .dept__go { display: none; } }
+
+/* Thầy cô và phân công dạy của tổ (LRN-05): chỉ đọc, suy từ thời khóa biểu đã phát hành */
+.dept__members { margin-top: 20px; padding: 20px 20px 18px; border: 1px solid var(--c-border); border-radius: 28px; background: var(--c-surface); box-shadow: var(--shadow-card); }
+.dept__hint { margin-left: auto; color: var(--c-text2); font-size: 12px; }
+.dept ul.dept__mlist { gap: 0; }
+.dept__member { display: grid; grid-template-columns: 36px minmax(160px, 240px) minmax(0, 1fr) 72px; align-items: center; gap: 14px; padding: 10px 12px; border-top: 1px solid var(--c-border); }
+.dept__member:first-child { border-top: 0; }
+.dept__tag { margin-left: 8px; padding: 1px 8px; border-radius: var(--radius-pill); background: var(--c-neutralBg); color: var(--c-text2); font-size: 11px; font-style: normal; font-weight: 700; vertical-align: 2px; }
+.dept__teach { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.dept__chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: var(--radius-pill); background: var(--c-sunken); color: var(--c-text2); font-size: 12px; }
+.dept__chip b { padding: 1px 9px; border-radius: var(--radius-pill); background: var(--sj-bg); color: var(--sj-fg); font-weight: 700; }
+@media (max-width: 1100px) { .dept__member { grid-template-columns: 36px minmax(0, 1fr) 72px; } .dept__teach { grid-column: 2 / -1; } }

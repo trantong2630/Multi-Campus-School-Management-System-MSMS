@@ -4,6 +4,9 @@ namespace MSMS.Api.Modules.Adm;
 
 public static class AdmModule
 {
-    public static IServiceCollection AddAdmModule(this IServiceCollection s)
-        => s.AddScoped<DashboardService>();
+    public static IServiceCollection AddAdmModule(this IServiceCollection s) => s
+        .AddScoped<DashboardService>()
+        .AddScoped<AdminDashboardService>()
+        .AddScoped<TeacherDashboardService>()
+        .AddScoped<HomeroomOverviewService>();
 }
