@@ -92,7 +92,7 @@ export function PostFormModal({ open, post, onClose, onSaved }: Props) {
             </div>
           ))}
         </div>
-        <FileButton accept=".png,.jpg,.jpeg" icon={<ImagePlus size={16} />} disabled={total >= MAX_POST_IMAGES} onFile={pick}>
+        <FileButton forceHideInput accept=".png,.jpg,.jpeg" icon={<ImagePlus size={16} />} disabled={total >= MAX_POST_IMAGES} onFile={pick}>
           Thêm ảnh
         </FileButton>
       </Form.Item>
