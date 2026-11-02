@@ -7,6 +7,7 @@ public static class ParModule
     public static IServiceCollection AddParModule(this IServiceCollection s)
         => s.AddScoped<LeaveRequestService>()
             .AddScoped<HomeroomLeaveService>()
-            .AddScoped<ConversationService>();
+            .AddScoped<ConversationService>()
+            .AddScoped<WeeklyReportService>();
 
 }

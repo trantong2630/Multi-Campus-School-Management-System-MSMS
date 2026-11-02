@@ -11,6 +11,9 @@ import type {
   MessageItem,
   MyChildItem,
   TeachingStudentItem,
+  HomeroomStudentItem,
+  ReportWeekItem,
+  WeeklyReportData,
 } from './types';
 
 export const parApi = {
@@ -123,8 +126,31 @@ export const parApi = {
     getTotalUnreadCount: () =>
       apiClient.get<number>('/par/conversations/unread-count').then((r) => r.data),
   },
+
+  report: {
+    /**
+     * Get valid weeks (Monday-Sunday) for viewing student's weekly report
+     */
+    getWeeks: (studentId: number) =>
+      apiClient.get<ReportWeekItem[]>('/par/weekly-reports/weeks', { params: { studentId } }).then((r) => r.data),
+
+    /**
+     * Get complete weekly report for a student
+     */
+    getReport: (studentId: number, weekStart?: string) =>
+      apiClient
+        .get<WeeklyReportData>(`/par/weekly-reports/student/${studentId}`, { params: { weekStart } })
+        .then((r) => r.data),
+
+    /**
+     * Get homeroom students for current teacher
+     */
+    getHomeroomStudents: () =>
+      apiClient.get<HomeroomStudentItem[]>('/par/weekly-reports/homeroom-students').then((r) => r.data),
+  },
 };
 
 export const leaveApi = parApi.leave;
 export const conversationApi = parApi.conversation;
+export const reportApi = parApi.report;
 
