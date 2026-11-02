@@ -106,7 +106,7 @@ export const menu: MenuGroup[] = [
     key: 'par', label: 'Phụ huynh', icon: HeartHandshake, section: 'manage',
     children: [
       { key: 'par-leave', label: 'Đơn xin nghỉ', path: '/par/leave-requests', roles: ['VicePrincipal', 'Teacher', 'Parent'], requires: { Teacher: 'homeroom', VicePrincipal: 'campus' }, ready: true, icon: FileText },
-      { key: 'par-report', label: 'Sổ liên lạc', path: '/par/weekly-reports', roles: ['Teacher', 'Student', 'Parent'], requires: { Teacher: 'homeroom' }, ready: false, icon: HeartHandshake },
+      { key: 'par-report', label: 'Sổ liên lạc', path: '/par/weekly-reports', roles: ['Teacher', 'Student', 'Parent'], requires: { Teacher: 'homeroom' }, ready: true, icon: HeartHandshake },
       { key: 'par-inbox', label: 'Hộp thư', path: '/par/inbox', roles: ['Teacher', 'Parent'], ready: true, icon: Mail },
     ],
   },

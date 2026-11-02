@@ -160,3 +160,74 @@ export interface MessageItem {
   readAt: string | null;
 }
 
+
+/**
+ * A valid week (Monday to Sunday) for viewing student's weekly report
+ */
+export interface ReportWeekItem {
+  weekStart: string;
+  weekEnd: string;
+  weekNumber: number;
+  label: string;
+  isCurrent: boolean;
+}
+
+/**
+ * Attendance summary: 5 metrics for a week
+ */
+export interface AttendanceSummary {
+  totalSessions: number;
+  presentCount: number;
+  lateCount: number;
+  excusedCount: number;
+  unexcusedCount: number;
+  unmarkedCount: number;
+}
+
+/**
+ * A single assignment with status and result
+ */
+export interface WeeklyAssignmentItem {
+  assignmentId: number;
+  title: string;
+  subjectName: string;
+  dueAt: string;
+  status: 'Submitted' | 'Unsubmitted' | 'Missed';
+  score?: number | null;
+  aiFeedback?: string | null;
+}
+
+/**
+ * Assignment summary for a week: 4 metrics + items list
+ */
+export interface AssignmentSummary {
+  assignedCount: number;
+  submittedCount: number;
+  unsubmittedCount: number;
+  missedCount: number;
+  items: WeeklyAssignmentItem[];
+}
+
+/**
+ * Complete weekly report for one student and one week (BR-24)
+ */
+export interface WeeklyReportData {
+  studentId: number;
+  studentName: string;
+  studentCode: string;
+  className: string;
+  weekStart: string;
+  weekEnd: string;
+  attendance: AttendanceSummary;
+  assignments: AssignmentSummary;
+}
+
+/**
+ * Student in homeroom teacher's class
+ */
+export interface HomeroomStudentItem {
+  studentId: number;
+  studentCode: string;
+  fullName: string;
+  className: string;
+}
