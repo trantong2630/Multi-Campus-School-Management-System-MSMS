@@ -13,3 +13,8 @@ export function useCurrentYear() {
   const current = years.data?.find((y) => y.isCurrent) ?? years.data?.[0];
   return { ...years, current };
 }
+
+/** Thống kê cấu trúc của màn Thiết lập. Cùng tiền tố ['sch'] nên sửa danh mục xong là tự làm mới. */
+export const useCampusStats = () => useQuery({ queryKey: ['sch', 'stats', 'campuses'], queryFn: schApi.stats.campuses });
+export const useCatalogStats = () => useQuery({ queryKey: ['sch', 'stats', 'catalog'], queryFn: schApi.stats.catalog });
+export const useClassStats = () => useQuery({ queryKey: ['sch', 'stats', 'classes'], queryFn: schApi.stats.classes });

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Drawer, Skeleton } from 'antd';
-import { ChevronRight, Search, Users, X } from 'lucide-react';
+import { BookOpenCheck, ChevronRight, Search, Users, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { PersonAvatar } from '@/shared/components/PersonAvatar';
 import { formatDateTime } from '@/shared/lib/format';
@@ -226,6 +226,40 @@ export function DepartmentPage() {
           )}
         </section>
       </div>
+
+      <section className="dept__members" aria-label="Thầy cô trong tổ">
+        <div className="dept__tools">
+          <h2><BookOpenCheck size={18} aria-hidden />Thầy cô và phân công dạy</h2>
+          <span className="dept__count">{d.members.filter((m) => m.inDepartment).length} người trong tổ</span>
+          <span className="dept__hint">
+            {d.semesterName ? `Theo thời khóa biểu đã phát hành, ${d.semesterName}` : 'Chưa có học kỳ hiện hành để suy phân công dạy'}
+          </span>
+        </div>
+        {d.members.length === 0 ? <p className="dept__none">Tổ chưa có thầy cô nào.</p> : (
+          <ul className="dept__mlist">
+            {d.members.map((m) => (
+              <li key={m.personId} className="dept__member">
+                <PersonAvatar name={m.name} size={36} />
+                <span className="dept__tmain">
+                  <strong>{m.name}{!m.inDepartment && <em className="dept__tag">Tổ khác</em>}</strong>
+                  <span className="dept__tmeta">{m.campusName ?? 'Chưa gắn phân hiệu'}</span>
+                </span>
+                <span className="dept__teach">
+                  {m.teaching.length === 0 ? <span className="dept__tmeta">Chưa dạy môn nào của tổ</span> : m.teaching.map((t) => (
+                    <span key={t.subjectId} className="dept__chip" style={subjectVars(t.subjectId)}>
+                      <b>{t.subjectName}</b>{t.classNames.join(', ')}
+                    </span>
+                  ))}
+                </span>
+                <span className="dept__tnum tabular">
+                  <strong>{m.periodsPerWeek}</strong>
+                  <small>tiết/tuần</small>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <Drawer open={openId !== null} onClose={() => setOpenId(null)} size={820} title="Chi tiết bài (chỉ xem)" destroyOnHidden>
         {openId !== null && <AssignmentPanel id={openId} />}
