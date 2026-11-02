@@ -1,12 +1,15 @@
-import { Avatar, Button, Dropdown, Layout, Menu, Tooltip } from 'antd';
+import { Avatar, Badge, Button, Dropdown, Layout, Menu, Tooltip } from 'antd';
 import type { MenuProps } from 'antd';
 import { ChevronDown, ChevronRight, ChevronsLeft, ChevronsRight, KeyRound, LogOut, Search, UserRound } from 'lucide-react';
 import { BrandLogo } from '@/shared/components/BrandLogo';
 import { useSchool } from '@/features/sch/hooks/useSchool';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { accountTypeLabel } from '@/shared/lib/labels';
+import { accountTypeLabel, logoutErrorTitle, logoutLabel } from '@/shared/lib/labels';
+import { showError } from '@/shared/lib/feedback';
 import { color } from '@/shared/lib/tokens';
+import { conversationApi } from '@/features/par/api';
+import { NotificationBell } from '@/features/com/components/NotificationBell';
 import { useAuth } from './AuthProvider';
 import { CommandPalette } from './CommandPalette';
 import { isPathAllowed, resolveCrumbs, sectionLabel, visibleMenu } from './menu';
@@ -24,14 +27,19 @@ function initialsOf(fullName: string) {
 interface Indicator { top: number; height: number; visible: boolean }
 
 export function AppLayout() {
-  const { user, logout } = useAuth();
+  const { user, logout, loggingOut, refresh } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const school = useSchool();
   const [collapsed, setCollapsed] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
 
-  const groups = useMemo(() => visibleMenu(user!.accountType), [user]);
+  const groups = useMemo(() => visibleMenu(user!), [user]);
+
+  useEffect(() => {
+    // Đổi màn hình cũng cập nhật trách nhiệm; API vẫn tự kiểm quyền cho từng request.
+    void refresh().catch(() => {});
+  }, [location.pathname, refresh]);
 
   // Từ key trong menu suy ra đường dẫn, và ngược lại từ đường dẫn tìm mục đang chọn.
   const pathByKey = useMemo(() => {
@@ -70,6 +78,16 @@ export function AppLayout() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  const [unreadInboxCount, setUnreadInboxCount] = useState<number>(0);
+
+  useEffect(() => {
+    if (user?.accountType === 'Parent' || user?.accountType === 'Teacher') {
+      conversationApi.getTotalUnreadCount()
+        .then(setUnreadInboxCount)
+        .catch(() => {});
+    }
+  }, [user, location.pathname]);
+
   // Menu chia cụm (Tổng quan / Quản lý / Hệ thống); cụm chỉ hiện khi còn ít nhất một nhóm.
   const items: MenuProps['items'] = useMemo(() => {
     const toItem = (g: (typeof groups)[number]) => {
@@ -80,7 +98,21 @@ export function AppLayout() {
           <Icon size={18} strokeWidth={2} />
         </span>
       );
-      if (!g.children) return { key: g.key, icon: tile, label: g.label };
+      if (!g.children) {
+        const hasBadge = g.key === 'par-inbox' && unreadInboxCount > 0;
+        return {
+          key: g.key,
+          icon: tile,
+          label: hasBadge ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              <span>{g.label}</span>
+              <Badge count={unreadInboxCount} size="small" style={{ marginLeft: 8 }} />
+            </span>
+          ) : (
+            g.label
+          ),
+        };
+      }
       return {
         key: g.key,
         icon: tile,
@@ -90,6 +122,9 @@ export function AppLayout() {
           label: (
             <span className="nav-sub" title={c.label}>
               <span className="nav-sub__label">{c.label}</span>
+              {c.key === 'par-inbox' && unreadInboxCount > 0 && (
+                <Badge count={unreadInboxCount} size="small" style={{ marginLeft: 8 }} />
+              )}
             </span>
           ),
         })),
@@ -100,7 +135,7 @@ export function AppLayout() {
       .map((sec) => ({ sec, list: groups.filter((g) => g.section === sec) }))
       .filter((x) => x.list.length > 0)
       .map(({ sec, list }) => ({ type: 'group' as const, key: `sec-${sec}`, label: sectionLabel[sec], children: list.map(toItem) }));
-  }, [groups, openKeys, selectedKey]);
+  }, [groups, openKeys, selectedKey, unreadInboxCount]);
 
   // Viên trắng của mục đang chọn là một lớp riêng nằm dưới menu, trượt mềm tới vị trí mới khi đổi trang hoặc mở/đóng nhóm.
   const navRef = useRef<HTMLDivElement>(null);
@@ -144,10 +179,13 @@ export function AppLayout() {
     { key: 'profile', icon: <UserRound size={16} />, label: 'Hồ sơ cá nhân', onClick: () => navigate('/profile') },
     { key: 'password', icon: <KeyRound size={16} />, label: 'Đổi mật khẩu', onClick: () => navigate('/change-password') },
     { type: 'divider' },
-    { key: 'logout', icon: <LogOut size={16} />, label: 'Đăng xuất', onClick: () => void logout() },
+    {
+      key: 'logout', icon: <LogOut size={16} />, label: logoutLabel(loggingOut), disabled: loggingOut,
+      onClick: () => { void logout().catch((error: unknown) => showError(error, logoutErrorTitle)); },
+    },
   ];
 
-  const crumbs = resolveCrumbs(location.pathname);
+  const crumbs = resolveCrumbs(location.pathname, user?.accountType);
 
   // Tab trình duyệt: tên trang trước để nhiều tab vẫn phân biệt được khi bị cắt chữ; Trang chủ chỉ có tên trường.
   const pageTitle = location.pathname === '/' ? undefined : crumbs[crumbs.length - 1];
@@ -222,7 +260,7 @@ export function AppLayout() {
           <nav className="header-crumb" aria-label="Vị trí hiện tại">
             <span className="header-crumb__path">
               {(crumbs.length ? crumbs : ['Trang chủ']).map((c, k, arr) => (
-                <span key={c} className={k === arr.length - 1 ? 'header-crumb__item header-crumb__item--current' : 'header-crumb__item'}>
+                <span key={`${k}-${c}`} className={k === arr.length - 1 ? 'header-crumb__item header-crumb__item--current' : 'header-crumb__item'}>
                   {k > 0 && <ChevronRight size={14} />}
                   {c}
                 </span>
@@ -235,6 +273,7 @@ export function AppLayout() {
             <span>Tìm nhanh màn hình</span>
             <kbd className="kbd">Ctrl K</kbd>
           </button>
+          <NotificationBell />
           <Dropdown menu={{ items: userMenu }} trigger={['click']} placement="bottomRight">
             <button type="button" className="header-user" aria-label="Tài khoản">
               <Avatar size={34} className="header-user__avatar">{initialsOf(user!.fullName)}</Avatar>
@@ -250,7 +289,7 @@ export function AppLayout() {
         <Content className="app-content">
           {/* key theo đường dẫn để nội dung mỗi trang hiện dần lên khi chuyển trang. */}
           <div className="app-content__inner" key={location.pathname}>
-            {isPathAllowed(location.pathname, user!.accountType) ? <Outlet /> : <Forbidden />}
+            {isPathAllowed(location.pathname, user!) ? <Outlet /> : <Forbidden />}
           </div>
         </Content>
       </Layout>

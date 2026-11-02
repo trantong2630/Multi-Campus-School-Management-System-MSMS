@@ -1,3 +1,4 @@
+using System.Net.Mail;
 using System.Text.RegularExpressions;
 using MSMS.Api.Common.Text;
 
@@ -46,4 +47,8 @@ public static partial class Guard
     }
 
     public static bool IsAlnum(string value) => AlnumRegex().IsMatch(value);
+
+    /// <summary>Địa chỉ email dạng tên@miền.đuôi: một địa chỉ duy nhất (không tên hiển thị, không dấu cách) và tên miền có dấu chấm.</summary>
+    public static bool IsEmail(string value) =>
+        value.Length <= 254 && MailAddress.TryCreate(value, out var mail) && mail.Address == value && mail.Host.Contains('.');
 }

@@ -50,6 +50,9 @@ export interface AcademicYear {
   endDate: string;
   isCurrent: boolean;
   semesters: Semester[];
+  /** Ngày kết thúc muộn nhất của học kỳ 1 và 2, do backend tính (SemesterRules). */
+  semester1LatestEnd: string;
+  semester2LatestEnd: string;
 }
 
 export interface Holiday {
@@ -82,4 +85,71 @@ export interface SchoolClass {
   isActive: boolean;
   studentCount: number;
   homeroomName: string | null;
+}
+
+export interface RosterItem {
+  enrollmentId: number;
+  studentId: number;
+  personCode: string;
+  fullName: string;
+  dateOfBirth: string | null;
+  gender: string | null;
+  startDate: string;
+  endDate: string | null;
+  reason: string | null;
+}
+
+export interface Roster {
+  classId: number;
+  className: string;
+  date: string;
+  students: RosterItem[];
+}
+
+export interface StudentCandidate {
+  studentId: number;
+  personCode: string;
+  fullName: string;
+  dateOfBirth: string | null;
+}
+
+export interface RolloverTarget {
+  classId: number;
+  name: string;
+  gradeLevel: number;
+  isActive: boolean;
+}
+
+export interface RolloverRow {
+  sourceClassId: number;
+  sourceName: string;
+  campusId: number;
+  campusName: string;
+  gradeLevel: number;
+  studentCount: number;
+  alreadyEnrolled: number;
+  suggestedName: string;
+  suggestedGrade: number | null;
+  target: RolloverTarget | null;
+}
+
+export interface RolloverCreateResult {
+  created: number;
+  classes: SchoolClass[];
+}
+
+/** Học sinh còn học ở cuối năm cũ của một lớp, kèm lớp năm mới đã xếp (nếu có). */
+export interface RolloverStudent {
+  studentId: number;
+  personCode: string;
+  fullName: string;
+  newClassId: number | null;
+  newClassName: string | null;
+  graduated: boolean;
+}
+
+export interface RolloverMoveResult {
+  moved: number;
+  skipped: number;
+  items: { sourceClassId: number; targetClassId: number; moved: number; skipped: number }[];
 }

@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Card, Form, Input, Segmented, Select } from 'antd';
+import { Button, Card, Form, Input, Segmented, Select, Space } from 'antd';
 import { message } from '@/shared/lib/antdStatic';
 import { KeyRound, Lock, LockOpen, Repeat } from 'lucide-react';
 import { useState } from 'react';
@@ -18,19 +18,18 @@ import { PersonCell } from '@/shared/components/PersonCell';
 import { accountApi } from '../accountApi';
 import { STAFF_ACCOUNT_TYPES } from '../accountTypes';
 import { TempPasswordModal } from '../components/TempPasswordModal';
+import { CreateAccountsModal } from '../components/CreateAccountsModal';
+import { AccountImpact } from '../components/AccountImpact';
 import type { Account, LockImpact, TempPasswordItem } from '../types';
 
 const ALL_TYPES: AccountType[] = ['SchoolAdmin', 'Principal', 'VicePrincipal', 'Teacher', 'Student', 'Parent'];
-const dutyLabel: Record<string, string> = {
-  Campus: 'Phụ trách phân hiệu', Department: 'Tổ trưởng', Homeroom: 'Chủ nhiệm lớp', Teaching: 'Phụ trách chuyên môn',
-};
 const STATUSES = ['Active', 'PendingPasswordChange', 'Locked'];
 const STATUS_LABEL: Record<string, string> = { Active: 'Đang hoạt động', PendingPasswordChange: 'Chờ đổi mật khẩu', Locked: 'Đã khóa' };
 const PAGE_SIZE = 20;
 
 interface TypeValues { accountType: string }
 
-/** IAM-02: quản lý tài khoản. Tạo tài khoản làm trên danh bạ (chọn nhiều dòng), màn hình này lo khóa, mở, cấp lại, đổi loại. */
+/** IAM-02: quản lý vòng đời tài khoản từ các hồ sơ sẵn có. */
 export function AccountsPage() {
   const qc = useQueryClient();
   const campuses = useCampuses();
@@ -41,7 +40,10 @@ export function AccountsPage() {
   const [page, setPage] = useState(1);
   const [form] = Form.useForm<TypeValues>();
   const [changing, setChanging] = useState<Account | null>(null);
+  const [changeImpact, setChangeImpact] = useState<LockImpact | null>(null);
+  const [createMode, setCreateMode] = useState<'single' | 'bulk' | null>(null);
   const [issued, setIssued] = useState<TempPasswordItem[] | null>(null);
+  const [skipped, setSkipped] = useState<{ personId: number; fullName: string; reason: string }[]>([]);
 
   const filters = { search: search || undefined, accountType, status, campusId };
   const accounts = useQuery({
@@ -49,7 +51,11 @@ export function AccountsPage() {
     queryFn: () => accountApi.list({ ...filters, page, pageSize: PAGE_SIZE }),
     placeholderData: (prev) => prev,
   });
-  const refresh = () => qc.invalidateQueries({ queryKey: ['iam', 'accounts'] });
+  const refresh = () => Promise.all([
+    qc.invalidateQueries({ queryKey: ['iam', 'accounts'] }),
+    qc.invalidateQueries({ queryKey: ['iam', 'directory'] }),
+    qc.invalidateQueries({ queryKey: ['ppl'] }),
+  ]);
   const reset = () => setPage(1);
 
   const run = async (action: () => Promise<unknown>, success: string) => {
@@ -69,8 +75,8 @@ export function AccountsPage() {
 
   const changeType = async (v: TypeValues) => {
     const res = await accountApi.changeType(changing!.accountId, v.accountType);
-    await refresh();
     setIssued([toItem(changing!, res, v.accountType)]);
+    void refresh();
   };
 
   const allowedTypes = (a: Account) =>
@@ -80,7 +86,8 @@ export function AccountsPage() {
     <>
       <PageHeader
         title="Tài khoản"
-        description="Mỗi hồ sơ có đúng một tài khoản. Tạo tài khoản bằng cách chọn nhiều dòng ở Hồ sơ → Cán bộ."
+        description="Quản lý tài khoản cán bộ, học sinh và phụ huynh. Mỗi hồ sơ có đúng một tài khoản."
+        extra={<Space><Button onClick={() => setCreateMode('bulk')}>Tạo hàng loạt</Button><Button type="primary" onClick={() => setCreateMode('single')}>Tạo tài khoản</Button></Space>}
       />
       <FilterBar>
         <Segmented<string>
@@ -128,17 +135,7 @@ export function AccountsPage() {
                           content: (
                             <div>
                               <p>Người này không đăng nhập được và phiên đang mở bị từ chối ở thao tác kế tiếp. Hồ sơ và lịch sử giữ nguyên.</p>
-                              {impact.sessionCount > 0 && (
-                                <p>
-                                  {impact.sessionCount} tiết từ hôm nay trở đi sẽ chuyển sang <b>Chờ xử lý</b> ({impact.campuses.map((c) => `${c.campus}: ${c.count}`).join(', ')}).
-                                  Hiệu phó phân hiệu sẽ nhận thông báo để đổi giáo viên hoặc hủy tiết.
-                                </p>
-                              )}
-                              {impact.duties.length > 0 && (
-                                <p>
-                                  Trách nhiệm sẽ kết thúc vào hôm nay: {impact.duties.map((d) => `${dutyLabel[d.kind] ?? d.kind} ${d.targetName}`).join('; ')}.
-                                </p>
-                              )}
+                              <AccountImpact impact={impact} />
                             </div>
                           ),
                           okText: 'Khóa tài khoản', danger: true,
@@ -155,13 +152,21 @@ export function AccountsPage() {
                       onOk: async () => {
                         try {
                           const res = await accountApi.resetPassword(a.accountId);
-                          await refresh();
                           setIssued([toItem(a, res)]);
+                          void refresh();
                         } catch (e) { showError(e); }
                       },
                     }),
                   },
-                  { key: 'type', label: 'Đổi loại tài khoản', icon: <Repeat size={16} />, hidden: allowedTypes(a).length === 0, onClick: () => setChanging(a) },
+                  { key: 'type', label: 'Đổi loại tài khoản', icon: <Repeat size={16} />, hidden: allowedTypes(a).length === 0,
+                    onClick: async () => {
+                      try {
+                        const impact = await accountApi.lockImpact(a.accountId);
+                        setChangeImpact(impact);
+                        setChanging(a);
+                      } catch (e) { showError(e); }
+                    },
+                  },
                 ]} />
               ),
             },
@@ -176,12 +181,21 @@ export function AccountsPage() {
         <p style={{ marginTop: 0, color: 'var(--c-text2)' }}>
           Chỉ dùng khi cấp sai loại. Hệ thống ghi nhật ký, cấp lại mật khẩu tạm và đưa tài khoản về Chờ đổi mật khẩu. Hồ sơ và lịch sử nghiệp vụ giữ nguyên.
         </p>
+        <p>Mọi phiên đăng nhập sẽ bị thu hồi.</p>
+        {changeImpact && <AccountImpact impact={changeImpact} />}
         <Form.Item label="Loại tài khoản mới" name="accountType" rules={[{ required: true, message: 'Chọn loại tài khoản mới.' }]}>
           <Select options={(changing ? allowedTypes(changing) : []).map((t) => ({ value: t, label: accountTypeLabel[t as AccountType] }))} />
         </Form.Item>
       </FormModal>
 
-      <TempPasswordModal open={issued !== null} title="Mật khẩu tạm mới" items={issued ?? []} onClose={() => setIssued(null)} />
+      {createMode && <CreateAccountsModal mode={createMode} onClose={() => setCreateMode(null)} onCreated={(result) => {
+        setCreateMode(null);
+        setIssued(result.created);
+        setSkipped(result.skipped);
+        void refresh();
+      }} />}
+      <TempPasswordModal open={issued !== null} title="Kết quả cấp tài khoản và mật khẩu tạm" items={issued ?? []}
+        skipped={skipped} onClose={() => { setIssued(null); setSkipped([]); }} />
     </>
   );
 }

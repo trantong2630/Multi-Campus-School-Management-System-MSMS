@@ -7,11 +7,11 @@ using MSMS.Api.Modules.Sch.Services;
 namespace MSMS.Api.Modules.Sch.Controllers;
 
 [ApiController, Route("api/sch/classes")]
-public class ClassesController(ClassService service) : ControllerBase
+public class ClassesController(ClassService service, ScopeResolver scope) : ControllerBase
 {
     [HttpGet, Authorize(Policy = Policies.Staff)]
     public Task<List<ClassDto>> List([FromQuery] int? campusId, [FromQuery] int? yearId, [FromQuery] bool includeInactive = false)
-        => service.ListAsync(campusId, yearId, includeInactive);
+        => service.ListVisibleAsync(campusId, yearId, includeInactive, scope);
 
     [HttpPost, Authorize(Policy = Policies.SchoolAdmin)]
     public Task<ClassDto> Create(ClassRequest r) => service.CreateAsync(r);

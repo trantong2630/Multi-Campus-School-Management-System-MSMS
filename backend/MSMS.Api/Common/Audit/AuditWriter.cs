@@ -19,7 +19,11 @@ public static class AuditCategories
 /// </summary>
 public sealed class AuditWriter(MsmsDbContext db, CurrentUser user, IClock clock)
 {
-    public void Add(string category, string action, IEnumerable<int>? targetIds = null, object? detail = null)
+    public void Add(string category, string action, IEnumerable<int>? targetIds = null, object? detail = null) =>
+        AddLong(category, action, targetIds?.Select(i => (long)i), detail);
+
+    /// <summary>Đích là tiết học (khóa bigint).</summary>
+    public void AddLong(string category, string action, IEnumerable<long>? targetIds, object? detail = null)
     {
         db.AuditLog.Add(new AuditLog
         {

@@ -307,3 +307,129 @@
   line-height: 20px;
   white-space: nowrap;
 }
+
+/* SCD-02: điều chỉnh lịch dạy — tiết nhấp được, ô nghỉ gạch chéo, nút thêm tiết bù hiện khi rê chuột. */
+.tt-chip--click {
+  cursor: pointer;
+}
+
+.tt-chip--click:hover {
+  outline: 1.5px solid var(--c-green500);
+  outline-offset: -1.5px;
+}
+
+.tt-tag {
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 16px;
+  color: var(--c-green700);
+  background: var(--c-green50);
+}
+
+.tt-lock {
+  margin-left: 4px;
+  vertical-align: -1px;
+  color: var(--c-text3);
+}
+
+.tt-cell--holiday {
+  background-image: repeating-linear-gradient(135deg, transparent 0 6px, var(--c-sunken) 6px 12px);
+}
+
+.tt-holiday-tag {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-danger);
+}
+
+.tt-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  min-height: 28px;
+  padding: 2px 6px;
+  border: 1px dashed var(--c-borderStrong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--c-text2);
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.tt-cell--addable:hover .tt-add,
+.tt-add:focus-visible {
+  opacity: 1;
+}
+
+.tt-add:hover {
+  background: var(--c-hoverBg);
+  color: var(--c-text1);
+}
+
+/* Hộp thoại thao tác trên một tiết */
+.tt-detail {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 6px 12px;
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+
+.tt-detail dt {
+  color: var(--c-text2);
+}
+
+.tt-detail dd {
+  margin: 0;
+  color: var(--c-text1);
+}
+
+.tt-class-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 18px 24px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--c-green200) 0%, var(--c-green100) 55%, var(--c-green50) 100%);
+}
+.tt-class-head__text { display: flex; flex-direction: column; gap: 2px; }
+.tt-class-head__name { font-size: 24px; font-weight: 700; line-height: 1.25; color: var(--c-ink); }
+.tt-class-head__campus { font-size: 14px; color: var(--c-green800); font-weight: 500; }
+.tt-class-head__week { font-size: 15px; font-weight: 600; color: var(--c-green800); }
+
+/* ---------- Chuyển tuần: ba nút chữ, "Tuần này" là viên xanh nổi bật ---------- */
+.wk-nav { display: inline-flex; align-items: center; gap: 6px; }
+.wk-nav__btn, .wk-nav__now {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 40px; padding: 0 16px; border: 0; border-radius: 999px;
+  font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: background-color .15s, color .15s;
+}
+.wk-nav__btn { padding: 0 12px; background: transparent; color: var(--c-green800); }
+.wk-nav__btn:hover { background: var(--c-green100); }
+.wk-nav__now { background: var(--c-green800); color: #fff; }
+.wk-nav__now:hover:not(:disabled) { filter: brightness(1.1); }
+.wk-nav__now:disabled { background: var(--c-green200); color: var(--c-green800); opacity: .75; cursor: default; }
+
+/* ---------- Khoảng ngày của tuần: cùng tông dải đầu lớp, giữa và ngay trên khung lịch ---------- */
+.wk-title { display: flex; justify-content: center; margin: 2px 0 14px; }
+.wk-title__pill {
+  display: inline-flex; align-items: center; gap: 14px;
+  padding: 9px 28px; border-radius: 999px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--c-green200) 72%, var(--c-green800)) 0%, var(--c-green200) 100%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-green800) 28%, transparent);
+  font-size: 17px; color: var(--c-ink);
+}
+.wk-title__pill b { font-weight: 700; letter-spacing: .01em; font-variant-numeric: tabular-nums; }
+.wk-title__pill i { display: block; width: 22px; height: 2px; border-radius: 2px; background: var(--c-green800); opacity: .5; }

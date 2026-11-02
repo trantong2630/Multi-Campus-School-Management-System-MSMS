@@ -41,6 +41,13 @@ namespace MSMS.Api.Common.Rules
             x => x.StartDate <= date && (x.EndDate == null || x.EndDate >= date);
 
         /// <summary>
+        /// Kiểm quyền hiện tại của trách nhiệm (BR-09): kết thúc hôm nay thì quyền đã mất ngay,
+        /// khác tra cứu lịch sử theo ngày dùng đầu mút kết thúc bao gồm ngày đó.
+        /// </summary>
+        public static Expression<Func<T, bool>> CurrentResponsibility<T>(DateOnly today) where T : class, IResponsibilityRecord =>
+            x => x.StartDate <= today && (x.EndDate == null || x.EndDate > today);
+
+        /// <summary>
         /// Thay người trong một transaction: bản cũ kết thúc vào NGÀY LIỀN TRƯỚC ngày hiệu lực của bản mới,
         /// nên hai khoảng không chạm nhau ngày nào (BR-09).
         /// </summary>

@@ -8,6 +8,7 @@ using MSMS.Api.Common.Errors;
 using MSMS.Api.Common.Notifications;
 using MSMS.Api.Common.Excel;
 using MSMS.Api.Common.Text;
+using MSMS.Api.Common.Rules;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
 using MSMS.Api.Data.Entities;
@@ -35,7 +36,7 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
             query = query.Where(a => a.Person.FullName.Contains(term) || a.Person.PersonCode.Contains(term) || a.Username.Contains(term));
         }
 
-        return query.OrderBy(a => a.Person.FullName)
+        return query.OrderBy(a => a.Person.FullName).ThenBy(a => a.AccountId)
             .Select(a => new AccountDto(a.AccountId, a.PersonId, a.Person.PersonCode, a.Person.FullName, a.Person.PersonType,
                 a.Username, a.AccountType, a.Status, a.LastLoginAt,
                 a.Person.StaffProfile == null ? null : a.Person.StaffProfile.PrimaryCampus.Name))
@@ -44,25 +45,58 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
 
     public async Task<TempPasswordItem> CreateAsync(CreateAccountRequest r)
     {
-        var result = await BulkCreateAsync(new BulkCreateAccountsRequest([r.PersonId], r.AccountType));
+        var personType = await db.Person.Where(p => p.PersonId == r.PersonId).Select(p => p.PersonType).FirstOrDefaultAsync()
+            ?? throw ApiException.NotFound("Không tìm thấy hồ sơ.");
+        if (!IsCompatible(personType, r.AccountType))
+            throw ApiException.BadRequest("Loại tài khoản không phù hợp với loại hồ sơ.");
+        var result = await CreateManyAsync(new BulkCreateAccountsRequest([r.PersonId], r.AccountType), bulk: false);
         if (result.Created.Count == 1) return result.Created[0];
         throw ApiException.BadRequest(result.Skipped.FirstOrDefault()?.Reason ?? "Không tạo được tài khoản.");
     }
+
+    // Danh bạ chọn hồ sơ thuộc IAM; không cần sửa các màn hình PPL chưa triển khai.
+    public Task<PagedResult<AccountDirectoryItem>> DirectoryAsync(string personType, string? search, int page, int pageSize)
+    {
+        if (personType is not ("Staff" or "Student" or "Parent"))
+            throw ApiException.BadRequest("Loại hồ sơ không hợp lệ.");
+        var query = db.Person.AsNoTracking().Where(p => p.PersonType == personType);
+        var term = search?.Trim();
+        if (!string.IsNullOrEmpty(term))
+            query = query.Where(p => p.FullName.Contains(term) || p.PersonCode.Contains(term));
+        return query.OrderBy(p => p.FullName).ThenBy(p => p.PersonId)
+            .Select(p => new AccountDirectoryItem(p.PersonId, p.PersonCode, p.FullName, p.PersonType,
+                p.StaffProfile == null ? null : p.StaffProfile.PrimaryCampus.Name, p.Account != null,
+                p.PersonType != "Staff" || (p.StaffProfile != null && p.StaffProfile.IsActive)))
+            .ToPagedAsync(page, pageSize);
+    }
+
+    private static bool IsCompatible(string personType, string? accountType) => personType switch
+    {
+        "Student" => accountType == AccountTypes.Student,
+        "Parent" => accountType == AccountTypes.Parent,
+        "Staff" => accountType is not null && StaffTypes.Contains(accountType),
+        _ => false,
+    };
 
     /// <summary>
     /// Danh bạ học sinh → Student, phụ huynh → Parent, cán bộ → một loại chọn cho cả lô. Hồ sơ đã có tài khoản thì bỏ qua (BR-04).
     /// Đơn lẻ và hàng loạt cùng một đường đi để cùng một bộ quy tắc.
     /// </summary>
-    public async Task<BulkCreateResult> BulkCreateAsync(BulkCreateAccountsRequest r)
+    public Task<BulkCreateResult> BulkCreateAsync(BulkCreateAccountsRequest r) => CreateManyAsync(r, bulk: true);
+
+    private async Task<BulkCreateResult> CreateManyAsync(BulkCreateAccountsRequest r, bool bulk)
     {
         if (r.PersonIds is null || r.PersonIds.Count == 0) throw ApiException.BadRequest("Chọn ít nhất một hồ sơ để tạo tài khoản.");
+        if (r.PersonIds.Count > 200) throw ApiException.BadRequest("Mỗi lần tạo tối đa 200 tài khoản.");
+        await using var tx = await db.Database.BeginTransactionAsync();
         var people = await db.Person.Include(p => p.Account).Include(p => p.StaffProfile)
             .Where(p => r.PersonIds.Contains(p.PersonId)).ToListAsync();
 
         var created = new List<(Account Account, Person Person, string Password)>();
         var skipped = new List<SkippedAccount>();
 
-        await using var tx = await db.Database.BeginTransactionAsync();
+        foreach (var id in r.PersonIds.Distinct().Except(people.Select(p => p.PersonId)))
+            skipped.Add(new SkippedAccount(id, $"Hồ sơ #{id}", "Không tìm thấy hồ sơ."));
         foreach (var person in people.OrderBy(p => p.PersonId))
         {
             if (person.Account is not null)
@@ -76,14 +110,14 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
                 "Parent" => AccountTypes.Parent,
                 _ => r.AccountType,
             };
+            if (!IsCompatible(person.PersonType, type))
+            {
+                skipped.Add(new SkippedAccount(person.PersonId, person.FullName, "Loại tài khoản không phù hợp với loại hồ sơ."));
+                continue;
+            }
             if (person.PersonType == "Staff")
             {
-                if (type is null || !StaffTypes.Contains(type))
-                {
-                    skipped.Add(new SkippedAccount(person.PersonId, person.FullName, "Chọn loại tài khoản cho cán bộ: Quản trị hệ thống, Hiệu trưởng, Hiệu phó hoặc Giáo viên."));
-                    continue;
-                }
-                if (person.StaffProfile is { IsActive: false })
+                if (person.StaffProfile is not { IsActive: true })
                 {
                     skipped.Add(new SkippedAccount(person.PersonId, person.FullName, "Hồ sơ cán bộ đã ngừng hoạt động."));
                     continue;
@@ -104,7 +138,7 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
 
         if (created.Count > 0)
         {
-            audit.Add(AuditCategories.Account, created.Count == 1 ? "CreateAccount" : "BulkCreateAccounts",
+            audit.Add(AuditCategories.Account, bulk ? "BulkCreateAccounts" : "CreateAccount",
                 created.Select(c => c.Account.AccountId), new { count = created.Count });
             await db.SaveChangesAsync();
         }
@@ -128,7 +162,7 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
 
     /// <summary>
     /// Khóa tài khoản không bị chặn bởi lịch dạy. Cùng transaction: tiết Đã xếp lịch từ hôm nay của Teacher chuyển Chờ xử lý,
-    /// trách nhiệm và phụ trách chuyên môn đang hiệu lực kết thúc vào ngày khóa (BR-05, BR-09).
+    /// trách nhiệm đang hiệu lực kết thúc vào ngày khóa (BR-05, BR-09).
     /// </summary>
     public async Task LockAsync(int accountId)
     {
@@ -140,9 +174,9 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
         var (sessionCount, dutyCount) = await ReleaseDutiesAsync(account);
         account.Status = AccountStatuses.Locked;
         audit.Add(AuditCategories.Account, "LockAccount", [account.AccountId], new { pendingSessions = sessionCount, closedDuties = dutyCount });
+        await sessions.RevokeAllAsync(account.AccountId);
         await db.SaveChangesAsync();
         await tx.CommitAsync();
-        await sessions.RevokeAllAsync(account.AccountId);
     }
 
     private async Task<List<TeachingSession>> AffectedSessionsAsync(int teacherId)
@@ -161,13 +195,13 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
         var today = clock.Today;
         var duties = new List<Duty>();
         duties.AddRange((await db.CampusLeadership.Include(x => x.Campus)
-            .Where(x => x.StaffId == staffId && (x.EndDate == null || x.EndDate >= today)).ToListAsync())
+            .Where(EffectivePeriod.CurrentResponsibility<CampusLeadership>(today)).Where(x => x.StaffId == staffId).ToListAsync())
             .Select(x => new Duty("Campus", x.Campus.Name, x)));
         duties.AddRange((await db.DepartmentHead.Include(x => x.Department)
-            .Where(x => x.StaffId == staffId && (x.EndDate == null || x.EndDate >= today)).ToListAsync())
+            .Where(EffectivePeriod.CurrentResponsibility<DepartmentHead>(today)).Where(x => x.StaffId == staffId).ToListAsync())
             .Select(x => new Duty("Department", x.Department.Name, x)));
         duties.AddRange((await db.HomeroomAssignment.Include(x => x.Class)
-            .Where(x => x.StaffId == staffId && (x.EndDate == null || x.EndDate >= today)).ToListAsync())
+            .Where(EffectivePeriod.CurrentResponsibility<HomeroomAssignment>(today)).Where(x => x.StaffId == staffId).ToListAsync())
             .Select(x => new Duty("Homeroom", x.Class.Name, x)));
         return duties;
     }
@@ -195,18 +229,17 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
         foreach (var campusGroup in affected.GroupBy(s => s.Class.CampusId))
         {
             var viceIds = await db.CampusLeadership
-                .Where(x => x.CampusId == campusGroup.Key && (x.EndDate == null || x.EndDate >= today) && x.StartDate <= today)
+                .Where(EffectivePeriod.CurrentResponsibility<CampusLeadership>(today))
+                .Where(x => x.CampusId == campusGroup.Key && x.Staff.Staff.Account != null
+                    && x.Staff.Staff.Account.AccountType == AccountTypes.VicePrincipal
+                    && x.Staff.Staff.Account.Status != AccountStatuses.Locked)
                 .Select(x => x.StaffId).ToListAsync();
             notifier.Add(viceIds, NotificationTypes.SessionPending, "Có tiết chuyển Chờ xử lý",
                 $"{campusGroup.Count()} tiết của {account.Person.FullName} cần đổi giáo viên hoặc hủy vì tài khoản không còn hoạt động.");
         }
 
         var duties = await EffectiveDutiesAsync(account.PersonId);
-        foreach (var d in duties)
-        {
-            if (d.Record.StartDate > today) d.Record.EndDate = d.Record.StartDate;   // chưa hiệu lực: rút về đúng ngày bắt đầu
-            else d.Record.EndDate = today;
-        }
+        foreach (var d in duties) d.Record.EndDate = today;
         return (affected.Count, duties.Count);
     }
 
@@ -226,13 +259,15 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
     public async Task<ResetPasswordResult> ResetPasswordAsync(int accountId)
     {
         var account = await FindAsync(accountId);
+        await using var tx = await db.Database.BeginTransactionAsync();
         var password = TempPasswords.Generate();
         account.PasswordHash = AuthService.HashPassword(account, password);
         account.Status = AccountStatuses.PendingPasswordChange;
         account.UpdatedAt = null;
         audit.Add(AuditCategories.Account, "ResetPassword", [account.AccountId]);   // không ghi mật khẩu
-        await db.SaveChangesAsync();
         await sessions.RevokeAllAsync(account.AccountId);
+        await db.SaveChangesAsync();
+        await tx.CommitAsync();
         return new ResetPasswordResult(account.Username, password);
     }
 
@@ -241,13 +276,7 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
     {
         var account = await FindAsync(accountId);
         if (account.AccountId == user.AccountId) throw ApiException.BadRequest("Không đổi loại của tài khoản đang đăng nhập.");
-        var allowed = account.Person.PersonType switch
-        {
-            "Student" => new[] { AccountTypes.Student },
-            "Parent" => new[] { AccountTypes.Parent },
-            _ => StaffTypes,
-        };
-        if (!allowed.Contains(r.AccountType)) throw ApiException.BadRequest("Loại tài khoản không phù hợp với loại hồ sơ.");
+        if (!IsCompatible(account.Person.PersonType, r.AccountType)) throw ApiException.BadRequest("Loại tài khoản không phù hợp với loại hồ sơ.");
         if (account.AccountType == r.AccountType) throw ApiException.BadRequest("Tài khoản đã đúng loại này.");
 
         await using var tx = await db.Database.BeginTransactionAsync();
@@ -260,15 +289,17 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
         account.UpdatedAt = null;
         audit.Add(AuditCategories.Account, "ChangeAccountType", [account.AccountId],
             new { from, to = r.AccountType, pendingSessions = sessionCount, closedDuties = dutyCount });
+        await sessions.RevokeAllAsync(account.AccountId);
         await db.SaveChangesAsync();
         await tx.CommitAsync();
-        await sessions.RevokeAllAsync(account.AccountId);
         return new ResetPasswordResult(account.Username, password);
     }
 
     /// <summary>File mật khẩu tạm sinh tức thời từ kết quả vừa tạo, không lưu, không xuất lại (BR-04).</summary>
     public FileContentResult BuildTempPasswordSheet(TempPasswordSheetRequest r)
     {
+        if (r.Items is null || r.Items.Count == 0 || r.Items.Count > 200)
+            throw ApiException.BadRequest("Chỉ tải danh sách vừa cấp, từ 1 đến 200 tài khoản.");
         using var wb = new XLWorkbook();
         var ws = wb.AddWorksheet("Mat_khau_tam");
         string[] headers = ["STT", "Mã hồ sơ", "Họ và tên", "Tên đăng nhập", "Loại tài khoản", "Mật khẩu tạm"];
@@ -281,7 +312,12 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
             ws.Cell(row, 2).Value = item.PersonCode;
             ws.Cell(row, 3).Value = item.FullName;
             ws.Cell(row, 4).Value = item.Username;
-            ws.Cell(row, 5).Value = item.AccountType;
+            ws.Cell(row, 5).Value = item.AccountType switch
+            {
+                AccountTypes.SchoolAdmin => "Quản trị hệ thống", AccountTypes.Principal => "Hiệu trưởng",
+                AccountTypes.VicePrincipal => "Hiệu phó", AccountTypes.Teacher => "Giáo viên",
+                AccountTypes.Student => "Học sinh", AccountTypes.Parent => "Phụ huynh", _ => item.AccountType,
+            };
             ws.Cell(row, 6).Value = item.TempPassword;
             row++;
         }
