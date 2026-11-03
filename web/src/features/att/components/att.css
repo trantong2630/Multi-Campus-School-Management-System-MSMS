@@ -1,0 +1,176 @@
+/* ATT-01 Điểm danh (Design_Web §9.3). Màu lấy từ CSS variables, không ghi hex. */
+
+/* Dải số đếm theo trạng thái */
+.att-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.att-count {
+  min-width: 132px;
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.att-count--total {
+  background: var(--c-green50);
+  border-color: var(--c-green200);
+}
+
+.att-count__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text3);
+}
+
+.att-count__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.att-count__value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--c-text1);
+}
+
+.att-marked {
+  font-weight: 600;
+  color: var(--c-text2);
+}
+
+.att-marked--done {
+  color: var(--c-green700);
+}
+
+/* Bảng điểm danh: mỗi học sinh một thẻ dòng */
+.att-sheet-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--c-text2);
+}
+
+.att-sheet-meta strong {
+  color: var(--c-text1);
+  font-weight: 600;
+}
+
+.att-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.att-row {
+  display: grid;
+  grid-template-columns: 40px minmax(220px, 1.2fr) auto minmax(220px, 1fr);
+  align-items: center;
+  gap: 16px;
+  min-height: 68px;
+  padding: 12px 20px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  transition: border-color 150ms, background 150ms;
+}
+
+.att-row:hover {
+  background: var(--c-rowHoverBg);
+  border-color: var(--c-green200);
+}
+
+.att-row__no {
+  font-size: 13px;
+  color: var(--c-text3);
+  text-align: right;
+}
+
+.att-row__side {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.att-row__trail {
+  font-size: 12px;
+  color: var(--c-text3);
+}
+
+/* Ba nút Có mặt / Muộn / Vắng, tô màu theo nhóm trạng thái khi được chọn (§2.4) */
+.att-choice {
+  display: inline-flex;
+  padding: 3px;
+  gap: 4px;
+  background: var(--c-sunken);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+}
+
+.att-choice__btn {
+  height: 34px;
+  min-width: 84px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--c-text2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms, color 150ms;
+}
+
+.att-choice__btn:hover:not(:disabled) {
+  background: var(--c-surface);
+  color: var(--c-text1);
+}
+
+.att-choice__btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.att-choice__btn:disabled {
+  cursor: not-allowed;
+}
+
+.att-choice__btn--on,
+.att-choice__btn--on:hover:not(:disabled) {
+  color: var(--c-surface);
+}
+
+.att-sheet-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Ô nhãn nhỏ trong lưới tuần và lưới theo ngày */
+.att-cell-subject {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text1);
+  margin-bottom: 4px;
+}
+
+.att-cell-future {
+  font-size: 12px;
+  color: var(--c-text3);
+}

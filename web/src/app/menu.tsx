@@ -90,7 +90,7 @@ export const menu: MenuGroup[] = [
       { key: 'scd-absence', label: 'Giáo viên vắng', path: '/scd/absences', roles: ['VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
     ],
   },
-  { key: 'att', label: 'Điểm danh', icon: ClipboardCheck, section: 'manage', path: '/att', roles: [...STAFF, 'Student', 'Parent'], ready: false },
+  { key: 'att', label: 'Điểm danh', icon: ClipboardCheck, section: 'manage', path: '/att', roles: [...STAFF, 'Student', 'Parent'], requires: { VicePrincipal: 'campus' }, ready: true },
   {
     key: 'lrn', label: 'Bài tập rèn luyện', icon: BookOpen, section: 'manage',
     children: [
