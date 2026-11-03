@@ -1,5 +1,6 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom';
 import { admRoutes } from '@/features/adm/routes';
+import { attRoutes } from '@/features/att/routes';
 import { iamRoutes } from '@/features/iam/routes';
 import { pplRoutes } from '@/features/ppl/routes';
 import { schRoutes } from '@/features/sch/routes';
@@ -22,7 +23,7 @@ export const router = createBrowserRouter([
       {
         path: '/',
         element: <AppLayout />,
-        children: [...admRoutes, ...iamRoutes, ...schRoutes, ...pplRoutes, ...scdRoutes, ...lrnRoutes, ...parRoutes, ...comRoutes],
+        children: [...admRoutes, ...iamRoutes, ...schRoutes, ...pplRoutes, ...scdRoutes, ...attRoutes, ...lrnRoutes, ...parRoutes, ...comRoutes],
       },
     ],
   },
