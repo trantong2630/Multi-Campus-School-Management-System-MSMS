@@ -31,7 +31,6 @@ public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOpti
     private static readonly PasswordHasher<Account> Hasher = new();
     private static readonly Account UnknownAccount = new();
     private static readonly string UnknownPasswordHash = Hasher.HashPassword(UnknownAccount, Guid.NewGuid().ToString("N"));
-    private const int MinPasswordLength = 8;
 
     public async Task<LoginResponse> LoginAsync(LoginRequest request, string? userAgent)
     {
@@ -80,25 +79,29 @@ public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOpti
 
     public async Task ChangePasswordAsync(int accountId, Guid? sessionId, ChangePasswordRequest request)
     {
-        var account = await db.Account.FirstAsync(a => a.AccountId == accountId);
+        await using var tx = await db.Database.BeginTransactionAsync();
+        var account = await PasswordResetState.AccountsForUpdate(db).FirstAsync(a => a.AccountId == accountId);
 
         if (Hasher.VerifyHashedPassword(account, account.PasswordHash, request.CurrentPassword ?? "") == PasswordVerificationResult.Failed)
             throw ApiException.BadRequest("Mật khẩu hiện tại không đúng. Nhập lại mật khẩu đang dùng.");
-        if (string.IsNullOrEmpty(request.NewPassword) || request.NewPassword.Length < MinPasswordLength)
-            throw ApiException.BadRequest($"Mật khẩu mới cần ít nhất {MinPasswordLength} ký tự.");
+        if (string.IsNullOrEmpty(request.NewPassword) || request.NewPassword.Length < PasswordResetState.MinPasswordLength)
+            throw ApiException.BadRequest($"Mật khẩu mới cần ít nhất {PasswordResetState.MinPasswordLength} ký tự.");
         if (request.NewPassword == request.CurrentPassword)
             throw ApiException.BadRequest("Mật khẩu mới trùng mật khẩu cũ. Chọn mật khẩu khác.");
 
-        await using var tx = await db.Database.BeginTransactionAsync();
         account.PasswordHash = Hasher.HashPassword(account, request.NewPassword);
         account.Status = AccountStatuses.Active;   // đổi lần đầu xong thì Chờ đổi mật khẩu → Đang hoạt động (BR-04)
         account.UpdatedAt = clock.Now;
+        await PasswordResetState.InvalidateAsync(db, accountId, clock.Now);
         await sessions.RevokeAllAsync(accountId, exceptSessionId: sessionId);   // thiết bị khác phải đăng nhập lại
         await db.SaveChangesAsync();
         await tx.CommitAsync();
     }
 
     public static string HashPassword(Account account, string password) => Hasher.HashPassword(account, password);
+
+    public static bool MatchesPassword(Account account, string password) =>
+        Hasher.VerifyHashedPassword(account, account.PasswordHash, password) != PasswordVerificationResult.Failed;
 
     private async Task<LoginResponse> IssueAsync(Account account, Guid sessionId, string? refreshToken)
     {

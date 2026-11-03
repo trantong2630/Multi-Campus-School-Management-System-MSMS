@@ -166,13 +166,14 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
     /// </summary>
     public async Task LockAsync(int accountId)
     {
-        var account = await FindAsync(accountId);
+        await using var tx = await db.Database.BeginTransactionAsync();
+        var account = await FindForUpdateAsync(accountId);
         if (account.AccountId == user.AccountId) throw ApiException.BadRequest("Không khóa được tài khoản đang đăng nhập.");
         if (account.Status == AccountStatuses.Locked) throw ApiException.BadRequest("Tài khoản đã bị khóa từ trước.");
 
-        await using var tx = await db.Database.BeginTransactionAsync();
         var (sessionCount, dutyCount) = await ReleaseDutiesAsync(account);
         account.Status = AccountStatuses.Locked;
+        await PasswordResetState.InvalidateAsync(db, accountId, clock.Now);
         audit.Add(AuditCategories.Account, "LockAccount", [account.AccountId], new { pendingSessions = sessionCount, closedDuties = dutyCount });
         await sessions.RevokeAllAsync(account.AccountId);
         await db.SaveChangesAsync();
@@ -258,12 +259,13 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
 
     public async Task<ResetPasswordResult> ResetPasswordAsync(int accountId)
     {
-        var account = await FindAsync(accountId);
         await using var tx = await db.Database.BeginTransactionAsync();
+        var account = await FindForUpdateAsync(accountId);
         var password = TempPasswords.Generate();
         account.PasswordHash = AuthService.HashPassword(account, password);
         account.Status = AccountStatuses.PendingPasswordChange;
         account.UpdatedAt = null;
+        await PasswordResetState.InvalidateAsync(db, accountId, clock.Now);
         audit.Add(AuditCategories.Account, "ResetPassword", [account.AccountId]);   // không ghi mật khẩu
         await sessions.RevokeAllAsync(account.AccountId);
         await db.SaveChangesAsync();
@@ -274,12 +276,12 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
     /// <summary>Cấp sai loại thì đổi loại: ghi Audit, cấp lại mật khẩu tạm, về Chờ đổi mật khẩu. Hồ sơ và lịch sử giữ nguyên (BR-01).</summary>
     public async Task<ResetPasswordResult> ChangeTypeAsync(int accountId, ChangeAccountTypeRequest r)
     {
-        var account = await FindAsync(accountId);
+        await using var tx = await db.Database.BeginTransactionAsync();
+        var account = await FindForUpdateAsync(accountId);
         if (account.AccountId == user.AccountId) throw ApiException.BadRequest("Không đổi loại của tài khoản đang đăng nhập.");
         if (!IsCompatible(account.Person.PersonType, r.AccountType)) throw ApiException.BadRequest("Loại tài khoản không phù hợp với loại hồ sơ.");
         if (account.AccountType == r.AccountType) throw ApiException.BadRequest("Tài khoản đã đúng loại này.");
 
-        await using var tx = await db.Database.BeginTransactionAsync();
         var (sessionCount, dutyCount) = await ReleaseDutiesAsync(account);   // loại cũ chưa bị đổi nên Teacher vẫn nhận diện được
         var password = TempPasswords.Generate();
         var from = account.AccountType;
@@ -287,6 +289,7 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
         account.PasswordHash = AuthService.HashPassword(account, password);
         account.Status = AccountStatuses.PendingPasswordChange;
         account.UpdatedAt = null;
+        await PasswordResetState.InvalidateAsync(db, accountId, clock.Now);
         audit.Add(AuditCategories.Account, "ChangeAccountType", [account.AccountId],
             new { from, to = r.AccountType, pendingSessions = sessionCount, closedDuties = dutyCount });
         await sessions.RevokeAllAsync(account.AccountId);
@@ -324,6 +327,10 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
         ws.Columns().AdjustToContents();
         return wb.ToFile("MSMS_Mat_khau_tam.xlsx");
     }
+
+    private async Task<Account> FindForUpdateAsync(int accountId) =>
+        await PasswordResetState.AccountsForUpdate(db).Include(a => a.Person).FirstOrDefaultAsync(a => a.AccountId == accountId)
+        ?? throw ApiException.NotFound("Không tìm thấy tài khoản.");
 
     private async Task<Account> FindAsync(int accountId) =>
         await db.Account.Include(a => a.Person).FirstOrDefaultAsync(a => a.AccountId == accountId)
