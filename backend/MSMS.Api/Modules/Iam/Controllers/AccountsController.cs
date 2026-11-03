@@ -39,8 +39,10 @@ public class AccountsController(AccountService service) : ControllerBase
     public async Task<IActionResult> Unlock(int id) { await service.UnlockAsync(id); return NoContent(); }
 
     [HttpPost("{id:int}/reset-password")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public Task<ResetPasswordResult> ResetPassword(int id) => service.ResetPasswordAsync(id);
 
     [HttpPut("{id:int}/type")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public Task<ResetPasswordResult> ChangeType(int id, ChangeAccountTypeRequest r) => service.ChangeTypeAsync(id, r);
 }

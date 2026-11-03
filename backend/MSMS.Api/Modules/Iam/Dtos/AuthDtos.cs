@@ -4,6 +4,14 @@ public record LoginRequest(string Username, string Password, string? ClientType 
 
 public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
 
+public record ForgotPasswordRequest(string? Username);
+
+public record VerifyPasswordResetRequest(string? Username, string? Code);
+
+public record PasswordResetVerificationResponse(string ResetToken, DateTime ExpiresAt);
+
+public record ResetPasswordRequest(string? Username, string? ResetToken, string? NewPassword);
+
 public record UserInfo(
     int AccountId, int PersonId, string PersonCode, string FullName,
     string AccountType, string Status, bool MustChangePassword, string? AvatarPath)

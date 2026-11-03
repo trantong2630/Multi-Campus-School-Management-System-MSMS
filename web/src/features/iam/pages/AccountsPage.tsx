@@ -147,14 +147,14 @@ export function AccountsPage() {
                     key: 'reset', label: 'Cấp lại mật khẩu', icon: <KeyRound size={16} />,
                     onClick: () => confirmAction({
                       title: `Cấp lại mật khẩu cho ${a.fullName}?`,
-                      content: 'Hệ thống sinh mật khẩu tạm mới, hiện một lần. Tài khoản quay về Chờ đổi mật khẩu.',
+                      content: 'Hệ thống sinh mật khẩu tạm mới, hiện một lần. Tài khoản quay về Chờ đổi mật khẩu; mọi phiên đăng nhập và mã OTP cũ mất hiệu lực.',
                       okText: 'Cấp lại mật khẩu',
                       onOk: async () => {
                         try {
                           const res = await accountApi.resetPassword(a.accountId);
                           setIssued([toItem(a, res)]);
                           void refresh();
-                        } catch (e) { showError(e); }
+                        } catch (e) { showError(e); throw e; }
                       },
                     }),
                   },
