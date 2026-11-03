@@ -25,6 +25,7 @@ public static class IamModule
             .AddScoped<IAuthService, AuthService>()
             .AddScoped<IOtpEmailSender, GmailOtpSender>()
             .AddScoped<PasswordResetService>()
-            .AddScoped<AccountService>();
+            .AddScoped<AccountService>()
+            .AddScoped<ProfileService>();
     }
 }

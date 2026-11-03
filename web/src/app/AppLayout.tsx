@@ -10,6 +10,7 @@ import { showError } from '@/shared/lib/feedback';
 import { color } from '@/shared/lib/tokens';
 import { conversationApi } from '@/features/par/api';
 import { NotificationBell } from '@/features/com/components/NotificationBell';
+import { useAvatarSrc } from '@/features/iam/hooks/useAvatarSrc';
 import { useAuth } from './AuthProvider';
 import { CommandPalette } from './CommandPalette';
 import { isPathAllowed, resolveCrumbs, sectionLabel, visibleMenu } from './menu';
@@ -31,6 +32,8 @@ export function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const school = useSchool();
+  // Tên file ảnh đổi mỗi lần đổi ảnh (GUID) nên dùng luôn làm khóa cache; chưa có ảnh thì hiện chữ cái đầu.
+  const { src: avatarSrc } = useAvatarSrc(user?.personId, user?.avatarPath);
   const [collapsed, setCollapsed] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
 
@@ -276,7 +279,7 @@ export function AppLayout() {
           <NotificationBell />
           <Dropdown menu={{ items: userMenu }} trigger={['click']} placement="bottomRight">
             <button type="button" className="header-user" aria-label="Tài khoản">
-              <Avatar size={34} className="header-user__avatar">{initialsOf(user!.fullName)}</Avatar>
+              <Avatar size={34} className="header-user__avatar" src={avatarSrc ?? undefined}>{initialsOf(user!.fullName)}</Avatar>
               <span className="header-user__text">
                 <span className="header-user__name">{user!.fullName}</span>
                 <span className="header-user__type">{accountTypeLabel[user!.accountType]}</span>
