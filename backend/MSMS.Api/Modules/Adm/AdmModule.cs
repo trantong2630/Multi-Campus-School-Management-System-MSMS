@@ -7,6 +7,7 @@ public static class AdmModule
     public static IServiceCollection AddAdmModule(this IServiceCollection s) => s
         .AddScoped<DashboardService>()
         .AddScoped<AdminDashboardService>()
-        .AddScoped<TeacherDashboardService>()
-        .AddScoped<HomeroomOverviewService>();
+        .AddScoped<HomeroomOverviewService>()
+        .AddScoped<ProgressService>()
+        .AddScoped<DepartmentBoardService>();
 }

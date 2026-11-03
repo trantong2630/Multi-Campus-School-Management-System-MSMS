@@ -810,8 +810,8 @@
 
 .dept__pulse { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 12px 36px; margin-bottom: 20px; padding: 18px 24px; border: 1px solid var(--c-border); border-radius: 28px; background: var(--c-surface); box-shadow: var(--shadow-card); }
 .dept__gauge { display: flex; align-items: center; gap: 18px; padding-right: 36px; border-right: 1px dashed var(--c-border); }
-.dept__gauge strong { display: block; font-size: 17px; }
-.dept__gauge span { display: block; max-width: 150px; margin-top: 2px; color: var(--c-text2); font-size: 13px; line-height: 18px; }
+.dept__gauge > div > strong { display: block; font-size: 17px; }
+.dept__gauge > div > span { display: block; max-width: 150px; margin-top: 2px; color: var(--c-text2); font-size: 13px; line-height: 18px; }
 .dept__stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .dept__stat { display: flex; flex-direction: column; align-items: flex-start; gap: 0; padding: 12px 16px; border: 0; border-radius: 20px; background: none; font: inherit; text-align: left; cursor: pointer; transition: background 140ms; }
 .dept__stat:hover { background: var(--c-rowHoverBg); }

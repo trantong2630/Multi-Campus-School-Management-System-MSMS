@@ -48,7 +48,11 @@ export function QuestionBankPage() {
 
   const draftCount = useQuery({ queryKey: ['lrn', 'questions', 'draft-count'], queryFn: () => lrnApi.questions.list({ mine: true, status: 'Draft', pageSize: 1 }) });
 
-  const refresh = () => qc.invalidateQueries({ queryKey: ['lrn', 'questions'] });
+  // `goneId`: câu hỏi vừa bị xóa. Phần chi tiết của nó có thể đang mở, làm mới sẽ gọi lại và bị báo lỗi vì câu đã không còn.
+  const refresh = (goneId?: number) => qc.invalidateQueries({
+    queryKey: ['lrn', 'questions'],
+    predicate: (q) => !(goneId !== undefined && q.queryKey[2] === 'detail' && q.queryKey[3] === goneId),
+  });
   const confirmDraft = useMutation({
     mutationFn: (id: number) => lrnApi.questions.confirm(id),
     onSuccess: () => { void refresh(); message.success('Đã duyệt: câu hỏi đã vào kho, dùng được cho bài tập.'); },
@@ -66,7 +70,7 @@ export function QuestionBankPage() {
   });
   const removeDraft = useMutation({
     mutationFn: (id: number) => lrnApi.questions.removeDraft(id),
-    onSuccess: () => { void refresh(); message.success('Đã xóa câu nháp.'); },
+    onSuccess: (_, id) => { setOpen(null); void refresh(id); message.success('Đã xóa câu nháp.'); },
     onError: (e) => showError(e),
   });
 

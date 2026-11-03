@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Form, Input, Select, Switch } from 'antd';
 import { message } from '@/shared/lib/antdStatic';
-import { GraduationCap, Layers, Pencil, Plus, Power, School, Upload, UserRoundX, Users } from 'lucide-react';
+import { Pencil, Plus, Power, Upload, Users } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/app/AuthProvider';
@@ -19,7 +19,6 @@ import { confirmAction, showError } from '@/shared/lib/feedback';
 import { formatNumber as fmt } from '@/shared/lib/format';
 import { schApi } from '../api';
 import { ClassRosterDrawer } from '../components/ClassRosterDrawer';
-import { DataGapAlert } from '../components/DataGapAlert';
 import { useCampuses, useClassStats, useCurrentYear, useYears } from '../hooks/useCatalogs';
 import '../components/school.css';
 import type { SchoolClass } from '../types';
@@ -107,28 +106,25 @@ export function ClassesPage() {
         <label className="inline-switch"><Switch checked={includeInactive} onChange={setIncludeInactive} /> Hiện cả lớp ngừng hoạt động</label>
       </FilterBar>
       <StatStrip>
-        <StatCard icon={School} tone="green" label="Lớp đang hoạt động" value={fmt(loaded ? active.length : undefined)}
-          hint={grades.length ? `${grades.length} khối đang có lớp` : undefined} />
-        <StatCard icon={GraduationCap} tone="sky" label="Học sinh đang học" value={fmt(loaded ? studentCount : undefined)}
-          hint={active.length && studentCount ? `Bình quân ${Math.round(studentCount / active.length)} học sinh mỗi lớp` : undefined} />
-        <StatCard icon={Layers} tone="violet" label="Học sinh theo khối" value={grades.length ? null : '—'}>
+        <StatCard label="Lớp đang hoạt động" value={fmt(loaded ? active.length : undefined)} />
+        <StatCard label="Học sinh đang học" value={fmt(loaded ? studentCount : undefined)} />
+        <StatCard label="Học sinh theo khối" value={grades.length ? null : '—'}>
           {grades.length > 0 && (
-            <ul className="grade-mini">
+            <ul className="grade-bars">
               {grades.map((g) => (
-                <li key={g.grade} title={`${g.classes} lớp`}>
-                  <span>Khối {g.grade}</span><b className="tabular">{fmt(g.students)}</b><small className="tabular">{g.classes} lớp</small>
+                <li key={g.grade} title={`Khối ${g.grade}: ${g.students} học sinh, ${g.classes} lớp`}>
+                  <b className="tabular">{fmt(g.students)}</b>
+                  <i style={{ height: `${Math.max(8, (g.students / Math.max(1, ...grades.map((x) => x.students))) * 46)}px` }} />
+                  <span>Khối {g.grade}</span>
                 </li>
               ))}
             </ul>
           )}
         </StatCard>
-        <StatCard icon={UserRoundX} tone="amber" label="Lớp chưa có chủ nhiệm" value={fmt(loaded ? withoutHomeroom : undefined)}
-          attention={withoutHomeroom > 0} hint={loaded && !withoutHomeroom ? 'Lớp nào cũng có chủ nhiệm' : undefined}
+        <StatCard label="Lớp chưa có chủ nhiệm" value={fmt(loaded ? withoutHomeroom : undefined)}
+          attention={withoutHomeroom > 0}
           onClick={withoutHomeroom > 0 && user && isPathAllowed('/ppl/responsibilities', user) ? () => navigate('/ppl/responsibilities') : undefined} />
       </StatStrip>
-      <DataGapAlert items={[
-        { key: 'unenrolled', label: 'học sinh đang học chưa ghi danh vào lớp nào (mở Danh sách học sinh của lớp để ghi danh)', count: classStats.data?.studentsWithoutClass },
-      ]} />
       <Card className="table-card">
         <DataTable<SchoolClass>
           rowKey="classId" loading={classes.isLoading || years.isLoading} dataSource={classes.data}

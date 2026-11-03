@@ -20,6 +20,7 @@ public static class Policies
     public const string Parent = nameof(Parent);
     public const string StudentOrParent = nameof(StudentOrParent);   // xem điểm và phân tích đã công bố (LRN-03, LRN-04)
     public const string ConversationParticipant = nameof(ConversationParticipant); // hộp thư chỉ dành cho Teacher và Parent
+    public const string AssignmentOversight = nameof(AssignmentOversight);   // theo dõi tiến độ bài tập: Principal, VicePrincipal, Teacher (service giới hạn ở chủ nhiệm)
     public const string AttendanceWriter = nameof(AttendanceWriter);   // ghi điểm danh: Teacher (tiết mình, trong ngày), SchoolAdmin (nhập bù, sửa) — BR-17
 
 
@@ -55,6 +56,8 @@ public static class Policies
         o.AddPolicy(Parent, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.Parent));
         o.AddPolicy(StudentOrParent, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.Student, AccountTypes.Parent));
         o.AddPolicy(ConversationParticipant, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.Teacher, AccountTypes.Parent));
+        o.AddPolicy(AssignmentOversight, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim,
+            AccountTypes.Principal, AccountTypes.VicePrincipal, AccountTypes.Teacher));
         o.AddPolicy(AttendanceWriter, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.Teacher, AccountTypes.SchoolAdmin));
     }
 }

@@ -6,7 +6,7 @@ Ngày: 01/11/2026. Tiếp tục từ code hiện có trên nhánh `dev`, giữ n
 
 | WBS | Kết quả Backend / Web |
 | --- | --- |
-| 4.1.7 | Menu và kiểm URL dùng cùng điều kiện theo role/trách nhiệm. Hiệu phó cần phân hiệu đang phụ trách; giao bài cần phụ trách chuyên môn; chủ nhiệm và tổ trưởng có menu riêng. School Admin không có Dashboard, thời khóa biểu, xuất dữ liệu hoặc hành vi của role khác. |
+| 4.1.7 | Menu và kiểm URL dùng cùng điều kiện theo role/trách nhiệm. Hiệu phó cần phân hiệu đang phụ trách; giao bài cần phụ trách chuyên môn; chủ nhiệm và tổ trưởng có menu riêng. School Admin chỉ có Thống kê hệ thống trong Bảng điều khiển, không có thời khóa biểu, xuất dữ liệu hoặc hành vi của role khác. |
 | 4.1.8 | Thêm bộ test riêng cho sáu role, ba trách nhiệm, phụ trách chuyên môn từ bản đã phát hành, ghi danh học sinh và liên kết phụ huynh; kiểm tra cả đối tượng ngoài phạm vi. |
 | 4.1.9 | Danh sách tài khoản giữ các cột loại, trạng thái, phân hiệu chính và lần đăng nhập gần nhất; bổ sung thứ tự ổn định khi phân trang. |
 | 4.1.10 | Kiểm thử tìm theo tên, mã hồ sơ, tên đăng nhập; lọc loại, trạng thái, phân hiệu và phân trang. |

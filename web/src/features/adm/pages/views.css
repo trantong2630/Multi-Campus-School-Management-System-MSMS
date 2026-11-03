@@ -1,0 +1,40 @@
+/* Bố cục riêng của từng màn Bảng điều khiển theo vai trò (tiền tố v-). Dùng chung bộ thành phần bd- nhưng mỗi màn xếp một kiểu. */
+
+/* Việc cần xử lý: vòng số + nhãn, bấm để mở */
+.v-todo { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.v-todo button, .v-todo > li > div { display: grid; grid-template-columns: 44px minmax(0, 1fr) 28px; align-items: center; gap: 14px; width: 100%; padding: 10px 12px; border: 1px solid var(--c-border); border-radius: 18px; background: var(--c-surface); font: inherit; font-size: 15px; text-align: left; color: var(--c-text1); }
+.v-todo button { cursor: pointer; transition: border-color .15s, transform .15s, box-shadow .15s; }
+.v-todo button:hover { border-color: var(--c-green600); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(16, 42, 48, .08); }
+.v-todo button:focus-visible { outline: 2px solid var(--c-green600); outline-offset: 2px; }
+.v-todo__n { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--c-amber); font-size: 17px; font-weight: 700; color: var(--c-ink); }
+.v-todo__go { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--c-green50); font-size: 14px; color: var(--c-green800); }
+.v-todo button:hover .v-todo__go { background: var(--c-green600); color: #fff; }
+.v-calm { margin: 0; padding: 8px 4px 4px; font-size: 15px; font-weight: 600; color: var(--c-green800); }
+
+/* Hàng thẻ số: bốn hoặc ba thẻ đều nhau */
+.v-tiles4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1000px) { .v-tiles4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Danh sách phân hiệu / lớp dạng hàng */
+.v-table { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.v-trow { display: grid; grid-template-columns: minmax(170px, 1.3fr) minmax(120px, 1.5fr) 90px 90px 80px; align-items: center; gap: 16px; width: 100%; padding: 13px 10px; border: 0; background: none; font: inherit; text-align: left; color: inherit; }
+.v-table li + li .v-trow { border-top: 1px solid var(--c-border); }
+button.v-trow { cursor: pointer; border-radius: 14px; transition: background .15s; }
+button.v-trow:hover { background: var(--c-rowHoverBg); }
+.v-trow--head { padding-top: 0; padding-bottom: 8px; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--c-text2); }
+.v-trow--head span:nth-child(n+3), .v-trow > :nth-child(n+3) { text-align: right; }
+.v-trow__name strong { display: block; font-size: 15px; font-weight: 600; color: var(--c-text1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v-trow__name span { display: block; font-size: 13px; color: var(--c-text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v-trow__num { font-size: 15px; font-weight: 600; }
+.v-trow__rate { font-size: 17px; font-weight: 700; }
+@media (max-width: 900px) { .v-trow { grid-template-columns: minmax(120px, 1.4fr) minmax(80px, 1fr) 70px 70px; } .v-trow > :nth-child(5) { display: none; } }
+.v-trow--teach { grid-template-columns: minmax(170px, 1.1fr) minmax(110px, 1fr) minmax(200px, 2fr) 120px; }
+.v-trow--teach > :nth-child(3) { text-align: left; }
+.v-trow--stu { grid-template-columns: 40px minmax(170px, 1.5fr) 110px minmax(160px, 1.4fr) 110px; }
+.v-trow--stu > :nth-child(3), .v-trow--stu > :nth-child(4) { text-align: left; }
+.v-trow--stu > :nth-child(1) { text-align: left; }
+
+.v-todo--two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 10px; }
+@media (max-width: 800px) { .v-todo--two { grid-template-columns: minmax(0, 1fr); } }
+
+.v-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--c-amberSoft); font-size: 12px; font-weight: 600; font-style: normal; color: var(--c-amberInk); }

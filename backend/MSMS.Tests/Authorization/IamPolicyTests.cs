@@ -31,6 +31,7 @@ public class IamPolicyTests
             [Policies.ConversationParticipant] = role is AccountTypes.Parent or AccountTypes.Teacher,
             [Policies.TimetableManager] = role == AccountTypes.VicePrincipal,
             [Policies.DashboardReader] = role is AccountTypes.Principal or AccountTypes.VicePrincipal,
+            [Policies.AssignmentOversight] = role is AccountTypes.Principal or AccountTypes.VicePrincipal or AccountTypes.Teacher,
         };
         foreach (var (policy, expected) in expectations)
             Assert.Equal(expected, (await auth.AuthorizeAsync(principal, policy)).Succeeded);

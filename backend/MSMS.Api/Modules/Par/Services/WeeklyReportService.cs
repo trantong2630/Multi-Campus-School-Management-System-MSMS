@@ -211,7 +211,7 @@ public sealed class WeeklyReportService(MsmsDbContext db, IClock clock, CurrentU
                     {
                         sb.SubmittedAt,
                         sb.Score,
-                        AiFeedback = sb.AiFeedback != null && sb.AiFeedback.Status == "Ready" ? sb.AiFeedback.AiContent : null,
+                        AiFeedback = sb.AiFeedback != null && sb.AiFeedback.Status == MSMS.Api.Modules.Lrn.Services.AnalysisStatuses.Done ? sb.AiFeedback.AiContent : null,
                     })
                     .FirstOrDefault(),
             })

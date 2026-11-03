@@ -1,119 +1,125 @@
 import { useQuery } from '@tanstack/react-query';
-import { Card, Select, Skeleton } from 'antd';
-import dayjs from 'dayjs';
-import { BookOpen, CalendarX2, FileText, HeartHandshake, KeyRound, UserRoundX, UsersRound } from 'lucide-react';
+import { Skeleton } from 'antd';
+import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/app/AuthProvider';
 import { isPathAllowed } from '@/app/menu';
-import { DataTable } from '@/shared/components/DataTable';
-import { PageHeader } from '@/shared/components/PageHeader';
-import { StatCard } from '@/shared/components/StatCard';
-import { formatDate } from '@/shared/lib/format';
 import { admApi } from '../api';
-import { AttentionStrip, SubjectRateList } from '../components/DashboardParts';
-import { fmt, pct } from '../components/dashboardFormat';
-import type { HomeroomStudentRow } from '../types';
-import './dashboard.css';
+import { Count, Donut, Empty, HBars, Seg, Tile } from '../components/BoardKit';
+import { fmt } from '../components/dashboardFormat';
+import '../components/board.css';
+import './views.css';
 
-const genderLabel: Record<string, string> = { Male: 'Nam', Female: 'Nữ', Other: 'Khác' };
+/** Vắng không phép từ ngần này buổi trong 30 ngày thì đưa vào danh sách cần theo dõi. */
+const WATCH_ABSENCES = 3;
+type Filter = 'all' | 'absent';
 
 /**
- * Màn theo dõi lớp chủ nhiệm: sĩ số, đơn nghỉ, phụ huynh và giáo viên bộ môn của lớp (phạm vi chủ nhiệm, Business Spec §2.3).
- * Bài tập chỉ có tỷ lệ nộp tổng hợp theo môn, không có bài nộp hay điểm từng học sinh.
+ * Tình hình lớp chủ nhiệm: sĩ số và chuyên cần, điểm danh, liên kết phụ huynh, học sinh vắng nhiều
+ * và danh sách học sinh (phạm vi chủ nhiệm, Business Spec §2.3).
  */
 export function HomeroomPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
+  const [filter, setFilter] = useState<Filter>('all');
   const classId = params.get('classId') ? Number(params.get('classId')) : undefined;
-  const data = useQuery({ queryKey: ['adm', 'homeroom', classId], queryFn: () => admApi.homeroom(classId) });
-  const d = data.data;
+  const q = useQuery({ queryKey: ['adm', 'homeroom', classId], queryFn: () => admApi.homeroom(classId) });
+  const d = q.data;
   const can = (path: string) => (user && isPathAllowed(path, user) ? path : undefined);
-  const go = (path: string) => (can(path) ? () => navigate(path) : undefined);
+
+  if (q.isLoading || !d) return <Skeleton active paragraph={{ rows: 10 }} />;
+
+  const a = d.attendance;
+  const marked = a.present + a.late + a.absentExcused + a.absentUnexcused;
+  const frequent = d.students.filter((s) => s.absentUnexcused >= WATCH_ABSENCES);
+  const shown = filter === 'absent' ? frequent : d.students;
+  const absentees = d.students.filter((s) => s.absentExcused + s.absentUnexcused > 0)
+    .sort((x, y) => y.absentUnexcused - x.absentUnexcused || (y.absentExcused + y.absentUnexcused) - (x.absentExcused + x.absentUnexcused))
+    .slice(0, 6);
 
   return (
-    <>
-      <PageHeader
-        title={d ? `Lớp chủ nhiệm ${d.className}` : 'Lớp chủ nhiệm'}
-        description={d ? [d.campusName, `Khối ${d.gradeLevel}`, d.academicYearName && `Năm học ${d.academicYearName}`, dayjs().format('DD/MM/YYYY')].filter(Boolean).join(' · ') : undefined}
-        extra={d && d.classes.length > 1 && (
-          <Select className="dash-scope" value={d.classId} onChange={(v: number) => setParams({ classId: String(v) })}
+    <div className="bd">
+      <header className="bd-head">
+        <div>
+          <h1>Lớp chủ nhiệm {d.className}</h1>
+          <p>{[d.campusName, `Khối ${d.gradeLevel}`, d.academicYearName && `Năm học ${d.academicYearName}`].filter(Boolean).join(' · ')}</p>
+        </div>
+        {d.classes.length > 1 && (
+          <Seg label="Chọn lớp" value={d.classId} onChange={(v) => { setFilter('all'); setParams({ classId: String(v) }); }}
             options={d.classes.map((c) => ({ value: c.id, label: `Lớp ${c.name}` }))} />
         )}
-      />
+      </header>
 
-      <div className="dash-bento">
-        <StatCard variant="accent" icon={UsersRound} label="Sĩ số" value={fmt(d?.studentCount)}
-          hint={d ? `${d.maleCount} nam · ${d.femaleCount} nữ` : undefined} />
-        <StatCard icon={FileText} tone="amber" label="Đơn nghỉ chờ duyệt" value={fmt(d?.pendingLeave)}
-          attention={!!d?.pendingLeave} hint={d?.pendingLeave ? 'Cần duyệt sớm' : 'Không có đơn chờ'} onClick={go('/par/leave-requests')} />
-        <StatCard icon={CalendarX2} tone="sky" label="Lượt nghỉ 30 ngày" value={fmt(d?.leaveLast30Days)}
-          hint="Đơn đã duyệt và đang chờ" />
-        <StatCard icon={BookOpen} tone="violet" label="Tỷ lệ nộp bài" value={pct(d?.submissionRate)}
-          hint={d ? `${d.subjects.length} môn đã giao bài` : undefined} />
+      <div className="v-tiles4">
+        <Tile hue="mint" label="Sĩ số" value={d.studentCount} hint={`${d.maleCount} nam · ${d.femaleCount} nữ`} />
+        <Tile hue="sky" label="Vắng không phép" value={<Count value={a.absentUnexcused} />} tone={a.absentUnexcused ? 'warn' : undefined} hint={marked ? `${fmt(a.absentExcused)} vắng có phép · 4 tuần` : 'chưa có điểm danh'} />
+        <Tile hue="sun" label="Đơn nghỉ chờ duyệt" value={d.pendingLeave} tone={d.pendingLeave ? 'warn' : undefined}
+          hint={`${d.leaveLast30Days} đơn trong 30 ngày`} onClick={can('/par/leave-requests') ? () => navigate('/par/leave-requests') : undefined} />
+        <Tile hue="lilac" label="Phụ huynh chưa có tài khoản" value={d.parentsWithoutAccount} tone={d.parentsWithoutAccount ? 'warn' : undefined}
+          hint={d.studentsWithoutParent ? `${d.studentsWithoutParent} học sinh chưa liên kết` : 'đã liên kết đủ'} />
+      </div>
 
-        {d && (
-          <AttentionStrip title="Cần theo dõi" items={[
-            { key: 'leave', label: 'đơn nghỉ chờ duyệt', count: d.pendingLeave, icon: FileText, to: can('/par/leave-requests') },
-            { key: 'noparent', label: 'học sinh chưa liên kết phụ huynh', count: d.studentsWithoutParent, icon: UserRoundX },
-            { key: 'noaccount', label: 'học sinh có phụ huynh chưa có tài khoản', count: d.parentsWithoutAccount, icon: KeyRound },
-          ]} />
-        )}
+      <div className="bd-split">
+        <section className="bd-panel" aria-label="Điểm danh">
+          <div className="bd-panel__title"><h2>Điểm danh 4 tuần</h2></div>
+          {marked === 0 ? <Empty>Chưa có lượt điểm danh nào.</Empty> : (
+            <Donut total={marked} caption="lượt" segments={[
+              { key: 'p', label: 'Có mặt', value: a.present, tone: 'good' },
+              { key: 'l', label: 'Muộn', value: a.late, tone: 'soft' },
+              { key: 'e', label: 'Vắng có phép', value: a.absentExcused, tone: 'warn' },
+              { key: 'u', label: 'Vắng không phép', value: a.absentUnexcused, tone: 'low' },
+            ]} />
+          )}
+        </section>
+        <section className="bd-panel" aria-label="Học sinh vắng nhiều">
+          <div className="bd-panel__title"><h2>Học sinh vắng nhiều nhất, 30 ngày</h2></div>
+          {absentees.length === 0 ? <Empty>Không có học sinh nào vắng.</Empty> : (
+            <HBars items={absentees.map((s) => ({
+              key: String(s.studentId), label: s.fullName, sub: `${s.absentUnexcused} không phép · ${s.absentExcused} có phép`,
+              value: s.absentUnexcused + s.absentExcused, display: `${s.absentUnexcused + s.absentExcused} buổi`,
+              tone: s.absentUnexcused >= WATCH_ABSENCES ? 'low' : 'warn',
+            }))} />
+          )}
+        </section>
+      </div>
 
-        <Card title="Nộp bài theo môn" className="dash-card dash-bento__half"
-          extra={<span className="dash-card__meta">Tỷ lệ cả lớp, trên bài đã đóng</span>}>
-          {data.isLoading ? <Skeleton active paragraph={{ rows: 5 }} title={false} /> : <SubjectRateList subjects={d?.subjects ?? []} />}
-        </Card>
-
-        <Card title="Giáo viên bộ môn" className="dash-card dash-bento__half"
-          extra={can('/par/inbox') && <a className="dash-card__link" onClick={() => navigate('/par/inbox')}>Hộp thư <HeartHandshake size={13} /></a>}>
-          {data.isLoading ? <Skeleton active paragraph={{ rows: 5 }} title={false} /> : !d?.teachers.length ? (
-            <div className="dash-empty">Lớp chưa có thời khóa biểu phát hành trong học kỳ này.</div>
-          ) : (
-            <ul className="dash-list">
-              {d.teachers.map((t) => (
-                <li key={`${t.subjectName}-${t.teacherName}`} className="dash-list__row">
-                  <span className="dash-badge">{t.subjectName}</span>
-                  <div className="dash-list__main"><b>{t.teacherName}</b></div>
+      <section className="bd-panel" aria-label="Danh sách học sinh">
+        <div className="bd-panel__title">
+          <h2>Danh sách học sinh</h2>
+          <Seg label="Lọc danh sách" value={filter} onChange={setFilter}
+            options={[{ value: 'all', label: `Cả lớp (${d.studentCount})` }, { value: 'absent', label: `Vắng nhiều (${frequent.length})` }]} />
+        </div>
+        {shown.length === 0 ? <Empty>{d.students.length === 0 ? 'Lớp chưa có học sinh ghi danh.' : 'Không có học sinh nào khớp.'}</Empty> : (
+          <>
+            <div className="v-trow v-trow--head v-trow--stu" aria-hidden><span>STT</span><span>Học sinh</span><span>Vắng 30 ngày</span><span>Phụ huynh</span><span>Đơn nghỉ</span></div>
+            <ul className="v-table">
+              {shown.map((s, i) => (
+                <li key={s.studentId}>
+                  <div className="v-trow v-trow--stu">
+                    <span className="v-trow__num tabular">{i + 1}</span>
+                    <span className="v-trow__name"><strong>{s.fullName}</strong><span className="tabular">{s.personCode}</span></span>
+                    <span className={`v-trow__num tabular${s.absentUnexcused >= WATCH_ABSENCES ? ' bd-text--low' : ''}`}>{s.absentUnexcused + s.absentExcused === 0 ? '—' : `${s.absentUnexcused + s.absentExcused} buổi`}</span>
+                    {s.parentName
+                      ? <span className="v-trow__name"><strong>{s.parentName}</strong><span className="tabular">{s.parentPhone ?? 'Chưa có số điện thoại'}</span></span>
+                      : <span className="bd-text--warn">Chưa liên kết</span>}
+                    <span className="v-trow__num tabular">{s.pendingLeave > 0 ? <em className="v-badge">{s.pendingLeave} chờ duyệt</em> : s.leaveCount || '—'}</span>
+                  </div>
                 </li>
               ))}
             </ul>
-          )}
-        </Card>
+          </>
+        )}
+      </section>
 
-        <Card title="Danh sách học sinh" className="dash-card dash-card--table dash-bento__full"
-          extra={d && <span className="dash-card__meta tabular">{d.studentCount} học sinh</span>}>
-          <DataTable<HomeroomStudentRow>
-            rowKey="studentId" dataSource={d?.students} loading={data.isLoading} pagination={false}
-            emptyText="Lớp chưa có học sinh ghi danh."
-            columns={[
-              { title: 'STT', key: 'no', width: 64, className: 'tabular', render: (_: unknown, __, i) => i + 1 },
-              {
-                title: 'Học sinh', dataIndex: 'fullName',
-                render: (v: string, r) => <div className="dash-cell"><b>{v}</b><span className="tabular">{r.personCode}</span></div>,
-              },
-              { title: 'Giới tính', dataIndex: 'gender', render: (v: string | null) => (v ? genderLabel[v] ?? v : '—') },
-              { title: 'Ngày sinh', dataIndex: 'dateOfBirth', className: 'tabular', render: (v: string | null) => formatDate(v) },
-              {
-                title: 'Nghỉ 30 ngày', dataIndex: 'leaveCount', align: 'right',
-                render: (v: number, r) => (
-                  <span className="tabular">{v}{r.pendingLeave > 0 && <span className="dash-pill dash-pill--now dash-pill--sm">{r.pendingLeave} chờ duyệt</span>}</span>
-                ),
-              },
-              {
-                title: 'Phụ huynh', dataIndex: 'parentName',
-                render: (v: string | null, r) => (v
-                  ? <div className="dash-cell"><b>{v}</b><span className="tabular">{r.parentPhone ?? 'Chưa có số điện thoại'}{r.parentCount > 1 ? ` · +${r.parentCount - 1} người` : ''}</span></div>
-                  : <span className="dash-cell--warn">Chưa liên kết</span>),
-              },
-              {
-                title: 'Tài khoản phụ huynh', dataIndex: 'parentHasAccount',
-                render: (v: boolean, r) => (r.parentCount === 0 ? '—' : v ? 'Đã có' : <span className="dash-cell--warn">Chưa có</span>),
-              },
-            ]}
-          />
-        </Card>
-      </div>
-    </>
+      {d.teachers.length > 0 && (
+        <section className="bd-panel" aria-label="Giáo viên bộ môn">
+          <div className="bd-panel__title"><h2>Giáo viên bộ môn</h2></div>
+          <div className="bd-chips">
+            {d.teachers.map((t) => <span key={`${t.subjectName}-${t.teacherName}`} className="bd-chip"><b>{t.subjectName}</b>{t.teacherName}</span>)}
+          </div>
+        </section>
+      )}
+    </div>
   );
 }

@@ -4,21 +4,21 @@ export interface GradeCount {
   gradeLevel: number;
   classCount: number;
   studentCount: number;
+  attendanceRate?: number | null;
 }
 
-/** Tỷ lệ nộp tính trên bài đã đóng; null = chưa có bài đóng. */
-export interface SubjectRate {
-  subjectId: number;
-  name: string;
-  assignmentCount: number;
-  submissionRate: number | null;
-}
-
-export interface WeekPoint {
+/** Một tuần: tỷ lệ có mặt (null khi chưa có lượt điểm danh) và số lượt vắng. */
+export interface AttendanceWeek {
   weekStart: string;
-  sessions: number;
-  assignments: number;
-  submissionRate: number | null;
+  rate: number | null;
+  absent: number;
+}
+
+/** Chuyên cần theo thứ trong tuần: 1 = Thứ Hai … 6 = Thứ Bảy. */
+export interface WeekdayRate {
+  day: number;
+  rate: number | null;
+  absent: number;
 }
 
 export interface NamedId {
@@ -36,7 +36,7 @@ export interface DashboardCampusRow {
   staffCount: number;
   sessionsToday: number;
   leaders: string[];
-  submissionRate: number | null;
+  attendanceRate: number | null;
 }
 
 export interface DashboardAttention {
@@ -45,6 +45,31 @@ export interface DashboardAttention {
   /** Null với Hiệu trưởng: không đọc đơn nghỉ. */
   pendingLeaveRequests: number | null;
   classesWithoutHomeroom: number;
+}
+
+/** Chuyên cần 4 tuần gần nhất. Rate null khi chưa có lượt điểm danh nào. */
+export interface AttendanceSummary {
+  rate: number | null;
+  present: number;
+  late: number;
+  absentExcused: number;
+  absentUnexcused: number;
+  /** Tiết đã qua ngày, Đã xếp lịch mà chưa có điểm danh. */
+  unmarkedSessions: number;
+  todaySessions: number;
+  todayMarkedSessions: number;
+}
+
+export interface ClassRow {
+  classId: number;
+  className: string;
+  gradeLevel: number;
+  campusId: number;
+  campusName: string;
+  homeroom: string | null;
+  studentCount: number;
+  attendanceRate: number | null;
+  unmarkedSessions: number;
 }
 
 export interface Dashboard {
@@ -60,8 +85,12 @@ export interface Dashboard {
   attention: DashboardAttention;
   byGrade: GradeCount[];
   campuses: DashboardCampusRow[];
-  subjects: SubjectRate[];
-  weeks: WeekPoint[];
+  weeks: AttendanceWeek[];
+  attendance: AttendanceSummary;
+  classes: ClassRow[];
+  weekdays: WeekdayRate[];
+  gradeOptions: number[];
+  gradeLevel: number | null;
 }
 
 // ---------- School Admin ----------
@@ -85,6 +114,10 @@ export interface AdminDashboard {
   semesterName: string | null;
   semesterStart: string | null;
   semesterEnd: string | null;
+  campusCount: number;
+  classCount: number;
+  studentCount: number;
+  staffCount: number;
   accounts: AccountTypeRow[];
   gaps: DataGap[];
   activity: { date: string; count: number }[];
@@ -92,58 +125,24 @@ export interface AdminDashboard {
   timetables: { campusId: number; name: string; classCount: number; publishedClassCount: number }[];
 }
 
-// ---------- Giáo viên ----------
+// ---------- Tiến độ bài tập rèn luyện ----------
 
-export interface TeacherSessionItem {
-  sessionId: number;
-  periodNo: number;
-  sessionOfDay: string;
-  startTime: string;
-  endTime: string;
-  classId: number;
-  className: string;
-  subjectName: string;
+export interface ProgressClass { classId: number; className: string; gradeLevel: number; campusId: number }
+export interface ProgressTeacher { teacherId: number; name: string; campusId: number; departmentId: number | null; departmentName: string | null; duties: number }
+export interface ProgressItem {
+  assignmentId: number; title: string; campusId: number; campusName: string; departmentId: number; departmentName: string;
+  classId: number; className: string; gradeLevel: number; subjectId: number; subjectName: string; teacherId: number; teacherName: string;
+  openAt: string; dueAt: string; isClosed: boolean; recipientCount: number; submittedCount: number;
 }
-
-export interface TeacherClassRow {
-  classId: number;
-  className: string;
-  gradeLevel: number;
-  subjects: string[];
-  studentCount: number;
-  assignmentCount: number;
-  submissionRate: number | null;
-}
-
-export interface TeacherAssignmentItem {
-  assignmentId: number;
-  title: string;
-  className: string;
-  subjectName: string;
-  dueAt: string;
-  isClosed: boolean;
-  recipientCount: number;
-  submittedCount: number;
-}
-
-export interface TeacherDashboard {
-  fullName: string;
+export interface Progress {
+  scope: 'School' | 'Campus' | 'Class';
   academicYearName: string | null;
   semesterName: string | null;
-  sessionsToday: number;
-  sessionsThisWeek: number;
-  classCount: number;
-  studentCount: number;
-  subjectCount: number;
-  openAssignments: number;
-  dueSoon: number;
-  assignmentsWithMissing: number;
-  submissionRate: number | null;
-  today: TeacherSessionItem[];
-  classes: TeacherClassRow[];
-  recent: TeacherAssignmentItem[];
-  homeroomClasses: NamedId[];
-  headDepartments: NamedId[];
+  now: string;
+  campuses: NamedId[];
+  classes: ProgressClass[];
+  teachers: ProgressTeacher[];
+  items: ProgressItem[];
 }
 
 // ---------- Lớp chủ nhiệm ----------
@@ -160,6 +159,8 @@ export interface HomeroomStudentRow {
   parentName: string | null;
   parentPhone: string | null;
   parentHasAccount: boolean;
+  absentExcused: number;
+  absentUnexcused: number;
 }
 
 export interface HomeroomOverview {
@@ -176,8 +177,33 @@ export interface HomeroomOverview {
   leaveLast30Days: number;
   studentsWithoutParent: number;
   parentsWithoutAccount: number;
-  submissionRate: number | null;
-  subjects: SubjectRate[];
   teachers: { subjectName: string; teacherName: string }[];
   students: HomeroomStudentRow[];
+  attendance: AttendanceSummary;
+  attendanceWeeks: AttendanceWeek[];
+}
+
+// ---------- Tình hình tổ chuyên môn ----------
+
+export interface DepartmentMemberRow {
+  staffId: number;
+  name: string;
+  campusName: string | null;
+  inDepartment: boolean;
+  periodsPerWeek: number;
+  absentToday: boolean;
+  unmarkedSessions: number;
+  teaching: { subjectName: string; classNames: string[] }[];
+}
+
+export interface DepartmentBoard {
+  departments: NamedId[];
+  subjectNames: string[];
+  semesterName: string | null;
+  sessionsToday: number;
+  pendingSessions: number;
+  absentToday: number;
+  attendance: AttendanceSummary;
+  attendanceWeeks: AttendanceWeek[];
+  members: DepartmentMemberRow[];
 }

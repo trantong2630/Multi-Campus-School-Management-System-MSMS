@@ -3,7 +3,7 @@ import { Button, Card, DatePicker, Form, Input } from 'antd';
 import { message } from '@/shared/lib/antdStatic';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import { CalendarDays, CalendarOff, CalendarRange, Hourglass, Pencil, Plus, Star, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/app/AuthProvider';
@@ -28,6 +28,12 @@ interface SemesterValues { start1: Dayjs; end1: Dayjs; start2: Dayjs; end2: Dayj
 
 const DATE_FORMAT = 'DD/MM/YYYY';
 const semesterText = (s?: Semester) => (s ? `${formatDate(s.startDate)} – ${formatDate(s.endDate)}` : null);
+
+/** Phần trăm năm học đã trôi qua tính tới hôm nay. */
+function yearElapsed(start: string, end: string, today: dayjs.Dayjs): number {
+  const total = dayjs(end).diff(dayjs(start), 'day') + 1;
+  return Math.min(100, Math.max(0, ((today.diff(dayjs(start), 'day') + 1) / Math.max(1, total)) * 100));
+}
 
 export function YearsPage() {
   const { user } = useAuth();
@@ -130,14 +136,16 @@ export function YearsPage() {
       />
       {!isLoading && (
         <StatStrip>
-          <StatCard icon={CalendarRange} tone="green" label="Năm học hiện hành" value={current?.name ?? '—'}
+          <StatCard label="Năm học hiện hành" value={current?.name ?? '—'}
+            meter={current ? yearElapsed(current.startDate, current.endDate, today) : null}
             hint={current ? `${formatDate(current.startDate)} – ${formatDate(current.endDate)}` : 'Chưa đặt năm học hiện hành'} />
-          <StatCard icon={CalendarDays} tone="sky" label="Học kỳ hiện tại" value={semester?.name ?? 'Ngoài học kỳ'}
+          <StatCard label="Học kỳ hiện tại" value={semester?.name ?? 'Ngoài học kỳ'}
+            meter={progress ? (progress.week / progress.total) * 100 : null}
             hint={progress ? `Tuần ${progress.week} / ${progress.total}`
               : upcomingSemester ? `${upcomingSemester.name} bắt đầu ${formatDate(upcomingSemester.startDate)}` : undefined} />
-          <StatCard icon={Hourglass} tone="violet" label="Còn lại của học kỳ" value={progress ? `${progress.total - progress.week} tuần` : '—'}
+          <StatCard label="Còn lại của học kỳ" value={progress ? `${progress.total - progress.week} tuần` : '—'}
             hint={semester ? `Kết thúc ${formatDate(semester.endDate)}` : undefined} />
-          <StatCard icon={CalendarOff} tone="amber" label="Ngày nghỉ còn lại trong năm" value={current ? upcoming.length : '—'}
+          <StatCard label="Ngày nghỉ còn lại trong năm" value={current ? upcoming.length : '—'}
             hint={nextHoliday ? `Gần nhất ${formatDate(nextHoliday.holidayDate)}${nextHoliday.reason ? ` · ${nextHoliday.reason}` : ''}` : undefined}
             onClick={canOpenHolidays ? () => navigate('/sch/holidays') : undefined} />
         </StatStrip>

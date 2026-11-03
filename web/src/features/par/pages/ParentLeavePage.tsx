@@ -296,6 +296,7 @@ export function ParentLeavePage() {
         title="Gửi đơn xin nghỉ học"
         form={form}
         width={640}
+        variant="drawer"
         onClose={closeModal}
         onSubmit={handleSubmit}
         okText="Gửi đơn"

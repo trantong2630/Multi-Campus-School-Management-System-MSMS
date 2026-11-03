@@ -2,6 +2,7 @@ using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
 using MSMS.Api.Data.Entities;
 using MSMS.Api.Modules.Adm.Services;
+using MSMS.Api.Modules.Scd.Services;
 using MSMS.Tests.Modules.Iam;
 
 namespace MSMS.Tests.Modules.Adm;
@@ -76,20 +77,26 @@ public class DashboardScopeTests
     }
 
     [Fact]
-    public async Task SubmissionRate_CountsOnlyClosedAssignments()
+    public async Task DepartmentBoard_ShowsLoadAndUnmarkedSessions_OnlyForTheHead()
     {
         using var f = new AccountTestFixture();
-        f.AddAccount(2, AccountTypes.Principal);
-        Enroll(f, 100, 1);
-        Enroll(f, 101, 1);
-        AddAssignment(f, 1, 1, 5, -1, [100, 101], [100]);   // đã đóng: 1/2
-        AddAssignment(f, 2, 1, 5, 2, [100, 101], []);       // còn mở: chưa tính
+        f.AddAccount(5);
+        f.AddAccount(6);
+        f.AddDuties(5);                              // giáo viên 5 là tổ trưởng tổ Toán
+        f.Publish(1, 1, 6);                          // giáo viên 6 dạy môn Toán ở lớp 1
+        f.AddLesson(6, 1, -1);                       // tiết đã qua, chưa điểm danh
+        f.AddLesson(6, 1, 0);                        // tiết hôm nay
 
-        var d = await Leadership(f, AccountTypes.Principal, 2).GetAsync(1);
-        Assert.Equal(50, Assert.Single(d.Campuses).SubmissionRate);
-        var subject = Assert.Single(d.Subjects);
-        Assert.Equal(2, subject.AssignmentCount);
-        Assert.Equal(50, subject.SubmissionRate);
+        DepartmentBoardService Board(int personId) => new(f.Db, AccountTestFixture.User(AccountTypes.Teacher, personId), f.Clock,
+            new SubjectResponsibilityService(f.Db, f.Clock));
+
+        var d = await Board(5).GetAsync();
+        var member = Assert.Single(d.Members, m => m.StaffId == 6);
+        Assert.Equal(1, member.PeriodsPerWeek);
+        Assert.Equal(1, member.UnmarkedSessions);
+        Assert.Equal("Toán", Assert.Single(member.Teaching).SubjectName);
+        Assert.Equal(1, d.SessionsToday);
+        Assert.Equal(403, (await Assert.ThrowsAsync<ApiException>(() => Board(6).GetAsync())).StatusCode);
     }
 
     [Fact]
@@ -118,24 +125,72 @@ public class DashboardScopeTests
     }
 
     [Fact]
-    public async Task Teacher_SeesOnlyOwnPublishedClassesAndOwnAssignments()
+    public async Task Progress_ScopesByRole_SchoolCampusAndHomeroomClass()
     {
         using var f = new AccountTestFixture();
+        f.AddAccount(1, AccountTypes.VicePrincipal);
+        f.AddAccount(2, AccountTypes.Principal);
         f.AddAccount(5);
         f.AddAccount(6);
-        f.Publish(1, 1, 5);
+        f.Db.CampusLeadership.Add(new CampusLeadership { StaffId = 1, CampusId = 1, StartDate = f.Clock.Today.AddDays(-10) });
+        f.Db.HomeroomAssignment.Add(new HomeroomAssignment { StaffId = 5, ClassId = 1, StartDate = f.Clock.Today.AddDays(-10) });
+        f.Db.SaveChanges();
         Enroll(f, 100, 1);
+        Enroll(f, 101, 2);
         AddAssignment(f, 1, 1, 5, -1, [100], [100]);
-        AddAssignment(f, 2, 1, 6, -1, [100], []);
-        f.AddLesson(5, 1);
-        f.AddLesson(6, 2);
+        AddAssignment(f, 2, 2, 6, -1, [101], []);
 
-        var d = await new TeacherDashboardService(f.Db, AccountTestFixture.User(AccountTypes.Teacher, 5), f.Clock).GetAsync();
-        Assert.Equal(1, Assert.Single(d.Classes).ClassId);
-        Assert.Equal(1, Assert.Single(d.Recent).AssignmentId);
-        Assert.Equal(100, d.SubmissionRate);
-        Assert.Equal(1, d.SessionsToday);
-        Assert.Empty(d.HomeroomClasses);
+        ProgressService Progress(string role, int personId) =>
+            new(f.Db, AccountTestFixture.User(role, personId), f.Clock, new SubjectResponsibilityService(f.Db, f.Clock));
+
+        var principal = await Progress(AccountTypes.Principal, 2).GetAsync(null);
+        Assert.Equal("School", principal.Scope);
+        Assert.Equal(2, principal.Items.Count);
+        Assert.Equal(2, Assert.Single((await Progress(AccountTypes.Principal, 2).GetAsync(2)).Items).ClassId);
+
+        var vp = await Progress(AccountTypes.VicePrincipal, 1).GetAsync(null);
+        Assert.Equal("Campus", vp.Scope);
+        Assert.Equal(1, Assert.Single(vp.Items).ClassId);
+        Assert.Equal(403, (await Assert.ThrowsAsync<ApiException>(() => Progress(AccountTypes.VicePrincipal, 1).GetAsync(2))).StatusCode);
+
+        var homeroom = await Progress(AccountTypes.Teacher, 5).GetAsync(null);
+        Assert.Equal("Class", homeroom.Scope);
+        var item = Assert.Single(homeroom.Items);
+        Assert.Equal(1, item.ClassId);
+        Assert.Equal(1, item.SubmittedCount);
+        Assert.Empty(homeroom.Campuses);
+        Assert.Equal(403, (await Assert.ThrowsAsync<ApiException>(() => Progress(AccountTypes.Teacher, 6).GetAsync(null))).StatusCode);
+    }
+
+    [Fact]
+    public async Task Attendance_SplitsExcusedFromUnexcused_AndCountsUnmarkedSessions()
+    {
+        using var f = new AccountTestFixture();
+        f.AddAccount(2, AccountTypes.Principal);
+        f.AddAccount(5);
+        Enroll(f, 100, 1);
+        Enroll(f, 101, 1);
+        Enroll(f, 102, 1);
+        f.AddLesson(5, 1, -1);                       // đã qua, chưa điểm danh
+        var marked = f.AddLesson(5, 1, -2);
+        foreach (var (student, status) in new[] { (100, "Present"), (101, "Absent"), (102, "Absent") })
+            marked.AttendanceRecord.Add(new AttendanceRecord { StudentId = student, Status = status, RecordedByPersonId = 5, RecordedAt = f.Clock.Now });
+        f.Db.LeaveRequest.Add(new LeaveRequest { StudentId = 102, ParentId = 900, ClassId = 1, FromDate = f.Clock.Today.AddDays(-2),
+            ToDate = f.Clock.Today.AddDays(-2), SessionOfDay = "AllDay", Status = "Approved", CreatedAt = f.Clock.Now });
+        f.Db.SaveChanges();
+
+        var d = await Leadership(f, AccountTypes.Principal, 2).GetAsync(1);
+        Assert.Equal(1, d.Attendance.Present);
+        Assert.Equal(1, d.Attendance.AbsentExcused);
+        Assert.Equal(1, d.Attendance.AbsentUnexcused);
+        Assert.Equal(33.3, d.Attendance.Rate);
+        Assert.Equal(1, d.Attendance.UnmarkedSessions);
+        var row = Assert.Single(d.Classes);
+        Assert.Equal(1, row.ClassId);
+        Assert.Equal(33.3, row.AttendanceRate);
+        Assert.Equal(1, row.UnmarkedSessions);
+        Assert.Equal(3, row.StudentCount);
+        Assert.Equal(33.3, Assert.Single(d.Campuses).AttendanceRate);
     }
 
     [Fact]

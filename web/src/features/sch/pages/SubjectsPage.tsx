@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Button, Card, Form, Input, Select, Tabs } from 'antd';
 import { message } from '@/shared/lib/antdStatic';
-import { BookOpen, CalendarCheck, Library, Pencil, Plus, Power, UsersRound } from 'lucide-react';
+import { Pencil, Plus, Power } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/app/AuthProvider';
 import { DataTable } from '@/shared/components/DataTable';
@@ -15,7 +15,6 @@ import { StatusBadge } from '@/shared/components/StatusBadge';
 import { confirmAction, showError } from '@/shared/lib/feedback';
 import { formatNumber as fmt } from '@/shared/lib/format';
 import { schApi } from '../api';
-import { DataGapAlert } from '../components/DataGapAlert';
 import { useCatalogStats, useDepartments } from '../hooks/useCatalogs';
 import '../components/school.css';
 import type { Department, Subject } from '../types';
@@ -87,19 +86,15 @@ export function SubjectsPage() {
         extra={addButton}
       />
       <StatStrip>
-        <StatCard icon={Library} tone="green" label="Tổ chuyên môn" value={fmt(loaded ? activeDepts.length : undefined)}
+        <StatCard label="Tổ chuyên môn" value={fmt(loaded ? activeDepts.length : undefined)}
           attention={deptsWithoutHead > 0}
-          hint={loaded ? (deptsWithoutHead ? `${deptsWithoutHead} tổ chưa có tổ trưởng` : 'Tổ nào cũng có tổ trưởng') : undefined} />
-        <StatCard icon={BookOpen} tone="sky" label="Môn học đang dùng" value={fmt(loaded ? activeSubjects : undefined)} />
-        <StatCard icon={UsersRound} tone="violet" label="Giáo viên thuộc tổ" value={fmt(loaded ? teacherCount : undefined)}
-          hint={activeDepts.length && teacherCount ? `Bình quân ${Math.round(teacherCount / activeDepts.length)} người mỗi tổ` : undefined} />
-        <StatCard icon={CalendarCheck} tone="amber" label="Môn đang có giáo viên dạy" value={fmt(taughtSubjects)}
-          hint={stats.data ? (stats.data.semesterName ? `Theo thời khóa biểu ${stats.data.semesterName}` : 'Chưa có học kỳ hiện hành') : undefined} />
+          hint={loaded && deptsWithoutHead ? `${deptsWithoutHead} tổ chưa có tổ trưởng` : undefined} />
+        <StatCard label="Môn học đang dùng" value={fmt(loaded ? activeSubjects : undefined)} />
+        <StatCard label="Giáo viên thuộc tổ" value={fmt(loaded ? teacherCount : undefined)} />
+        <StatCard label="Môn đang có giáo viên dạy" value={fmt(taughtSubjects)}
+          meter={taughtSubjects !== undefined && activeSubjects > 0 ? (taughtSubjects / activeSubjects) * 100 : null}
+          hint={taughtSubjects !== undefined && activeSubjects > 0 ? `trên ${fmt(activeSubjects)} môn` : undefined} />
       </StatStrip>
-      <DataGapAlert items={[
-        { key: 'head', label: 'tổ chuyên môn chưa có tổ trưởng', count: deptsWithoutHead, to: '/ppl/responsibilities' },
-        { key: 'teacher', label: 'giáo viên chưa thuộc tổ chuyên môn nào', count: stats.data?.teachersWithoutDepartment, to: '/ppl/staff' },
-      ]} />
       <Tabs
         activeKey={tab}
         onChange={(k) => setTab(k as typeof tab)}
