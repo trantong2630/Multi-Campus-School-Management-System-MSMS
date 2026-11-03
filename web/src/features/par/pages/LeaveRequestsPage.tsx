@@ -6,7 +6,7 @@ import { ParentLeavePage } from './ParentLeavePage';
  * Dispatcher component for leave requests.
  * Routes to different pages based on user account type:
  * - Parent: Parent leave management
- * - Teacher/VicePrincipal: Homeroom leave approval
+ * - Teacher: Homeroom leave approval
  */
 export function LeaveRequestsPage() {
   const { user } = useAuth();
@@ -15,7 +15,7 @@ export function LeaveRequestsPage() {
     return <ParentLeavePage />;
   }
 
-  if (user?.accountType === 'Teacher' || user?.accountType === 'VicePrincipal') {
+  if (user?.accountType === 'Teacher') {
     return <HomeroomLeavePage />;
   }
 

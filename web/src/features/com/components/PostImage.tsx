@@ -27,6 +27,7 @@ export function PostImage({ postId, imageId, alt, className = '' }: Props) {
     queryKey: ['com', 'post-image', postId, imageId],
     queryFn: () => postApi.image(postId, imageId),
     staleTime: Infinity,
+    meta: { silent: true },
   });
   const url = useObjectUrl(q.data);
   return url

@@ -1,11 +1,11 @@
 import {
-  BookOpen, CalendarDays, ChartColumn, ClipboardCheck, FileText, HeartHandshake, House, LayoutDashboard, Mail, Newspaper, School, Settings2, ShieldCheck, Users,
+  BookOpen, CalendarDays, ClipboardCheck, FileText, HeartHandshake, House, LayoutDashboard, Mail, Newspaper, Settings2, ShieldCheck, Users,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { AccountType } from '@/shared/lib/labels';
 import type { UserInfo } from '@/features/iam/types';
 
-type ScopeRequirement = 'homeroom' | 'department' | 'subject' | 'campus';
+type ScopeRequirement = 'homeroom' | 'department' | 'homeroomOrDepartment' | 'subject' | 'campus';
 type NavigationUser = Pick<UserInfo, 'accountType' | 'scope'>;
 
 interface MenuAccess {
@@ -29,6 +29,8 @@ export interface MenuGroup extends Partial<MenuAccess> {
   icon: LucideIcon;
   /** Cụm trên sider: menu chia thành vài cụm có nhãn nhỏ, thứ tự các nhóm vẫn giữ nguyên. */
   section: MenuSection;
+  /** Giữ nguyên nhóm cha dù chỉ còn một mục con (Bảng điều khiển của School Admin). */
+  keepGroup?: boolean;
   /** Nhóm một màn hình thì không có cấp 2: dùng `path` thay `children`. */
   path?: string;
   children?: MenuLeaf[];
@@ -44,11 +46,18 @@ const STAFF: AccountType[] = [...MGMT, 'Teacher'];
 // Cấu trúc menu theo Dev_Conventions §4.7.
 export const menu: MenuGroup[] = [
   { key: 'home', label: 'Trang chủ', icon: House, section: 'overview', path: '/', roles: ALL, ready: true },
-  // Một mục Dashboard, nội dung theo loại tài khoản (HT/HP vận hành, SA dữ liệu tổ chức, GV việc dạy của mình).
-  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, section: 'overview', path: '/dashboard', roles: STAFF, requires: { VicePrincipal: 'campus' }, ready: true },
-  // Màn theo dõi theo trách nhiệm: chỉ hiện khi trách nhiệm đang hiệu lực.
-  { key: 'homeroom', label: 'Lớp chủ nhiệm', icon: School, section: 'overview', path: '/homeroom', roles: ['Teacher'], requires: { Teacher: 'homeroom' }, ready: true },
-  { key: 'lrn-dept', label: 'Tiến độ giao bài của tổ', icon: ChartColumn, section: 'overview', path: '/lrn/department', roles: ['Teacher'], requires: { Teacher: 'department' }, ready: true },
+  {
+    // Bảng điều khiển: tình hình vận hành theo phạm vi của vai trò, và tiến độ bài tập rèn luyện dùng chung tên cho mọi cấp quản lý.
+    key: 'dashboard', label: 'Bảng điều khiển', icon: LayoutDashboard, section: 'overview', keepGroup: true,
+    children: [
+      { key: 'dash-school', label: 'Tình hình toàn trường', path: '/dashboard/school', roles: ['Principal'], ready: true },
+      { key: 'dash-campus', label: 'Tình hình phân hiệu', path: '/dashboard/campus', roles: ['VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
+      { key: 'dash-dept', label: 'Tình hình tổ chuyên môn', path: '/dashboard/department', roles: ['Teacher'], requires: { Teacher: 'department' }, ready: true },
+      { key: 'dash-class', label: 'Tình hình lớp chủ nhiệm', path: '/dashboard/homeroom', roles: ['Teacher'], requires: { Teacher: 'homeroom' }, ready: true },
+      { key: 'dash-progress', label: 'Tiến độ bài tập rèn luyện', path: '/dashboard/progress', roles: ['Principal', 'VicePrincipal', 'Teacher'], requires: { VicePrincipal: 'campus', Teacher: 'homeroomOrDepartment' }, ready: true },
+      { key: 'dash-system', label: 'Thống kê hệ thống', path: '/dashboard/system', roles: ['SchoolAdmin'], ready: true },
+    ],
+  },
   {
     // Cán bộ thấy cả Đăng tin lẫn Bảng tin; học sinh, phụ huynh chỉ còn Bảng tin nên nhóm tự thu về một mục (xem visibleMenu).
     key: 'com', label: 'Bảng tin', icon: Newspaper, section: 'overview',
@@ -105,7 +114,7 @@ export const menu: MenuGroup[] = [
   {
     key: 'par', label: 'Phụ huynh', icon: HeartHandshake, section: 'manage',
     children: [
-      { key: 'par-leave', label: 'Đơn xin nghỉ', path: '/par/leave-requests', roles: ['VicePrincipal', 'Teacher', 'Parent'], requires: { Teacher: 'homeroom', VicePrincipal: 'campus' }, ready: true, icon: FileText },
+      { key: 'par-leave', label: 'Đơn xin nghỉ', path: '/par/leave-requests', roles: ['Teacher', 'Parent'], requires: { Teacher: 'homeroom' }, ready: true, icon: FileText },
       { key: 'par-report', label: 'Sổ liên lạc', path: '/par/weekly-reports', roles: ['Teacher', 'Student', 'Parent'], requires: { Teacher: 'homeroom' }, ready: true, icon: HeartHandshake },
       { key: 'par-inbox', label: 'Hộp thư', path: '/par/inbox', roles: ['Teacher', 'Parent'], ready: true, icon: Mail },
     ],
@@ -125,6 +134,7 @@ function canAccess(item: Pick<MenuGroup, 'roles' | 'requires' | 'ready'>, user: 
   switch (item.requires?.[user.accountType]) {
     case 'homeroom': return !!user.scope?.homeroomClassIds.length;
     case 'department': return !!user.scope?.headDepartmentIds.length;
+    case 'homeroomOrDepartment': return !!user.scope?.homeroomClassIds.length || !!user.scope?.headDepartmentIds.length;
     case 'subject': return !!user.scope?.subjectResponsibilities.length;
     case 'campus': return !!user.scope?.ledCampusIds.length;
     default: return true;
@@ -151,7 +161,7 @@ export function visibleMenu(user: NavigationUser): MenuGroup[] {
             requires: c.requires,
           });
         }
-      } else if (children.length === 1) {
+      } else if (children.length === 1 && !g.keepGroup) {
         // Nhóm chỉ còn một màn hình thì không có cấp 2 (Conventions §4.7): dùng thẳng tên và đường dẫn của màn hình đó.
         result.push({
           ...g,
@@ -200,7 +210,7 @@ export function resolveCrumbs(pathname: string, type?: AccountType): string[] {
 /** Mục bị ẩn không được mở bằng URL; hồ sơ cá nhân và đổi mật khẩu vẫn dành cho mọi người. */
 export function isPathAllowed(pathname: string, user: NavigationUser): boolean {
   pathname = pathname.replace(/\/+$/, '') || '/';
-  if (extraCrumbs[pathname]) return true;
+  if (extraCrumbs[pathname] || pathname === '/dashboard') return true;
   for (const g of menu) {
     if (g.path && (pathname === g.path || (g.path !== '/' && pathname.startsWith(g.path + '/')))) return canAccess(g, user);
     const leaf = g.children?.find((c) => pathname === c.path || pathname.startsWith(c.path + '/'));

@@ -6,6 +6,7 @@ using MSMS.Api.Common.Audit;
 using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
 using MSMS.Api.Common.Notifications;
+using MSMS.Api.Common.Storage;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
 using MSMS.Api.Modules.Adm;
@@ -30,6 +31,7 @@ builder.Services.AddDbContext<MsmsDbContext>(o =>
     o.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddSingleton<IClock, SystemClock>();
+builder.Services.AddImageStorage(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<AccountAccessValidator>();

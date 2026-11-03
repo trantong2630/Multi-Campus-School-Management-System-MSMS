@@ -9,7 +9,7 @@ using MSMS.Api.Modules.Adm.Dtos;
 namespace MSMS.Api.Modules.Adm.Services;
 
 /// <summary>
-/// Dashboard của School Admin: tài khoản, thiếu sót dữ liệu cần bổ sung, hoạt động hệ thống và tiến độ thời khóa biểu.
+/// Thống kê hệ thống của School Admin: quy mô, tài khoản, thiếu sót dữ liệu cần bổ sung, hoạt động hệ thống và tiến độ thời khóa biểu.
 /// Quy mô và cấu trúc trường hiển thị trên các màn Thiết lập (StructureStatsService), không lặp lại ở đây.
 /// Chỉ những việc School Admin tự sửa được (danh mục, hồ sơ, tài khoản, trách nhiệm); không có số liệu giảng dạy đứng tên người khác (BR-02).
 /// </summary>
@@ -91,7 +91,10 @@ public sealed class AdminDashboardService(MsmsDbContext db, IClock clock)
             return new CampusTimetable(c.CampusId, c.Name, ids.Count, ids.Count(published.Contains));
         }).ToList();
 
+        var studentCount = await studying.CountAsync();
+        var staffCount = await db.StaffProfile.AsNoTracking().CountAsync(s => s.IsActive);
         return new AdminDashboardDto(term.YearName, term.SemesterName, term.SemesterStart, term.SemesterEnd,
+            campuses.Count, classStats.Count, studentCount, staffCount,
             accounts, gaps, activity, byCategory, timetables);
     }
 

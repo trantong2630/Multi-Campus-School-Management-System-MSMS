@@ -26,7 +26,8 @@ export function AbsencePage() {
   const [declareOpen, setDeclareOpen] = useState(false);
   const [tab, setTab] = useState('pending');
 
-  const refresh = () => qc.invalidateQueries({ queryKey: ['scd'] });
+  // Không làm mới gợi ý giáo viên: ô chọn trong hộp "Xử lý tiết" vẫn đang mở, gọi lại cho tiết vừa xử lý xong sẽ bị báo lỗi vì tiết không còn Chờ xử lý.
+  const refresh = () => qc.invalidateQueries({ queryKey: ['scd'], predicate: (q) => q.queryKey[1] !== 'teacherAvailability' });
 
   return (
     <>

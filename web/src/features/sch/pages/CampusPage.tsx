@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Form, Input } from 'antd';
 import { message } from '@/shared/lib/antdStatic';
-import { Building2, GraduationCap, Pencil, Plus, Power, School, UsersRound } from 'lucide-react';
+import { Pencil, Plus, Power } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/app/AuthProvider';
 import { AddressInput } from '@/shared/components/AddressInput';
@@ -15,7 +15,6 @@ import { StatusBadge } from '@/shared/components/StatusBadge';
 import { confirmAction, showError } from '@/shared/lib/feedback';
 import { formatNumber as fmt } from '@/shared/lib/format';
 import { schApi } from '../api';
-import { DataGapAlert } from '../components/DataGapAlert';
 import { useCampuses, useCampusStats } from '../hooks/useCatalogs';
 import type { Campus, CampusStat } from '../types';
 import '../components/school.css';
@@ -78,17 +77,12 @@ export function CampusPage() {
         )}
       />
       <StatStrip>
-        <StatCard icon={Building2} tone="green" label="Phân hiệu đang hoạt động" value={fmt(data && active.length)}
+        <StatCard label="Phân hiệu đang hoạt động" value={fmt(data && active.length)}
           hint={data && data.length > active.length ? `${data.length - active.length} phân hiệu ngừng hoạt động` : undefined} />
-        <StatCard icon={School} tone="sky" label="Lớp đang hoạt động" value={fmt(data && classCount)} />
-        <StatCard icon={GraduationCap} tone="violet" label="Học sinh đang học" value={fmt(data && studentCount)}
-          hint={classCount > 0 ? `Bình quân ${Math.round(studentCount / classCount)} học sinh mỗi lớp` : undefined} />
-        <StatCard icon={UsersRound} tone="amber" label="Cán bộ đang công tác" value={fmt(data && sum((s) => s.staffCount))}
-          hint="Theo phân hiệu chính" />
+        <StatCard label="Lớp đang hoạt động" value={fmt(data && classCount)} />
+        <StatCard label="Học sinh đang học" value={fmt(data && studentCount)} />
+        <StatCard label="Cán bộ đang công tác" value={fmt(data && sum((s) => s.staffCount))} />
       </StatStrip>
-      <DataGapAlert items={[
-        { key: 'leader', label: 'phân hiệu chưa có hiệu phó phụ trách', count: withoutLeader, to: '/ppl/responsibilities' },
-      ]} />
       <Card className="table-card">
         <DataTable<CampusRow>
           rowKey="campusId"

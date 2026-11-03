@@ -24,7 +24,7 @@ public class SchoolController(SchoolProfileService service) : ControllerBase
         if (logo is null) return NotFound();
         // Giao diện thêm ?v=<phiên bản> vào đường dẫn nên có thể cho trình duyệt cache lâu.
         Response.Headers.CacheControl = "public, max-age=604800";
-        return PhysicalFile(logo.Value.Path, logo.Value.ContentType);
+        return File(logo.Content, logo.ContentType);
     }
 
     [HttpPost("logo"), Authorize(Policy = Policies.SchoolProfileManager)]

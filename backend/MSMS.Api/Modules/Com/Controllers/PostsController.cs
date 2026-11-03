@@ -24,7 +24,7 @@ public class PostsController(PostService service) : ControllerBase
     {
         var image = await service.FindImageAsync(id, imageId);
         Response.Headers.CacheControl = "private, max-age=3600";
-        return PhysicalFile(image.Path, image.ContentType);
+        return File(image.Content, image.ContentType);
     }
 
     [HttpPost, Authorize(Policy = Policies.Staff), RequestSizeLimit(UploadLimit)]

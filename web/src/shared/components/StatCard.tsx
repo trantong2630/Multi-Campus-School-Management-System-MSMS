@@ -18,6 +18,8 @@ interface Props {
   /** Chỉ số "cần chú ý" đang lớn hơn 0: chấm hổ phách trước nhãn, số đổi màu hổ phách đậm. */
   attention?: boolean;
   onClick?: () => void;
+  /** Thanh tiến độ mảnh dưới số (0–100), cùng màu nhấn của ô. Chỉ dùng khi có tỷ lệ thật. */
+  meter?: number | null;
   /** Lớp vị trí trong lưới bento (vd. ô cao hai hàng). */
   className?: string;
   /** Nội dung phụ dưới số (vd. phân bổ theo khối trong ô nhấn). */
@@ -25,7 +27,7 @@ interface Props {
 }
 
 /** Ô chỉ số dạng bento của Dashboard (Design_Web §8.6): nhãn, số lớn, dòng phụ, lối "Xem". */
-export function StatCard({ label, icon: Icon, tone = 'green', value, hint, variant = 'default', attention = false, onClick, className, children }: Props) {
+export function StatCard({ label, icon: Icon, tone = 'green', value, hint, variant = 'default', attention = false, onClick, className, children, meter }: Props) {
   const clickable = !!onClick;
   const cls = [
     'bento-tile', 'stat-card',
@@ -51,6 +53,7 @@ export function StatCard({ label, icon: Icon, tone = 'green', value, hint, varia
         )}
       </div>
       <div className="stat-card__value tabular">{value}</div>
+      {meter != null && <span className="stat-card__meter" aria-hidden><i style={{ width: `${Math.min(100, Math.max(2, meter))}%` }} /></span>}
       {children}
       <div className="stat-card__foot">
         <span>{hint}</span>
