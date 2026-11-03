@@ -119,7 +119,7 @@ export function AssignmentPanel({ id }: { id: number }) {
         <ol className="paper">
           {detail.data.questions.map((q) => (
             <li key={q.assignmentQuestionId}>
-              <header><b>Câu {q.orderNo}</b><span className="tabular">{fmtScore(q.points)} điểm{q.isMultiple ? ' · chọn nhiều' : ''}</span></header>
+              <header><b>Câu {q.orderNo}</b>{q.isMultiple && <span>Chọn nhiều</span>}</header>
               <p>{q.content}</p>
               <ul>{q.options.map((o) => <li key={o.optionId} className={o.isCorrect ? 'is-correct' : ''}><b>{o.label}</b>{o.content}</li>)}</ul>
             </li>

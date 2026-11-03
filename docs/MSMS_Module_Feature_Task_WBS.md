@@ -755,7 +755,7 @@ Bỏ các câu nháp không dùng.
 
 **4.6.9 — Giao bài tập / Assign Practice**  
 `BE + Web` · 3 MD · dep: 4.6.2, 4.4.35  
-Teacher ĐANG PHỤ TRÁCH CHUYÊN MÔN ở (lớp, môn) chọn các câu Sẵn dùng CÙNG MỘT MÔN từ ngân hàng, đặt thứ tự và điểm từng câu (tổng điểm là mẫu số khi quy về thang 10 và phải lớn hơn 0), thời điểm mở (mặc định ngay), hạn nộp lớn hơn hiện tại và thời lượng làm bài tùy chọn. Bài giao ngay, không có bước nháp; lưu danh sách học sinh có ghi danh hiệu lực ở lớp lúc đó làm DANH SÁCH ĐƯỢC GIAO, không đổi khi học sinh chuyển lớp về sau; tạo thông báo cho học sinh của lớp. Bài đã giao không sửa, không xóa, không gia hạn (BR-21, BR-26, mục 7.8).
+Teacher ĐANG PHỤ TRÁCH CHUYÊN MÔN ở (lớp, môn) chọn các câu Sẵn dùng CÙNG MỘT MÔN từ ngân hàng, đặt thứ tự các câu (các câu cùng trọng số), thời điểm mở (mặc định ngay), hạn nộp lớn hơn hiện tại và thời lượng làm bài tùy chọn. Bài giao ngay, không có bước nháp; lưu danh sách học sinh có ghi danh hiệu lực ở lớp lúc đó làm DANH SÁCH ĐƯỢC GIAO, không đổi khi học sinh chuyển lớp về sau; tạo thông báo cho học sinh của lớp. Bài đã giao không sửa, không xóa, không gia hạn (BR-21, BR-26, mục 7.8).
 
 **4.6.10 — Xem danh sách bài đã giao theo lớp / View Assignments by Class**  
 `BE + Web` · 1.5 MD · dep: 4.6.9  
@@ -781,7 +781,7 @@ Tối đa MỘT lần nộp. Backend từ chối nộp sau hạn thực tế (c�
 
 **4.6.15 — Chấm tự động khi nộp / Auto-grade on Submission**  
 `BE` · 2 MD · dep: 4.6.14  
-Backend chấm ngay khi nộp. Một câu chỉ được điểm khi học sinh chọn ĐÚNG VÀ ĐỦ các đáp án đúng, không chọn thừa. Điểm = tổng điểm câu đúng / tổng điểm bài × 10, làm tròn 2 chữ số thập phân. Chưa nộp KHÔNG phải 0 điểm — hiển thị Không nộp, chỉ áp dụng cho học sinh trong danh sách được giao; mẫu số tỉ lệ nộp là số học sinh của danh sách đó (BR-21).
+Backend chấm ngay khi nộp. Một câu chỉ được điểm khi học sinh chọn ĐÚNG VÀ ĐỦ các đáp án đúng, không chọn thừa. Các câu cùng trọng số: điểm = số câu đúng / số câu của bài × 10, làm tròn 2 chữ số thập phân. Chưa nộp KHÔNG phải 0 điểm — hiển thị Không nộp, chỉ áp dụng cho học sinh trong danh sách được giao; mẫu số tỉ lệ nộp là số học sinh của danh sách đó (BR-21).
 
 **4.6.16 — Xem kết quả bài làm (học sinh và phụ huynh) / View Practice Result**  
 `BE + Web + Mobile` · 2 MD · dep: 4.6.15  

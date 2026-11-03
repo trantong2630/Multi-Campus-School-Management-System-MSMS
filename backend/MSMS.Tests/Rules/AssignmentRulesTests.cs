@@ -63,15 +63,15 @@ public class QuizRulesGradingTests
     [Fact]
     public void ScoreOutOfTen_RoundsHalfUpToTwoDecimals()
     {
-        Assert.Equal(3.33m, QuizRules.ScoreOutOfTen(1m, 3m));
-        Assert.Equal(6.67m, QuizRules.ScoreOutOfTen(2m, 3m));
-        Assert.Equal(10m, QuizRules.ScoreOutOfTen(5m, 5m));
-        Assert.Equal(0m, QuizRules.ScoreOutOfTen(0m, 4m));
+        Assert.Equal(3.33m, QuizRules.ScoreOutOfTen(1, 3));
+        Assert.Equal(6.67m, QuizRules.ScoreOutOfTen(2, 3));
+        Assert.Equal(10m, QuizRules.ScoreOutOfTen(5, 5));
+        Assert.Equal(0m, QuizRules.ScoreOutOfTen(0, 4));
     }
 
     [Fact]
     public void ScoreOutOfTen_ZeroTotal_Throws()
     {
-        Assert.ThrowsAny<Exception>(() => QuizRules.ScoreOutOfTen(0m, 0m));
+        Assert.ThrowsAny<Exception>(() => QuizRules.ScoreOutOfTen(0, 0));
     }
 }

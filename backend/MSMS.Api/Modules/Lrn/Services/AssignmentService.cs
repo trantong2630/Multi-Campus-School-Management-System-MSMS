@@ -51,7 +51,7 @@ public sealed class AssignmentService(
         var row = (await ProjectItems(db.Assignment.AsNoTracking().Where(x => x.AssignmentId == id)).ToListAsync()).Single();
         var lines = await db.AssignmentQuestion.AsNoTracking().Include(x => x.Question).ThenInclude(q => q.QuestionOption)
             .Where(x => x.AssignmentId == id).OrderBy(x => x.OrderNo).ToListAsync();
-        return new AssignmentDetailDto(ToDto(row, clock.Now), a.Instruction, lines.Sum(x => x.Points), ToLines(lines));
+        return new AssignmentDetailDto(ToDto(row, clock.Now), a.Instruction, ToLines(lines));
     }
 
     /// <summary>
@@ -97,7 +97,7 @@ public sealed class AssignmentService(
         };
         var order = (short)0;
         foreach (var item in items)
-            a.AssignmentQuestion.Add(new AssignmentQuestion { QuestionId = item.QuestionId, OrderNo = ++order, Points = item.Points });
+            a.AssignmentQuestion.Add(new AssignmentQuestion { QuestionId = item.QuestionId, OrderNo = ++order });
         foreach (var studentId in roster)
             a.AssignmentRecipient.Add(new AssignmentRecipient { StudentId = studentId });
         db.Assignment.Add(a);
@@ -114,13 +114,13 @@ public sealed class AssignmentService(
     // ---- dùng chung ----
 
     public static IReadOnlyList<AssignmentQuestionDto> ToLines(IEnumerable<AssignmentQuestion> lines) => lines.OrderBy(l => l.OrderNo)
-        .Select(l => new AssignmentQuestionDto(l.AssignmentQuestionId, l.QuestionId, l.OrderNo, l.Points, l.Question.Content, l.Question.Explanation,
+        .Select(l => new AssignmentQuestionDto(l.AssignmentQuestionId, l.QuestionId, l.OrderNo, l.Question.Content, l.Question.Explanation,
             l.Question.QuestionOption.Count(o => o.IsCorrect) > 1,
             l.Question.QuestionOption.OrderBy(o => o.OptionLabel).Select(o => new OptionDto(o.OptionId, o.OptionLabel, o.Content, o.IsCorrect)).ToList()))
         .ToList();
 
     public static IReadOnlyList<QuizQuestionDto> ToQuiz(IEnumerable<AssignmentQuestion> lines) => lines.OrderBy(l => l.OrderNo)
-        .Select(l => new QuizQuestionDto(l.AssignmentQuestionId, l.OrderNo, l.Points, l.Question.Content,
+        .Select(l => new QuizQuestionDto(l.AssignmentQuestionId, l.OrderNo, l.Question.Content,
             l.Question.QuestionOption.Count(o => o.IsCorrect) > 1, l.Question.QuestionOption.Count(o => o.IsCorrect),
             l.Question.QuestionOption.OrderBy(o => o.OptionLabel).Select(o => new QuizOptionDto(o.OptionId, o.OptionLabel, o.Content)).ToList()))
         .ToList();
@@ -165,8 +165,6 @@ public sealed class AssignmentService(
             throw ApiException.BadRequest($"Một bài tối đa {QuizRules.MaxQuestionsPerAssignment} câu hỏi.");
         if (list.Select(i => i.QuestionId).Distinct().Count() != list.Count)
             throw ApiException.BadRequest("Mỗi câu hỏi chỉ xuất hiện một lần trong bài.");
-        if (list.Any(i => i.Points <= 0 || i.Points > QuizRules.MaxPoints || decimal.Round(i.Points, 2) != i.Points))
-            throw ApiException.BadRequest($"Điểm mỗi câu lớn hơn 0 và tối đa {QuizRules.MaxPoints:0}, tối đa 2 chữ số thập phân.");
         return list;
     }
 

@@ -20,7 +20,6 @@ public static class QuizRules
     public const byte MinGrade = 6;
     public const byte MaxGrade = 9;
     public const int MaxQuestionsPerAssignment = 50;
-    public const decimal MaxPoints = 10m;
 
     /// <summary>Lỗi của bộ lựa chọn, null nếu hợp lệ: đúng 4 lựa chọn A–D, nội dung không trống, từ 1 đến 3 đáp án đúng.</summary>
     public static string? CheckOptions(IReadOnlyList<OptionInput>? options)
@@ -48,10 +47,10 @@ public static class QuizRules
         return selected.Count > 0 && selected.Count == correctOptionIds.Count && selected.All(correctOptionIds.Contains);
     }
 
-    /// <summary>Điểm = tổng điểm câu đúng / tổng điểm bài × 10, làm tròn 2 chữ số thập phân; 0,005 làm tròn lên (không làm tròn về số chẵn).</summary>
-    public static decimal ScoreOutOfTen(decimal earnedPoints, decimal totalPoints)
+    /// <summary>Điểm = số câu đúng / số câu của bài × 10 (các câu cùng trọng số), làm tròn 2 chữ số thập phân; 0,005 làm tròn lên (không làm tròn về số chẵn).</summary>
+    public static decimal ScoreOutOfTen(int correctCount, int questionCount)
     {
-        if (totalPoints <= 0) throw ApiException.BadRequest("Tổng điểm của bài phải lớn hơn 0.");
-        return Math.Round(earnedPoints / totalPoints * 10m, 2, MidpointRounding.AwayFromZero);
+        if (questionCount <= 0) throw ApiException.BadRequest("Bài phải có ít nhất một câu hỏi.");
+        return Math.Round((decimal)correctCount / questionCount * 10m, 2, MidpointRounding.AwayFromZero);
     }
 }

@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { formatDateTime } from '@/shared/lib/format';
 import { resultLine } from '../aiLines';
 import type { Analysis, PracticeResult, ResultQuestion } from '../types';
-import { fmtScore } from '../time';
 import { AiAvatar, AiBubble, AiDots, MsmsAi, TypedText } from './MsmsAi';
 import { ScoreRing } from './parts';
 
@@ -24,7 +23,6 @@ function QuestionCard({ q, viewer }: { q: ResultQuestion; viewer: Viewer }) {
           <span className="rv-q__label">Câu {q.orderNo}{q.isMultiple && <span className="rv-q__multi">Chọn nhiều đáp án: {q.options.filter((o) => o.isCorrect).length} đáp án đúng</span>}</span>
           <p>{q.content}</p>
         </div>
-        <span className="rv-q__pts tabular">{fmtScore(q.earnedPoints)}/{fmtScore(q.points)}</span>
       </header>
       <ul className="rv-opts">
         {q.options.map((o) => {

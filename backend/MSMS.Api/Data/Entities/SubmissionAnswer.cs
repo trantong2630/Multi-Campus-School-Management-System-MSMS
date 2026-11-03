@@ -13,8 +13,6 @@ public partial class SubmissionAnswer
 
     public bool? IsCorrect { get; set; }
 
-    public decimal? EarnedPoints { get; set; }
-
     public virtual AssignmentQuestion AssignmentQuestion { get; set; } = null!;
 
     public virtual Submission Submission { get; set; } = null!;

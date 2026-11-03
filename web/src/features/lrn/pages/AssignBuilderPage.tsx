@@ -17,7 +17,7 @@ import { DURATION_PRESETS, GRADES } from '../labels';
 import type { ClassSubjectOption, QuestionItem } from '../types';
 import '../components/lrn.css';
 
-interface Line { question: QuestionItem; points: number }
+interface Line { question: QuestionItem }
 
 const stamp = (d: Dayjs) => d.format('YYYY-MM-DDTHH:mm:ss');
 
@@ -80,7 +80,7 @@ export function AssignBuilderPage() {
   const toggle = (q: QuestionItem) =>
     setLines((cur) => (cur.some((l) => l.question.questionId === q.questionId)
       ? cur.filter((l) => l.question.questionId !== q.questionId)
-      : [...cur, { question: q, points: 1 }]));
+      : [...cur, { question: q }]));
   const move = (i: number, d: -1 | 1) => setLines((cur) => {
     const j = i + d;
     if (j < 0 || j >= cur.length) return cur;
@@ -88,9 +88,7 @@ export function AssignBuilderPage() {
     [next[i], next[j]] = [next[j], next[i]];
     return next;
   });
-  const setPoints = (i: number, v: number | null) => setLines((cur) => cur.map((l, k) => (k === i ? { ...l, points: v ?? 1 } : l)));
 
-  const totalPoints = lines.reduce((s, l) => s + l.points, 0);
   const problems: string[] = [];
   if (!target) problems.push('chọn lớp và môn');
   if (lines.length === 0) problems.push('chọn ít nhất một câu hỏi');
@@ -118,7 +116,7 @@ export function AssignBuilderPage() {
           const created = await lrnApi.assignments.create({
             subjectId: target.subjectId, classId: target.classId, title: title.trim(), instruction: instruction.trim() || undefined,
             openAt: scheduled && openAt ? stamp(openAt) : undefined, dueAt: stamp(dueAt), durationMinutes: duration ?? undefined,
-            items: lines.map((l) => ({ questionId: l.question.questionId, points: l.points })),
+            items: lines.map((l) => ({ questionId: l.question.questionId })),
           });
           await qc.invalidateQueries({ queryKey: ['lrn', 'assignments'] });
           await qc.invalidateQueries({ queryKey: ['lrn', 'questions'] });
@@ -285,7 +283,6 @@ export function AssignBuilderPage() {
                 <li key={l.question.questionId}>
                   <span className="sheet__no">{i + 1}</span>
                   <span className="sheet__text" title={l.question.content}>{l.question.content}</span>
-                  <InputNumber className="sheet__pts" size="small" min={0.25} max={10} step={0.25} value={l.points} onChange={(v) => setPoints(i, v)} aria-label={`Điểm câu ${i + 1}`} />
                   <span className="sheet__ctl">
                     <button type="button" aria-label="Lên" disabled={i === 0} onClick={() => move(i, -1)}><ArrowUp size={13} /></button>
                     <button type="button" aria-label="Xuống" disabled={i === lines.length - 1} onClick={() => move(i, 1)}><ArrowDown size={13} /></button>
@@ -297,8 +294,8 @@ export function AssignBuilderPage() {
           )}
 
           <div className="sheet__total">
-            <span>{lines.length} câu · tổng {totalPoints.toLocaleString('vi-VN')} điểm</span>
-            <small>Điểm học sinh quy về thang 10</small>
+            <span>{lines.length} câu</span>
+            <small>Các câu cùng điểm, điểm bài tính trên thang 10</small>
           </div>
           {problems.length > 0 && <p className="sheet__todo">Còn thiếu: {problems.join(', ')}.</p>}
           <button type="button" className="sheet__go" disabled={problems.length > 0 || saving} onClick={submit}>Giao bài</button>
