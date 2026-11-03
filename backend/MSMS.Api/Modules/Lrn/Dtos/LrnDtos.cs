@@ -27,7 +27,7 @@ public record GenerateQuestionsResultDto(IReadOnlyList<QuestionDetailDto> Drafts
 
 public record ClassSubjectOptionDto(int ClassId, string ClassName, byte GradeLevel, int SubjectId, string SubjectName);
 
-public record AssignmentLineDto(int QuestionId, decimal Points);
+public record AssignmentLineDto(int QuestionId);
 
 public record CreateAssignmentDto(
     int SubjectId, int ClassId, string? Title, string? Instruction, DateTime? OpenAt, DateTime? DueAt, short? DurationMinutes,
@@ -39,17 +39,17 @@ public record AssignmentItemDto(
     bool IsClosed, string AssignedByName, bool IsMine);
 
 public record AssignmentQuestionDto(
-    int AssignmentQuestionId, int QuestionId, int OrderNo, decimal Points, string Content, string? Explanation,
+    int AssignmentQuestionId, int QuestionId, int OrderNo, string Content, string? Explanation,
     bool IsMultiple, IReadOnlyList<OptionDto> Options);
 
 public record AssignmentDetailDto(
-    AssignmentItemDto Assignment, string? Instruction, decimal TotalPoints, IReadOnlyList<AssignmentQuestionDto> Questions);
+    AssignmentItemDto Assignment, string? Instruction, IReadOnlyList<AssignmentQuestionDto> Questions);
 
 // ---- LRN-02: Làm bài (học sinh) ----
 
 /// <summary>Đề đúng như học sinh thấy: không có đáp án đúng, không có giải thích.</summary>
 public record QuizOptionDto(int OptionId, string Label, string Content);
-public record QuizQuestionDto(int AssignmentQuestionId, int OrderNo, decimal Points, string Content, bool IsMultiple, int CorrectCount, IReadOnlyList<QuizOptionDto> Options);
+public record QuizQuestionDto(int AssignmentQuestionId, int OrderNo, string Content, bool IsMultiple, int CorrectCount, IReadOnlyList<QuizOptionDto> Options);
 
 public record AnswerInputDto(int AssignmentQuestionId, List<int>? OptionIds);
 public record SaveAnswersDto(List<AnswerInputDto>? Answers);
@@ -62,7 +62,7 @@ public record MyAssignmentItemDto(
 /// <summary>Bài có thời lượng mà học sinh chưa bấm Bắt đầu thì <c>Questions</c> rỗng và <c>Started</c> là false.</summary>
 public record AttemptDto(
     int AssignmentId, string Title, string? Instruction, int SubjectId, string SubjectName, string ClassName, DateTime OpenAt, DateTime DueAt,
-    short? DurationMinutes, bool Started, DateTime? StartedAt, DateTime Deadline, DateTime ServerNow, int QuestionCount, decimal TotalPoints,
+    short? DurationMinutes, bool Started, DateTime? StartedAt, DateTime Deadline, DateTime ServerNow, int QuestionCount,
     DateTime? LastSavedAt, IReadOnlyList<QuizQuestionDto> Questions, IReadOnlyList<AnswerInputDto> Answers);
 
 public record SubmitResultDto(DateTime SubmittedAt);
@@ -84,8 +84,8 @@ public record ChildResultItemDto(
 public record ResultOptionDto(int OptionId, string Label, string Content, bool IsCorrect, bool Selected);
 
 public record ResultQuestionDto(
-    int AssignmentQuestionId, int OrderNo, decimal Points, string Content, string? Explanation, bool IsMultiple,
-    bool? IsCorrect, decimal? EarnedPoints, IReadOnlyList<ResultOptionDto> Options);
+    int AssignmentQuestionId, int OrderNo, string Content, string? Explanation, bool IsMultiple,
+    bool? IsCorrect, IReadOnlyList<ResultOptionDto> Options);
 
 public record AnalysisMistakeDto(int QuestionNo, string Why);
 
@@ -97,7 +97,7 @@ public record AnalysisDto(
 /// <summary>Học sinh chưa nộp: <c>Submitted</c> là false, không có câu hỏi và đáp án.</summary>
 public record PracticeResultDto(
     int AssignmentId, string Title, string SubjectName, string ClassName, string StudentName, DateTime DueAt,
-    bool Submitted, DateTime? SubmittedAt, decimal? Score, short? CorrectCount, decimal TotalPoints,
+    bool Submitted, DateTime? SubmittedAt, decimal? Score, short? CorrectCount,
     IReadOnlyList<ResultQuestionDto> Questions, AnalysisDto? Analysis);
 
 // ---- LRN-05: Tiến độ giao bài của tổ ----

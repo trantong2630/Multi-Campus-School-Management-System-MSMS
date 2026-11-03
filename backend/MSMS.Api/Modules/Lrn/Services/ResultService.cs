@@ -129,25 +129,24 @@ public sealed class ResultService(
         var submission = await db.Submission.AsNoTracking().Include(s => s.AiFeedback)
             .FirstOrDefaultAsync(s => s.AssignmentId == a.AssignmentId && s.StudentId == studentId && s.SubmittedAt != null);
         var lines = await grader.LoadLinesAsync(a.AssignmentId);
-        var total = lines.Sum(l => l.Points);
         if (submission is null)
-            return new PracticeResultDto(a.AssignmentId, a.Title, a.Subject.Name, a.Class.Name, student, a.DueAt, false, null, null, null, total, [], null);
+            return new PracticeResultDto(a.AssignmentId, a.Title, a.Subject.Name, a.Class.Name, student, a.DueAt, false, null, null, null, [], null);
 
         var answers = await db.SubmissionAnswer.AsNoTracking().Where(x => x.SubmissionId == submission.SubmissionId)
-            .Select(x => new { x.AssignmentQuestionId, x.IsCorrect, x.EarnedPoints, Selected = x.SubmissionAnswerOption.Select(o => o.OptionId).ToList() })
+            .Select(x => new { x.AssignmentQuestionId, x.IsCorrect, Selected = x.SubmissionAnswerOption.Select(o => o.OptionId).ToList() })
             .ToListAsync();
         var questions = lines.Select(l =>
         {
             var ans = answers.FirstOrDefault(x => x.AssignmentQuestionId == l.AssignmentQuestionId);
             var selected = ans?.Selected ?? [];
-            return new ResultQuestionDto(l.AssignmentQuestionId, l.OrderNo, l.Points, l.Question.Content, l.Question.Explanation,
-                l.Question.QuestionOption.Count(o => o.IsCorrect) > 1, ans?.IsCorrect ?? false, ans?.EarnedPoints ?? 0m,
+            return new ResultQuestionDto(l.AssignmentQuestionId, l.OrderNo, l.Question.Content, l.Question.Explanation,
+                l.Question.QuestionOption.Count(o => o.IsCorrect) > 1, ans?.IsCorrect ?? false,
                 l.Question.QuestionOption.OrderBy(o => o.OptionLabel)
                     .Select(o => new ResultOptionDto(o.OptionId, o.OptionLabel, o.Content, o.IsCorrect, selected.Contains(o.OptionId))).ToList());
         }).ToList();
 
         return new PracticeResultDto(a.AssignmentId, a.Title, a.Subject.Name, a.Class.Name, student, a.DueAt, true, submission.SubmittedAt,
-            submission.Score, submission.CorrectCount, total, questions, await ResolveAnalysisAsync(submission));
+            submission.Score, submission.CorrectCount, questions, await ResolveAnalysisAsync(submission));
     }
 
     private static string? StaleAware(string? status, DateTime submittedAt, DateTime now) =>

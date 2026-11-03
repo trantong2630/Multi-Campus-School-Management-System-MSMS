@@ -211,10 +211,6 @@ public partial class MsmsDbContext : DbContext
 
             entity.HasIndex(e => new { e.AssignmentId, e.QuestionId }, "UQ_AssignmentQuestion").IsUnique();
 
-            entity.Property(e => e.Points)
-                .HasDefaultValue(1m)
-                .HasColumnType("decimal(4, 2)");
-
             entity.HasOne(d => d.Assignment).WithMany(p => p.AssignmentQuestion)
                 .HasForeignKey(d => d.AssignmentId)
                 .OnDelete(DeleteBehavior.ClientSetNull);
@@ -888,8 +884,6 @@ public partial class MsmsDbContext : DbContext
             entity.HasKey(e => e.AnswerId).HasName("PK__Submissi__D4825004190B923E");
 
             entity.HasIndex(e => new { e.SubmissionId, e.AssignmentQuestionId }, "UQ_SubmissionAnswer").IsUnique();
-
-            entity.Property(e => e.EarnedPoints).HasColumnType("decimal(4, 2)");
 
             entity.HasOne(d => d.AssignmentQuestion).WithMany(p => p.SubmissionAnswer)
                 .HasForeignKey(d => d.AssignmentQuestionId)

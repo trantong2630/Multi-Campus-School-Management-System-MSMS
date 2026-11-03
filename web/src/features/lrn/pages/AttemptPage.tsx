@@ -275,7 +275,6 @@ export function AttemptPage() {
                 {q.isMultiple
                   ? <span className="qcard__tag qcard__tag--multi">Chọn nhiều đáp án: chọn đúng {q.correctCount} đáp án</span>
                   : <span className="qcard__tag">Chọn một đáp án</span>}
-                <span className="qcard__pts">{q.points.toLocaleString('vi-VN')} điểm</span>
               </div>
               {idx === 0 && data.instruction && <p className="focus__note">{data.instruction}</p>}
               <h2 className="qcard__text">{q.content}</h2>

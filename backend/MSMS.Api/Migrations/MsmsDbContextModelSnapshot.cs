@@ -270,11 +270,6 @@ namespace MSMS.Api.Migrations
                     b.Property<short>("OrderNo")
                         .HasColumnType("smallint");
 
-                    b.Property<decimal>("Points")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("decimal(4, 2)")
-                        .HasDefaultValue(1m);
-
                     b.Property<int>("QuestionId")
                         .HasColumnType("int");
 
@@ -1596,9 +1591,6 @@ namespace MSMS.Api.Migrations
 
                     b.Property<int>("AssignmentQuestionId")
                         .HasColumnType("int");
-
-                    b.Property<decimal?>("EarnedPoints")
-                        .HasColumnType("decimal(4, 2)");
 
                     b.Property<bool?>("IsCorrect")
                         .HasColumnType("bit");

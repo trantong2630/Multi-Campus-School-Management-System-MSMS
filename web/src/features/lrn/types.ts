@@ -67,7 +67,7 @@ export interface QuestionQuery {
 
 export interface ClassSubjectOption { classId: number; className: string; gradeLevel: number; subjectId: number; subjectName: string }
 
-export interface AssignmentLine { questionId: number; points: number }
+export interface AssignmentLine { questionId: number }
 
 export interface CreateAssignmentInput {
   subjectId: number;
@@ -102,7 +102,6 @@ export interface AssignmentQuestion {
   assignmentQuestionId: number;
   questionId: number;
   orderNo: number;
-  points: number;
   content: string;
   explanation: string | null;
   isMultiple: boolean;
@@ -112,7 +111,6 @@ export interface AssignmentQuestion {
 export interface AssignmentDetail {
   assignment: AssignmentItem;
   instruction: string | null;
-  totalPoints: number;
   questions: AssignmentQuestion[];
 }
 
@@ -122,7 +120,6 @@ export interface QuizOption { optionId: number; label: string; content: string }
 export interface QuizQuestion {
   assignmentQuestionId: number;
   orderNo: number;
-  points: number;
   content: string;
   isMultiple: boolean;
   /** Số đáp án đúng: học sinh biết phải chọn mấy đáp án. */
@@ -163,7 +160,6 @@ export interface Attempt {
   deadline: string;
   serverNow: string;
   questionCount: number;
-  totalPoints: number;
   lastSavedAt: string | null;
   questions: QuizQuestion[];
   answers: AnswerInput[];
@@ -210,12 +206,10 @@ export interface ResultOption { optionId: number; label: string; content: string
 export interface ResultQuestion {
   assignmentQuestionId: number;
   orderNo: number;
-  points: number;
   content: string;
   explanation: string | null;
   isMultiple: boolean;
   isCorrect: boolean | null;
-  earnedPoints: number | null;
   options: ResultOption[];
 }
 
@@ -240,7 +234,6 @@ export interface PracticeResult {
   submittedAt: string | null;
   score: number | null;
   correctCount: number | null;
-  totalPoints: number;
   questions: ResultQuestion[];
   analysis: Analysis | null;
 }

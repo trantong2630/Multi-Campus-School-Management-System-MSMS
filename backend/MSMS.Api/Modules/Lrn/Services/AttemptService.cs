@@ -155,7 +155,7 @@ public sealed class AttemptService(MsmsDbContext db, CurrentUser user, IClock cl
         return new AttemptDto(
             a.AssignmentId, a.Title, a.Instruction, a.SubjectId, a.Subject.Name, a.Class.Name, a.OpenAt, a.DueAt, a.DurationMinutes,
             started, submission?.StartedAt, AssignmentRules.EffectiveDeadline(a.DueAt, a.DurationMinutes, submission?.StartedAt), now,
-            lines.Count, lines.Sum(l => l.Points), submission?.LastSavedAt,
+            lines.Count, submission?.LastSavedAt,
             started ? AssignmentService.ToQuiz(lines) : [], saved);
     }
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace MSMS.Api.Data.Entities;
 
-/// <summary>Câu hỏi của một bài tập: thứ tự và điểm từng câu, chụp lúc giao bài (BR-20).</summary>
+/// <summary>Câu hỏi của một bài tập: thứ tự các câu, chụp lúc giao bài (BR-20).</summary>
 public partial class AssignmentQuestion
 {
     public int AssignmentQuestionId { get; set; }
@@ -13,8 +13,6 @@ public partial class AssignmentQuestion
     public int QuestionId { get; set; }
 
     public short OrderNo { get; set; }
-
-    public decimal Points { get; set; }
 
     public virtual Assignment Assignment { get; set; } = null!;
 
