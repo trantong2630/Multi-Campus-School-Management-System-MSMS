@@ -134,7 +134,7 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
   });
 
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<RespStatus | undefined>();
+  const [status, setStatus] = useState<RespStatus | 'All'>('All');
   const [onlyMissing, setOnlyMissing] = useState(false);
 
   const [assignForm] = Form.useForm<AssignValues>();
@@ -175,7 +175,7 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
   const term = search.trim().toLowerCase();
   const shown = (rows ?? []).filter((r) =>
     (!onlyMissing || (!r.staffId && !r.nextStaffName))
-    && (!status || statusOf(r) === status)
+    && (status === 'All' || statusOf(r) === status)
     && (!term || [r.targetName, r.targetCode, r.targetGroup, r.staffName, r.staffCode, r.nextStaffName, r.endedStaffName]
       .some((x) => x?.toLowerCase().includes(term))));
 
@@ -198,7 +198,7 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
           allowClear prefix={<Search size={14} />} value={search} onChange={(e) => setSearch(e.target.value)}
           placeholder={`Tìm ${meta.target.toLowerCase()}, mã hoặc người phụ trách`}
         />
-        <Select allowClear placeholder="Trạng thái" value={status} onChange={setStatus} options={STATUS_OPTIONS} />
+        <Select value={status} onChange={setStatus} options={[{ value: 'All', label: 'Tất cả trạng thái' }, ...STATUS_OPTIONS]} />
         {kind === 'homeroom' && (
           <Select
             placeholder="Năm học" value={yearId} onChange={onYear}
