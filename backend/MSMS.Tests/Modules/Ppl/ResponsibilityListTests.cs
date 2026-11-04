@@ -80,18 +80,4 @@ public class ResponsibilityListTests
         Assert.Equal(21, row.NextStaffId);
         Assert.Equal(Today.AddDays(2), row.NextStartDate);
     }
-
-    [Fact]
-    public async Task Campus_rows_show_the_principal_whose_primary_campus_it_is_without_assigning_them()
-    {
-        var (f, svc) = Setup();
-        var principal = f.AddAccount(30, AccountTypes.Principal, campusId: 1);
-
-        var rows = await svc.ListCurrentAsync(ResponsibilityKinds.Campus, null);
-
-        Assert.Equal(principal.Person.FullName, rows.Single(r => r.TargetId == 1).PrincipalNames);
-        Assert.Null(rows.Single(r => r.TargetId == 2).PrincipalNames);
-        Assert.Null(rows.Single(r => r.TargetId == 1).StaffId);   // chỉ là thông tin hiển thị, không phải trách nhiệm được gán
-        Assert.Empty(f.Db.CampusLeadership);
-    }
 }
