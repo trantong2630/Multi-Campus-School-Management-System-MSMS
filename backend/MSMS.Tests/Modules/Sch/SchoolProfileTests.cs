@@ -242,7 +242,9 @@ public sealed class SchoolProfileTests : IDisposable
         Assert.False(File.Exists(oldPath));
         var only = Assert.Single(LogoFiles());
         Assert.EndsWith(".jpg", only);
-        Assert.Equal("image/jpeg", (await svc.FindLogoAsync())!.ContentType);
+        var logo = (await svc.FindLogoAsync())!;
+        await using var stream = logo.Content;
+        Assert.Equal("image/jpeg", logo.ContentType);
     }
 
     [Fact]
