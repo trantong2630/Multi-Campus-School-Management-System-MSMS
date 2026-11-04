@@ -24,10 +24,26 @@ import type { ResponsibilityHistoryRow, ResponsibilityKind, ResponsibilityRow } 
 interface AssignValues { targetId?: number; staffId: number; startDate: Dayjs }
 interface EndValues { endDate: Dayjs }
 
-const KINDS: { key: ResponsibilityKind; label: string; target: string; holder: string; verb: string; accountType: string; accountLabel: string }[] = [
-  { key: 'campus', label: 'Phụ trách phân hiệu', target: 'Phân hiệu', holder: 'Hiệu phó phụ trách', verb: 'Phụ trách', accountType: 'VicePrincipal', accountLabel: 'Hiệu phó' },
-  { key: 'department', label: 'Tổ trưởng', target: 'Tổ chuyên môn', holder: 'Tổ trưởng', verb: 'Làm tổ trưởng', accountType: 'Teacher', accountLabel: 'Giáo viên' },
-  { key: 'homeroom', label: 'Chủ nhiệm', target: 'Lớp', holder: 'Chủ nhiệm', verb: 'Chủ nhiệm', accountType: 'Teacher', accountLabel: 'Giáo viên' },
+interface KindMeta {
+  key: ResponsibilityKind; label: string; target: string; holder: string; verb: string; accountType: string; accountLabel: string;
+  /** Cảnh báo khi đích chưa có người: "N <đích> <lacks>: ..." và hệ quả cho người dùng. */
+  lacks: string;
+  effect: string;
+}
+
+const KINDS: KindMeta[] = [
+  {
+    key: 'campus', label: 'Phụ trách phân hiệu', target: 'Phân hiệu', holder: 'Hiệu phó phụ trách', verb: 'Phụ trách', accountType: 'VicePrincipal', accountLabel: 'Hiệu phó',
+    lacks: 'chưa có Hiệu phó phụ trách', effect: 'Chưa có Hiệu phó theo dõi các phân hiệu này cho tới khi có người được gán.',
+  },
+  {
+    key: 'department', label: 'Tổ trưởng', target: 'Tổ chuyên môn', holder: 'Tổ trưởng', verb: 'Làm tổ trưởng', accountType: 'Teacher', accountLabel: 'Giáo viên',
+    lacks: 'chưa có tổ trưởng', effect: 'Chưa có tổ trưởng theo dõi tiến độ bài tập rèn luyện của các tổ này cho tới khi có người được gán.',
+  },
+  {
+    key: 'homeroom', label: 'Chủ nhiệm', target: 'Lớp', holder: 'Chủ nhiệm', verb: 'Chủ nhiệm', accountType: 'Teacher', accountLabel: 'Giáo viên',
+    lacks: 'chưa có chủ nhiệm', effect: 'Đơn xin nghỉ của các lớp này nằm chờ tới khi có chủ nhiệm được gán.',
+  },
 ];
 
 type RespStatus = 'Assigned' | 'Upcoming' | 'Unassigned' | 'Ended';
@@ -153,8 +169,8 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
     catch (e) { message.error(await blobErrorMessage(e) ?? 'Không xuất được danh sách.'); }
   };
 
-  // 4.3.34: lớp của năm hiện hành chưa có chủ nhiệm — đơn xin nghỉ của lớp đó nằm chờ tới khi có chủ nhiệm được gán.
-  const missing = kind === 'homeroom' ? (rows?.filter((r) => !r.staffId && !r.nextStaffName) ?? []) : [];
+  // Đích chưa có người đảm nhiệm và chưa có ai được hẹn (4.3.34 cho lớp; tương tự cho phân hiệu và tổ chuyên môn).
+  const missing = rows?.filter((r) => !r.staffId && !r.nextStaffName) ?? [];
 
   const term = search.trim().toLowerCase();
   const shown = (rows ?? []).filter((r) =>
@@ -198,9 +214,9 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
       {missing.length > 0 && (
         <InlineAlert
           type="warning"
-          title={`${missing.length} lớp chưa có chủ nhiệm: ${missing.slice(0, 5).map((r) => r.targetName).join(', ')}${missing.length > 5 ? '…' : ''}`}
-          description="Đơn xin nghỉ của các lớp này nằm chờ tới khi có chủ nhiệm được gán."
-          action={<span>Chỉ hiện lớp chưa có chủ nhiệm <Switch size="small" checked={onlyMissing} onChange={setOnlyMissing} /></span>}
+          title={`${missing.length} ${meta.target.toLowerCase()} ${meta.lacks}: ${missing.slice(0, 5).map((r) => r.targetName).join(', ')}${missing.length > 5 ? '…' : ''}`}
+          description={meta.effect}
+          action={<span>Chỉ hiện {meta.target.toLowerCase()} {meta.lacks} <Switch size="small" checked={onlyMissing} onChange={setOnlyMissing} /></span>}
         />
       )}
 
