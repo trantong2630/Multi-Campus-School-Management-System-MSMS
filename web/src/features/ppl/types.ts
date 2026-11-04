@@ -107,6 +107,12 @@ export interface ResponsibilityRow {
   /** Người đã được xếp nhưng chưa tới ngày hiệu lực. */
   nextStaffName: string | null;
   nextStartDate: string | null;
+  staffCode: string | null;
+  endDate: string | null;
+  /** Người giữ gần nhất đã kết thúc, khi đích không còn ai đảm nhiệm. */
+  endedStaffName: string | null;
+  endedDate: string | null;
+  targetCode: string | null;
 }
 
 export interface ResponsibilityHistoryRow {

@@ -1,23 +1,26 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Card, DatePicker, Drawer, Form, Select, Switch, Tabs } from 'antd';
-import { InlineAlert } from '@/shared/components/InlineAlert';
-import { message } from '@/shared/lib/antdStatic';
+import { Badge, Button, Card, DatePicker, Drawer, Form, Input, Select, Switch, Tabs } from 'antd';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import { CircleOff, History, UserPlus, UserRoundCog } from 'lucide-react';
-import { useState } from 'react';
+import { CircleOff, FileDown, History, Plus, Search, UserPlus, UserRoundCog } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/app/AuthProvider';
-import { useCurrentYear } from '@/features/sch/hooks/useCatalogs';
+import { useCurrentYear, useYears } from '@/features/sch/hooks/useCatalogs';
 import { DataTable } from '@/shared/components/DataTable';
+import { FilterBar } from '@/shared/components/FilterBar';
 import { FormModal } from '@/shared/components/FormModal';
+import { InlineAlert } from '@/shared/components/InlineAlert';
 import { PageHeader } from '@/shared/components/PageHeader';
+import { PersonCell } from '@/shared/components/PersonCell';
 import { RowActions } from '@/shared/components/RowActions';
 import { StatusBadge } from '@/shared/components/StatusBadge';
+import { message } from '@/shared/lib/antdStatic';
+import { blobErrorMessage, downloadFile } from '@/shared/lib/download';
 import { formatDate, toDateString } from '@/shared/lib/format';
 import { pplApi } from '../api';
 import type { ResponsibilityHistoryRow, ResponsibilityKind, ResponsibilityRow } from '../types';
 
-interface AssignValues { staffId: number; startDate: Dayjs }
+interface AssignValues { targetId?: number; staffId: number; startDate: Dayjs }
 interface EndValues { endDate: Dayjs }
 
 const KINDS: { key: ResponsibilityKind; label: string; target: string; holder: string; accountType: string; accountLabel: string }[] = [
@@ -26,11 +29,38 @@ const KINDS: { key: ResponsibilityKind; label: string; target: string; holder: s
   { key: 'homeroom', label: 'Chủ nhiệm', target: 'Lớp', holder: 'Chủ nhiệm', accountType: 'Teacher', accountLabel: 'Giáo viên' },
 ];
 
+type RespStatus = 'Assigned' | 'Upcoming' | 'Unassigned' | 'Ended';
+const statusOf = (r: ResponsibilityRow): RespStatus =>
+  r.staffId ? 'Assigned' : r.nextStaffName ? 'Upcoming' : r.endedStaffName ? 'Ended' : 'Unassigned';
+const STATUS_OPTIONS: { value: RespStatus; label: string }[] = [
+  { value: 'Assigned', label: 'Đã phân công' },
+  { value: 'Upcoming', label: 'Sắp hiệu lực' },
+  { value: 'Unassigned', label: 'Chưa phân công' },
+  { value: 'Ended', label: 'Đã kết thúc' },
+];
+const dash = <span className="muted">—</span>;
+
+function useResponsibilities(kind: ResponsibilityKind, yearId?: number) {
+  return useQuery({
+    queryKey: ['ppl', 'resp', kind, kind === 'homeroom' ? yearId : null],
+    queryFn: () => pplApi.responsibilities.list(kind, yearId),
+    enabled: kind !== 'homeroom' || yearId !== undefined,
+  });
+}
+
 /** PPL-04: trách nhiệm có khoảng hiệu lực. Chỉ Principal và School Admin gán (spec 2.2). */
 export function ResponsibilitiesPage() {
   const { user } = useAuth();
   const canWrite = user?.accountType === 'SchoolAdmin' || user?.accountType === 'Principal';
+  const { current } = useCurrentYear();
   const [kind, setKind] = useState<ResponsibilityKind>('campus');
+  const [yearId, setYearId] = useState<number | undefined>();
+  const effectiveYear = yearId ?? current?.academicYearId;
+
+  const campus = useResponsibilities('campus');
+  const department = useResponsibilities('department');
+  const homeroom = useResponsibilities('homeroom', effectiveYear);
+  const byKind = { campus, department, homeroom };
 
   return (
     <>
@@ -41,61 +71,113 @@ export function ResponsibilitiesPage() {
       <Tabs
         activeKey={kind}
         onChange={(k) => setKind(k as ResponsibilityKind)}
-        items={KINDS.map((k) => ({ key: k.key, label: k.label, children: <KindTable kind={k.key} canWrite={canWrite} /> }))}
+        items={KINDS.map((k) => {
+          // Số đích chưa có người đảm nhiệm (và chưa có ai được hẹn): cần xử lý.
+          const missing = byKind[k.key].data?.filter((r) => !r.staffId && !r.nextStaffName).length ?? 0;
+          return {
+            key: k.key,
+            label: <span>{k.label}{missing > 0 && <Badge count={missing} color="#C26A0A" size="small" style={{ marginLeft: 8 }} />}</span>,
+            children: (
+              <KindTable
+                kind={k.key} rows={byKind[k.key].data} loading={byKind[k.key].isLoading} canWrite={canWrite}
+                yearId={effectiveYear} onYear={setYearId}
+              />
+            ),
+          };
+        })}
       />
     </>
   );
 }
 
-function KindTable({ kind, canWrite }: { kind: ResponsibilityKind; canWrite: boolean }) {
+interface KindTableProps {
+  kind: ResponsibilityKind;
+  rows: ResponsibilityRow[] | undefined;
+  loading: boolean;
+  canWrite: boolean;
+  yearId: number | undefined;
+  onYear: (id: number | undefined) => void;
+}
+
+function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableProps) {
   const meta = KINDS.find((k) => k.key === kind)!;
   const qc = useQueryClient();
-  const { current } = useCurrentYear();
-  const rows = useQuery({
-    queryKey: ['ppl', 'resp', kind, current?.academicYearId],
-    queryFn: () => pplApi.responsibilities.list(kind, current?.academicYearId),
-    enabled: kind !== 'homeroom' || current !== undefined,
-  });
+  const years = useYears();
   const staff = useQuery({
     queryKey: ['ppl', 'staff-options', meta.accountType],
     queryFn: () => pplApi.staff.list({ accountType: meta.accountType, pageSize: 200 }),
   });
 
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState<RespStatus | undefined>();
+  const [onlyMissing, setOnlyMissing] = useState(false);
+
   const [assignForm] = Form.useForm<AssignValues>();
   const [endForm] = Form.useForm<EndValues>();
-  const [assigning, setAssigning] = useState<ResponsibilityRow | null>(null);
+  const [assigning, setAssigning] = useState<ResponsibilityRow | 'new' | null>(null);
+  const [picked, setPicked] = useState<number | undefined>();
   const [ending, setEnding] = useState<ResponsibilityRow | null>(null);
   const [history, setHistory] = useState<ResponsibilityRow | null>(null);
-  const [onlyMissing, setOnlyMissing] = useState(false);
   const historyData = useQuery({
     queryKey: ['ppl', 'resp-history', kind, history?.targetId],
     queryFn: () => pplApi.responsibilities.history(kind, history!.targetId),
     enabled: history !== null,
   });
+  useEffect(() => { if (assigning === 'new') setPicked(undefined); }, [assigning]);
 
   const refresh = () => qc.invalidateQueries({ queryKey: ['ppl', 'resp'] });
-
-  // Mỗi Hiệu phó chỉ phụ trách một phân hiệu: làm mờ người đang giữ phân hiệu khác (server vẫn kiểm lại, kể cả người được hẹn).
-  const ledCampus = new Map<number, string>();
-  if (kind === 'campus') rows.data?.forEach((r) => { if (r.staffId && r.targetId !== assigning?.targetId) ledCampus.set(r.staffId, r.targetName); });
-
-  // 4.3.34: lớp của năm hiện hành chưa có chủ nhiệm đang hiệu lực — đơn xin nghỉ của lớp đó nằm chờ tới khi có chủ nhiệm.
-  const missing = kind === 'homeroom' ? (rows.data?.filter((r) => !r.staffId && !r.nextStaffName) ?? []) : [];
-  const shown = onlyMissing ? missing : rows.data;
+  const target = assigning === 'new' ? rows?.find((r) => r.targetId === picked) : assigning;
 
   const assign = async (v: AssignValues) => {
-    await pplApi.responsibilities.assign({ kind, targetId: assigning!.targetId, staffId: v.staffId, startDate: toDateString(v.startDate) });
+    const targetId = assigning === 'new' ? v.targetId! : assigning!.targetId;
+    await pplApi.responsibilities.assign({ kind, targetId, staffId: v.staffId, startDate: toDateString(v.startDate) });
     await refresh();
-    message.success(assigning!.staffId ? 'Đã thay người đảm nhiệm.' : 'Đã gán trách nhiệm.');
+    message.success(target?.staffId ? 'Đã thay người đảm nhiệm.' : 'Đã gán trách nhiệm.');
   };
   const end = async (v: EndValues) => {
     await pplApi.responsibilities.end({ kind, recordId: ending!.recordId!, endDate: toDateString(v.endDate) });
     await refresh();
     message.success('Đã kết thúc trách nhiệm.');
   };
+  const exportFile = async () => {
+    try { await downloadFile('/ppl/responsibilities/export', { kind, yearId: kind === 'homeroom' ? yearId : undefined }); }
+    catch (e) { message.error(await blobErrorMessage(e) ?? 'Không xuất được danh sách.'); }
+  };
+
+  // 4.3.34: lớp của năm hiện hành chưa có chủ nhiệm — đơn xin nghỉ của lớp đó nằm chờ tới khi có chủ nhiệm được gán.
+  const missing = kind === 'homeroom' ? (rows?.filter((r) => !r.staffId && !r.nextStaffName) ?? []) : [];
+
+  const term = search.trim().toLowerCase();
+  const shown = (rows ?? []).filter((r) =>
+    (!onlyMissing || (!r.staffId && !r.nextStaffName))
+    && (!status || statusOf(r) === status)
+    && (!term || [r.targetName, r.targetCode, r.targetGroup, r.staffName, r.staffCode, r.nextStaffName, r.endedStaffName]
+      .some((x) => x?.toLowerCase().includes(term))));
+
+  // Mỗi Hiệu phó chỉ phụ trách một phân hiệu: làm mờ người đang giữ phân hiệu khác (server vẫn kiểm lại, kể cả người được hẹn).
+  const ledCampus = new Map<number, string>();
+  if (kind === 'campus') rows?.forEach((r) => { if (r.staffId && r.targetId !== target?.targetId) ledCampus.set(r.staffId, r.targetName); });
 
   return (
     <>
+      <FilterBar>
+        <Input
+          allowClear prefix={<Search size={14} />} value={search} onChange={(e) => setSearch(e.target.value)}
+          placeholder={`Tìm ${meta.target.toLowerCase()}, mã hoặc người phụ trách`}
+        />
+        <Select allowClear placeholder="Trạng thái" value={status} onChange={setStatus} options={STATUS_OPTIONS} />
+        {kind === 'homeroom' && (
+          <Select
+            placeholder="Năm học" value={yearId} onChange={onYear}
+            options={years.data?.map((y) => ({ value: y.academicYearId, label: y.name }))}
+          />
+        )}
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+          <Button icon={<FileDown size={16} />} onClick={exportFile}>Xuất danh sách</Button>
+          {canWrite && <Button type="primary" icon={<Plus size={16} />} onClick={() => setAssigning('new')}>Phân công</Button>}
+        </div>
+      </FilterBar>
+
       {missing.length > 0 && (
         <InlineAlert
           type="warning"
@@ -104,23 +186,39 @@ function KindTable({ kind, canWrite }: { kind: ResponsibilityKind; canWrite: boo
           action={<span>Chỉ hiện lớp chưa có chủ nhiệm <Switch size="small" checked={onlyMissing} onChange={setOnlyMissing} /></span>}
         />
       )}
+
       <Card className="table-card">
         <DataTable<ResponsibilityRow>
-          rowKey="targetId" loading={rows.isLoading} dataSource={shown}
-          emptyText={kind === 'homeroom' ? 'Chưa có lớp nào trong năm học hiện hành.' : `Chưa có ${meta.target.toLowerCase()} nào.`}
+          rowKey="targetId" loading={loading} dataSource={shown}
+          emptyText={rows?.length ? 'Không có kết quả khớp bộ lọc.' : kind === 'homeroom' ? 'Chưa có lớp nào trong năm học này.' : `Chưa có ${meta.target.toLowerCase()} nào.`}
           columns={[
-            { title: meta.target, dataIndex: 'targetName', render: (v: string) => <strong>{v}</strong> },
-            ...(kind === 'homeroom' ? [{ title: 'Phân hiệu', dataIndex: 'targetGroup', width: 180 }] : []),
+            ...(kind === 'campus' ? [{ title: 'Mã', dataIndex: 'targetCode', width: 110, className: 'tabular', render: (v: string | null) => v ?? dash }] : []),
+            { title: meta.target, dataIndex: 'targetName', width: 200, render: (v: string) => <strong>{v}</strong> },
+            ...(kind === 'homeroom' ? [{ title: 'Phân hiệu', dataIndex: 'targetGroup', width: 150 }] : []),
             {
-              title: meta.holder, dataIndex: 'staffName',
-              render: (v: string | null, r: ResponsibilityRow) => (
-                <div className="stack-cell">
-                  {v ?? <span className="muted">Chưa có</span>}
-                  {r.nextStaffName && <span className="muted">Sắp nhận: {r.nextStaffName} từ {formatDate(r.nextStartDate)}</span>}
-                </div>
-              ),
+              title: meta.holder, key: 'holder', width: 260,
+              render: (_: unknown, r: ResponsibilityRow) => {
+                if (r.staffId) {
+                  return (
+                    <div className="stack-cell">
+                      <PersonCell name={r.staffName!} sub={r.staffCode ?? undefined} />
+                      {r.nextStaffName && <span className="muted">Sắp nhận: {r.nextStaffName} từ {formatDate(r.nextStartDate)}</span>}
+                    </div>
+                  );
+                }
+                if (r.nextStaffName) return <PersonCell name={r.nextStaffName} sub={`Từ ${formatDate(r.nextStartDate)}`} />;
+                if (r.endedStaffName) return <PersonCell name={r.endedStaffName} sub="Đã kết thúc" muted />;
+                return <span className="muted">Chưa phân công</span>;
+              },
             },
-            { title: 'Từ ngày', dataIndex: 'startDate', width: 130, className: 'tabular', render: (v: string | null) => formatDate(v) },
+            {
+              title: 'Thời gian hiệu lực', key: 'period', width: 190, className: 'tabular',
+              render: (_: unknown, r: ResponsibilityRow) => r.staffId
+                ? `${formatDate(r.startDate)} – ${r.endDate ? formatDate(r.endDate) : 'hiện tại'}`
+                : r.nextStaffName ? `Từ ${formatDate(r.nextStartDate)}`
+                  : r.endedStaffName ? `Đến ${formatDate(r.endedDate)}` : dash,
+            },
+            { title: 'Trạng thái', key: 'status', width: 150, render: (_: unknown, r: ResponsibilityRow) => <StatusBadge domain="responsibility" value={statusOf(r)} /> },
             {
               title: 'Thao tác', key: 'actions', width: 140, align: 'center', fixed: 'right',
               render: (_: unknown, r: ResponsibilityRow) => (
@@ -128,7 +226,7 @@ function KindTable({ kind, canWrite }: { kind: ResponsibilityKind; canWrite: boo
                   {
                     key: 'assign', label: r.staffId ? 'Thay người' : 'Gán người đảm nhiệm', hidden: !canWrite,
                     icon: r.staffId ? <UserRoundCog size={16} /> : <UserPlus size={16} />,
-                    onClick: () => { setAssigning(r); },
+                    onClick: () => setAssigning(r),
                   },
                   { key: 'end', label: 'Kết thúc trách nhiệm', icon: <CircleOff size={16} />, danger: true, hidden: !canWrite || !r.staffId, onClick: () => setEnding(r) },
                   { key: 'history', label: 'Lịch sử', icon: <History size={16} />, onClick: () => setHistory(r) },
@@ -141,14 +239,24 @@ function KindTable({ kind, canWrite }: { kind: ResponsibilityKind; canWrite: boo
 
       <FormModal<AssignValues>
         open={assigning !== null}
-        title={assigning?.staffId ? `Thay ${meta.holder.toLowerCase()} — ${assigning.targetName}` : `Gán ${meta.holder.toLowerCase()} — ${assigning?.targetName ?? ''}`}
+        title={assigning === 'new'
+          ? `Phân công ${meta.holder.toLowerCase()}`
+          : assigning?.staffId ? `Thay ${meta.holder.toLowerCase()} — ${assigning.targetName}` : `Gán ${meta.holder.toLowerCase()} — ${assigning?.targetName ?? ''}`}
         form={assignForm} onClose={() => setAssigning(null)} onSubmit={assign}
         initialValues={{ startDate: dayjs() }}
       >
-        {assigning?.staffId && (
+        {assigning === 'new' && (
+          <Form.Item label={meta.target} name="targetId" rules={[{ required: true, message: `Chọn ${meta.target.toLowerCase()}.` }]}>
+            <Select
+              showSearch optionFilterProp="label" placeholder={`Chọn ${meta.target.toLowerCase()}`} onChange={setPicked}
+              options={rows?.map((r) => ({ value: r.targetId, label: r.targetGroup ? `${r.targetName} · ${r.targetGroup}` : r.targetName }))}
+            />
+          </Form.Item>
+        )}
+        {target?.staffId && (
           <InlineAlert
             type="info"
-            title={`Hiện do ${assigning.staffName} đảm nhiệm từ ${formatDate(assigning.startDate)}.`}
+            title={`Hiện do ${target.staffName} đảm nhiệm từ ${formatDate(target.startDate)}.`}
             description="Người cũ kết thúc vào ngày liền trước ngày hiệu lực của người mới; dữ liệu đã phát sinh không bị đụng tới."
           />
         )}
@@ -159,7 +267,7 @@ function KindTable({ kind, canWrite }: { kind: ResponsibilityKind; canWrite: boo
         >
           <Select
             showSearch optionFilterProp="label" placeholder="Chọn cán bộ"
-            options={staff.data?.items.filter((s) => s.isActive && s.staffId !== assigning?.staffId)
+            options={staff.data?.items.filter((s) => s.isActive && s.staffId !== target?.staffId)
               .map((s) => ({
                 value: s.staffId,
                 label: ledCampus.has(s.staffId)

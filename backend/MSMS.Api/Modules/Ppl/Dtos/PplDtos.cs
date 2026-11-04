@@ -22,7 +22,8 @@ public record StaffImportResult(bool Accepted, int Created, IReadOnlyList<StaffI
 public record ResponsibilityRow(
     string Kind, int TargetId, string TargetName, string? TargetGroup,
     int? RecordId, int? StaffId, string? StaffName, DateOnly? StartDate,
-    string? NextStaffName = null, DateOnly? NextStartDate = null);
+    string? NextStaffName = null, DateOnly? NextStartDate = null,
+    string? StaffCode = null, DateOnly? EndDate = null, string? EndedStaffName = null, DateOnly? EndedDate = null, string? TargetCode = null);
 
 public record ResponsibilityAssignRequest(string Kind, int TargetId, int StaffId, DateOnly StartDate);
 public record ResponsibilityEndRequest(string Kind, int RecordId, DateOnly EndDate);

@@ -1,6 +1,9 @@
+using ClosedXML.Excel;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
+using MSMS.Api.Common.Excel;
 using MSMS.Api.Common.Rules;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
@@ -30,9 +33,12 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
             case ResponsibilityKinds.Campus:
             {
                 var holders = await db.CampusLeadership.AsNoTracking().Where(EffectivePeriod.CurrentResponsibility<CampusLeadership>(today))
-                    .Select(x => new { x.Id, x.CampusId, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
+                    .Select(x => new { x.Id, x.CampusId, x.StaffId, Name = x.Staff.Staff.FullName, Code = x.Staff.Staff.PersonCode, x.StartDate, x.EndDate }).ToListAsync();
                 var upcoming = await db.CampusLeadership.AsNoTracking().Where(x => x.StartDate > today).OrderBy(x => x.StartDate)
                     .Select(x => new { x.CampusId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
+                var ended = (await db.CampusLeadership.AsNoTracking().Where(x => x.EndDate != null && x.EndDate <= today)
+                    .Select(x => new { x.CampusId, Name = x.Staff.Staff.FullName, x.EndDate }).ToListAsync())
+                    .GroupBy(x => x.CampusId).ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.EndDate).First());
                 var campusesQuery = db.Campus.AsNoTracking().Where(c => c.IsActive);
                 if (user.AccountType == AccountTypes.VicePrincipal)
                 {
@@ -44,15 +50,20 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
                 {
                     var h = holders.FirstOrDefault(x => x.CampusId == c.CampusId);
                     var u = upcoming.FirstOrDefault(x => x.CampusId == c.CampusId);
-                    return new ResponsibilityRow(kind, c.CampusId, c.Name, null, h?.Id, h?.StaffId, h?.Name, h?.StartDate, u?.Name, u?.StartDate);
+                    var e = ended.GetValueOrDefault(c.CampusId);
+                    return new ResponsibilityRow(kind, c.CampusId, c.Name, null, h?.Id, h?.StaffId, h?.Name, h?.StartDate, u?.Name, u?.StartDate,
+                        h?.Code, h?.EndDate, e?.Name, e?.EndDate, c.Code);
                 }).ToList();
             }
             case ResponsibilityKinds.Department:
             {
                 var holders = await db.DepartmentHead.AsNoTracking().Where(EffectivePeriod.CurrentResponsibility<DepartmentHead>(today))
-                    .Select(x => new { x.Id, x.DepartmentId, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
+                    .Select(x => new { x.Id, x.DepartmentId, x.StaffId, Name = x.Staff.Staff.FullName, Code = x.Staff.Staff.PersonCode, x.StartDate, x.EndDate }).ToListAsync();
                 var upcoming = await db.DepartmentHead.AsNoTracking().Where(x => x.StartDate > today).OrderBy(x => x.StartDate)
                     .Select(x => new { x.DepartmentId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
+                var ended = (await db.DepartmentHead.AsNoTracking().Where(x => x.EndDate != null && x.EndDate <= today)
+                    .Select(x => new { x.DepartmentId, Name = x.Staff.Staff.FullName, x.EndDate }).ToListAsync())
+                    .GroupBy(x => x.DepartmentId).ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.EndDate).First());
                 var departmentsQuery = db.SubjectDepartment.AsNoTracking().Where(d => d.IsActive);
                 if (user.AccountType == AccountTypes.VicePrincipal)
                 {
@@ -66,16 +77,21 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
                 {
                     var h = holders.FirstOrDefault(x => x.DepartmentId == d.DepartmentId);
                     var u = upcoming.FirstOrDefault(x => x.DepartmentId == d.DepartmentId);
-                    return new ResponsibilityRow(kind, d.DepartmentId, d.Name, null, h?.Id, h?.StaffId, h?.Name, h?.StartDate, u?.Name, u?.StartDate);
+                    var e = ended.GetValueOrDefault(d.DepartmentId);
+                    return new ResponsibilityRow(kind, d.DepartmentId, d.Name, null, h?.Id, h?.StaffId, h?.Name, h?.StartDate, u?.Name, u?.StartDate,
+                        h?.Code, h?.EndDate, e?.Name, e?.EndDate);
                 }).ToList();
             }
             case ResponsibilityKinds.Homeroom:
             {
                 var year = yearId ?? await db.AcademicYear.Where(y => y.IsCurrent).Select(y => (int?)y.AcademicYearId).FirstOrDefaultAsync();
                 var holders = await db.HomeroomAssignment.AsNoTracking().Where(EffectivePeriod.CurrentResponsibility<HomeroomAssignment>(today))
-                    .Select(x => new { x.Id, x.ClassId, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
+                    .Select(x => new { x.Id, x.ClassId, x.StaffId, Name = x.Staff.Staff.FullName, Code = x.Staff.Staff.PersonCode, x.StartDate, x.EndDate }).ToListAsync();
                 var upcoming = await db.HomeroomAssignment.AsNoTracking().Where(x => x.StartDate > today).OrderBy(x => x.StartDate)
                     .Select(x => new { x.ClassId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
+                var ended = (await db.HomeroomAssignment.AsNoTracking().Where(x => x.EndDate != null && x.EndDate <= today)
+                    .Select(x => new { x.ClassId, Name = x.Staff.Staff.FullName, x.EndDate }).ToListAsync())
+                    .GroupBy(x => x.ClassId).ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.EndDate).First());
                 var visibleClasses = await scope.FilterClassesAsync(db.Class.AsNoTracking());
                 var classes = await visibleClasses.Where(c => c.IsActive && c.AcademicYearId == year)
                     .OrderBy(c => c.Campus.Name).ThenBy(c => c.GradeLevel).ThenBy(c => c.Name)
@@ -84,12 +100,53 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
                 {
                     var h = holders.FirstOrDefault(x => x.ClassId == c.ClassId);
                     var u = upcoming.FirstOrDefault(x => x.ClassId == c.ClassId);
-                    return new ResponsibilityRow(kind, c.ClassId, c.Name, c.Campus, h?.Id, h?.StaffId, h?.Name, h?.StartDate, u?.Name, u?.StartDate);
+                    var e = ended.GetValueOrDefault(c.ClassId);
+                    return new ResponsibilityRow(kind, c.ClassId, c.Name, c.Campus, h?.Id, h?.StaffId, h?.Name, h?.StartDate, u?.Name, u?.StartDate,
+                        h?.Code, h?.EndDate, e?.Name, e?.EndDate);
                 }).ToList();
             }
             default:
                 throw ApiException.BadRequest("Loại trách nhiệm không hợp lệ.");
         }
+    }
+
+    /// <summary>Xuất danh sách một loại trách nhiệm ra Excel, cùng phạm vi và trạng thái với màn hình.</summary>
+    public async Task<FileContentResult> ExportAsync(string kind, int? yearId)
+    {
+        var rows = await ListCurrentAsync(kind, yearId);
+        var (sheet, file, target) = kind switch
+        {
+            ResponsibilityKinds.Campus => ("Phụ trách phân hiệu", "MSMS_Trach_nhiem_phu_trach_phan_hieu.xlsx", "Phân hiệu"),
+            ResponsibilityKinds.Department => ("Tổ trưởng", "MSMS_Trach_nhiem_to_truong.xlsx", "Tổ chuyên môn"),
+            _ => ("Chủ nhiệm", "MSMS_Trach_nhiem_chu_nhiem.xlsx", "Lớp"),
+        };
+        var homeroom = kind == ResponsibilityKinds.Homeroom;
+        string[] headers = [..(kind == ResponsibilityKinds.Campus ? new[] { "Mã phân hiệu" } : []), target, ..(homeroom ? new[] { "Phân hiệu" } : []),
+            "Người phụ trách", "Mã hồ sơ", "Từ ngày", "Đến ngày", "Trạng thái"];
+
+        using var wb = new XLWorkbook();
+        var ws = wb.AddWorksheet(sheet);
+        for (var c = 0; c < headers.Length; c++) ws.Cell(1, c + 1).Value = headers[c];
+        ws.StyleHeaderRow(1, headers.Length, 22);
+        var r = 2;
+        foreach (var row in rows)
+        {
+            var status = row.StaffId is not null ? "Đã phân công" : row.NextStaffName is not null ? "Sắp hiệu lực"
+                : row.EndedStaffName is not null ? "Đã kết thúc" : "Chưa phân công";
+            var cells = new List<object?>();
+            if (kind == ResponsibilityKinds.Campus) cells.Add(row.TargetCode);
+            cells.Add(row.TargetName);
+            if (homeroom) cells.Add(row.TargetGroup);
+            cells.Add(row.StaffName ?? row.NextStaffName ?? row.EndedStaffName);
+            cells.Add(row.StaffCode);
+            cells.Add(row.StartDate is { } s ? s.ToString("dd/MM/yyyy") : row.NextStartDate is { } n ? n.ToString("dd/MM/yyyy") : null);
+            cells.Add(row.EndDate is { } e ? e.ToString("dd/MM/yyyy") : row.EndedDate is { } ed ? ed.ToString("dd/MM/yyyy") : null);
+            cells.Add(status);
+            for (var c = 0; c < cells.Count; c++) ws.Cell(r, c + 1).Value = cells[c]?.ToString() ?? "";
+            r++;
+        }
+        ws.Columns().AdjustToContents();
+        return wb.ToFile(file);
     }
 
     public async Task<List<ResponsibilityHistoryRow>> HistoryAsync(string kind, int targetId)
