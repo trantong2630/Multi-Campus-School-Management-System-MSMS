@@ -12,6 +12,10 @@ public class ResponsibilitiesController(ResponsibilityService service) : Control
     [HttpGet, Authorize(Policy = Policies.CampusReader)]
     public Task<List<ResponsibilityRow>> List([FromQuery] string kind, [FromQuery] int? yearId) => service.ListCurrentAsync(kind, yearId);
 
+    // Xuất Excel cùng phạm vi với danh sách trên màn hình.
+    [HttpGet("export"), Authorize(Policy = Policies.CampusReader)]
+    public Task<FileContentResult> Export([FromQuery] string kind, [FromQuery] int? yearId) => service.ExportAsync(kind, yearId);
+
     [HttpGet("history"), Authorize(Policy = Policies.CampusReader)]
     public Task<List<ResponsibilityHistoryRow>> History([FromQuery] string kind, [FromQuery] int targetId) => service.HistoryAsync(kind, targetId);
 

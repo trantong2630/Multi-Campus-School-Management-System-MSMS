@@ -225,7 +225,7 @@ public static class DevSeeder
         await db.SaveChangesAsync();
 
         // ---- Phân công và ghi danh (cần khóa đã sinh ở trên) ----
-        db.CampusLeadership.Add(new CampusLeadership { CampusId = campus.CampusId, StaffId = principal.PersonId, StartDate = yearStart, CreatedAt = now });
+        // Phụ trách phân hiệu chỉ gán cho Hiệu phó (BR-09, 4.3.28); Hiệu trưởng nhìn toàn trường nên không cần dòng này.
         db.CampusLeadership.Add(new CampusLeadership { CampusId = campus.CampusId, StaffId = vice.PersonId, StartDate = yearStart, CreatedAt = now });
 
         // Tổ trưởng: giáo viên đầu tiên của mỗi tổ có giáo viên.

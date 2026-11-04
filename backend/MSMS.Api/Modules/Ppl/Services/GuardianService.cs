@@ -39,7 +39,7 @@ public sealed class GuardianService(MsmsDbContext db, IClock clock, ScopeResolve
         var paged = await query.OrderBy(p => p.FullName).ThenBy(p => p.PersonId)
             .Select(p => new GuardianDto(p.PersonId, p.PersonCode, p.FullName, p.PhoneNumber, p.Email, p.Address,
                 p.ParentStudentLink.AsQueryable().Count(linkScope), null,
-                p.Account == null ? null : p.Account.AccountId, p.Account == null ? null : p.Account.Status))
+                p.Account == null ? null : p.Account.AccountId, p.Account == null ? null : p.Account.Status, p.Gender))
             .ToPagedAsync(page, pageSize);
 
         // Tên các con (tối đa 3) lấy ở truy vấn riêng cho trang hiện tại.
@@ -56,7 +56,7 @@ public sealed class GuardianService(MsmsDbContext db, IClock clock, ScopeResolve
         var person = new Person
         {
             PersonType = "Parent", PersonCode = await PersonCodes.NextAsync(db, PersonCodes.Parent),
-            FullName = v.FullName, PhoneNumber = v.Phone, Email = v.Email, Address = v.Address, CreatedAt = clock.Now,
+            FullName = v.FullName, PhoneNumber = v.Phone, Email = v.Email, Address = v.Address, Gender = v.Gender, CreatedAt = clock.Now,
         };
         db.Person.Add(person);
         await db.SaveChangesAsync();
@@ -71,6 +71,7 @@ public sealed class GuardianService(MsmsDbContext db, IClock clock, ScopeResolve
         parent.PhoneNumber = v.Phone;
         parent.Email = v.Email;
         parent.Address = v.Address;
+        parent.Gender = v.Gender;
         parent.UpdatedAt = clock.Now;
         await db.SaveChangesAsync();
         return await GetAsync(id);
@@ -139,10 +140,10 @@ public sealed class GuardianService(MsmsDbContext db, IClock clock, ScopeResolve
     private async Task<GuardianDto> GetAsync(int id) =>
         await db.Person.AsNoTracking().Where(p => p.PersonId == id)
             .Select(p => new GuardianDto(p.PersonId, p.PersonCode, p.FullName, p.PhoneNumber, p.Email, p.Address,
-                p.ParentStudentLink.Count, null, p.Account == null ? null : p.Account.AccountId, p.Account == null ? null : p.Account.Status))
+                p.ParentStudentLink.Count, null, p.Account == null ? null : p.Account.AccountId, p.Account == null ? null : p.Account.Status, p.Gender))
             .FirstAsync();
 
-    private record Validated(string FullName, string Phone, string? Email, string? Address);
+    private record Validated(string FullName, string Phone, string? Email, string? Address, string? Gender);
 
     private async Task<Validated> ValidateAsync(int? selfId, GuardianRequest r)
     {
@@ -160,6 +161,9 @@ public sealed class GuardianService(MsmsDbContext db, IClock clock, ScopeResolve
         var email = Guard.Optional(r.Email, "Email", 150);
         if (email is not null && !Guard.IsEmail(email)) throw ApiException.BadRequest("Email chưa đúng định dạng. Kiểm tra lại địa chỉ email.");
 
-        return new Validated(name, phone, email, Guard.Optional(r.Address, "Địa chỉ", 255));
+        var gender = Genders.Parse(r.Gender);
+        if (gender == "?") throw ApiException.BadRequest("Giới tính chỉ gồm Nam, Nữ hoặc Khác.");
+
+        return new Validated(name, phone, email, Guard.Optional(r.Address, "Địa chỉ", 255), gender);
     }
 }

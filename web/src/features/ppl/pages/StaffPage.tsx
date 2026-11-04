@@ -159,6 +159,7 @@ export function StaffPage() {
             },
             { title: 'Họ và tên', dataIndex: 'fullName', width: 210, render: (v: string, s: Staff) => <PersonCell name={v} muted={!s.isActive} /> },
             { title: 'Ngày sinh', dataIndex: 'dateOfBirth', width: 104, className: 'tabular', render: (v: string | null) => formatDate(v) },
+            { title: 'Giới tính', dataIndex: 'gender', width: 90, render: (v: string | null) => GENDERS.find((g) => g.value === v)?.label ?? '—' },
             { title: 'Số định danh', dataIndex: 'nationalId', width: 120, className: 'tabular', render: (v: string | null) => v ?? <span className="muted">—</span> },
             { title: 'Phân hiệu chính', dataIndex: 'primaryCampusName', width: 120, render: (v: string | null) => v ?? <span className="muted">—</span> },
             { title: 'Tổ chuyên môn', dataIndex: 'departmentName', width: 130, render: (v: string | null) => v ?? <span className="muted">—</span> },

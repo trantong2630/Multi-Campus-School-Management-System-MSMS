@@ -129,22 +129,25 @@ export function HolidaysPage() {
       )}
 
       <FormModal<FormValues>
+        variant="drawer" width={640}
         open={adding !== null} title="Thêm ngày nghỉ" form={form} onClose={() => setAdding(null)} onSubmit={save}
         initialValues={{ scope: campusId ?? WHOLE_SCHOOL, date: adding?.date }}
       >
-        <Form.Item
-          label="Ngày nghỉ" name="date" rules={[{ required: true, message: 'Chọn ngày nghỉ.' }]}
-          extra={yearRange ? `Phải nằm trong năm học ${yearRange.name}.` : undefined}
-        >
-          <DatePicker
-            format="DD/MM/YYYY" style={{ width: '100%' }}
-            disabledDate={(d) => !!yearRange && (d.isBefore(yearRange.startDate, 'day') || d.isAfter(yearRange.endDate, 'day'))}
-          />
-        </Form.Item>
-        <Form.Item label="Phạm vi" name="scope" rules={[{ required: true }]}>
-          <Select options={[{ value: WHOLE_SCHOOL, label: 'Toàn trường' }, ...(campuses.data?.filter((c) => c.isActive).map((c) => ({ value: c.campusId, label: c.name })) ?? [])]} />
-        </Form.Item>
-        <Form.Item label="Lý do" name="reason"><Input maxLength={255} /></Form.Item>
+        <div className="form-grid">
+          <Form.Item
+            label="Ngày nghỉ" name="date" rules={[{ required: true, message: 'Chọn ngày nghỉ.' }]}
+            extra={yearRange ? `Phải nằm trong năm học ${yearRange.name}.` : undefined}
+          >
+            <DatePicker
+              format="DD/MM/YYYY" style={{ width: '100%' }}
+              disabledDate={(d) => !!yearRange && (d.isBefore(yearRange.startDate, 'day') || d.isAfter(yearRange.endDate, 'day'))}
+            />
+          </Form.Item>
+          <Form.Item label="Phạm vi" name="scope" rules={[{ required: true }]}>
+            <Select options={[{ value: WHOLE_SCHOOL, label: 'Toàn trường' }, ...(campuses.data?.filter((c) => c.isActive).map((c) => ({ value: c.campusId, label: c.name })) ?? [])]} />
+          </Form.Item>
+          <Form.Item label="Lý do" name="reason" style={{ gridColumn: '1 / -1' }}><Input maxLength={255} /></Form.Item>
+        </div>
       </FormModal>
     </>
   );

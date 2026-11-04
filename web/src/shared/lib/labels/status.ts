@@ -2,7 +2,7 @@ import type { BadgeGroup } from '@/shared/lib/tokens';
 
 export type StatusDomain =
   | 'account' | 'session' | 'sessionSource' | 'attendance' | 'leave' | 'question'
-  | 'catalog' | 'assignment' | 'aiFeedback' | 'timetableVersion' | 'post' | 'student' | 'submission';
+  | 'catalog' | 'assignment' | 'aiFeedback' | 'timetableVersion' | 'post' | 'student' | 'submission' | 'responsibility' | 'handover';
 
 type Entry = [label: string, group: BadgeGroup];
 
@@ -68,6 +68,17 @@ const registry: Record<StatusDomain, Record<string, Entry>> = {
   submission: {
     Submitted: ['Đã nộp', 'info'],
     NotSubmitted: ['Không nộp', 'neutral'],
+  },
+  handover: {
+    Current: ['Đang đảm nhiệm', 'active'],
+    Upcoming: ['Sắp hiệu lực', 'info'],
+    Ended: ['Đã kết thúc', 'neutral'],
+  },
+  responsibility: {
+    Assigned: ['Đã phân công', 'active'],
+    Upcoming: ['Sắp hiệu lực', 'info'],
+    Unassigned: ['Chưa phân công', 'pending'],
+    Ended: ['Đã kết thúc', 'neutral'],
   },
 };
 

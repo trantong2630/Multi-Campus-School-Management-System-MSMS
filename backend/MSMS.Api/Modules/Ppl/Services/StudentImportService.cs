@@ -294,7 +294,7 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
     }
 
     /// <summary>Ô số điện thoại: Excel hay chuyển số có số 0 đầu thành số và làm mất số 0, nên bù lại cho số di động 10 chữ số.</summary>
-    private static string ReadPhone(IXLCell cell)
+    internal static string ReadPhone(IXLCell cell)
     {
         if (cell.IsEmpty()) return string.Empty;
         if (cell.DataType == XLDataType.Number)

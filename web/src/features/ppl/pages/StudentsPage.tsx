@@ -156,6 +156,7 @@ export function StudentsPage() {
             { title: 'Mã hồ sơ', dataIndex: 'personCode', width: 110, className: 'tabular' },
             { title: 'Họ và tên', dataIndex: 'fullName', width: 210, render: (v: string, s: Student) => <PersonCell name={v} muted={s.status !== 'Studying'} /> },
             { title: 'Ngày sinh', dataIndex: 'dateOfBirth', width: 104, className: 'tabular', render: (v: string | null) => formatDate(v) },
+            { title: 'Giới tính', dataIndex: 'gender', width: 90, render: (v: string | null) => GENDERS.find((g) => g.value === v)?.label ?? '—' },
             { title: 'Số định danh', dataIndex: 'nationalId', width: 120, className: 'tabular' },
             { title: 'Lớp', dataIndex: 'className', width: 90, render: (v: string | null) => v ?? dash },
             { title: 'Phân hiệu', dataIndex: 'campusName', width: 120, render: (v: string | null) => v ?? dash },

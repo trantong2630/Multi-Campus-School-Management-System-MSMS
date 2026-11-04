@@ -10,8 +10,10 @@ public static class PplModule
             .AddScoped<StudentImportService>()
             .AddScoped<StudentService>()
             .AddScoped<GuardianService>()
+            .AddScoped<GuardianImportService>()
             .AddScoped<StudentService>()
             .AddScoped<GuardianService>()
+            .AddScoped<GuardianImportService>()
             .AddScoped<ResponsibilityService>()
             .AddScoped<HomeroomService>();
 }
