@@ -35,7 +35,7 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
                 var holders = await db.CampusLeadership.AsNoTracking().Where(EffectivePeriod.CurrentResponsibility<CampusLeadership>(today))
                     .Select(x => new { x.Id, x.CampusId, x.StaffId, Name = x.Staff.Staff.FullName, Code = x.Staff.Staff.PersonCode, x.StartDate, x.EndDate }).ToListAsync();
                 var upcoming = await db.CampusLeadership.AsNoTracking().Where(x => x.StartDate > today).OrderBy(x => x.StartDate)
-                    .Select(x => new { x.CampusId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
+                    .Select(x => new { x.CampusId, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
                 var ended = (await db.CampusLeadership.AsNoTracking().Where(x => x.EndDate != null && x.EndDate <= today)
                     .Select(x => new { x.CampusId, Name = x.Staff.Staff.FullName, x.EndDate }).ToListAsync())
                     .GroupBy(x => x.CampusId).ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.EndDate).First());
@@ -52,7 +52,7 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
                     var u = upcoming.FirstOrDefault(x => x.CampusId == c.CampusId);
                     var e = ended.GetValueOrDefault(c.CampusId);
                     return new ResponsibilityRow(kind, c.CampusId, c.Name, null, h?.Id, h?.StaffId, h?.Name, h?.StartDate, u?.Name, u?.StartDate,
-                        h?.Code, h?.EndDate, e?.Name, e?.EndDate, c.Code);
+                        h?.Code, h?.EndDate, e?.Name, e?.EndDate, c.Code, u?.StaffId);
                 }).ToList();
             }
             case ResponsibilityKinds.Department:
@@ -60,7 +60,7 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
                 var holders = await db.DepartmentHead.AsNoTracking().Where(EffectivePeriod.CurrentResponsibility<DepartmentHead>(today))
                     .Select(x => new { x.Id, x.DepartmentId, x.StaffId, Name = x.Staff.Staff.FullName, Code = x.Staff.Staff.PersonCode, x.StartDate, x.EndDate }).ToListAsync();
                 var upcoming = await db.DepartmentHead.AsNoTracking().Where(x => x.StartDate > today).OrderBy(x => x.StartDate)
-                    .Select(x => new { x.DepartmentId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
+                    .Select(x => new { x.DepartmentId, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
                 var ended = (await db.DepartmentHead.AsNoTracking().Where(x => x.EndDate != null && x.EndDate <= today)
                     .Select(x => new { x.DepartmentId, Name = x.Staff.Staff.FullName, x.EndDate }).ToListAsync())
                     .GroupBy(x => x.DepartmentId).ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.EndDate).First());
@@ -79,7 +79,7 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
                     var u = upcoming.FirstOrDefault(x => x.DepartmentId == d.DepartmentId);
                     var e = ended.GetValueOrDefault(d.DepartmentId);
                     return new ResponsibilityRow(kind, d.DepartmentId, d.Name, null, h?.Id, h?.StaffId, h?.Name, h?.StartDate, u?.Name, u?.StartDate,
-                        h?.Code, h?.EndDate, e?.Name, e?.EndDate);
+                        h?.Code, h?.EndDate, e?.Name, e?.EndDate, NextStaffId: u?.StaffId);
                 }).ToList();
             }
             case ResponsibilityKinds.Homeroom:
@@ -88,7 +88,7 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
                 var holders = await db.HomeroomAssignment.AsNoTracking().Where(EffectivePeriod.CurrentResponsibility<HomeroomAssignment>(today))
                     .Select(x => new { x.Id, x.ClassId, x.StaffId, Name = x.Staff.Staff.FullName, Code = x.Staff.Staff.PersonCode, x.StartDate, x.EndDate }).ToListAsync();
                 var upcoming = await db.HomeroomAssignment.AsNoTracking().Where(x => x.StartDate > today).OrderBy(x => x.StartDate)
-                    .Select(x => new { x.ClassId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
+                    .Select(x => new { x.ClassId, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
                 var ended = (await db.HomeroomAssignment.AsNoTracking().Where(x => x.EndDate != null && x.EndDate <= today)
                     .Select(x => new { x.ClassId, Name = x.Staff.Staff.FullName, x.EndDate }).ToListAsync())
                     .GroupBy(x => x.ClassId).ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.EndDate).First());
@@ -102,7 +102,7 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
                     var u = upcoming.FirstOrDefault(x => x.ClassId == c.ClassId);
                     var e = ended.GetValueOrDefault(c.ClassId);
                     return new ResponsibilityRow(kind, c.ClassId, c.Name, c.Campus, h?.Id, h?.StaffId, h?.Name, h?.StartDate, u?.Name, u?.StartDate,
-                        h?.Code, h?.EndDate, e?.Name, e?.EndDate);
+                        h?.Code, h?.EndDate, e?.Name, e?.EndDate, NextStaffId: u?.StaffId);
                 }).ToList();
             }
             default:

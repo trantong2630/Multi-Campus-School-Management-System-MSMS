@@ -164,8 +164,16 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
       .some((x) => x?.toLowerCase().includes(term))));
 
   // Mỗi Hiệu phó một phân hiệu, mỗi giáo viên một lớp chủ nhiệm (cùng năm học): làm mờ người đang giữ đích khác (server vẫn kiểm lại, kể cả người được hẹn).
+  // Gồm cả người đã được xếp cho đích khác nhưng chưa tới ngày hiệu lực: đã phân công thì không chọn thêm.
   const ledCampus = new Map<number, string>();
-  if (kind === 'campus' || kind === 'homeroom') rows?.forEach((r) => { if (r.staffId && r.targetId !== target?.targetId) ledCampus.set(r.staffId, r.targetName); });
+  if (kind === 'campus' || kind === 'homeroom') {
+    const act = kind === 'campus' ? 'phụ trách' : 'chủ nhiệm';
+    rows?.forEach((r) => {
+      if (r.targetId === target?.targetId) return;
+      if (r.staffId) ledCampus.set(r.staffId, `đang ${act} ${r.targetName}`);
+      if (r.nextStaffId && !ledCampus.has(r.nextStaffId)) ledCampus.set(r.nextStaffId, `đã được xếp ${act} ${r.targetName} từ ${formatDate(r.nextStartDate)}`);
+    });
+  }
 
   return (
     <>
@@ -291,7 +299,7 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
               .map((s) => ({
                 value: s.staffId,
                 label: ledCampus.has(s.staffId)
-                  ? `${s.fullName} (${s.personCode}) — đang ${kind === 'campus' ? 'phụ trách' : 'chủ nhiệm'} ${ledCampus.get(s.staffId)}`
+                  ? `${s.fullName} (${s.personCode}) — ${ledCampus.get(s.staffId)}`
                   : `${s.fullName} (${s.personCode})`,
                 disabled: ledCampus.has(s.staffId),
               }))}

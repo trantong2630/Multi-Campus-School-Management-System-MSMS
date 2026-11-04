@@ -113,6 +113,7 @@ export interface ResponsibilityRow {
   endedStaffName: string | null;
   endedDate: string | null;
   targetCode: string | null;
+  nextStaffId: number | null;
 }
 
 export interface ResponsibilityHistoryRow {

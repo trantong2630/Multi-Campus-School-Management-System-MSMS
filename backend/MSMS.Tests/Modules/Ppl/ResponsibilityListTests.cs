@@ -38,6 +38,7 @@ public class ResponsibilityListTests
         Assert.Equal("PH1", ph1.TargetCode);
         Assert.NotNull(ph1.StaffCode);
         Assert.Equal(Today.AddDays(2), ph1.NextStartDate);
+        Assert.Equal(11, ph1.NextStaffId);   // để giao diện làm mờ người đã được xếp cho đích khác
         var ph2 = rows.Single(r => r.TargetId == 2);
         Assert.Null(ph2.StaffId);
         Assert.NotNull(ph2.EndedStaffName);
