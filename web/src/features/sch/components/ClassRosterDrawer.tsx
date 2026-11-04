@@ -18,6 +18,9 @@ import './school.css';
 import { useYears } from '../hooks/useCatalogs';
 import type { RosterItem, SchoolClass, StudentCandidate } from '../types';
 
+const GENDER_LABELS: Record<string, string> = { Male: 'Nam', Female: 'Nữ', Other: 'Khác' };
+const genderText = (v: string | null) => (v ? GENDER_LABELS[v] ?? v : '—');
+
 interface Props {
   cls: SchoolClass | null;
   canWrite: boolean;
@@ -153,6 +156,7 @@ export function ClassRosterDrawer({ cls, canWrite, onClose }: Props) {
           columns={[
             { title: 'Học sinh', dataIndex: 'fullName', render: (v: string, r: RosterItem) => <PersonCell name={v} sub={r.personCode} /> },
             { title: 'Ngày sinh', dataIndex: 'dateOfBirth', width: 112, className: 'tabular', render: (v: string | null) => formatDate(v) },
+            { title: 'Giới tính', dataIndex: 'gender', width: 96, render: (v: string | null) => genderText(v) },
             { title: 'Bắt đầu', dataIndex: 'startDate', width: 132, className: 'tabular', render: (v: string) => formatDate(v) },
             {
               title: 'Kết thúc', dataIndex: 'endDate', width: 132, className: 'tabular',
@@ -215,6 +219,7 @@ export function ClassRosterDrawer({ cls, canWrite, onClose }: Props) {
             { title: 'Mã HS', dataIndex: 'personCode', width: 120, className: 'tabular' },
             { title: 'Họ tên', dataIndex: 'fullName' },
             { title: 'Ngày sinh', dataIndex: 'dateOfBirth', width: 120, className: 'tabular', render: (v: string | null) => formatDate(v) },
+            { title: 'Giới tính', dataIndex: 'gender', width: 100, render: (v: string | null) => genderText(v) },
           ]}
         />
       </Modal>

@@ -111,6 +111,7 @@ export interface StudentCandidate {
   personCode: string;
   fullName: string;
   dateOfBirth: string | null;
+  gender: string | null;
 }
 
 export interface RolloverTarget {

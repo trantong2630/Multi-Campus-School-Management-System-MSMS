@@ -47,7 +47,7 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
                         || (s.Student.NationalId != null && s.Student.NationalId.Contains(q)))
             .OrderBy(s => s.Student.FullName)
             .Take(limit)
-            .Select(s => new StudentCandidateDto(s.StudentId, s.Student.PersonCode, s.Student.FullName, s.Student.DateOfBirth))
+            .Select(s => new StudentCandidateDto(s.StudentId, s.Student.PersonCode, s.Student.FullName, s.Student.DateOfBirth, s.Student.Gender))
             .ToListAsync();
     }
 

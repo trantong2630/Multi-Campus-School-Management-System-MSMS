@@ -41,7 +41,7 @@ public record SchoolProfileRequest(string Name, string? Address, string? PhoneNu
 public record RosterItemDto(int EnrollmentId, int StudentId, string PersonCode, string FullName, DateOnly? DateOfBirth,
     string? Gender, DateOnly StartDate, DateOnly? EndDate, string? Reason);
 public record RosterDto(int ClassId, string ClassName, DateOnly Date, IReadOnlyList<RosterItemDto> Students);
-public record StudentCandidateDto(int StudentId, string PersonCode, string FullName, DateOnly? DateOfBirth);
+public record StudentCandidateDto(int StudentId, string PersonCode, string FullName, DateOnly? DateOfBirth, string? Gender = null);
 public record EnrollRequest(int StudentId, DateOnly StartDate);
 public record TransferRequest(int ToClassId, DateOnly EffectiveDate);
 public record CloseEnrollmentRequest(string Reason);
