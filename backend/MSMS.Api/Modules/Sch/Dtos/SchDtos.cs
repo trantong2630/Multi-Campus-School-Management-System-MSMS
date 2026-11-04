@@ -72,7 +72,8 @@ public record RolloverMoveRequest(List<RolloverMovePair> Pairs);
 public record RolloverMoveItemResult(int SourceClassId, int TargetClassId, int Moved, int Skipped);
 public record RolloverMoveResult(int Moved, int Skipped, IReadOnlyList<RolloverMoveItemResult> Items);
 /// <summary>Học sinh còn học ở cuối năm cũ của một lớp, kèm lớp năm mới em đã được xếp (nếu có).</summary>
-public record RolloverStudentDto(int StudentId, string PersonCode, string FullName, int? NewClassId, string? NewClassName, bool Graduated = false);
+public record RolloverStudentDto(int StudentId, string PersonCode, string FullName, int? NewClassId, string? NewClassName, bool Graduated = false,
+    DateOnly? DateOfBirth = null, string? Gender = null);
 public record GraduateRequest(List<int> StudentIds);
 public record RolloverStudentsMoveRequest(int FromClassId, int ToClassId, List<int> StudentIds);
 public record RolloverUndoRequest(List<int> EnrollmentIds);

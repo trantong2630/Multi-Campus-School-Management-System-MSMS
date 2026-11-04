@@ -333,3 +333,103 @@ button.hol-chip {
 .grade-bars li { white-space: nowrap; display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; height: 100%; min-width: 0; font-size: 12px; color: var(--c-text2); }
 .grade-bars b { font-size: 13px; color: var(--c-ink); }
 .grade-bars i { display: block; width: 100%; max-width: 30px; min-height: 4px; border-radius: 6px 6px 3px 3px; background: var(--cell, var(--c-green600)); opacity: .85; }
+
+/* Kết chuyển năm học (kiểu mẫu mới): đầu mỗi bảng có biểu tượng, tiêu đề, dòng phụ và số học sinh; nền đầu bảng theo vai trò. */
+.rollover-panel--retain .ant-card-head {
+  background: var(--c-amberBg);
+}
+
+.rollover-panel--source .ant-card-head {
+  background: var(--c-skyBg);
+}
+
+.rollover-panel--promote .ant-card-head {
+  background: var(--c-green50);
+}
+
+.rollover-panel--source.ant-card {
+  border-color: var(--c-skyBg);
+}
+
+.rollover-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 6px 0;
+}
+
+.rollover-head__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--c-surface);
+}
+
+.rollover-head__icon--retain {
+  color: var(--c-amberFg);
+}
+
+.rollover-head__icon--source {
+  color: var(--c-skyFg);
+}
+
+.rollover-head__icon--promote {
+  color: var(--c-green600);
+}
+
+.rollover-head__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.rollover-head__text strong {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--c-text1);
+}
+
+.rollover-head__text .muted {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.rollover-head__count {
+  display: grid;
+  place-items: center;
+  flex: none;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  background: var(--c-surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text1);
+}
+
+.rollover-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 48px 12px;
+  text-align: center;
+}
+
+.rollover-empty__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--c-sunken);
+  color: var(--c-text3);
+}

@@ -147,6 +147,8 @@ export interface RolloverStudent {
   newClassId: number | null;
   newClassName: string | null;
   graduated: boolean;
+  dateOfBirth: string | null;
+  gender: string | null;
 }
 
 export interface RolloverMoveResult {
