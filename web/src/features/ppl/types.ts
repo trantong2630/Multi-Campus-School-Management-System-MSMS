@@ -84,6 +84,14 @@ export interface StaffImportResult {
   totalErrors: number;
 }
 
+export interface GuardianImportResult {
+  accepted: boolean;
+  created: number;
+  skipped: SkippedRow[];
+  errors: ImportError[];
+  totalErrors: number;
+}
+
 export interface StudentImportResult {
   accepted: boolean;
   students: number;

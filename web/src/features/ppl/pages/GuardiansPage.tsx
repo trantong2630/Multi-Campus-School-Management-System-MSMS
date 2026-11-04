@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Form, Input, Modal, Select } from 'antd';
 import { message } from '@/shared/lib/antdStatic';
-import { Eye, KeyRound, Pencil, Plus } from 'lucide-react';
+import { Eye, FileDown, KeyRound, Pencil, Plus, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/app/AuthProvider';
 import { accountApi } from '@/features/iam/accountApi';
@@ -14,8 +14,10 @@ import { PageHeader } from '@/shared/components/PageHeader';
 import { PersonCell } from '@/shared/components/PersonCell';
 import { RowActions } from '@/shared/components/RowActions';
 import { StatusBadge } from '@/shared/components/StatusBadge';
+import { blobErrorMessage, downloadFile } from '@/shared/lib/download';
 import { showError } from '@/shared/lib/feedback';
 import { pplApi } from '../api';
+import { GuardianImportModal } from '../components/GuardianImportModal';
 import type { Guardian, GuardianChild } from '../types';
 
 interface FormValues {
@@ -48,6 +50,7 @@ export function GuardiansPage() {
   const [editing, setEditing] = useState<Guardian | 'new' | null>(null);
   const [viewing, setViewing] = useState<Guardian | null>(null);
   const [selected, setSelected] = useState<number[]>([]);
+  const [importOpen, setImportOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [created, setCreated] = useState<BulkCreateResult | null>(null);
@@ -73,6 +76,11 @@ export function GuardiansPage() {
     enabled: viewing !== null,
   });
 
+  const template = async () => {
+    try { await downloadFile('/ppl/guardians/import-template'); }
+    catch (e) { message.error(await blobErrorMessage(e) ?? 'Không tải được file mẫu.'); }
+  };
+
   const save = async (v: FormValues) => {
     if (editing === 'new') await pplApi.guardians.create(v);
     else if (editing) await pplApi.guardians.update(editing.parentId, v);
@@ -85,7 +93,13 @@ export function GuardiansPage() {
       <PageHeader
         title="Phụ huynh"
         description="Danh bạ phụ huynh và các con được liên kết. Số điện thoại bắt buộc, duy nhất và là khóa nhận diện khi import."
-        extra={canWrite && <Button type="primary" icon={<Plus size={16} />} onClick={() => setEditing('new')}>Thêm phụ huynh</Button>}
+        extra={canWrite && (
+          <>
+            <Button icon={<FileDown size={16} />} onClick={template}>Tải file mẫu</Button>
+            <Button icon={<Upload size={16} />} onClick={() => setImportOpen(true)}>Import Excel</Button>
+            <Button type="primary" icon={<Plus size={16} />} onClick={() => setEditing('new')}>Thêm phụ huynh</Button>
+          </>
+        )}
       />
       <FilterBar>
         <Input.Search
@@ -135,6 +149,8 @@ export function GuardiansPage() {
           ]}
         />
       </Card>
+
+      <GuardianImportModal open={importOpen} onClose={() => setImportOpen(false)} />
 
       {selected.length > 0 && (
         <div className="floating-bar">

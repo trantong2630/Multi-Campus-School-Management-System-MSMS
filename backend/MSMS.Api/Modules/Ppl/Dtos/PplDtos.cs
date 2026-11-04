@@ -57,3 +57,9 @@ public record ChangeGuardianRequest(int? ExistingParentId, GuardianRequest? NewG
 
 /// <summary>Chuyển trường (SchoolTransfer) hoặc tốt nghiệp (Graduated) cho một hoặc nhiều học sinh (4.3.19–4.3.20).</summary>
 public record StudentLeaveRequest(List<int> StudentIds, string Reason);
+
+// Import phụ huynh từ Excel (chỉ tạo hồ sơ, số điện thoại là khóa nhận diện)
+public record GuardianImportSkipped(int Row, string FullName, string Reason, string? PersonCode = null);
+
+public record GuardianImportResult(bool Accepted, int Created, IReadOnlyList<GuardianImportSkipped> Skipped,
+    IReadOnlyList<ImportError> Errors, int TotalErrors);
