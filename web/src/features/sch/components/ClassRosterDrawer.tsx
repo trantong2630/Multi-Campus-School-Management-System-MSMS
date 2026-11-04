@@ -125,7 +125,7 @@ export function ClassRosterDrawer({ cls, canWrite, onClose }: Props) {
   return (
     <>
       <Modal
-        open={cls !== null} width={720} onCancel={onClose} destroyOnHidden mask={{ closable: false }}
+        open={cls !== null} width={880} onCancel={onClose} destroyOnHidden mask={{ closable: false }}
         title={cls ? `Lớp ${cls.name} · ${cls.campusName} · Năm học ${cls.academicYearName}` : ''}
         footer={<Button onClick={onClose}>Đóng</Button>}
       >
@@ -154,12 +154,12 @@ export function ClassRosterDrawer({ cls, canWrite, onClose }: Props) {
             getCheckboxProps: (r) => ({ disabled: r.endDate !== null }),
           } : undefined}
           columns={[
-            { title: 'Học sinh', dataIndex: 'fullName', render: (v: string, r: RosterItem) => <PersonCell name={v} sub={r.personCode} /> },
-            { title: 'Ngày sinh', dataIndex: 'dateOfBirth', width: 112, className: 'tabular', render: (v: string | null) => formatDate(v) },
-            { title: 'Giới tính', dataIndex: 'gender', width: 96, render: (v: string | null) => genderText(v) },
-            { title: 'Bắt đầu', dataIndex: 'startDate', width: 132, className: 'tabular', render: (v: string) => formatDate(v) },
+            { title: 'Học sinh', dataIndex: 'fullName', width: 240, render: (v: string, r: RosterItem) => <PersonCell name={v} sub={r.personCode} /> },
+            { title: 'Ngày sinh', dataIndex: 'dateOfBirth', width: 104, className: 'tabular', render: (v: string | null) => formatDate(v) },
+            { title: 'Giới tính', dataIndex: 'gender', width: 84, render: (v: string | null) => genderText(v) },
+            { title: 'Bắt đầu', dataIndex: 'startDate', width: 112, className: 'tabular', render: (v: string) => formatDate(v) },
             {
-              title: 'Kết thúc', dataIndex: 'endDate', width: 132, className: 'tabular',
+              title: 'Kết thúc', dataIndex: 'endDate', width: 124, className: 'tabular',
               render: (v: string | null, r: RosterItem) => v
                 ? (
                   <>
@@ -170,7 +170,7 @@ export function ClassRosterDrawer({ cls, canWrite, onClose }: Props) {
                 : <span className="muted">Hết năm học</span>,
             },
             ...(canWrite ? [{
-              title: 'Thao tác', key: 'actions', width: 96, align: 'center' as const,
+              title: 'Thao tác', key: 'actions', width: 84, align: 'center' as const,
               render: (_: unknown, r: RosterItem) => (
                 <RowActions actions={[
                   { key: 'transfer', label: 'Chuyển lớp', icon: <ArrowRightLeft size={16} />, hidden: r.endDate !== null, onClick: () => setTransferring([r]) },
