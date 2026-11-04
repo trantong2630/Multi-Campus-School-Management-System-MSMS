@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, Card, DatePicker, Drawer, Form, Input, Select, Switch, Tabs } from 'antd';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import { CircleOff, FileDown, History, Plus, Search, UserPlus, UserRoundCog } from 'lucide-react';
+import { CircleOff, FileDown, Plus, Search, UserPlus, UserRoundCog } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/app/AuthProvider';
 import { useCurrentYear, useYears } from '@/features/sch/hooks/useCatalogs';
@@ -39,6 +39,14 @@ const STATUS_OPTIONS: { value: RespStatus; label: string }[] = [
   { value: 'Ended', label: 'Đã kết thúc' },
 ];
 const dash = <span className="muted">—</span>;
+
+/** Trạng thái một dòng trong lịch bàn giao: đã kết thúc từ hôm nay trở về trước thì quyền đã mất (BR-09). */
+function handoverStatus(r: ResponsibilityHistoryRow): 'Current' | 'Upcoming' | 'Ended' {
+  const today = dayjs().startOf('day');
+  if (dayjs(r.startDate).isAfter(today)) return 'Upcoming';
+  if (r.endDate && !dayjs(r.endDate).isAfter(today)) return 'Ended';
+  return 'Current';
+}
 
 function useResponsibilities(kind: ResponsibilityKind, yearId?: number) {
   return useQuery({
@@ -212,11 +220,23 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
               },
             },
             {
-              title: 'Thời gian hiệu lực', key: 'period', width: 190, className: 'tabular',
-              render: (_: unknown, r: ResponsibilityRow) => r.staffId
-                ? `${formatDate(r.startDate)} – ${r.endDate ? formatDate(r.endDate) : 'hiện tại'}`
-                : r.nextStaffName ? `Từ ${formatDate(r.nextStartDate)}`
-                  : r.endedStaffName ? `Đến ${formatDate(r.endedDate)}` : dash,
+              title: 'Thời gian hiệu lực', key: 'period', width: 210,
+              render: (_: unknown, r: ResponsibilityRow) => {
+                const range = r.staffId
+                  ? `${formatDate(r.startDate)} – ${r.endDate ? formatDate(r.endDate) : 'hiện tại'}`
+                  : r.nextStaffName ? `Từ ${formatDate(r.nextStartDate)}`
+                    : r.endedStaffName ? `Đến ${formatDate(r.endedDate)}` : null;
+                if (!range) return dash;
+                // Lịch bàn giao: ai giữ trách nhiệm theo thời gian, kể cả người đã được hẹn (đúng ngay dưới khoảng hiệu lực).
+                return (
+                  <div className="stack-cell">
+                    <span className="tabular">{range}</span>
+                    <Button type="link" size="small" style={{ padding: 0, height: 'auto', fontWeight: 600 }} onClick={() => setHistory(r)}>
+                      Xem lịch bàn giao →
+                    </Button>
+                  </div>
+                );
+              },
             },
             { title: 'Trạng thái', key: 'status', width: 150, render: (_: unknown, r: ResponsibilityRow) => <StatusBadge domain="responsibility" value={statusOf(r)} /> },
             {
@@ -229,7 +249,7 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
                     onClick: () => setAssigning(r),
                   },
                   { key: 'end', label: 'Kết thúc trách nhiệm', icon: <CircleOff size={16} />, danger: true, hidden: !canWrite || !r.staffId, onClick: () => setEnding(r) },
-                  { key: 'history', label: 'Lịch sử', icon: <History size={16} />, onClick: () => setHistory(r) },
+
                 ]} />
               ),
             },
@@ -297,15 +317,15 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
         </Form.Item>
       </FormModal>
 
-      <Drawer open={history !== null} onClose={() => setHistory(null)} size={560} title={`Lịch sử — ${history?.targetName ?? ''}`} closable>
+      <Drawer open={history !== null} onClose={() => setHistory(null)} size={560} title={`Lịch bàn giao — ${history?.targetName ?? ''}`} closable>
         <DataTable<ResponsibilityHistoryRow>
           rowKey="recordId" loading={historyData.isLoading} dataSource={historyData.data} pagination={false}
           emptyText="Chưa có ai từng đảm nhiệm."
           columns={[
             { title: 'Người đảm nhiệm', dataIndex: 'staffName' },
-            { title: 'Từ ngày', dataIndex: 'startDate', width: 120, className: 'tabular', render: (v: string) => formatDate(v) },
-            { title: 'Đến ngày', dataIndex: 'endDate', width: 120, className: 'tabular', render: (v: string | null) => (v ? formatDate(v) : 'Đang đảm nhiệm') },
-            { title: '', dataIndex: 'isEffective', width: 140, align: 'center', render: (v: boolean) => (v ? <StatusBadge domain="catalog" value="Active" /> : null) },
+            { title: 'Từ ngày', dataIndex: 'startDate', width: 110, className: 'tabular', render: (v: string) => formatDate(v) },
+            { title: 'Đến ngày', dataIndex: 'endDate', width: 110, className: 'tabular', render: (v: string | null) => (v ? formatDate(v) : 'Hiện tại') },
+            { title: 'Trạng thái', key: 'status', width: 150, render: (_: unknown, r: ResponsibilityHistoryRow) => <StatusBadge domain="handover" value={handoverStatus(r)} /> },
           ]}
         />
       </Drawer>
