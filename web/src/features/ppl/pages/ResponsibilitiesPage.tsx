@@ -282,6 +282,7 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
       </Card>
 
       <FormModal<AssignValues>
+        variant="drawer" width={640}
         open={assigning !== null}
         title={assigning === 'new'
           ? `Phân công ${meta.holder.toLowerCase()}`
@@ -289,41 +290,43 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
         form={assignForm} onClose={() => setAssigning(null)} onSubmit={assign}
         initialValues={{ startDate: dayjs() }}
       >
-        {assigning === 'new' && (
-          <Form.Item label={meta.target} name="targetId" rules={[{ required: true, message: `Chọn ${meta.target.toLowerCase()}.` }]}>
+        <div className="form-grid">
+          {assigning === 'new' && (
+            <Form.Item label={meta.target} name="targetId" style={{ gridColumn: '1 / -1' }} rules={[{ required: true, message: `Chọn ${meta.target.toLowerCase()}.` }]}>
+              <Select
+                showSearch optionFilterProp="label" placeholder={`Chọn ${meta.target.toLowerCase()}`} onChange={setPicked}
+                options={rows?.map((r) => ({ value: r.targetId, label: r.targetGroup ? `${r.targetName} · ${r.targetGroup}` : r.targetName }))}
+              />
+            </Form.Item>
+          )}
+          {target?.staffId && (
+            <InlineAlert
+              type="info" style={{ gridColumn: '1 / -1' }}
+              title={`Hiện do ${target.staffName} đảm nhiệm từ ${formatDate(target.startDate)}.`}
+              description="Người cũ kết thúc vào ngày liền trước ngày hiệu lực của người mới; dữ liệu đã phát sinh không bị đụng tới."
+            />
+          )}
+          <Form.Item
+            label={`Cán bộ (tài khoản loại ${meta.accountLabel})`} name="staffId"
+            rules={[{ required: true, message: `Chọn cán bộ có tài khoản loại ${meta.accountLabel}.` }]}
+            extra={staff.data?.items.length === 0 ? `Chưa có cán bộ nào có tài khoản loại ${meta.accountLabel}. Tạo tài khoản ở Hồ sơ → Cán bộ trước.` : undefined}
+          >
             <Select
-              showSearch optionFilterProp="label" placeholder={`Chọn ${meta.target.toLowerCase()}`} onChange={setPicked}
-              options={rows?.map((r) => ({ value: r.targetId, label: r.targetGroup ? `${r.targetName} · ${r.targetGroup}` : r.targetName }))}
+              showSearch optionFilterProp="label" placeholder="Chọn cán bộ"
+              options={staff.data?.items.filter((s) => s.isActive && s.staffId !== target?.staffId)
+                .map((s) => ({
+                  value: s.staffId,
+                  label: ledCampus.has(s.staffId)
+                    ? `${s.fullName} (${s.personCode}) — ${ledCampus.get(s.staffId)}`
+                    : `${s.fullName} (${s.personCode})`,
+                  disabled: ledCampus.has(s.staffId),
+                }))}
             />
           </Form.Item>
-        )}
-        {target?.staffId && (
-          <InlineAlert
-            type="info"
-            title={`Hiện do ${target.staffName} đảm nhiệm từ ${formatDate(target.startDate)}.`}
-            description="Người cũ kết thúc vào ngày liền trước ngày hiệu lực của người mới; dữ liệu đã phát sinh không bị đụng tới."
-          />
-        )}
-        <Form.Item
-          label={`Cán bộ (tài khoản loại ${meta.accountLabel})`} name="staffId"
-          rules={[{ required: true, message: `Chọn cán bộ có tài khoản loại ${meta.accountLabel}.` }]}
-          extra={staff.data?.items.length === 0 ? `Chưa có cán bộ nào có tài khoản loại ${meta.accountLabel}. Tạo tài khoản ở Hồ sơ → Cán bộ trước.` : undefined}
-        >
-          <Select
-            showSearch optionFilterProp="label" placeholder="Chọn cán bộ"
-            options={staff.data?.items.filter((s) => s.isActive && s.staffId !== target?.staffId)
-              .map((s) => ({
-                value: s.staffId,
-                label: ledCampus.has(s.staffId)
-                  ? `${s.fullName} (${s.personCode}) — ${ledCampus.get(s.staffId)}`
-                  : `${s.fullName} (${s.personCode})`,
-                disabled: ledCampus.has(s.staffId),
-              }))}
-          />
-        </Form.Item>
-        <Form.Item label="Ngày hiệu lực" name="startDate" rules={[{ required: true, message: 'Chọn ngày bắt đầu hiệu lực.' }]}>
-          <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
-        </Form.Item>
+          <Form.Item label="Ngày hiệu lực" name="startDate" rules={[{ required: true, message: 'Chọn ngày bắt đầu hiệu lực.' }]}>
+            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+          </Form.Item>
+        </div>
       </FormModal>
 
       <FormModal<EndValues>
