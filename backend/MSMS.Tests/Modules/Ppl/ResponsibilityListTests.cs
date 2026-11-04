@@ -60,4 +60,24 @@ public class ResponsibilityListTests
         Assert.Equal("Đã phân công", ws.Cell(2, 7).GetString());   // PH1 có người
         Assert.Equal("Chưa phân công", ws.Cell(3, 7).GetString()); // PH2 trống
     }
+
+    [Theory]
+    [InlineData(ResponsibilityKinds.Department, 1)]
+    [InlineData(ResponsibilityKinds.Homeroom, 1)]
+    public async Task Department_and_homeroom_rows_report_the_same_handover_fields_as_campus(string kind, int targetId)
+    {
+        var (f, svc) = Setup();
+        f.AddAccount(20, AccountTypes.Teacher);
+        f.AddAccount(21, AccountTypes.Teacher);
+        await svc.AssignAsync(new(kind, targetId, 20, Today.AddDays(-20)));
+        await svc.AssignAsync(new(kind, targetId, 21, Today.AddDays(2)));   // người cũ kết thúc ngày liền trước
+
+        var row = (await svc.ListCurrentAsync(kind, null)).Single(r => r.TargetId == targetId);
+
+        Assert.Equal(20, row.StaffId);                                 // hôm nay người cũ vẫn đang giữ
+        Assert.NotNull(row.StaffCode);
+        Assert.Equal(Today.AddDays(1), row.EndDate);                   // kết thúc ngày liền trước ngày bắt đầu của người mới
+        Assert.Equal(21, row.NextStaffId);
+        Assert.Equal(Today.AddDays(2), row.NextStartDate);
+    }
 }
