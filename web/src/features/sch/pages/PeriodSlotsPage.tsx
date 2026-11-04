@@ -84,21 +84,24 @@ export function PeriodSlotsPage() {
       </Card>
 
       <FormModal<FormValues>
+        variant="drawer" width={640}
         open={editing !== null} title={editing === 'new' ? 'Thêm khung giờ tiết' : 'Sửa giờ của khung tiết'}
         form={form} onClose={() => setEditing(null)} onSubmit={save}
         initialValues={editing && editing !== 'new'
           ? { sessionOfDay: editing.sessionOfDay, periodNo: editing.periodNo, times: [toTime(editing.startTime), toTime(editing.endTime)] }
           : { sessionOfDay: 'Morning' }}
       >
-        <Form.Item label="Buổi" name="sessionOfDay" rules={[{ required: true }]}>
-          <Select disabled={editing !== 'new'} options={[{ value: 'Morning', label: 'Sáng' }, { value: 'Afternoon', label: 'Chiều' }]} />
-        </Form.Item>
-        <Form.Item label="Tiết" name="periodNo" rules={[{ required: true, message: 'Nhập số tiết (từ 1).' }]}>
-          <InputNumber min={1} max={20} disabled={editing !== 'new'} style={{ width: '100%' }} />
-        </Form.Item>
-        <Form.Item label="Giờ bắt đầu – kết thúc" name="times" rules={[{ required: true, message: 'Chọn giờ bắt đầu và giờ kết thúc.' }]}>
-          <TimePicker.RangePicker format="HH:mm" minuteStep={5} needConfirm={false} style={{ width: '100%' }} />
-        </Form.Item>
+        <div className="form-grid">
+          <Form.Item label="Buổi" name="sessionOfDay" rules={[{ required: true }]}>
+            <Select disabled={editing !== 'new'} options={[{ value: 'Morning', label: 'Sáng' }, { value: 'Afternoon', label: 'Chiều' }]} />
+          </Form.Item>
+          <Form.Item label="Tiết" name="periodNo" rules={[{ required: true, message: 'Nhập số tiết (từ 1).' }]}>
+            <InputNumber min={1} max={20} disabled={editing !== 'new'} style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item label="Giờ bắt đầu – kết thúc" name="times" style={{ gridColumn: '1 / -1' }} rules={[{ required: true, message: 'Chọn giờ bắt đầu và giờ kết thúc.' }]}>
+            <TimePicker.RangePicker format="HH:mm" minuteStep={5} needConfirm={false} style={{ width: '100%' }} />
+          </Form.Item>
+        </div>
       </FormModal>
     </>
   );
