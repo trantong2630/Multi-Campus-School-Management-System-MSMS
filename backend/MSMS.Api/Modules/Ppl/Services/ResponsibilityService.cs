@@ -132,6 +132,7 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
         {
             case ResponsibilityKinds.Campus:
                 if (!await db.Campus.AnyAsync(c => c.CampusId == r.TargetId && c.IsActive)) throw ApiException.BadRequest("Phân hiệu không tồn tại hoặc đã ngừng hoạt động.");
+                await EnsureSingleCampusAsync(r);
                 await ReplaceAsync(db.CampusLeadership, x => x.CampusId == r.TargetId, r, () => new CampusLeadership { CampusId = r.TargetId });
                 break;
             case ResponsibilityKinds.Department:
@@ -187,6 +188,23 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
         record.EndDate = null;
         record.AssignedByPersonId = user.PersonId;
         set.Add(record);
+    }
+
+    /// <summary>
+    /// Mỗi Hiệu phó chỉ phụ trách một phân hiệu tại một thời điểm: chặn nếu người này đang giữ, hoặc đã được hẹn giữ, phân hiệu khác
+    /// trong khoảng bản mới bắt đầu. Bản đã kết thúc từ ngày bắt đầu của bản mới trở về trước không tính (BR-09).
+    /// </summary>
+    private async Task EnsureSingleCampusAsync(ResponsibilityAssignRequest r)
+    {
+        var other = await db.CampusLeadership.AsNoTracking()
+            .Where(x => x.StaffId == r.StaffId && x.CampusId != r.TargetId && (x.EndDate == null || x.EndDate > r.StartDate))
+            .OrderBy(x => x.StartDate)
+            .Select(x => new { Campus = x.Campus.Name, Staff = x.Staff.Staff.FullName, x.StartDate })
+            .FirstOrDefaultAsync();
+        if (other is not null)
+            throw ApiException.BadRequest(
+                $"{other.Staff} đang phụ trách {other.Campus} (từ {other.StartDate:dd/MM/yyyy}). Mỗi Hiệu phó chỉ phụ trách một phân hiệu: " +
+                "kết thúc trách nhiệm đó trước khi gán sang phân hiệu khác.");
     }
 
     /// <summary>Phụ trách phân hiệu chỉ gán cho Vice Principal; tổ trưởng và chủ nhiệm chỉ gán cho Teacher (BR-09).</summary>

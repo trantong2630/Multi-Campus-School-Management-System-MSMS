@@ -75,6 +75,10 @@ function KindTable({ kind, canWrite }: { kind: ResponsibilityKind; canWrite: boo
 
   const refresh = () => qc.invalidateQueries({ queryKey: ['ppl', 'resp'] });
 
+  // Mỗi Hiệu phó chỉ phụ trách một phân hiệu: làm mờ người đang giữ phân hiệu khác (server vẫn kiểm lại, kể cả người được hẹn).
+  const ledCampus = new Map<number, string>();
+  if (kind === 'campus') rows.data?.forEach((r) => { if (r.staffId && r.targetId !== assigning?.targetId) ledCampus.set(r.staffId, r.targetName); });
+
   // 4.3.34: lớp của năm hiện hành chưa có chủ nhiệm đang hiệu lực — đơn xin nghỉ của lớp đó nằm chờ tới khi có chủ nhiệm.
   const missing = kind === 'homeroom' ? (rows.data?.filter((r) => !r.staffId && !r.nextStaffName) ?? []) : [];
   const shown = onlyMissing ? missing : rows.data;
@@ -156,7 +160,13 @@ function KindTable({ kind, canWrite }: { kind: ResponsibilityKind; canWrite: boo
           <Select
             showSearch optionFilterProp="label" placeholder="Chọn cán bộ"
             options={staff.data?.items.filter((s) => s.isActive && s.staffId !== assigning?.staffId)
-              .map((s) => ({ value: s.staffId, label: `${s.fullName} (${s.personCode})` }))}
+              .map((s) => ({
+                value: s.staffId,
+                label: ledCampus.has(s.staffId)
+                  ? `${s.fullName} (${s.personCode}) — đang phụ trách ${ledCampus.get(s.staffId)}`
+                  : `${s.fullName} (${s.personCode})`,
+                disabled: ledCampus.has(s.staffId),
+              }))}
           />
         </Form.Item>
         <Form.Item label="Ngày hiệu lực" name="startDate" rules={[{ required: true, message: 'Chọn ngày bắt đầu hiệu lực.' }]}>
