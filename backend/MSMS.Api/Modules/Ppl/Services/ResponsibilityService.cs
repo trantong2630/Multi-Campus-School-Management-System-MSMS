@@ -39,6 +39,12 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
                 var ended = (await db.CampusLeadership.AsNoTracking().Where(x => x.EndDate != null && x.EndDate <= today)
                     .Select(x => new { x.CampusId, Name = x.Staff.Staff.FullName, x.EndDate }).ToListAsync())
                     .GroupBy(x => x.CampusId).ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.EndDate).First());
+                // Hiệu trưởng có phạm vi toàn trường nên không được gán phụ trách phân hiệu; chỉ hiển thị thông tin phân hiệu chính của họ.
+                var principals = (await db.StaffProfile.AsNoTracking()
+                    .Where(s => s.IsActive && s.Staff.Account != null && s.Staff.Account.AccountType == AccountTypes.Principal)
+                    .Select(s => new { s.PrimaryCampusId, s.Staff.FullName }).ToListAsync())
+                    .GroupBy(x => x.PrimaryCampusId)
+                    .ToDictionary(g => g.Key, g => string.Join(", ", g.Select(x => x.FullName).OrderBy(n => n)));
                 var campusesQuery = db.Campus.AsNoTracking().Where(c => c.IsActive);
                 if (user.AccountType == AccountTypes.VicePrincipal)
                 {
@@ -52,7 +58,7 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
                     var u = upcoming.FirstOrDefault(x => x.CampusId == c.CampusId);
                     var e = ended.GetValueOrDefault(c.CampusId);
                     return new ResponsibilityRow(kind, c.CampusId, c.Name, null, h?.Id, h?.StaffId, h?.Name, h?.StartDate, u?.Name, u?.StartDate,
-                        h?.Code, h?.EndDate, e?.Name, e?.EndDate, c.Code, u?.StaffId);
+                        h?.Code, h?.EndDate, e?.Name, e?.EndDate, c.Code, u?.StaffId, principals.GetValueOrDefault(c.CampusId));
                 }).ToList();
             }
             case ResponsibilityKinds.Department:

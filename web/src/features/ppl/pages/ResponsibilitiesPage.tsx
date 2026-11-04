@@ -226,7 +226,12 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
           emptyText={rows?.length ? 'Không có kết quả khớp bộ lọc.' : kind === 'homeroom' ? 'Chưa có lớp nào trong năm học này.' : `Chưa có ${meta.target.toLowerCase()} nào.`}
           columns={[
             ...(kind === 'campus' ? [{ title: 'Mã', dataIndex: 'targetCode', width: 110, className: 'tabular', render: (v: string | null) => v ?? dash }] : []),
-            { title: meta.target, dataIndex: 'targetName', width: 200, render: (v: string) => <strong>{v}</strong> },
+            {
+              title: meta.target, dataIndex: 'targetName', width: 230,
+              render: (v: string, r: ResponsibilityRow) => r.principalNames
+                ? <div className="stack-cell"><strong>{v}</strong><span className="muted">Hiệu trưởng: {r.principalNames} (phân hiệu chính)</span></div>
+                : <strong>{v}</strong>,
+            },
             ...(kind === 'homeroom' ? [{ title: 'Phân hiệu', dataIndex: 'targetGroup', width: 150 }] : []),
             {
               title: meta.holder, key: 'holder', width: 260,

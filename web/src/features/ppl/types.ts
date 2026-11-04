@@ -114,6 +114,8 @@ export interface ResponsibilityRow {
   endedDate: string | null;
   targetCode: string | null;
   nextStaffId: number | null;
+  /** Chỉ tab phân hiệu: Hiệu trưởng có phân hiệu chính là đích này (thông tin hiển thị, không phải trách nhiệm được gán). */
+  principalNames: string | null;
 }
 
 export interface ResponsibilityHistoryRow {

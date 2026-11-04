@@ -24,7 +24,7 @@ public record ResponsibilityRow(
     int? RecordId, int? StaffId, string? StaffName, DateOnly? StartDate,
     string? NextStaffName = null, DateOnly? NextStartDate = null,
     string? StaffCode = null, DateOnly? EndDate = null, string? EndedStaffName = null, DateOnly? EndedDate = null, string? TargetCode = null,
-    int? NextStaffId = null);
+    int? NextStaffId = null, string? PrincipalNames = null);
 
 public record ResponsibilityAssignRequest(string Kind, int TargetId, int StaffId, DateOnly StartDate);
 public record ResponsibilityEndRequest(string Kind, int RecordId, DateOnly EndDate);
