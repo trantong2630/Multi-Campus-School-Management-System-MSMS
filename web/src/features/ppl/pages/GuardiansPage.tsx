@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, Card, Form, Input, Modal } from 'antd';
+import { Button, Card, Form, Input, Modal, Select } from 'antd';
 import { message } from '@/shared/lib/antdStatic';
 import { Eye, KeyRound, Pencil, Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -23,9 +23,11 @@ interface FormValues {
   phoneNumber: string;
   email?: string;
   address?: string;
+  gender?: string;
 }
 
 const PAGE_SIZE = 20;
+const GENDERS = [{ value: 'Male', label: 'Nam' }, { value: 'Female', label: 'Nữ' }, { value: 'Other', label: 'Khác' }];
 const dash = <span className="muted">—</span>;
 
 /** PPL-03: danh bạ phụ huynh (4.3.22–4.3.25). Số điện thoại là khóa nhận diện. Chỉ School Admin tạo và sửa. */
@@ -105,6 +107,7 @@ export function GuardiansPage() {
           columns={[
             { title: 'Mã hồ sơ', dataIndex: 'personCode', width: 110, className: 'tabular' },
             { title: 'Họ và tên', dataIndex: 'fullName', width: 210, render: (v: string) => <PersonCell name={v} /> },
+            { title: 'Giới tính', dataIndex: 'gender', width: 90, render: (v: string | null) => GENDERS.find((x) => x.value === v)?.label ?? '—' },
             { title: 'Số điện thoại', dataIndex: 'phoneNumber', width: 130, className: 'tabular', render: (v: string | null) => v ?? dash },
             { title: 'Email', dataIndex: 'email', width: 180, render: (v: string | null) => v ?? dash },
             {
@@ -156,6 +159,7 @@ export function GuardiansPage() {
             rules={[{ required: true, message: 'Nhập số điện thoại.' }, { pattern: /^[0-9+\s.-]{9,20}$/, message: 'Số điện thoại chưa đúng định dạng.' }]}>
             <Input maxLength={20} inputMode="tel" />
           </Form.Item>
+          <Form.Item label="Giới tính" name="gender"><Select allowClear options={GENDERS} /></Form.Item>
           <Form.Item label="Email" name="email" rules={[{ type: 'email', message: 'Email chưa đúng định dạng.' }]}>
             <Input maxLength={150} />
           </Form.Item>

@@ -45,9 +45,9 @@ public record StudentRequest(string FullName, DateOnly? DateOfBirth, string? Nat
 // PPL-03 Danh bạ phụ huynh (4.3.22–4.3.26)
 public record GuardianDto(
     int ParentId, string PersonCode, string FullName, string? PhoneNumber, string? Email, string? Address,
-    int ChildCount, string? ChildrenSummary, int? AccountId, string? AccountStatus);
+    int ChildCount, string? ChildrenSummary, int? AccountId, string? AccountStatus, string? Gender = null);
 
-public record GuardianRequest(string FullName, string? PhoneNumber, string? Email, string? Address);
+public record GuardianRequest(string FullName, string? PhoneNumber, string? Email, string? Address, string? Gender = null);
 
 public record GuardianChildDto(
     int StudentId, string PersonCode, string FullName, string? ClassName, string? CampusName, string StudentStatus, string? Relationship, bool IsPrimary);

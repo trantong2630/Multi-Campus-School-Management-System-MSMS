@@ -49,6 +49,7 @@ export interface Guardian {
   address: string | null;
   childCount: number;
   childrenSummary: string | null;
+  gender: string | null;
   accountId: number | null;
   accountStatus: string | null;
 }
