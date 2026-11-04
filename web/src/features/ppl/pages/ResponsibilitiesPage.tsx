@@ -154,9 +154,9 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
     && (!term || [r.targetName, r.targetCode, r.targetGroup, r.staffName, r.staffCode, r.nextStaffName, r.endedStaffName]
       .some((x) => x?.toLowerCase().includes(term))));
 
-  // Mỗi Hiệu phó chỉ phụ trách một phân hiệu: làm mờ người đang giữ phân hiệu khác (server vẫn kiểm lại, kể cả người được hẹn).
+  // Mỗi Hiệu phó một phân hiệu, mỗi giáo viên một lớp chủ nhiệm (cùng năm học): làm mờ người đang giữ đích khác (server vẫn kiểm lại, kể cả người được hẹn).
   const ledCampus = new Map<number, string>();
-  if (kind === 'campus') rows?.forEach((r) => { if (r.staffId && r.targetId !== target?.targetId) ledCampus.set(r.staffId, r.targetName); });
+  if (kind === 'campus' || kind === 'homeroom') rows?.forEach((r) => { if (r.staffId && r.targetId !== target?.targetId) ledCampus.set(r.staffId, r.targetName); });
 
   return (
     <>
@@ -271,7 +271,7 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
               .map((s) => ({
                 value: s.staffId,
                 label: ledCampus.has(s.staffId)
-                  ? `${s.fullName} (${s.personCode}) — đang phụ trách ${ledCampus.get(s.staffId)}`
+                  ? `${s.fullName} (${s.personCode}) — đang ${kind === 'campus' ? 'phụ trách' : 'chủ nhiệm'} ${ledCampus.get(s.staffId)}`
                   : `${s.fullName} (${s.personCode})`,
                 disabled: ledCampus.has(s.staffId),
               }))}

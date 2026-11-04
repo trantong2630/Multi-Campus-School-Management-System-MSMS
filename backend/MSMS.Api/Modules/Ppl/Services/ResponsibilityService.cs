@@ -198,6 +198,7 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
                 break;
             case ResponsibilityKinds.Homeroom:
                 if (!await db.Class.AnyAsync(c => c.ClassId == r.TargetId && c.IsActive)) throw ApiException.BadRequest("Lớp không tồn tại hoặc đã ngừng hoạt động.");
+                await EnsureSingleHomeroomAsync(r);
                 await ReplaceAsync(db.HomeroomAssignment, x => x.ClassId == r.TargetId, r, () => new HomeroomAssignment { ClassId = r.TargetId });
                 break;
             default:
@@ -262,6 +263,25 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
             throw ApiException.BadRequest(
                 $"{other.Staff} đang phụ trách {other.Campus} (từ {other.StartDate:dd/MM/yyyy}). Mỗi Hiệu phó chỉ phụ trách một phân hiệu: " +
                 "kết thúc trách nhiệm đó trước khi gán sang phân hiệu khác.");
+    }
+
+    /// <summary>
+    /// Mỗi giáo viên chỉ chủ nhiệm một lớp trong một năm học: chặn nếu người này đang giữ, hoặc đã được hẹn giữ, lớp khác của cùng năm học
+    /// với lớp được gán. Lớp của năm học khác không tính, nên vẫn xếp trước chủ nhiệm cho năm sau (BR-09).
+    /// </summary>
+    private async Task EnsureSingleHomeroomAsync(ResponsibilityAssignRequest r)
+    {
+        var yearId = await db.Class.Where(c => c.ClassId == r.TargetId).Select(c => c.AcademicYearId).FirstAsync();
+        var other = await db.HomeroomAssignment.AsNoTracking()
+            .Where(x => x.StaffId == r.StaffId && x.ClassId != r.TargetId && x.Class.AcademicYearId == yearId
+                        && (x.EndDate == null || x.EndDate > r.StartDate))
+            .OrderBy(x => x.StartDate)
+            .Select(x => new { Class = x.Class.Name, Staff = x.Staff.Staff.FullName, x.StartDate })
+            .FirstOrDefaultAsync();
+        if (other is not null)
+            throw ApiException.BadRequest(
+                $"{other.Staff} đang chủ nhiệm lớp {other.Class} (từ {other.StartDate:dd/MM/yyyy}). Mỗi giáo viên chỉ chủ nhiệm một lớp trong một năm học: " +
+                "kết thúc trách nhiệm đó trước khi gán sang lớp khác.");
     }
 
     /// <summary>Phụ trách phân hiệu chỉ gán cho Vice Principal; tổ trưởng và chủ nhiệm chỉ gán cho Teacher (BR-09).</summary>
