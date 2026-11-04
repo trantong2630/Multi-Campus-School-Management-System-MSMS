@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, Card, DatePicker, Drawer, Form, Input, Select, Switch, Tabs } from 'antd';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import { CircleOff, FileDown, Plus, Search, UserPlus, UserRoundCog } from 'lucide-react';
+import { CircleOff, FileDown, History, Plus, Search, UserPlus, UserRoundCog } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/app/AuthProvider';
 import { useCurrentYear, useYears } from '@/features/sch/hooks/useCatalogs';
@@ -18,15 +18,16 @@ import { message } from '@/shared/lib/antdStatic';
 import { blobErrorMessage, downloadFile } from '@/shared/lib/download';
 import { formatDate, toDateString } from '@/shared/lib/format';
 import { pplApi } from '../api';
+import { HandoverPopover, hasHandover } from '../components/HandoverPopover';
 import type { ResponsibilityHistoryRow, ResponsibilityKind, ResponsibilityRow } from '../types';
 
 interface AssignValues { targetId?: number; staffId: number; startDate: Dayjs }
 interface EndValues { endDate: Dayjs }
 
-const KINDS: { key: ResponsibilityKind; label: string; target: string; holder: string; accountType: string; accountLabel: string }[] = [
-  { key: 'campus', label: 'Phụ trách phân hiệu', target: 'Phân hiệu', holder: 'Hiệu phó phụ trách', accountType: 'VicePrincipal', accountLabel: 'Hiệu phó' },
-  { key: 'department', label: 'Tổ trưởng', target: 'Tổ chuyên môn', holder: 'Tổ trưởng', accountType: 'Teacher', accountLabel: 'Giáo viên' },
-  { key: 'homeroom', label: 'Chủ nhiệm', target: 'Lớp', holder: 'Chủ nhiệm', accountType: 'Teacher', accountLabel: 'Giáo viên' },
+const KINDS: { key: ResponsibilityKind; label: string; target: string; holder: string; verb: string; accountType: string; accountLabel: string }[] = [
+  { key: 'campus', label: 'Phụ trách phân hiệu', target: 'Phân hiệu', holder: 'Hiệu phó phụ trách', verb: 'Phụ trách', accountType: 'VicePrincipal', accountLabel: 'Hiệu phó' },
+  { key: 'department', label: 'Tổ trưởng', target: 'Tổ chuyên môn', holder: 'Tổ trưởng', verb: 'Làm tổ trưởng', accountType: 'Teacher', accountLabel: 'Giáo viên' },
+  { key: 'homeroom', label: 'Chủ nhiệm', target: 'Lớp', holder: 'Chủ nhiệm', verb: 'Chủ nhiệm', accountType: 'Teacher', accountLabel: 'Giáo viên' },
 ];
 
 type RespStatus = 'Assigned' | 'Upcoming' | 'Unassigned' | 'Ended';
@@ -227,13 +228,11 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
                   : r.nextStaffName ? `Từ ${formatDate(r.nextStartDate)}`
                     : r.endedStaffName ? `Đến ${formatDate(r.endedDate)}` : null;
                 if (!range) return dash;
-                // Lịch bàn giao: ai giữ trách nhiệm theo thời gian, kể cả người đã được hẹn (đúng ngay dưới khoảng hiệu lực).
+                // Chỉ khi đích sắp đổi người mới có "Xem lịch bàn giao"; lịch sử đầy đủ mở từ cột Thao tác hoặc "Xem chi tiết".
                 return (
                   <div className="stack-cell">
                     <span className="tabular">{range}</span>
-                    <Button type="link" size="small" style={{ padding: 0, height: 'auto', fontWeight: 600 }} onClick={() => setHistory(r)}>
-                      Xem lịch bàn giao →
-                    </Button>
+                    {hasHandover(r) && <HandoverPopover row={r} verb={meta.verb} onDetail={() => setHistory(r)} />}
                   </div>
                 );
               },
@@ -249,6 +248,7 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
                     onClick: () => setAssigning(r),
                   },
                   { key: 'end', label: 'Kết thúc trách nhiệm', icon: <CircleOff size={16} />, danger: true, hidden: !canWrite || !r.staffId, onClick: () => setEnding(r) },
+                  { key: 'history', label: 'Lịch sử', icon: <History size={16} />, onClick: () => setHistory(r) },
 
                 ]} />
               ),
@@ -317,7 +317,7 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
         </Form.Item>
       </FormModal>
 
-      <Drawer open={history !== null} onClose={() => setHistory(null)} size={560} title={`Lịch bàn giao — ${history?.targetName ?? ''}`} closable>
+      <Drawer open={history !== null} onClose={() => setHistory(null)} size={560} title={`Lịch sử — ${history?.targetName ?? ''}`} closable>
         <DataTable<ResponsibilityHistoryRow>
           rowKey="recordId" loading={historyData.isLoading} dataSource={historyData.data} pagination={false}
           emptyText="Chưa có ai từng đảm nhiệm."
