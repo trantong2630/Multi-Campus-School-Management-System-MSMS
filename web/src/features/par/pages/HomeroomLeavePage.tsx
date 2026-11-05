@@ -21,6 +21,8 @@ const SESSION_OF_DAY_LABEL: Record<string, string> = {
 
 const ellipsisStyle: CSSProperties = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
 
+const PAGE_SIZE = 10;
+
 interface RejectValues {
   decisionNote: string;
 }
@@ -40,10 +42,12 @@ export function HomeroomLeavePage() {
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [detail, setDetail] = useState<HomeroomLeaveItem | null>(null);
 
-  // Get homeroom leave requests
-  const { data: leaves = [], isLoading } = useQuery({
-    queryKey: ['par', 'leave', 'homeroom'],
-    queryFn: () => parApi.leave.getHomeroomLeaves(),
+  // Get homeroom leave requests (phân trang phía server)
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useQuery({
+    queryKey: ['par', 'leave', 'homeroom', page],
+    queryFn: () => parApi.leave.getHomeroomLeaves({ page, pageSize: PAGE_SIZE }),
+    placeholderData: (prev) => prev,
   });
 
   // Approve leave request mutation
@@ -138,7 +142,8 @@ export function HomeroomLeavePage() {
           tableLayout="fixed"
           scroll={{ x: 1130 }}
           loading={isLoading}
-          dataSource={leaves}
+          dataSource={data?.items}
+          pagination={{ current: page, pageSize: PAGE_SIZE, total: data?.total, onChange: setPage }}
           emptyText="Lớp chủ nhiệm hiện chưa có đơn xin nghỉ nào."
           columns={[
             {

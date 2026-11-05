@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MSMS.Api.Common.Auth;
+using MSMS.Api.Common.Errors;
 using MSMS.Api.Data.Entities;
 using MSMS.Api.Modules.Par.Dtos;
 using MSMS.Api.Modules.Par.Services;
@@ -17,7 +18,8 @@ public class LeaveRequestsController(LeaveRequestService parentService, Homeroom
     public Task<IReadOnlyList<LeaveRequest>> SubmitBulk(BulkCreateLeaveRequestDto dto) => parentService.SubmitBulkAsync(dto);
 
     [HttpGet("student/{studentId:int}"), Authorize(Policy = Policies.Parent)]
-    public Task<IEnumerable<ParentLeaveItemDto>> GetParentLeaves(int studentId) => parentService.GetParentLeavesAsync(studentId);
+    public Task<PagedResult<ParentLeaveItemDto>> GetParentLeaves(int studentId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        => parentService.GetParentLeavesAsync(studentId, page, pageSize);
 
     [HttpGet("my-children"), Authorize(Policy = Policies.Parent)]
     public Task<IEnumerable<MyChildDto>> GetMyChildren() => parentService.GetMyChildrenAsync();
@@ -26,7 +28,8 @@ public class LeaveRequestsController(LeaveRequestService parentService, Homeroom
     public async Task<IActionResult> Withdraw(int id) { await parentService.WithdrawAsync(id); return NoContent(); }
 
     [HttpGet("homeroom"), Authorize(Policy = Policies.Teacher)]
-    public Task<IEnumerable<HomeroomLeaveItemDto>> GetHomeroomInbox([FromQuery] int? classId) => homeroomService.GetHomeroomInboxAsync(classId);
+    public Task<PagedResult<HomeroomLeaveItemDto>> GetHomeroomInbox([FromQuery] int? classId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        => homeroomService.GetHomeroomInboxAsync(classId, page, pageSize);
 
     [HttpPut("{id:int}/approve"), Authorize(Policy = Policies.Teacher)]
     public async Task<IActionResult> Approve(int id) { await homeroomService.ApproveAsync(id); return NoContent(); }

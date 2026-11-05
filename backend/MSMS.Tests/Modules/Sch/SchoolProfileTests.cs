@@ -31,7 +31,7 @@ public sealed class SchoolProfileTests : IDisposable
 
     public void Dispose()
     {
-        if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true);
+        try { if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true); } catch (IOException) { }
     }
 
     private (MsmsDbContext Db, SchoolProfileService Service) Create()

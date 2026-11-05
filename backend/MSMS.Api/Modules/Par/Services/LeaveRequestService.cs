@@ -100,8 +100,10 @@ public sealed class LeaveRequestService(MsmsDbContext db, IClock clock, CurrentU
         return leaves;
     }
 
-    public async Task<IEnumerable<ParentLeaveItemDto>> GetParentLeavesAsync(int studentId)
+    public async Task<PagedResult<ParentLeaveItemDto>> GetParentLeavesAsync(int studentId, int page = 1, int pageSize = 10)
     {
+        pageSize = Math.Clamp(pageSize, 1, 10);
+
         // Kiểm tra quyền: phụ huynh chỉ xem được của con liên kết hợp lệ
         var link = await db.ParentStudentLink
             .FirstOrDefaultAsync(l => l.StudentId == studentId && l.ParentId == currentUser.PersonId);
@@ -109,8 +111,10 @@ public sealed class LeaveRequestService(MsmsDbContext db, IClock clock, CurrentU
             throw ApiException.Forbidden("Bạn không có quyền xem danh sách xin nghỉ của học sinh này.");
 
         return await db.LeaveRequest
+            .AsNoTracking()
             .Where(lr => lr.StudentId == studentId)
             .OrderByDescending(lr => lr.CreatedAt)
+            .ThenByDescending(lr => lr.LeaveRequestId)
             .Select(lr => new ParentLeaveItemDto(
                 lr.LeaveRequestId,
                 lr.StudentId,
@@ -128,7 +132,7 @@ public sealed class LeaveRequestService(MsmsDbContext db, IClock clock, CurrentU
                 lr.DecidedByPerson == null ? null : lr.DecidedByPerson.FullName,
                 lr.DecidedAt,
                 lr.DecisionNote))
-            .ToListAsync();
+            .ToPagedAsync(page, pageSize);
     }
 
     public async Task WithdrawAsync(int leaveRequestId)
