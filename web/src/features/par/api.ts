@@ -10,6 +10,8 @@ import type {
   LeaveRequestItem,
   MessageItem,
   MyChildItem,
+  PagedResult,
+  PageQuery,
   TeachingStudentItem,
   HomeroomStudentItem,
   ReportWeekItem,
@@ -27,8 +29,10 @@ export const parApi = {
     /**
      * Get leave requests for a specific child
      */
-    getMyChildLeaves: (studentId: number) =>
-      apiClient.get<LeaveRequestItem[]>(`/par/leave-requests/student/${studentId}`).then((r) => r.data),
+    getMyChildLeaves: (studentId: number, params?: PageQuery) =>
+      apiClient
+        .get<PagedResult<LeaveRequestItem>>(`/par/leave-requests/student/${studentId}`, { params })
+        .then((r) => r.data),
 
     /**
      * Submit a new leave request
@@ -51,9 +55,9 @@ export const parApi = {
     /**
      * Get leave requests for homeroom class (homeroom teacher)
      */
-    getHomeroomLeaves: (classId?: number) =>
+    getHomeroomLeaves: (params?: PageQuery & { classId?: number }) =>
       apiClient
-        .get<HomeroomLeaveItem[]>('/par/leave-requests/homeroom', { params: { classId } })
+        .get<PagedResult<HomeroomLeaveItem>>('/par/leave-requests/homeroom', { params })
         .then((r) => r.data),
 
     /**

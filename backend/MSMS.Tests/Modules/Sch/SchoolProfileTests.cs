@@ -31,7 +31,7 @@ public sealed class SchoolProfileTests : IDisposable
 
     public void Dispose()
     {
-        if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true);
+        try { if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true); } catch (IOException) { }
     }
 
     private (MsmsDbContext Db, SchoolProfileService Service) Create()
@@ -242,7 +242,9 @@ public sealed class SchoolProfileTests : IDisposable
         Assert.False(File.Exists(oldPath));
         var only = Assert.Single(LogoFiles());
         Assert.EndsWith(".jpg", only);
-        Assert.Equal("image/jpeg", (await svc.FindLogoAsync())!.ContentType);
+        var logo = (await svc.FindLogoAsync())!;
+        using var content = logo.Content;
+        Assert.Equal("image/jpeg", logo.ContentType);
     }
 
     [Fact]

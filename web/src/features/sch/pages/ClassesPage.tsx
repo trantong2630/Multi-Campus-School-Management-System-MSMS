@@ -19,7 +19,7 @@ import { confirmAction, showError } from '@/shared/lib/feedback';
 import { formatNumber as fmt } from '@/shared/lib/format';
 import { schApi } from '../api';
 import { ClassRosterDrawer } from '../components/ClassRosterDrawer';
-import { useCampuses, useClassStats, useCurrentYear, useYears } from '../hooks/useCatalogs';
+import { useCampuses, useCurrentYear, useYears } from '../hooks/useCatalogs';
 import '../components/school.css';
 import type { SchoolClass } from '../types';
 
@@ -49,7 +49,7 @@ export function ClassesPage() {
     enabled: effectiveYear !== undefined,
   });
 
-  const classStats = useClassStats();
+
   const navigate = useNavigate();
   // Hiệu phó chỉ đọc lớp của phân hiệu đang phụ trách (API đã lọc), nên ô chọn cũng chỉ còn các phân hiệu đó.
   const campusOptions = (campuses.data ?? [])

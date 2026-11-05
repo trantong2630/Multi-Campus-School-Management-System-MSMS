@@ -60,6 +60,8 @@ const isPeriodKind = (kind?: DayKind) => kind === 'MorningPeriods' || kind === '
 
 const ellipsisStyle: CSSProperties = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
 
+const PAGE_SIZE = 10;
+
 /** Tách kiểu nghỉ trên form thành (buổi, tiết) đúng với hợp đồng API. */
 const toSessionAndSlots = (kind: DayKind = 'AllDay', slotIds?: number[]) => ({
   sessionOfDay: kind === 'AllDay' ? 'AllDay' : kind.startsWith('Morning') ? 'Morning' : 'Afternoon',
@@ -106,11 +108,13 @@ export function ParentLeavePage() {
     }
   }, [children, selectedStudentId]);
 
-  // Get leave requests for selected child
-  const { data: leaveRequests = [], isLoading: leavesLoading } = useQuery({
-    queryKey: ['par', 'leave', 'student', selectedStudentId],
-    queryFn: () => parApi.leave.getMyChildLeaves(selectedStudentId!),
+  // Get leave requests for selected child (phân trang phía server)
+  const [page, setPage] = useState(1);
+  const { data: leavePage, isLoading: leavesLoading } = useQuery({
+    queryKey: ['par', 'leave', 'student', selectedStudentId, page],
+    queryFn: () => parApi.leave.getMyChildLeaves(selectedStudentId!, { page, pageSize: PAGE_SIZE }),
     enabled: !!selectedStudentId,
+    placeholderData: (prev) => prev,
   });
 
   // Chế độ range: 1 đơn duy nhất cho cả khoảng ngày; chế độ flexible: N đơn (mỗi ngày một đơn)
@@ -136,6 +140,7 @@ export function ParentLeavePage() {
       });
     }
 
+    setPage(1);
     void qc.invalidateQueries({ queryKey: ['par', 'leave', 'student', selectedStudentId] });
     message.success('Gửi đơn xin nghỉ thành công.');
   };
@@ -180,7 +185,7 @@ export function ParentLeavePage() {
               style={{ width: 250 }}
               value={selectedStudentId}
               placeholder={childrenLoading ? 'Đang tải học sinh...' : 'Chọn học sinh'}
-              onChange={setSelectedStudentId}
+              onChange={(id) => { setSelectedStudentId(id); setPage(1); }}
               options={children.map((c) => ({
                 value: c.studentId,
                 label: `${c.fullName}${c.className ? ` - ${c.className}` : ''}`,
@@ -205,7 +210,8 @@ export function ParentLeavePage() {
           tableLayout="fixed"
           scroll={{ x: 1010 }}
           loading={leavesLoading}
-          dataSource={leaveRequests}
+          dataSource={leavePage?.items}
+          pagination={{ current: page, pageSize: PAGE_SIZE, total: leavePage?.total, onChange: setPage }}
           emptyText={
             children.length === 0
               ? 'Tài khoản chưa được liên kết với học sinh nào.'

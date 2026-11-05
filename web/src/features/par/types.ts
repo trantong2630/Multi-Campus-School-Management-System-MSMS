@@ -11,6 +11,17 @@ export interface MyChildItem {
 
 export type LeaveSessionOfDay = 'Morning' | 'Afternoon' | 'AllDay';
 
+/** Kết quả phân trang từ server (khớp `PagedResult<T>` của backend). */
+export interface PagedResult<T> {
+  items: T[];
+  total: number;
+}
+
+export interface PageQuery {
+  page?: number;
+  pageSize?: number;
+}
+
 /**
  * Leave request item for parent's child
  */

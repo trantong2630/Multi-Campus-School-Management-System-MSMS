@@ -46,7 +46,7 @@ export function CampusPage() {
   const sum = (pick: (s: CampusStat) => number) => active.reduce((n, c) => n + pick(c.stat), 0);
   const studentCount = sum((s) => s.studentCount);
   const classCount = sum((s) => s.classCount);
-  const withoutLeader = active.filter((c) => !c.stat.leaders.length).length;
+
 
   const refresh = () => Promise.all([
     qc.invalidateQueries({ queryKey: ['sch', 'campuses'] }),
