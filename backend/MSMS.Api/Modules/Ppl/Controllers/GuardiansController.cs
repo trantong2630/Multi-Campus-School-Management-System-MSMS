@@ -9,7 +9,7 @@ namespace MSMS.Api.Modules.Ppl.Controllers;
 
 /// <summary>PPL-03: danh bạ phụ huynh và liên kết (4.3.22–4.3.26). Xem: Management; ghi: School Admin.</summary>
 [ApiController, Route("api/ppl")]
-public class GuardiansController(GuardianService guardians) : ControllerBase
+public class GuardiansController(GuardianService guardians, GuardianImportService import) : ControllerBase
 {
     [HttpGet("guardians"), Authorize(Policy = Policies.CampusReader)]
     public Task<PagedResult<GuardianDto>> List([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
@@ -23,6 +23,19 @@ public class GuardiansController(GuardianService guardians) : ControllerBase
 
     [HttpPut("guardians/{id:int}"), Authorize(Policy = Policies.SchoolAdmin)]
     public Task<GuardianDto> Update(int id, GuardianRequest r) => guardians.UpdateAsync(id, r);
+
+    // Import phụ huynh từ Excel: chỉ School Admin, chỉ tạo hồ sơ (BR-11).
+    [HttpGet("guardians/import-template"), Authorize(Policy = Policies.SchoolAdmin)]
+    public IActionResult Template() => import.BuildTemplate();
+
+    [HttpPost("guardians/import"), Authorize(Policy = Policies.SchoolAdmin)]
+    [RequestSizeLimit(10_000_000)]
+    public async Task<GuardianImportResult> Import(IFormFile file)
+    {
+        if (file is null || file.Length == 0) throw ApiException.BadRequest("Chưa chọn file. Chọn file .xlsx rồi tải lên.");
+        await using var stream = file.OpenReadStream();
+        return await import.ImportAsync(stream);
+    }
 
     [HttpPut("students/{studentId:int}/guardian"), Authorize(Policy = Policies.SchoolAdmin)]
     public async Task<IActionResult> ChangeRepresentative(int studentId, ChangeGuardianRequest r)

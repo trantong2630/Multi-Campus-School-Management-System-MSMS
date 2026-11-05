@@ -243,7 +243,7 @@ public sealed class SchoolProfileTests : IDisposable
         var only = Assert.Single(LogoFiles());
         Assert.EndsWith(".jpg", only);
         var logo = (await svc.FindLogoAsync())!;
-        using var content = logo.Content;
+        await using var stream = logo.Content;
         Assert.Equal("image/jpeg", logo.ContentType);
     }
 

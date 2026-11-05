@@ -184,16 +184,19 @@ export function YearsPage() {
       </Card>
 
       <FormModal<YearValues>
+        variant="drawer" width={640}
         open={editing !== null} title={editing === 'new' ? 'Thêm năm học' : 'Sửa năm học'}
         form={yearForm} onClose={() => setEditing(null)} onSubmit={saveYear}
         initialValues={editing && editing !== 'new' ? { name: editing.name, range: range(editing.startDate, editing.endDate) } : undefined}
       >
-        <Form.Item label="Tên năm học" name="name" rules={[{ required: true, whitespace: true, message: 'Nhập tên năm học, ví dụ 2026-2027.' }]}>
-          <Input maxLength={20} placeholder="2026-2027" />
-        </Form.Item>
-        <Form.Item label="Từ ngày – đến ngày" name="range" rules={[{ required: true, message: 'Chọn ngày bắt đầu và ngày kết thúc năm học.' }]}>
-          <DatePicker.RangePicker format={DATE_FORMAT} style={{ width: '100%' }} />
-        </Form.Item>
+        <div className="form-grid">
+          <Form.Item label="Tên năm học" name="name" rules={[{ required: true, whitespace: true, message: 'Nhập tên năm học, ví dụ 2026-2027.' }]}>
+            <Input maxLength={20} placeholder="2026-2027" />
+          </Form.Item>
+          <Form.Item label="Từ ngày – đến ngày" name="range" style={{ gridColumn: '1 / -1' }} rules={[{ required: true, message: 'Chọn ngày bắt đầu và ngày kết thúc năm học.' }]}>
+            <DatePicker.RangePicker format={DATE_FORMAT} style={{ width: '100%' }} />
+          </Form.Item>
+        </div>
       </FormModal>
 
       <FormModal<SemesterValues>

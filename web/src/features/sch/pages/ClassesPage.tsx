@@ -165,22 +165,25 @@ export function ClassesPage() {
       <ClassRosterDrawer key={rosterOf?.classId} cls={rosterOf} canWrite={canWrite} onClose={() => setRosterOf(null)} />
 
       <FormModal<FormValues>
+        variant="drawer" width={640}
         open={editing !== null} title={editing === 'new' ? 'Thêm lớp' : 'Sửa lớp'}
         form={form} onClose={() => setEditing(null)} onSubmit={save}
         initialValues={editing && editing !== 'new' ? editing : { academicYearId: effectiveYear, campusId }}
       >
-        <Form.Item label="Phân hiệu" name="campusId" rules={[{ required: true, message: 'Chọn phân hiệu của lớp.' }]}>
-          <Select disabled={editing !== 'new'} options={campuses.data?.filter((c) => c.isActive).map((c) => ({ value: c.campusId, label: c.name }))} />
-        </Form.Item>
-        <Form.Item label="Năm học" name="academicYearId" rules={[{ required: true, message: 'Chọn năm học của lớp.' }]}>
-          <Select disabled={editing !== 'new'} options={years.data?.map((y) => ({ value: y.academicYearId, label: y.name }))} />
-        </Form.Item>
-        <Form.Item label="Tên lớp" name="name" rules={[{ required: true, whitespace: true, message: 'Nhập tên lớp, ví dụ 6A1.' }]}>
-          <Input maxLength={50} />
-        </Form.Item>
-        <Form.Item label="Khối" name="gradeLevel" rules={[{ required: true, message: 'Chọn khối từ 6 đến 9.' }]}>
-          <Select options={GRADES} />
-        </Form.Item>
+        <div className="form-grid">
+          <Form.Item label="Phân hiệu" name="campusId" rules={[{ required: true, message: 'Chọn phân hiệu của lớp.' }]}>
+            <Select disabled={editing !== 'new'} options={campuses.data?.filter((c) => c.isActive).map((c) => ({ value: c.campusId, label: c.name }))} />
+          </Form.Item>
+          <Form.Item label="Năm học" name="academicYearId" rules={[{ required: true, message: 'Chọn năm học của lớp.' }]}>
+            <Select disabled={editing !== 'new'} options={years.data?.map((y) => ({ value: y.academicYearId, label: y.name }))} />
+          </Form.Item>
+          <Form.Item label="Tên lớp" name="name" rules={[{ required: true, whitespace: true, message: 'Nhập tên lớp, ví dụ 6A1.' }]}>
+            <Input maxLength={50} />
+          </Form.Item>
+          <Form.Item label="Khối" name="gradeLevel" rules={[{ required: true, message: 'Chọn khối từ 6 đến 9.' }]}>
+            <Select options={GRADES} />
+          </Form.Item>
+        </div>
       </FormModal>
     </>
   );

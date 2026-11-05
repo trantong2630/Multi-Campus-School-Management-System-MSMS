@@ -22,7 +22,9 @@ public record StaffImportResult(bool Accepted, int Created, IReadOnlyList<StaffI
 public record ResponsibilityRow(
     string Kind, int TargetId, string TargetName, string? TargetGroup,
     int? RecordId, int? StaffId, string? StaffName, DateOnly? StartDate,
-    string? NextStaffName = null, DateOnly? NextStartDate = null);
+    string? NextStaffName = null, DateOnly? NextStartDate = null,
+    string? StaffCode = null, DateOnly? EndDate = null, string? EndedStaffName = null, DateOnly? EndedDate = null, string? TargetCode = null,
+    int? NextStaffId = null);
 
 public record ResponsibilityAssignRequest(string Kind, int TargetId, int StaffId, DateOnly StartDate);
 public record ResponsibilityEndRequest(string Kind, int RecordId, DateOnly EndDate);
@@ -43,9 +45,9 @@ public record StudentRequest(string FullName, DateOnly? DateOfBirth, string? Nat
 // PPL-03 Danh bạ phụ huynh (4.3.22–4.3.26)
 public record GuardianDto(
     int ParentId, string PersonCode, string FullName, string? PhoneNumber, string? Email, string? Address,
-    int ChildCount, string? ChildrenSummary, int? AccountId, string? AccountStatus);
+    int ChildCount, string? ChildrenSummary, int? AccountId, string? AccountStatus, string? Gender = null);
 
-public record GuardianRequest(string FullName, string? PhoneNumber, string? Email, string? Address);
+public record GuardianRequest(string FullName, string? PhoneNumber, string? Email, string? Address, string? Gender = null);
 
 public record GuardianChildDto(
     int StudentId, string PersonCode, string FullName, string? ClassName, string? CampusName, string StudentStatus, string? Relationship, bool IsPrimary);
@@ -55,3 +57,9 @@ public record ChangeGuardianRequest(int? ExistingParentId, GuardianRequest? NewG
 
 /// <summary>Chuyển trường (SchoolTransfer) hoặc tốt nghiệp (Graduated) cho một hoặc nhiều học sinh (4.3.19–4.3.20).</summary>
 public record StudentLeaveRequest(List<int> StudentIds, string Reason);
+
+// Import phụ huynh từ Excel (chỉ tạo hồ sơ, số điện thoại là khóa nhận diện)
+public record GuardianImportSkipped(int Row, string FullName, string Reason, string? PersonCode = null);
+
+public record GuardianImportResult(bool Accepted, int Created, IReadOnlyList<GuardianImportSkipped> Skipped,
+    IReadOnlyList<ImportError> Errors, int TotalErrors);

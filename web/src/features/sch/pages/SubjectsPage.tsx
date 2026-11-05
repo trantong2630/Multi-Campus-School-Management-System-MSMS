@@ -195,37 +195,43 @@ export function SubjectsPage() {
       />
 
       <FormModal<DeptValues>
+        variant="drawer" width={640}
         open={editingDept !== null} title={editingDept === 'new' ? 'Thêm tổ chuyên môn' : 'Sửa tổ chuyên môn'}
         form={deptForm} onClose={() => setEditingDept(null)} onSubmit={saveDept}
         initialValues={editingDept && editingDept !== 'new' ? editingDept : undefined}
       >
-        <Form.Item label="Tên tổ chuyên môn" name="name" rules={[{ required: true, whitespace: true, message: 'Nhập tên tổ chuyên môn.' }]}>
-          <Input maxLength={150} />
-        </Form.Item>
-        <Form.Item label="Mô tả" name="description"><Input.TextArea rows={2} maxLength={255} /></Form.Item>
+        <div className="form-grid">
+          <Form.Item label="Tên tổ chuyên môn" name="name" style={{ gridColumn: '1 / -1' }} rules={[{ required: true, whitespace: true, message: 'Nhập tên tổ chuyên môn.' }]}>
+            <Input maxLength={150} />
+          </Form.Item>
+          <Form.Item label="Mô tả" name="description" style={{ gridColumn: '1 / -1' }}><Input.TextArea rows={2} maxLength={255} /></Form.Item>
+        </div>
       </FormModal>
 
       <FormModal<SubjectValues>
+        variant="drawer" width={640}
         open={editingSubject !== null} title={editingSubject === 'new' ? 'Thêm môn học' : 'Sửa môn học'}
         form={subjectForm} onClose={() => setEditingSubject(null)} onSubmit={saveSubject}
         initialValues={editingSubject && editingSubject !== 'new' ? editingSubject : undefined}
       >
-        <Form.Item label="Tổ chuyên môn" name="departmentId" rules={[{ required: true, message: 'Chọn tổ chuyên môn của môn học.' }]}>
-          <Select options={departments.data?.filter((d) => d.isActive).map((d) => ({ value: d.departmentId, label: d.name }))} />
-        </Form.Item>
-        <Form.Item label="Tên môn học" name="name" rules={[{ required: true, whitespace: true, message: 'Nhập tên môn học.' }]}>
-          <Input maxLength={150} />
-        </Form.Item>
-        <Form.Item
-          label="Viết tắt môn" name="abbreviation"
-          extra="Chỉ gồm chữ và số, không dấu cách, không dấu gạch. Ví dụ: TOAN, VAN, TA."
-          rules={[
-            { required: true, whitespace: true, message: 'Nhập viết tắt môn.' },
-            { pattern: /^[A-Za-z0-9]+$/, message: 'Viết tắt chỉ gồm chữ và số, không dấu cách, không dấu gạch.' },
-          ]}
-        >
-          <Input maxLength={10} />
-        </Form.Item>
+        <div className="form-grid">
+          <Form.Item label="Tổ chuyên môn" name="departmentId" rules={[{ required: true, message: 'Chọn tổ chuyên môn của môn học.' }]}>
+            <Select options={departments.data?.filter((d) => d.isActive).map((d) => ({ value: d.departmentId, label: d.name }))} />
+          </Form.Item>
+          <Form.Item label="Tên môn học" name="name" rules={[{ required: true, whitespace: true, message: 'Nhập tên môn học.' }]}>
+            <Input maxLength={150} />
+          </Form.Item>
+          <Form.Item
+            label="Viết tắt môn" name="abbreviation"
+            extra="Chỉ gồm chữ và số, không dấu cách, không dấu gạch. Ví dụ: TOAN, VAN, TA."
+            rules={[
+              { required: true, whitespace: true, message: 'Nhập viết tắt môn.' },
+              { pattern: /^[A-Za-z0-9]+$/, message: 'Viết tắt chỉ gồm chữ và số, không dấu cách, không dấu gạch.' },
+            ]}
+          >
+            <Input maxLength={10} />
+          </Form.Item>
+        </div>
       </FormModal>
     </>
   );
