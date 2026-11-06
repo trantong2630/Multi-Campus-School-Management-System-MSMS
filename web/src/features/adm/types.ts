@@ -207,3 +207,40 @@ export interface DepartmentBoard {
   attendanceWeeks: AttendanceWeek[];
   members: DepartmentMemberRow[];
 }
+
+// ---------- Nhật ký (ADM-02) ----------
+
+export interface AuditLogFilters {
+  category?: string;
+  actorPersonId?: number;
+  from?: string;
+  to?: string;
+}
+
+export interface AuditLogItem {
+  auditId: number;
+  category: string;
+  action: string;
+  actorName: string;
+  actorCode: string;
+  createdAt: string;
+  targetCount: number;
+}
+
+export interface AuditActor {
+  personId: number;
+  fullName: string;
+  personCode: string;
+}
+
+export interface AuditLogDetail {
+  auditId: number;
+  category: string;
+  action: string;
+  actorName: string;
+  actorCode: string;
+  createdAt: string;
+  targetKind: string;
+  targets: { id: number; label: string | null }[];
+  fields: { key: string; value: string }[];
+}

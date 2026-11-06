@@ -81,4 +81,71 @@ public class RolloverGraduateTests
         Assert.True(list.Single(s => s.StudentId == 101).Graduated);
         Assert.False(list.Single(s => s.StudentId == 102).Graduated);
     }
+
+    // ---------------------------------------------------------------- BR-28: hàng loạt ghi một bản ghi kèm danh sách ID
+
+    private static Dictionary<int, int> AddAccounts(MsmsDbContext db, params int[] studentIds)
+    {
+        var accounts = studentIds.ToDictionary(id => id, id => new Account
+        {
+            PersonId = id, Username = $"hs{id}", AccountType = AccountTypes.Student, Status = AccountStatuses.Active, PasswordHash = "x", CreatedAt = DateTime.UtcNow,
+        });
+        db.Account.AddRange(accounts.Values);
+        db.SaveChanges();
+        return accounts.ToDictionary(a => a.Key, a => a.Value.AccountId);
+    }
+
+    private static List<int> EnrollmentIds(MsmsDbContext db, params int[] studentIds) =>
+        db.Enrollment.Where(e => studentIds.Contains(e.StudentId)).OrderBy(e => e.StudentId).Select(e => e.EnrollmentId).ToList();
+
+    [Fact]
+    public async Task Graduate_ManyStudents_WritesOneAuditRecordWithAllAccountIds()
+    {
+        var (db, svc, _) = Create();
+        var accounts = AddAccounts(db, 101, 102);
+
+        await svc.GraduateAsync(C9A1, new GraduateRequest([101, 102]));
+
+        var audit = await db.AuditLog.SingleAsync();
+        Assert.Equal(AuditCategories.Account, audit.Category);
+        Assert.Equal("BulkLockAccounts", audit.Action);
+        Assert.Equal(accounts.Values.Order(), System.Text.Json.JsonSerializer.Deserialize<List<int>>(audit.TargetIds!)!.Order());
+    }
+
+    [Fact]
+    public async Task CloseMany_ManyStudentsLeaving_WritesOneAuditRecord()
+    {
+        var (db, svc, _) = Create();
+        var accounts = AddAccounts(db, 101, 102);
+
+        await svc.CloseManyAsync(new CloseManyRequest(EnrollmentIds(db, 101, 102), EnrollmentCloseReasons.SchoolTransfer));
+
+        var audit = await db.AuditLog.SingleAsync();
+        Assert.Equal("BulkLockAccounts", audit.Action);
+        Assert.Equal(accounts.Values.Order(), System.Text.Json.JsonSerializer.Deserialize<List<int>>(audit.TargetIds!)!.Order());
+    }
+
+    [Fact]
+    public async Task CloseMany_OneStudentLeaving_StaysASingleLockRecord()
+    {
+        var (db, svc, _) = Create();
+        AddAccounts(db, 101);
+
+        await svc.CloseManyAsync(new CloseManyRequest(EnrollmentIds(db, 101), EnrollmentCloseReasons.SchoolTransfer));
+
+        Assert.Equal("LockAccount", (await db.AuditLog.SingleAsync()).Action);
+    }
+
+    [Fact]
+    public async Task Close_OneStudentLeaving_WritesLockRecord_ButClassTransferLocksNothing()
+    {
+        var (db, svc, _) = Create();
+        AddAccounts(db, 101, 102);
+
+        await svc.CloseAsync(EnrollmentIds(db, 102).Single(), new CloseEnrollmentRequest(EnrollmentCloseReasons.ClassTransfer));
+        Assert.Empty(db.AuditLog);
+
+        await svc.CloseAsync(EnrollmentIds(db, 101).Single(), new CloseEnrollmentRequest(EnrollmentCloseReasons.SchoolTransfer));
+        Assert.Equal("LockAccount", (await db.AuditLog.SingleAsync()).Action);
+    }
 }
