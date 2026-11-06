@@ -2,6 +2,7 @@ import { Navigate } from 'react-router-dom';
 import type { RouteObject } from 'react-router-dom';
 import { useAuth } from '@/app/AuthProvider';
 import { visibleMenu } from '@/app/menu';
+import { AuditLogPage } from './pages/AuditLogPage';
 import { CampusBoardPage } from './pages/CampusBoardPage';
 import { DepartmentBoardPage } from './pages/DepartmentBoardPage';
 import { HomePage } from './pages/HomePage';
@@ -26,4 +27,5 @@ export const admRoutes: RouteObject[] = [
   { path: 'dashboard/homeroom', element: <HomeroomPage /> },
   { path: 'dashboard/progress', element: <ProgressPage /> },
   { path: 'dashboard/system', element: <SystemBoardPage /> },
+  { path: 'adm/audit-log', element: <AuditLogPage /> },
 ];

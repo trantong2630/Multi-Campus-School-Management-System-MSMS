@@ -123,7 +123,7 @@ export const menu: MenuGroup[] = [
     key: 'adm', label: 'Quản trị', icon: ShieldCheck, section: 'system',
     children: [
       { key: 'adm-account', label: 'Tài khoản', path: '/adm/accounts', roles: ['SchoolAdmin'], ready: true },
-      { key: 'adm-audit', label: 'Nhật ký', path: '/adm/audit-log', roles: ['SchoolAdmin'], ready: false },
+      { key: 'adm-audit', label: 'Nhật ký', path: '/adm/audit-log', roles: ['SchoolAdmin'], ready: true },
       { key: 'adm-export', label: 'Xuất dữ liệu', path: '/adm/exports', roles: ['VicePrincipal', 'Teacher'], requires: { Teacher: 'homeroom', VicePrincipal: 'campus' }, ready: false },
     ],
   },
