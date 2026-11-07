@@ -101,6 +101,18 @@ internal sealed class PplEnv : IDisposable
         Db.SaveChanges();
     }
 
+    /// <summary>Dựng sẵn một trách nhiệm (kể cả ngày bắt đầu trong quá khứ, mà chức năng gán không cho phép) bằng cách ghi thẳng vào DB.</summary>
+    public void Seed(string kind, int target, int staff, DateOnly start, DateOnly? end = null)
+    {
+        switch (kind)
+        {
+            case "campus": Db.CampusLeadership.Add(new CampusLeadership { CampusId = target, StaffId = staff, StartDate = start, EndDate = end }); break;
+            case "department": Db.DepartmentHead.Add(new DepartmentHead { DepartmentId = target, StaffId = staff, StartDate = start, EndDate = end }); break;
+            default: Db.HomeroomAssignment.Add(new HomeroomAssignment { ClassId = target, StaffId = staff, StartDate = start, EndDate = end }); break;
+        }
+        Db.SaveChanges();
+    }
+
     /// <summary>Chạy và kỳ vọng bị từ chối với mã 400 (có thể kèm đoạn thông báo).</summary>
     public static async Task Rejects(Func<Task> act, string? messagePart = null)
     {

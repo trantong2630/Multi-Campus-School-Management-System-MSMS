@@ -323,8 +323,11 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
                 }))}
             />
           </Form.Item>
-          <Form.Item label="Ngày hiệu lực" name="startDate" rules={[{ required: true, message: 'Chọn ngày bắt đầu hiệu lực.' }]}>
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+          <Form.Item
+            label="Ngày hiệu lực" name="startDate" extra="Từ hôm nay trở đi: không sửa lùi lịch sử trách nhiệm."
+            rules={[{ required: true, message: 'Chọn ngày bắt đầu hiệu lực.' }]}
+          >
+            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabledDate={(d) => d.isBefore(dayjs(), 'day')} />
           </Form.Item>
         </div>
       </FormModal>

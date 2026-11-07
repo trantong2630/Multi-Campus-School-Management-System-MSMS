@@ -123,7 +123,7 @@ public class ResponsibilityFieldTests
     public async Task Replace_ClosesOldDayBefore()
     {
         using var e = new PplEnv();
-        await e.Resp.AssignAsync(Assign("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-10)));
+        e.Seed("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-10));
         await e.Resp.AssignAsync(Assign("homeroom", PplEnv.Class6A, PplEnv.OtherTeacher, T));
         var old = await e.Db.HomeroomAssignment.SingleAsync(x => x.StaffId == PplEnv.Teacher);
         Assert.Equal(T.AddDays(-1), old.EndDate);
@@ -131,14 +131,28 @@ public class ResponsibilityFieldTests
         Assert.Equal(2, (await e.Resp.HistoryAsync("homeroom", PplEnv.Class6A)).Count);
     }
 
-    [Fact(DisplayName = "PPL | Trách nhiệm | Ngày hiệu lực | ngày trong quá khứ vẫn được chấp nhận khi thay người, hiệu lực lùi về ngày đó (CHƯA chặn ngày quá khứ)")]
-    public async Task Replace_PastStart_CurrentlyAccepted()
+    [Theory(DisplayName = "PPL | Trách nhiệm | Ngày hiệu lực | ngày trong quá khứ bị từ chối khi gán hoặc thay người, hôm nay và ngày sau được chấp nhận")]
+    [InlineData(-1, false)] [InlineData(-30, false)] [InlineData(0, true)] [InlineData(1, true)] [InlineData(30, true)]
+    public async Task StartDate_NotBeforeToday(int offsetDays, bool accepted)
     {
         using var e = new PplEnv();
-        await e.Resp.AssignAsync(Assign("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-10)));
-        await e.Resp.AssignAsync(Assign("homeroom", PplEnv.Class6A, PplEnv.OtherTeacher, T.AddDays(-5)));
-        Assert.Equal(T.AddDays(-6), (await e.Db.HomeroomAssignment.SingleAsync(x => x.StaffId == PplEnv.Teacher)).EndDate);
-        Assert.Equal(PplEnv.OtherTeacher, (await e.Resp.ListCurrentAsync("homeroom", null)).Single(r => r.TargetId == PplEnv.Class6A).StaffId);
+        e.Seed("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-60));      // người đang giữ từ lâu: thay người được
+        var request = Assign("homeroom", PplEnv.Class6A, PplEnv.OtherTeacher, T.AddDays(offsetDays));
+        if (accepted) await e.Resp.AssignAsync(request);
+        else
+        {
+            await PplEnv.Rejects(() => e.Resp.AssignAsync(request), "trước hôm nay");
+            Assert.Null((await e.Db.HomeroomAssignment.SingleAsync()).EndDate);   // không đổi gì
+        }
+    }
+
+    [Fact(DisplayName = "PPL | Trách nhiệm | Ngày hiệu lực | gán mới cho đích chưa có người cũng không cho chọn ngày quá khứ")]
+    public async Task StartDate_Past_Rejected_ForNewAssignment()
+    {
+        using var e = new PplEnv();
+        await PplEnv.Rejects(() => e.Resp.AssignAsync(Assign("campus", PplEnv.Campus1, PplEnv.ViceP, T.AddDays(-1))), "trước hôm nay");
+        await PplEnv.Rejects(() => e.Resp.AssignAsync(Assign("department", PplEnv.Dept1, PplEnv.Teacher, T.AddDays(-1))), "trước hôm nay");
+        Assert.Empty(e.Db.CampusLeadership); Assert.Empty(e.Db.DepartmentHead);
     }
 
     [Fact(DisplayName = "PPL | Trách nhiệm | Thay người | không thay được trong ngày người cũ vừa bắt đầu (ngày hiệu lực phải sau ngày bắt đầu của người cũ)")]
@@ -153,7 +167,7 @@ public class ResponsibilityFieldTests
     public async Task Assign_SameHolder_Rejected()
     {
         using var e = new PplEnv();
-        await e.Resp.AssignAsync(Assign("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-5)));
+        e.Seed("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-5));
         await PplEnv.Rejects(() => e.Resp.AssignAsync(Assign("homeroom", PplEnv.Class6A, PplEnv.Teacher, T)), "đang đảm nhiệm sẵn");
     }
 
@@ -180,7 +194,7 @@ public class ResponsibilityFieldTests
     public async Task Department_Replace()
     {
         using var e = new PplEnv();
-        await e.Resp.AssignAsync(Assign("department", PplEnv.Dept1, PplEnv.Teacher, T.AddDays(-20)));
+        e.Seed("department", PplEnv.Dept1, PplEnv.Teacher, T.AddDays(-20));
         await e.Resp.AssignAsync(Assign("department", PplEnv.Dept1, PplEnv.OtherTeacher, T));
         Assert.Equal(T.AddDays(-1), (await e.Db.DepartmentHead.SingleAsync(d => d.StaffId == PplEnv.Teacher)).EndDate);
     }
@@ -198,7 +212,7 @@ public class ResponsibilityFieldTests
     public async Task End_BeforeStart_Rejected()
     {
         using var e = new PplEnv();
-        await e.Resp.AssignAsync(Assign("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-10)));
+        e.Seed("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-10));
         var id = (await e.Db.HomeroomAssignment.SingleAsync()).Id;
         await PplEnv.Rejects(() => e.Resp.EndAsync(new ResponsibilityEndRequest("homeroom", id, T.AddDays(-11))), "trước ngày bắt đầu");
     }
@@ -207,7 +221,7 @@ public class ResponsibilityFieldTests
     public async Task End_AlreadyEnded_Rejected()
     {
         using var e = new PplEnv();
-        await e.Resp.AssignAsync(Assign("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-10)));
+        e.Seed("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-10));
         var id = (await e.Db.HomeroomAssignment.SingleAsync()).Id;
         await e.Resp.EndAsync(new ResponsibilityEndRequest("homeroom", id, T.AddDays(-2)));
         await PplEnv.Rejects(() => e.Resp.EndAsync(new ResponsibilityEndRequest("homeroom", id, T)), "đã kết thúc");
@@ -217,7 +231,7 @@ public class ResponsibilityFieldTests
     public async Task End_Today_ReleasesTargetImmediately()
     {
         using var e = new PplEnv();
-        await e.Resp.AssignAsync(Assign("department", PplEnv.Dept1, PplEnv.Teacher, T.AddDays(-10)));
+        e.Seed("department", PplEnv.Dept1, PplEnv.Teacher, T.AddDays(-10));
         var id = (await e.Db.DepartmentHead.SingleAsync()).Id;
         await e.Resp.EndAsync(new ResponsibilityEndRequest("department", id, T));
         var row = (await e.Resp.ListCurrentAsync("department", null)).Single(r => r.TargetId == PplEnv.Dept1);
@@ -230,7 +244,7 @@ public class ResponsibilityFieldTests
     public async Task End_Then_AssignSameDay()
     {
         using var e = new PplEnv();
-        await e.Resp.AssignAsync(Assign("department", PplEnv.Dept1, PplEnv.Teacher, T.AddDays(-10)));
+        e.Seed("department", PplEnv.Dept1, PplEnv.Teacher, T.AddDays(-10));
         var id = (await e.Db.DepartmentHead.SingleAsync()).Id;
         await e.Resp.EndAsync(new ResponsibilityEndRequest("department", id, T));
         await e.Resp.AssignAsync(Assign("department", PplEnv.Dept1, PplEnv.OtherTeacher, T));
@@ -242,7 +256,7 @@ public class ResponsibilityFieldTests
     public async Task End_Future_StillCurrentToday()
     {
         using var e = new PplEnv();
-        await e.Resp.AssignAsync(Assign("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-10)));
+        e.Seed("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-10));
         var id = (await e.Db.HomeroomAssignment.SingleAsync()).Id;
         await e.Resp.EndAsync(new ResponsibilityEndRequest("homeroom", id, T.AddDays(7)));
         var row = (await e.Resp.ListCurrentAsync("homeroom", null)).Single(r => r.TargetId == PplEnv.Class6A);
@@ -300,8 +314,8 @@ public class ResponsibilityFieldTests
     public async Task History_OrderedAndFlagged()
     {
         using var e = new PplEnv();
-        await e.Resp.AssignAsync(Assign("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-20)));
-        await e.Resp.AssignAsync(Assign("homeroom", PplEnv.Class6A, PplEnv.OtherTeacher, T.AddDays(-3)));
+        e.Seed("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-20), T.AddDays(-4));
+        e.Seed("homeroom", PplEnv.Class6A, PplEnv.OtherTeacher, T.AddDays(-3));
         var h = await e.Resp.HistoryAsync("homeroom", PplEnv.Class6A);
         Assert.Equal([PplEnv.OtherTeacher, PplEnv.Teacher], h.Select(x => x.StaffId).ToArray());
         Assert.True(h[0].IsEffective);

@@ -56,7 +56,7 @@ public class HomeroomResponsibilityTests
     public async Task After_the_first_homeroom_ended_the_teacher_can_take_another_class()
     {
         var (f, svc) = Setup();
-        await svc.AssignAsync(Assign(1, 20, Today.AddDays(-30)));
+        f.Db.HomeroomAssignment.Add(new HomeroomAssignment { ClassId = 1, StaffId = 20, StartDate = Today.AddDays(-30) }); f.Db.SaveChanges();
         f.Db.HomeroomAssignment.Single().EndDate = Today.AddDays(-1);
         await f.Db.SaveChangesAsync();
 
@@ -69,7 +69,7 @@ public class HomeroomResponsibilityTests
     public async Task Replacing_the_homeroom_teacher_of_the_same_class_is_not_blocked()
     {
         var (f, svc) = Setup();
-        await svc.AssignAsync(Assign(1, 20, Today.AddDays(-10)));
+        f.Db.HomeroomAssignment.Add(new HomeroomAssignment { ClassId = 1, StaffId = 20, StartDate = Today.AddDays(-10) }); f.Db.SaveChanges();
 
         await svc.AssignAsync(Assign(1, 21, Today));   // thay người ở chính lớp đó
         await svc.AssignAsync(Assign(2, 20, Today));   // giáo viên cũ được giải phóng

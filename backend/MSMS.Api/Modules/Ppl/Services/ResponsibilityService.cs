@@ -183,6 +183,9 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
     /// <summary>Gán người mới; nếu đích đang có người thì thay người trong cùng transaction.</summary>
     public async Task AssignAsync(ResponsibilityAssignRequest r)
     {
+        // Không viết lại lịch sử: người đã duyệt đơn hoặc giao bài trong khoảng đó vẫn là người giữ trách nhiệm lúc ấy.
+        if (r.StartDate < clock.Today)
+            throw ApiException.BadRequest("Ngày hiệu lực không được trước hôm nay. Chọn hôm nay hoặc một ngày sau đó.");
         await EnsureEligibleAsync(r.Kind, r.StaffId);
         await using var tx = await db.Database.BeginTransactionAsync();
         switch (r.Kind)
