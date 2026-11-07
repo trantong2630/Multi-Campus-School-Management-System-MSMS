@@ -210,9 +210,9 @@
   line-height: 22px;
   text-align: left;
   color: var(--c-text1);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* Tên ngày nghỉ dài thì xuống dòng, không cắt bằng dấu "…"; ô lịch tự cao theo nội dung. */
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 button.hol-chip {
