@@ -81,11 +81,11 @@ public class StaffImportFieldTests
         Assert.True((await ImportRun.Staff(e, null, Row())).Passed);
     }
 
-    [Fact(DisplayName = "PPL | Import cán bộ | Dòng hợp lệ | chỉ điền 4 cột bắt buộc (họ tên, ngày sinh, phân hiệu, số định danh) vẫn qua")]
+    [Fact(DisplayName = "PPL | Import cán bộ | Dòng hợp lệ | chỉ điền 5 cột bắt buộc (họ tên, ngày sinh, email, phân hiệu, số định danh) vẫn qua")]
     public async Task Only_Required_Columns_Pass()
     {
         using var e = new PplEnv();
-        var row = new[] { "Trần Thị B", "05/05/1985", "", "", "", "", "Phân hiệu 1", "", "333333333333" };
+        var row = new[] { "Trần Thị B", "05/05/1985", "", "", "b.tran@school.vn", "", "Phân hiệu 1", "", "333333333333" };
         Assert.True((await ImportRun.Staff(e, null, row)).Passed);
     }
 
@@ -98,6 +98,7 @@ public class StaffImportFieldTests
     [InlineData(2, "01/01/2020", "Ngày sinh", "18 đến 75")]
     [InlineData(2, "01/01/1900", "Ngày sinh", "18 đến 75")]
     [InlineData(3, "robot", "Giới tính", "Nam, Nữ hoặc Khác")]
+    [InlineData(5, "", "Email", "Thiếu email")]
     [InlineData(5, "abc", "Email", "chưa đúng định dạng")]
     [InlineData(5, "a@b", "Email", "chưa đúng định dạng")]
     [InlineData(6, "Tổ không có", "Tổ chuyên môn", "chưa khai")]

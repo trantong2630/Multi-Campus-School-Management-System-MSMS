@@ -23,7 +23,7 @@ public sealed class StaffImportService(MsmsDbContext db, IClock clock)
         "Họ và tên", "Ngày sinh", "Giới tính", "Số điện thoại", "Email",
         "Tổ chuyên môn", "Phân hiệu chính", "Viết tắt GV", "Số định danh",
     ];
-    private static readonly int[] RequiredColumns = [1, 2, 7, 9];
+    private static readonly int[] RequiredColumns = [1, 2, 5, 7, 9];
 
     private const string SheetName = "02_Can_bo";
     private const int InputRows = 200;
@@ -39,7 +39,7 @@ public sealed class StaffImportService(MsmsDbContext db, IClock clock)
 
         ws.WriteTitle("MSMS — MẪU IMPORT CÁN BỘ", last);
         ws.WriteNote(2,
-            "Bắt buộc (ô tô cam): Họ và tên, Ngày sinh, Phân hiệu chính, Số định danh. Tùy chọn: Giới tính, Số điện thoại, Email, Tổ chuyên môn, Viết tắt GV. "
+            "Bắt buộc (ô tô cam): Họ và tên, Ngày sinh, Email, Phân hiệu chính, Số định danh. Tùy chọn: Giới tính, Số điện thoại, Tổ chuyên môn, Viết tắt GV. "
             + "KHÔNG có cột mã hồ sơ — hệ thống tự sinh mã CB và tên đăng nhập. Viết tắt GV chỉ điền cho giáo viên, duy nhất toàn trường, chỉ chữ và số. "
             + "Số định danh là 12 chữ số, duy nhất toàn trường, dùng để nhận diện người đã có (nên định dạng cột là Text để giữ số 0 đầu). Người đã có thì bỏ qua cả dòng. Ngày sinh dd/mm/yyyy. Import chỉ tạo hồ sơ, không tạo tài khoản.",
             last, 40);
@@ -142,7 +142,8 @@ public sealed class StaffImportService(MsmsDbContext db, IClock clock)
                 if (phone.Length > 0 && !Guard.IsMobilePhone(phone)) Err(4, Guard.PhoneRuleMessage);
 
                 var email = ws.Cell(row, 5).Text();
-                if (email.Length > 0 && (!Guard.IsEmail(email) || email.Length > 150)) Err(5, "Email chưa đúng định dạng.");
+                if (email.Length == 0) Err(5, "Thiếu email. Email dùng để nhận mã OTP của tài khoản.");
+                else if (!Guard.IsEmail(email) || email.Length > 150) Err(5, "Email chưa đúng định dạng.");
 
                 int? deptId = null;
                 var deptName = ws.Cell(row, 6).Text();
@@ -174,7 +175,7 @@ public sealed class StaffImportService(MsmsDbContext db, IClock clock)
                 }
 
                 if (errors.Count == rowErrors)
-                    valid.Add((row, name, dob, nationalId, gender, phone.Length > 0 ? phone : null, email.Length > 0 ? email : null, deptId, campusId, abbr));
+                    valid.Add((row, name, dob, nationalId, gender, phone.Length > 0 ? phone : null, email, deptId, campusId, abbr));
             }
 
             if (errors.Count > 0) return Rejected(errors, skipped);
