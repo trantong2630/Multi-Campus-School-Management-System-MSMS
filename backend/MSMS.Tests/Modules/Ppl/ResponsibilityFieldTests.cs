@@ -231,18 +231,33 @@ public class ResponsibilityFieldTests
     public async Task End_BeforeStart_Rejected()
     {
         using var e = new PplEnv();
-        e.Seed("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-10));
+        e.Seed("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(5));   // đã hẹn bắt đầu 5 ngày nữa
         var id = (await e.Db.HomeroomAssignment.SingleAsync()).Id;
-        await PplEnv.Rejects(() => e.Resp.EndAsync(new ResponsibilityEndRequest("homeroom", id, T.AddDays(-11))), "trước ngày bắt đầu");
+        await PplEnv.Rejects(() => e.Resp.EndAsync(new ResponsibilityEndRequest("homeroom", id, T.AddDays(3))), "trước ngày bắt đầu");
+    }
+
+    [Theory(DisplayName = "PPL | Trách nhiệm | Kết thúc | ngày kết thúc trước hôm nay bị từ chối (không sửa lùi lịch sử), hôm nay và ngày sau được chấp nhận")]
+    [InlineData(-1, false)] [InlineData(-30, false)] [InlineData(0, true)] [InlineData(7, true)]
+    public async Task End_Date_NotBeforeToday(int offsetDays, bool accepted)
+    {
+        using var e = new PplEnv();
+        e.Seed("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-60));
+        var id = (await e.Db.HomeroomAssignment.SingleAsync()).Id;
+        var request = new ResponsibilityEndRequest("homeroom", id, T.AddDays(offsetDays));
+        if (accepted) await e.Resp.EndAsync(request);
+        else
+        {
+            await PplEnv.Rejects(() => e.Resp.EndAsync(request), "trước hôm nay");
+            Assert.Null((await e.Db.HomeroomAssignment.SingleAsync()).EndDate);
+        }
     }
 
     [Fact(DisplayName = "PPL | Trách nhiệm | Kết thúc | trách nhiệm đã kết thúc từ trước bị từ chối")]
     public async Task End_AlreadyEnded_Rejected()
     {
         using var e = new PplEnv();
-        e.Seed("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-10));
+        e.Seed("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-10), T.AddDays(-2));   // đã kết thúc từ trước
         var id = (await e.Db.HomeroomAssignment.SingleAsync()).Id;
-        await e.Resp.EndAsync(new ResponsibilityEndRequest("homeroom", id, T.AddDays(-2)));
         await PplEnv.Rejects(() => e.Resp.EndAsync(new ResponsibilityEndRequest("homeroom", id, T)), "đã kết thúc");
     }
 

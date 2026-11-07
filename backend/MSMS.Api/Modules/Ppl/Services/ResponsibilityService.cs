@@ -224,6 +224,8 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
         };
         if (record.EndDate is not null && record.EndDate < clock.Today)
             throw ApiException.BadRequest("Trách nhiệm này đã kết thúc từ trước.");
+        if (r.EndDate < clock.Today)
+            throw ApiException.BadRequest("Ngày kết thúc không được trước hôm nay. Chọn hôm nay hoặc một ngày sau đó.");
         if (r.EndDate < record.StartDate)
             throw ApiException.BadRequest($"Ngày kết thúc không được trước ngày bắt đầu ({record.StartDate:dd/MM/yyyy}).");
         record.EndDate = r.EndDate;

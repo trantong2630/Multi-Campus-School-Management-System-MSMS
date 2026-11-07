@@ -339,11 +339,11 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
       >
         <InlineAlert
           type="warning"
-          title={`${ending?.staffName ?? ''} sẽ mất quyền tương ứng ngay sau ngày kết thúc.`}
-          description="Loại tài khoản không đổi."
+          title={`${ending?.staffName ?? ''} sẽ mất quyền tương ứng từ ngày kết thúc.`}
+          description="Chọn hôm nay hoặc một ngày sau đó. Loại tài khoản không đổi."
         />
         <Form.Item label="Ngày kết thúc" name="endDate" rules={[{ required: true, message: 'Chọn ngày kết thúc.' }]}>
-          <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+          <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabledDate={(d) => d.isBefore(dayjs(), 'day')} />
         </Form.Item>
       </FormModal>
 
