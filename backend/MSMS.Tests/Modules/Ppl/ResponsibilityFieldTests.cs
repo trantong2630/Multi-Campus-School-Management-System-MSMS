@@ -165,15 +165,15 @@ public class ResponsibilityFieldTests
         await PplEnv.Rejects(() => e.Resp.AssignAsync(Assign("homeroom", PplEnv.Class6A, PplEnv.OtherTeacher, T)), "bắt đầu sau ngày đã chọn");
     }
 
-    [Fact(DisplayName = "PPL | Trách nhiệm | Tổ trưởng | một giáo viên có thể làm tổ trưởng nhiều tổ (CHƯA có ràng buộc một người một tổ)")]
-    public async Task Department_SameTeacherTwoDepartments_CurrentlyAllowed()
+    [Fact(DisplayName = "PPL | Trách nhiệm | Tổ trưởng | một giáo viên đang làm tổ trưởng một tổ thì không gán thêm tổ khác được")]
+    public async Task Department_SameTeacherTwoDepartments_Rejected()
     {
         using var e = new PplEnv();
         e.Db.SubjectDepartment.Add(new SubjectDepartment { DepartmentId = 3, Name = "Tổ Văn", IsActive = true });
         e.Db.SaveChanges();
         await e.Resp.AssignAsync(Assign("department", PplEnv.Dept1, PplEnv.Teacher));
-        await e.Resp.AssignAsync(Assign("department", 3, PplEnv.Teacher));
-        Assert.Equal(2, await e.Db.DepartmentHead.CountAsync(d => d.StaffId == PplEnv.Teacher));
+        await PplEnv.Rejects(() => e.Resp.AssignAsync(Assign("department", 3, PplEnv.Teacher)), "chỉ làm tổ trưởng một tổ");
+        Assert.Equal(1, await e.Db.DepartmentHead.CountAsync(d => d.StaffId == PplEnv.Teacher));
     }
 
     [Fact(DisplayName = "PPL | Trách nhiệm | Tổ trưởng | thay tổ trưởng của tổ: bản cũ kết thúc ngày liền trước")]

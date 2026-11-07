@@ -179,11 +179,11 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
     && (!term || [r.targetName, r.targetCode, r.targetGroup, r.staffName, r.staffCode, r.nextStaffName, r.endedStaffName]
       .some((x) => x?.toLowerCase().includes(term))));
 
-  // Mỗi Hiệu phó một phân hiệu, mỗi giáo viên một lớp chủ nhiệm (cùng năm học): làm mờ người đang giữ đích khác (server vẫn kiểm lại, kể cả người được hẹn).
+  // Mỗi Hiệu phó một phân hiệu, mỗi giáo viên một tổ trưởng, mỗi giáo viên một lớp chủ nhiệm (cùng năm học): làm mờ người đang giữ đích khác (server vẫn kiểm lại, kể cả người được hẹn).
   // Gồm cả người đã được xếp cho đích khác nhưng chưa tới ngày hiệu lực: đã phân công thì không chọn thêm.
   const ledCampus = new Map<number, string>();
-  if (kind === 'campus' || kind === 'homeroom') {
-    const act = kind === 'campus' ? 'phụ trách' : 'chủ nhiệm';
+  if (kind === 'campus' || kind === 'homeroom' || kind === 'department') {
+    const act = kind === 'campus' ? 'phụ trách' : kind === 'department' ? 'làm tổ trưởng' : 'chủ nhiệm';
     rows?.forEach((r) => {
       if (r.targetId === target?.targetId) return;
       if (r.staffId) ledCampus.set(r.staffId, `đang ${act} ${r.targetName}`);
