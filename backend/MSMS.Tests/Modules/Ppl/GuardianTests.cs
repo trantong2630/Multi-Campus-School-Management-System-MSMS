@@ -38,15 +38,15 @@ public class GuardianFieldTests
     }
 
     [Theory(DisplayName = "PPL | Phụ huynh | Số điện thoại | không đúng 10 chữ số hoặc không bắt đầu bằng 0 bị từ chối")]
-    [InlineData("091234567")] [InlineData("09123456789")] [InlineData("09123abc78")] [InlineData("1234567890")] [InlineData("12-34")]
+    [InlineData("091234567")] [InlineData("09123456789")] [InlineData("09123abc78")] [InlineData("1234567890")] [InlineData("0241234567")] [InlineData("0123456789")] [InlineData("12-34")]
     public async Task Phone_Length_Invalid(string phone)
     {
         using var e = new PplEnv();
         await PplEnv.Rejects(() => Update(e, Valid() with { PhoneNumber = phone }), "đúng 10 chữ số");
     }
 
-    [Theory(DisplayName = "PPL | Phụ huynh | Số điện thoại | đúng 10 chữ số bắt đầu bằng 0 được chấp nhận, ký tự phân cách được bỏ khi lưu")]
-    [InlineData("0123456789", "0123456789")] [InlineData("0987654321", "0987654321")]
+    [Theory(DisplayName = "PPL | Phụ huynh | Số điện thoại | đúng 10 chữ số đầu 03/05/07/08/09 được chấp nhận, ký tự phân cách được bỏ khi lưu")]
+    [InlineData("0323456789", "0323456789")] [InlineData("0987654321", "0987654321")]
     [InlineData("0900 000 001", "0900000001")] [InlineData("0900-000-001", "0900000001")] [InlineData("0900.000.001", "0900000001")] [InlineData("+84900000001", "0900000001")]
     public async Task Phone_Valid_Normalized(string input, string stored)
     {

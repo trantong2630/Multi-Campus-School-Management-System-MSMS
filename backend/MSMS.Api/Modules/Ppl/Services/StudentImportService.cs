@@ -198,7 +198,7 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
                 var phone = NormalizePhone(ReadPhone(ws.Cell(row, ColPhone)));
                 int? existingParentId = null;
                 if (phone.Length == 0) Err(ColPhone, "Thiếu số điện thoại phụ huynh. Đây là khóa nhận diện phụ huynh.");
-                else if (!IsPhone(phone)) Err(ColPhone, "Số điện thoại phụ huynh phải gồm đúng 10 chữ số và bắt đầu bằng số 0.");
+                else if (!IsPhone(phone)) Err(ColPhone, "Số điện thoại phụ huynh phải là số di động đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09.");
                 else
                 {
                     // Cùng số điện thoại thì cùng một phụ huynh: khác họ tên trong cùng file là lỗi (BR-11).

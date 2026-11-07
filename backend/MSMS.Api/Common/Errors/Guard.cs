@@ -48,10 +48,10 @@ public static partial class Guard
 
     public static bool IsAlnum(string value) => AlnumRegex().IsMatch(value);
 
-    /// <summary>Số điện thoại di động: đúng 10 chữ số, bắt đầu bằng 0.</summary>
-    public static bool IsMobilePhone(string value) => value.Length == 10 && value[0] == '0' && value.All(char.IsAsciiDigit);
+    /// <summary>Số điện thoại di động: đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09.</summary>
+    public static bool IsMobilePhone(string value) => value.Length == 10 && value[0] == '0' && value[1] is '3' or '5' or '7' or '8' or '9' && value.All(char.IsAsciiDigit);
 
-    public const string PhoneRuleMessage = "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.";
+    public const string PhoneRuleMessage = "Số điện thoại di động phải gồm đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09.";
 
     public static string? MobilePhone(string? value, string label = "Số điện thoại")
     {

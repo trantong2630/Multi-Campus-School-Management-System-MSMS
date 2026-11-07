@@ -151,6 +151,7 @@ public class StaffFieldTests
         using var e = new PplEnv();
         await PplEnv.Rejects(() => Update(e, Valid() with { PhoneNumber = "abc-xyz" }), "10 chữ số");
         await PplEnv.Rejects(() => Update(e, Valid() with { PhoneNumber = "1912345678" }), "10 chữ số");
+        await PplEnv.Rejects(() => Update(e, Valid() with { PhoneNumber = "0241234567" }), "10 chữ số");   // số bàn, không phải di động
     }
 
     // ---------- Phân hiệu chính ----------

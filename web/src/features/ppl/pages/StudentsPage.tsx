@@ -217,7 +217,7 @@ export function StudentsPage() {
             <Input maxLength={12} inputMode="numeric" disabled={editing !== 'new'} />
           </Form.Item>
           <Form.Item label="Giới tính" name="gender"><Select allowClear options={GENDERS} /></Form.Item>
-          <Form.Item label="Số điện thoại" name="phoneNumber" extra="Đúng 10 chữ số, bắt đầu bằng 0." rules={[{ pattern: /^0\d{9}$/, message: 'Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.' }]}><Input maxLength={10} inputMode="tel" /></Form.Item>
+          <Form.Item label="Số điện thoại" name="phoneNumber" extra="Số di động 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09." rules={[{ pattern: /^0[35789]\d{8}$/, message: 'Số điện thoại di động phải gồm đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09.' }]}><Input maxLength={10} inputMode="tel" /></Form.Item>
           <Form.Item label="Địa chỉ" name="address"><Input maxLength={255} /></Form.Item>
           <Form.Item label="Ghi chú" name="note"><Input.TextArea rows={3} maxLength={500} /></Form.Item>
         </div>

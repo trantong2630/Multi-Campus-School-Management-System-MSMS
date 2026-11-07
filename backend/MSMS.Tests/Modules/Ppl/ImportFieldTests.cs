@@ -122,8 +122,8 @@ public class StaffImportFieldTests
     public async Task Length_Boundaries()
     {
         using var e = new PplEnv();
-        Assert.True((await ImportRun.Staff(e, null, Row((1, PplEnv.Text(150)), (4, "0" + new string('1', 9)), (8, new string('A', 10)), (5, new string('a', 140) + "@school.vn")))).Passed);
-        var o = await ImportRun.Staff(e, null, Row((1, PplEnv.Text(151)), (4, "0" + new string('1', 10)), (8, new string('A', 11)), (5, new string('a', 141) + "@school.vn")));
+        Assert.True((await ImportRun.Staff(e, null, Row((1, PplEnv.Text(150)), (4, "09" + new string('1', 8)), (8, new string('A', 10)), (5, new string('a', 140) + "@school.vn")))).Passed);
+        var o = await ImportRun.Staff(e, null, Row((1, PplEnv.Text(151)), (4, "09" + new string('1', 9)), (8, new string('A', 11)), (5, new string('a', 141) + "@school.vn")));
         Assert.True(o.HasError("Họ và tên", "150")); Assert.True(o.HasError("Số điện thoại", "10 chữ số"));
         Assert.True(o.HasError("Viết tắt GV", "10")); Assert.True(o.HasError("Email", "định dạng"));
     }

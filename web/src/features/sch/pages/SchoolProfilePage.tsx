@@ -89,7 +89,7 @@ export function SchoolProfilePage() {
               <AddressInput />
             </Form.Item>
             <div className="form-grid">
-              <Form.Item label="Số điện thoại" name="phoneNumber" extra="Đúng 10 chữ số, bắt đầu bằng 0." rules={[{ pattern: /^0\d{9}$/, message: 'Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.' }]}><Input maxLength={10} inputMode="tel" /></Form.Item>
+              <Form.Item label="Số điện thoại" name="phoneNumber" extra="Số di động 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09." rules={[{ pattern: /^0[35789]\d{8}$/, message: 'Số điện thoại di động phải gồm đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09.' }]}><Input maxLength={10} inputMode="tel" /></Form.Item>
               <Form.Item label="Email" name="email" rules={[{ type: 'email', message: 'Email chưa đúng định dạng.' }]}>
                 <Input maxLength={150} />
               </Form.Item>
