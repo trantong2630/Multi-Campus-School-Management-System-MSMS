@@ -80,7 +80,7 @@ export function ChangeGuardianModal({ student, onClose }: Props) {
         ) : (
           <>
             <Form.Item label="Họ và tên" name="fullName" rules={[{ required: true, whitespace: true, message: 'Nhập họ và tên.' }]}><Input maxLength={150} /></Form.Item>
-            <Form.Item label="Số điện thoại" name="phoneNumber" rules={[{ required: true, message: 'Nhập số điện thoại.' }]}><Input maxLength={20} inputMode="tel" /></Form.Item>
+            <Form.Item label="Số điện thoại" name="phoneNumber" extra="Đúng 10 chữ số, bắt đầu bằng 0." rules={[{ required: true, message: 'Nhập số điện thoại.' }, { pattern: /^0\d{9}$/, message: 'Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.' }]}><Input maxLength={10} inputMode="tel" /></Form.Item>
             <Form.Item label="Email" name="email" rules={[{ type: 'email', message: 'Email chưa đúng định dạng.' }]}><Input maxLength={150} /></Form.Item>
           </>
         )}

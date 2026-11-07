@@ -158,7 +158,7 @@ public sealed class StudentService(MsmsDbContext db, IClock clock, ScopeResolver
                 throw ApiException.BadRequest($"Số định danh {nationalId} đã thuộc hồ sơ {owner.PersonCode} ({owner.FullName}). Mở hồ sơ đó để sửa thay vì tạo mới.");
         }
 
-        return new Validated(name, nationalId, gender, Guard.Optional(r.PhoneNumber, "Số điện thoại", 20),
+        return new Validated(name, nationalId, gender, Guard.MobilePhone(r.PhoneNumber),
             Guard.Optional(r.Address, "Địa chỉ", 255), Guard.Optional(r.Note, "Ghi chú", 500));
     }
 }

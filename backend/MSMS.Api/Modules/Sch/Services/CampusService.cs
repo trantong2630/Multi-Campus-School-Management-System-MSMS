@@ -24,7 +24,7 @@ public sealed class CampusService(MsmsDbContext db, IClock clock)
         var campus = new Campus
         {
             Code = code, Name = name, Address = Guard.Optional(r.Address, "Địa chỉ", 255),
-            PhoneNumber = Guard.Optional(r.PhoneNumber, "Số điện thoại", 20), IsActive = true, CreatedAt = clock.Now,
+            PhoneNumber = Guard.MobilePhone(r.PhoneNumber), IsActive = true, CreatedAt = clock.Now,
         };
         db.Campus.Add(campus);
         await db.SaveChangesAsync();
@@ -41,7 +41,7 @@ public sealed class CampusService(MsmsDbContext db, IClock clock)
         campus.Code = code;
         campus.Name = name;
         campus.Address = Guard.Optional(r.Address, "Địa chỉ", 255);
-        campus.PhoneNumber = Guard.Optional(r.PhoneNumber, "Số điện thoại", 20);
+        campus.PhoneNumber = Guard.MobilePhone(r.PhoneNumber);
         await db.SaveChangesAsync();
     }
 

@@ -64,14 +64,14 @@ public class SchSchoolProfileFieldTests : IDisposable
         await SchEnv.Rejects(() => Svc.UpdateAsync(Req(web: at200 + "x")), "200");
     }
 
-    [Fact(DisplayName = "SCH | Thông tin trường | Địa chỉ và Số điện thoại | địa chỉ 255/256 ký tự, SĐT 20/21 ký tự; SĐT chữ cái vẫn được chấp nhận (CHƯA kiểm định dạng số)")]
+    [Fact(DisplayName = "SCH | Thông tin trường | Địa chỉ và Số điện thoại | địa chỉ 255/256 ký tự, SĐT phải đúng 10 chữ số bắt đầu bằng 0")]
     public async Task Address_Phone_Boundaries()
     {
-        var ok = await Svc.UpdateAsync(Req(addr: SchEnv.Text(255), phone: new string('1', 20)));
-        Assert.Equal(255, ok.Address!.Length); Assert.Equal(20, ok.PhoneNumber!.Length);
+        var ok = await Svc.UpdateAsync(Req(addr: SchEnv.Text(255), phone: "0912345678"));
+        Assert.Equal(255, ok.Address!.Length); Assert.Equal("0912345678", ok.PhoneNumber);
         await SchEnv.Rejects(() => Svc.UpdateAsync(Req(addr: SchEnv.Text(256))), "255");
-        await SchEnv.Rejects(() => Svc.UpdateAsync(Req(phone: new string('1', 21))), "20");
-        Assert.Equal("abc", (await Svc.UpdateAsync(Req(phone: "abc"))).PhoneNumber);
+        await SchEnv.Rejects(() => Svc.UpdateAsync(Req(phone: "091234567")), "10 chữ số");
+        await SchEnv.Rejects(() => Svc.UpdateAsync(Req(phone: "abc")), "10 chữ số");
     }
 }
 

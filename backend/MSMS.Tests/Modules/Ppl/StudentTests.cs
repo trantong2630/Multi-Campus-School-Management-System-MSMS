@@ -97,13 +97,14 @@ public class StudentFieldTests
         await PplEnv.Rejects(() => Update(e, Valid() with { Gender = input }), "Giới tính");
     }
 
-    [Fact(DisplayName = "PPL | Học sinh | Số điện thoại | đúng 20 ký tự được chấp nhận, 21 bị từ chối, chữ cái vẫn được chấp nhận (CHƯA kiểm định dạng)")]
+    [Fact(DisplayName = "PPL | Học sinh | Số điện thoại | đúng 10 chữ số bắt đầu bằng 0 được chấp nhận; thiếu, thừa, chữ cái hoặc không bắt đầu bằng 0 bị từ chối")]
     public async Task Phone_Boundary()
     {
         using var e = new PplEnv();
-        Assert.Equal(20, (await Update(e, Valid() with { PhoneNumber = new string('1', 20) })).PhoneNumber!.Length);
-        await PplEnv.Rejects(() => Update(e, Valid() with { PhoneNumber = new string('1', 21) }), "20");
-        Assert.Equal("abc", (await Update(e, Valid() with { PhoneNumber = "abc" })).PhoneNumber);
+        Assert.Equal("0912345678", (await Update(e, Valid() with { PhoneNumber = "0912345678" })).PhoneNumber);
+        foreach (var bad in new[] { "091234567", "09123456789", "1912345678", "abc" })
+            await PplEnv.Rejects(() => Update(e, Valid() with { PhoneNumber = bad }), "10 chữ số");
+
     }
 
     [Fact(DisplayName = "PPL | Học sinh | Địa chỉ | đúng 255 ký tự được chấp nhận, 256 bị từ chối")]

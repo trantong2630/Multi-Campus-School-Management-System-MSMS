@@ -179,6 +179,6 @@ public sealed class StaffService(MsmsDbContext db, IClock clock, ScopeResolver s
                 throw ApiException.BadRequest($"Số định danh {nationalId} đã thuộc hồ sơ {owner.PersonCode} ({owner.FullName}). Mở hồ sơ đó để sửa thay vì tạo mới.");
         }
 
-        return new Validated(name, nationalId, gender, Guard.Optional(r.PhoneNumber, "Số điện thoại", 20), email, abbr);
+        return new Validated(name, nationalId, gender, Guard.MobilePhone(r.PhoneNumber), email, abbr);
     }
 }

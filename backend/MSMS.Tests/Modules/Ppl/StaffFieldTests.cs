@@ -136,19 +136,21 @@ public class StaffFieldTests
     }
 
     // ---------- Số điện thoại ----------
-    [Fact(DisplayName = "PPL | Cán bộ | Số điện thoại | đúng 20 ký tự được chấp nhận, 21 bị từ chối")]
+    [Fact(DisplayName = "PPL | Cán bộ | Số điện thoại | đúng 10 chữ số bắt đầu bằng 0 được chấp nhận, 9 hoặc 11 chữ số bị từ chối")]
     public async Task Phone_Length_Boundary()
     {
         using var e = new PplEnv();
-        Assert.Equal(20, (await Update(e, Valid() with { PhoneNumber = new string('1', 20) })).PhoneNumber!.Length);
-        await PplEnv.Rejects(() => Update(e, Valid() with { PhoneNumber = new string('1', 21) }), "20");
+        Assert.Equal("0912345678", (await Update(e, Valid() with { PhoneNumber = "0912345678" })).PhoneNumber);
+        await PplEnv.Rejects(() => Update(e, Valid() with { PhoneNumber = "091234567" }), "10 chữ số");
+        await PplEnv.Rejects(() => Update(e, Valid() with { PhoneNumber = "09123456789" }), "10 chữ số");
     }
 
-    [Fact(DisplayName = "PPL | Cán bộ | Số điện thoại | chữ cái vẫn được chấp nhận (CHƯA kiểm định dạng số)")]
-    public async Task Phone_Letters_CurrentlyAccepted()
+    [Fact(DisplayName = "PPL | Cán bộ | Số điện thoại | chữ cái hoặc không bắt đầu bằng 0 bị từ chối")]
+    public async Task Phone_Letters_Rejected()
     {
         using var e = new PplEnv();
-        Assert.Equal("abc-xyz", (await Update(e, Valid() with { PhoneNumber = "abc-xyz" })).PhoneNumber);
+        await PplEnv.Rejects(() => Update(e, Valid() with { PhoneNumber = "abc-xyz" }), "10 chữ số");
+        await PplEnv.Rejects(() => Update(e, Valid() with { PhoneNumber = "1912345678" }), "10 chữ số");
     }
 
     // ---------- Phân hiệu chính ----------

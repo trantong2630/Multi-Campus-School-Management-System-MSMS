@@ -139,7 +139,7 @@ public sealed class StaffImportService(MsmsDbContext db, IClock clock)
                 if (gender == "?") { Err(3, "Giới tính chỉ gồm Nam, Nữ hoặc Khác."); gender = null; }
 
                 var phone = ws.Cell(row, 4).Text();
-                if (phone.Length > 20) Err(4, "Số điện thoại tối đa 20 ký tự.");
+                if (phone.Length > 0 && !Guard.IsMobilePhone(phone)) Err(4, Guard.PhoneRuleMessage);
 
                 var email = ws.Cell(row, 5).Text();
                 if (email.Length > 0 && (!Guard.IsEmail(email) || email.Length > 150)) Err(5, "Email chưa đúng định dạng.");

@@ -198,7 +198,7 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
                 var phone = NormalizePhone(ReadPhone(ws.Cell(row, ColPhone)));
                 int? existingParentId = null;
                 if (phone.Length == 0) Err(ColPhone, "Thiếu số điện thoại phụ huynh. Đây là khóa nhận diện phụ huynh.");
-                else if (!IsPhone(phone)) Err(ColPhone, "Số điện thoại phụ huynh chỉ gồm 9 đến 15 chữ số.");
+                else if (!IsPhone(phone)) Err(ColPhone, "Số điện thoại phụ huynh phải gồm đúng 10 chữ số và bắt đầu bằng số 0.");
                 else
                 {
                     // Cùng số điện thoại thì cùng một phụ huynh: khác họ tên trong cùng file là lỗi (BR-11).
@@ -327,7 +327,7 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
         return s;
     }
 
-    internal static bool IsPhone(string phone) => phone.Length is >= 9 and <= 15 && phone.All(char.IsAsciiDigit);
+    internal static bool IsPhone(string phone) => Guard.IsMobilePhone(phone);
 
     private static StudentImportResult Rejected(List<ImportError> errors, List<StudentImportSkipped> skipped, List<StudentImportWarning>? warnings = null) =>
         new(false, 0, 0, 0, skipped, errors.Take(ExcelHelpers.MaxReportedErrors).ToList(), errors.Count, warnings ?? []);

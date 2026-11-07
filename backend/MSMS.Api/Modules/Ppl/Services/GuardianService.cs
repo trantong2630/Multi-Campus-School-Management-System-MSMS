@@ -152,7 +152,7 @@ public sealed class GuardianService(MsmsDbContext db, IClock clock, ScopeResolve
         // Số điện thoại bắt buộc và duy nhất giữa các phụ huynh: đó là khóa nhận diện khi import (BR-11).
         var phone = StudentImportService.NormalizePhone(r.PhoneNumber ?? "");
         if (phone.Length == 0) throw ApiException.BadRequest("Số điện thoại không được để trống. Đây là khóa nhận diện phụ huynh.");
-        if (!StudentImportService.IsPhone(phone)) throw ApiException.BadRequest("Số điện thoại chỉ gồm 9 đến 15 chữ số.");
+        if (!StudentImportService.IsPhone(phone)) throw ApiException.BadRequest(Guard.PhoneRuleMessage);
         var owner = await db.Person.Where(p => p.PersonType == "Parent" && p.PersonId != selfId && p.PhoneNumber == phone)
             .Select(p => new { p.PersonCode, p.FullName }).FirstOrDefaultAsync();
         if (owner is not null)

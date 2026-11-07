@@ -171,8 +171,8 @@ export function GuardiansPage() {
           <Form.Item label="Họ và tên" name="fullName" rules={[{ required: true, whitespace: true, message: 'Nhập họ và tên đầy đủ.' }]}>
             <Input maxLength={150} />
           </Form.Item>
-          <Form.Item label="Số điện thoại" name="phoneNumber" extra="Duy nhất giữa các phụ huynh. 9 đến 15 chữ số."
-            rules={[{ required: true, message: 'Nhập số điện thoại.' }, { pattern: /^[0-9+\s.-]{9,20}$/, message: 'Số điện thoại chưa đúng định dạng.' }]}>
+          <Form.Item label="Số điện thoại" name="phoneNumber" extra="Duy nhất giữa các phụ huynh. Đúng 10 chữ số, bắt đầu bằng 0."
+            rules={[{ required: true, message: 'Nhập số điện thoại.' }, { pattern: /^0\d{9}$/, message: 'Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.' }]}>
             <Input maxLength={20} inputMode="tel" />
           </Form.Item>
           <Form.Item label="Giới tính" name="gender"><Select allowClear options={GENDERS} /></Form.Item>

@@ -48,6 +48,18 @@ public static partial class Guard
 
     public static bool IsAlnum(string value) => AlnumRegex().IsMatch(value);
 
+    /// <summary>Số điện thoại di động: đúng 10 chữ số, bắt đầu bằng 0.</summary>
+    public static bool IsMobilePhone(string value) => value.Length == 10 && value[0] == '0' && value.All(char.IsAsciiDigit);
+
+    public const string PhoneRuleMessage = "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.";
+
+    public static string? MobilePhone(string? value, string label = "Số điện thoại")
+    {
+        var v = Optional(value, label, 20);
+        if (v != null && !IsMobilePhone(v)) throw ApiException.BadRequest(PhoneRuleMessage);
+        return v;
+    }
+
     /// <summary>Khoảng tuổi hợp lệ (tuổi tròn tính đến hôm nay) của hồ sơ cán bộ và học sinh: chặn nhập nhầm năm sinh.</summary>
     public const int StaffMinAge = 18, StaffMaxAge = 75, StudentMinAge = 5, StudentMaxAge = 25;
 

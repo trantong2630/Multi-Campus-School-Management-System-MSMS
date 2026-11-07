@@ -154,7 +154,7 @@ export function CampusPage() {
           <Form.Item label="Địa chỉ" name="address" style={{ gridColumn: '1 / -1' }} rules={[{ max: 255, message: 'Địa chỉ tối đa 255 ký tự. Rút gọn số nhà, đường.' }]}>
             <AddressInput />
           </Form.Item>
-          <Form.Item label="Số điện thoại" name="phoneNumber"><Input maxLength={20} /></Form.Item>
+          <Form.Item label="Số điện thoại" name="phoneNumber" extra="Đúng 10 chữ số, bắt đầu bằng 0." rules={[{ pattern: /^0\d{9}$/, message: 'Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.' }]}><Input maxLength={10} inputMode="tel" /></Form.Item>
         </div>
       </FormModal>
     </>

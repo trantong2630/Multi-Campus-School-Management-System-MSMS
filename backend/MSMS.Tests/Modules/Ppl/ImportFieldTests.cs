@@ -118,13 +118,13 @@ public class StaffImportFieldTests
         Assert.True(o.HasError(column, reason), string.Join(" | ", o.Errors.Select(x => $"{x.Column}: {x.Reason}")));
     }
 
-    [Fact(DisplayName = "PPL | Import cán bộ | Độ dài | họ tên 150/151, SĐT 20/21, viết tắt 10/11, email 150/151 ký tự")]
+    [Fact(DisplayName = "PPL | Import cán bộ | Độ dài | họ tên 150/151, SĐT 10/11 chữ số, viết tắt 10/11, email 150/151 ký tự")]
     public async Task Length_Boundaries()
     {
         using var e = new PplEnv();
-        Assert.True((await ImportRun.Staff(e, null, Row((1, PplEnv.Text(150)), (4, new string('1', 20)), (8, new string('A', 10)), (5, new string('a', 140) + "@school.vn")))).Passed);
-        var o = await ImportRun.Staff(e, null, Row((1, PplEnv.Text(151)), (4, new string('1', 21)), (8, new string('A', 11)), (5, new string('a', 141) + "@school.vn")));
-        Assert.True(o.HasError("Họ và tên", "150")); Assert.True(o.HasError("Số điện thoại", "20"));
+        Assert.True((await ImportRun.Staff(e, null, Row((1, PplEnv.Text(150)), (4, "0" + new string('1', 9)), (8, new string('A', 10)), (5, new string('a', 140) + "@school.vn")))).Passed);
+        var o = await ImportRun.Staff(e, null, Row((1, PplEnv.Text(151)), (4, "0" + new string('1', 10)), (8, new string('A', 11)), (5, new string('a', 141) + "@school.vn")));
+        Assert.True(o.HasError("Họ và tên", "150")); Assert.True(o.HasError("Số điện thoại", "10 chữ số"));
         Assert.True(o.HasError("Viết tắt GV", "10")); Assert.True(o.HasError("Email", "định dạng"));
     }
 
@@ -268,7 +268,7 @@ public class StudentImportFieldTests
     [InlineData(6, "", "Phụ huynh — Họ và tên", "Thiếu họ và tên phụ huynh")]
     [InlineData(7, "", "Phụ huynh — Quan hệ", "Thiếu quan hệ")]
     [InlineData(8, "", "Phụ huynh — Số điện thoại", "Thiếu số điện thoại")]
-    [InlineData(8, "12345678", "Phụ huynh — Số điện thoại", "9 đến 15")]
+    [InlineData(8, "12345678", "Phụ huynh — Số điện thoại", "10 chữ số")]
     [InlineData(8, "abc", "Phụ huynh — Số điện thoại", "Thiếu số điện thoại")]
     [InlineData(9, "abc", "Phụ huynh — Email", "chưa đúng định dạng")]
     [InlineData(10, "", "Số định danh", "Thiếu số định danh")]
