@@ -86,7 +86,8 @@ public sealed class StaffImportService(MsmsDbContext db, IClock clock)
             if (errors.Count > 0) return Rejected(errors, []);
 
             var campuses = await db.Campus.AsNoTracking().ToDictionaryAsync(c => c.Name, c => c, StringComparer.OrdinalIgnoreCase);
-            var departments = await db.SubjectDepartment.AsNoTracking().ToDictionaryAsync(d => d.Name, d => d.DepartmentId, StringComparer.OrdinalIgnoreCase);
+            var departments = (await db.SubjectDepartment.AsNoTracking().Select(d => new { d.Name, d.DepartmentId, d.IsActive }).ToListAsync())
+                .ToDictionary(d => d.Name, d => (Id: d.DepartmentId, Active: d.IsActive), StringComparer.OrdinalIgnoreCase);
             var existingAbbrs = (await db.StaffProfile.Where(s => s.TeacherAbbr != null).Select(s => s.TeacherAbbr!).ToListAsync())
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
             var existingIds = await db.Person.Where(p => p.NationalId != null)
@@ -146,7 +147,11 @@ public sealed class StaffImportService(MsmsDbContext db, IClock clock)
                 var deptName = ws.Cell(row, 6).Text();
                 if (deptName.Length > 0)
                 {
-                    if (departments.TryGetValue(deptName, out var d)) deptId = d;
+                    if (departments.TryGetValue(deptName, out var d))
+                    {
+                        if (d.Active) deptId = d.Id;
+                        else Err(6, $"Tổ chuyên môn \"{deptName}\" đã ngừng hoạt động. Chọn tổ còn hoạt động.");
+                    }
                     else Err(6, $"Tổ chuyên môn \"{deptName}\" chưa khai trong hệ thống. Khai ở Thiết lập hoặc sửa lại tên cho đúng.");
                 }
 

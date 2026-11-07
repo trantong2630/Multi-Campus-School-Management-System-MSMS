@@ -132,11 +132,13 @@ public class StaffImportFieldTests
         Assert.True((await ImportRun.Staff(e, null, Row((6, "  tổ   TOÁN "), (7, "phân HIỆU 1")))).Passed);
     }
 
-    [Fact(DisplayName = "PPL | Import cán bộ | Tổ chuyên môn | tổ đã ngừng hoạt động vẫn được dùng khi import (CHƯA kiểm tổ còn hoạt động)")]
-    public async Task Department_Inactive_CurrentlyAccepted()
+    [Fact(DisplayName = "PPL | Import cán bộ | Tổ chuyên môn | tổ đã ngừng hoạt động bị báo lỗi ở đúng ô")]
+    public async Task Department_Inactive_Rejected()
     {
         using var e = new PplEnv();
-        Assert.True((await ImportRun.Staff(e, null, Row((6, "Tổ cũ")))).Passed);
+        var o = await ImportRun.Staff(e, null, Row((6, "Tổ cũ")));
+        Assert.False(o.Passed);
+        Assert.True(o.HasError("Tổ chuyên môn", "ngừng hoạt động"));
     }
 
     [Fact(DisplayName = "PPL | Import cán bộ | Số định danh | người đã có (trùng số) bị bỏ qua cả dòng kèm mã hồ sơ, không báo lỗi")]

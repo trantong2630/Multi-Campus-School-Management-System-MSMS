@@ -170,11 +170,22 @@ public class StaffFieldTests
         Assert.Null((await Update(e, Valid() with { DepartmentId = null })).DepartmentId);
     }
 
-    [Fact(DisplayName = "PPL | Cán bộ | Tổ chuyên môn | tổ đã ngừng hoạt động vẫn được chọn (CHƯA kiểm tổ còn hoạt động)")]
-    public async Task Department_Inactive_CurrentlyAccepted()
+    [Fact(DisplayName = "PPL | Cán bộ | Tổ chuyên môn | tổ đã ngừng hoạt động không chọn được cho tổ mới")]
+    public async Task Department_Inactive_Rejected()
     {
         using var e = new PplEnv();
-        Assert.Equal(PplEnv.DeptInactive, (await Update(e, Valid() with { DepartmentId = PplEnv.DeptInactive })).DepartmentId);
+        await PplEnv.Rejects(() => Update(e, Valid() with { DepartmentId = PplEnv.DeptInactive }), "ngừng hoạt động");
+        await PplEnv.Rejects(() => e.Staff.CreateAsync(Valid() with { DepartmentId = PplEnv.DeptInactive }), "ngừng hoạt động");
+    }
+
+    [Fact(DisplayName = "PPL | Cán bộ | Tổ chuyên môn | cán bộ đang thuộc tổ vừa ngừng hoạt động vẫn sửa được trường khác mà không phải đổi tổ")]
+    public async Task Department_Inactive_KeepingCurrent_Accepted()
+    {
+        using var e = new PplEnv();
+        e.Db.StaffProfile.Single(s => s.StaffId == PplEnv.Teacher).DepartmentId = PplEnv.DeptInactive; e.Db.SaveChanges();
+        var dto = await Update(e, Valid() with { DepartmentId = PplEnv.DeptInactive, PhoneNumber = "0987654321" });
+        Assert.Equal(PplEnv.DeptInactive, dto.DepartmentId);
+        Assert.Equal("0987654321", dto.PhoneNumber);
     }
 
     // ---------- Viết tắt giáo viên ----------

@@ -229,7 +229,7 @@ export function StaffPage() {
             <Select options={campuses.data?.filter((c) => c.isActive).map((c) => ({ value: c.campusId, label: c.name }))} />
           </Form.Item>
           <Form.Item label="Tổ chuyên môn" name="departmentId">
-            <Select allowClear options={departments.data?.filter((d) => d.isActive).map((d) => ({ value: d.departmentId, label: d.name }))} />
+            <Select allowClear options={departments.data?.filter((d) => d.isActive || (editing !== 'new' && editing?.departmentId === d.departmentId)).map((d) => ({ value: d.departmentId, label: d.isActive ? d.name : ` (đã ngừng)` }))} />
           </Form.Item>
           <Form.Item label="Giới tính" name="gender"><Select allowClear options={GENDERS} /></Form.Item>
           <Form.Item label="Số điện thoại" name="phoneNumber"><Input maxLength={20} /></Form.Item>
