@@ -81,15 +81,15 @@ public class SchCatalogFieldTests
         await SchEnv.Rejects(() => e.Campuses.CreateAsync(Campus(code: "PH11", name: SchEnv.Text(150))), "đã có");
     }
 
-    [Fact(DisplayName = "SCH | Phân hiệu | Địa chỉ và Số điện thoại | địa chỉ 255/256 ký tự, SĐT 20/21 ký tự; SĐT chữ cái vẫn được chấp nhận (CHƯA kiểm định dạng số)")]
+    [Fact(DisplayName = "SCH | Phân hiệu | Địa chỉ và Số điện thoại | địa chỉ 255/256 ký tự, SĐT phải đúng 10 chữ số bắt đầu bằng 0")]
     public async Task Campus_Address_Phone_Boundaries()
     {
         using var e = new SchEnv();
-        var ok = await e.Campuses.CreateAsync(Campus(addr: SchEnv.Text(255), phone: new string('1', 20)));
-        Assert.Equal(255, ok.Address!.Length); Assert.Equal(20, ok.PhoneNumber!.Length);
+        var ok = await e.Campuses.CreateAsync(Campus(addr: SchEnv.Text(255), phone: "0912345678"));
+        Assert.Equal(255, ok.Address!.Length); Assert.Equal("0912345678", ok.PhoneNumber);
         await SchEnv.Rejects(() => e.Campuses.CreateAsync(Campus("PH10", "Tên 10", SchEnv.Text(256))), "255");
-        await SchEnv.Rejects(() => e.Campuses.CreateAsync(Campus("PH11", "Tên 11", null, new string('1', 21))), "20");
-        Assert.Equal("abc-xyz", (await e.Campuses.CreateAsync(Campus("PH12", "Tên 12", null, "abc-xyz"))).PhoneNumber);
+        await SchEnv.Rejects(() => e.Campuses.CreateAsync(Campus("PH11", "Tên 11", null, "091234567")), "10 chữ số");
+        await SchEnv.Rejects(() => e.Campuses.CreateAsync(Campus("PH12", "Tên 12", null, "abc-xyz")), "10 chữ số");
     }
 
     [Fact(DisplayName = "SCH | Phân hiệu | Sửa | kiểm cùng các giới hạn như khi tạo, phân hiệu không tồn tại trả 404")]
@@ -219,16 +219,17 @@ public class SchCalendarFieldTests
         await SchEnv.Rejects(() => e.Calendar.CreateYearAsync(Year(en: s.AddDays(endOffsetDays))), "sau ngày bắt đầu");
     }
 
-    [Fact(DisplayName = "SCH | Năm học | Ngày bắt đầu và kết thúc | kết thúc đúng 1 ngày sau bắt đầu được chấp nhận; khoảng 100 năm vẫn được chấp nhận (CHƯA giới hạn độ dài năm học)")]
+    [Fact(DisplayName = "SCH | Năm học | Ngày bắt đầu và kết thúc | kết thúc đúng 1 ngày sau bắt đầu được chấp nhận; dài đúng 13 tháng được chấp nhận, quá 13 tháng bị từ chối")]
     public async Task Year_Range_Boundaries()
     {
         using var e = new SchEnv();
         Assert.NotNull(await e.Calendar.CreateYearAsync(Year("Ngắn", new(2029, 9, 1), new(2029, 9, 2))));
-        Assert.NotNull(await e.Calendar.CreateYearAsync(Year("Dài", new(2030, 1, 1), new(2130, 1, 1))));
+        Assert.NotNull(await e.Calendar.CreateYearAsync(Year("Dài", new(2030, 1, 1), new(2031, 2, 1))));
+        await SchEnv.Rejects(() => e.Calendar.CreateYearAsync(Year("Quá dài", new(2033, 1, 1), new(2034, 2, 2))), "13 tháng");
     }
 
     [Theory(DisplayName = "SCH | Năm học | Khoảng thời gian | chồng khoảng của năm học khác (kể cả chạm đúng một ngày) bị từ chối")]
-    [InlineData(2026, 12, 1, 2027, 1, 1)] [InlineData(2027, 5, 31, 2027, 8, 1)] [InlineData(2026, 1, 1, 2026, 9, 1)] [InlineData(2025, 1, 1, 2028, 1, 1)]
+    [InlineData(2026, 12, 1, 2027, 1, 1)] [InlineData(2027, 5, 31, 2027, 8, 1)] [InlineData(2026, 1, 1, 2026, 9, 1)] [InlineData(2026, 10, 1, 2027, 2, 1)]
     public async Task Year_Overlap_Rejected(int y1, int m1, int d1, int y2, int m2, int d2)
     {
         using var e = new SchEnv();
@@ -356,8 +357,8 @@ public class SchCalendarFieldTests
         await SchEnv.Rejects(() => e.Slots.CreateAsync(Slot(session)), "Buổi");
     }
 
-    [Theory(DisplayName = "SCH | Khung giờ | Số tiết | từ 1 trở lên được chấp nhận, bằng 0 bị từ chối; 255 vẫn được chấp nhận (CHƯA giới hạn số tiết tối đa)")]
-    [InlineData(0, false)] [InlineData(1, true)] [InlineData(20, true)] [InlineData(255, true)]
+    [Theory(DisplayName = "SCH | Khung giờ | Số tiết | từ 1 trở lên được chấp nhận, bằng 0 hoặc quá 20 bị từ chối")]
+    [InlineData(0, false)] [InlineData(1, true)] [InlineData(20, true)] [InlineData(21, false)] [InlineData(255, false)]
     public async Task Slot_PeriodNo(int no, bool accepted)
     {
         using var e = new SchEnv();
