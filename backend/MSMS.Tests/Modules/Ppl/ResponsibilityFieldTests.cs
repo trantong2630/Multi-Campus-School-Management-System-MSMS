@@ -131,8 +131,27 @@ public class ResponsibilityFieldTests
         Assert.Equal(2, (await e.Resp.HistoryAsync("homeroom", PplEnv.Class6A)).Count);
     }
 
+    [Theory(DisplayName = "PPL | Trách nhiệm | Thay người | chỉ có hiệu lực ngay hôm nay, hẹn ngày sau bị từ chối (tránh khoảng trống một ngày)")]
+    [InlineData(1)] [InlineData(30)]
+    public async Task Replace_FutureDate_Rejected(int offsetDays)
+    {
+        using var e = new PplEnv();
+        e.Seed("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-60));
+        await PplEnv.Rejects(() => e.Resp.AssignAsync(Assign("homeroom", PplEnv.Class6A, PplEnv.OtherTeacher, T.AddDays(offsetDays))), "hiệu lực ngay hôm nay");
+        Assert.Null((await e.Db.HomeroomAssignment.SingleAsync()).EndDate);
+    }
+
+    [Theory(DisplayName = "PPL | Trách nhiệm | Gán lần đầu | đích đang trống thì được hẹn ngày sau")]
+    [InlineData(1)] [InlineData(30)]
+    public async Task Assign_EmptyTarget_FutureDate_Accepted(int offsetDays)
+    {
+        using var e = new PplEnv();
+        await e.Resp.AssignAsync(Assign("homeroom", PplEnv.Class6A, PplEnv.OtherTeacher, T.AddDays(offsetDays)));
+        Assert.Single(await e.Db.HomeroomAssignment.ToListAsync());
+    }
+
     [Theory(DisplayName = "PPL | Trách nhiệm | Ngày hiệu lực | ngày trong quá khứ bị từ chối khi gán hoặc thay người, hôm nay và ngày sau được chấp nhận")]
-    [InlineData(-1, false)] [InlineData(-30, false)] [InlineData(0, true)] [InlineData(1, true)] [InlineData(30, true)]
+    [InlineData(-1, false)] [InlineData(-30, false)] [InlineData(0, true)]
     public async Task StartDate_NotBeforeToday(int offsetDays, bool accepted)
     {
         using var e = new PplEnv();

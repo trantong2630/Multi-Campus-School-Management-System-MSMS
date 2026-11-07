@@ -241,6 +241,9 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
         if (current is not null)
         {
             if (current.StaffId == r.StaffId) throw ApiException.BadRequest("Người này đang đảm nhiệm sẵn. Chọn người khác để thay.");
+            // Thay người có hiệu lực ngay: hẹn ngày sau sẽ để người cũ mất quyền hôm nay mà người mới chưa nhận (khoảng trống).
+            if (r.StartDate > clock.Today)
+                throw ApiException.BadRequest("Thay người có hiệu lực ngay hôm nay. Chọn hôm nay, hoặc kết thúc người hiện tại vào ngày muốn rồi gán người mới sau.");
             EffectivePeriod.CloseBefore(current, r.StartDate);
         }
 

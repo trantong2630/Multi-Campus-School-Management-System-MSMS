@@ -91,7 +91,7 @@ export function ResponsibilitiesPage() {
     <>
       <PageHeader
         title="Trách nhiệm"
-        description="Mỗi đích có tối đa một người đang đảm nhiệm. Thay người thì bản cũ kết thúc vào ngày liền trước ngày bản mới bắt đầu."
+        description="Mỗi đích có tối đa một người đang đảm nhiệm. Thay người có hiệu lực ngay hôm nay, bản cũ kết thúc vào ngày liền trước."
       />
       <Tabs
         activeKey={kind}
@@ -303,7 +303,7 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
             <InlineAlert
               type="info" style={{ gridColumn: '1 / -1' }}
               title={`Hiện do ${target.staffName} đảm nhiệm từ ${formatDate(target.startDate)}.`}
-              description="Người cũ kết thúc vào ngày liền trước ngày hiệu lực của người mới; dữ liệu đã phát sinh không bị đụng tới."
+              description="Người mới nhận ngay hôm nay, người cũ kết thúc vào ngày liền trước; dữ liệu đã phát sinh không bị đụng tới."
             />
           )}
           <Form.Item
@@ -324,10 +324,10 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
             />
           </Form.Item>
           <Form.Item
-            label="Ngày hiệu lực" name="startDate" extra="Từ hôm nay trở đi: không sửa lùi lịch sử trách nhiệm."
+            label="Ngày hiệu lực" name="startDate" extra={target?.staffId ? 'Thay người có hiệu lực ngay hôm nay.' : 'Từ hôm nay trở đi: không sửa lùi lịch sử trách nhiệm.'}
             rules={[{ required: true, message: 'Chọn ngày bắt đầu hiệu lực.' }]}
           >
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabledDate={(d) => d.isBefore(dayjs(), 'day')} />
+            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabledDate={(d) => d.isBefore(dayjs(), 'day') || (!!target?.staffId && d.isAfter(dayjs(), 'day'))} />
           </Form.Item>
         </div>
       </FormModal>
