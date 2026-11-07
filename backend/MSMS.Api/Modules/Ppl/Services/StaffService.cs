@@ -141,6 +141,7 @@ public sealed class StaffService(MsmsDbContext db, IClock clock, ScopeResolver s
         var name = Guard.Required(r.FullName, "Họ và tên", 150);
         if (r.DateOfBirth is not { } dob) throw ApiException.BadRequest("Ngày sinh không được để trống.");
         if (dob > clock.Today) throw ApiException.BadRequest("Ngày sinh không được ở tương lai.");
+        if (!Guard.StaffAgeOk(dob, clock.Today)) throw ApiException.BadRequest(Guard.StaffAgeMessage);
 
         var gender = Genders.Parse(r.Gender);
         if (gender == "?") throw ApiException.BadRequest("Giới tính chỉ gồm Nam, Nữ hoặc Khác.");

@@ -64,18 +64,30 @@ public class StaffFieldTests
         await PplEnv.Rejects(() => Update(e, Valid() with { DateOfBirth = PplEnv.Today.AddDays(1) }), "tương lai");
     }
 
-    [Fact(DisplayName = "PPL | Cán bộ | Ngày sinh | đúng hôm nay được chấp nhận (ranh giới)")]
-    public async Task Dob_Today_Accepted()
+    [Fact(DisplayName = "PPL | Cán bộ | Ngày sinh | đúng 18 tuổi hôm nay được chấp nhận, thiếu một ngày bị từ chối (ranh giới dưới)")]
+    public async Task Dob_MinAge_Boundary()
     {
         using var e = new PplEnv();
-        Assert.Equal(PplEnv.Today, (await Update(e, Valid() with { DateOfBirth = PplEnv.Today })).DateOfBirth);
+        var eighteen = PplEnv.Today.AddYears(-18);
+        Assert.Equal(eighteen, (await Update(e, Valid() with { DateOfBirth = eighteen })).DateOfBirth);
+        await PplEnv.Rejects(() => Update(e, Valid() with { DateOfBirth = eighteen.AddDays(1) }), "18 đến 75");
     }
 
-    [Fact(DisplayName = "PPL | Cán bộ | Ngày sinh | năm 1800 vẫn được chấp nhận (CHƯA kiểm tuổi hợp lý)")]
-    public async Task Dob_VeryOld_CurrentlyAccepted()
+    [Fact(DisplayName = "PPL | Cán bộ | Ngày sinh | 75 tuổi được chấp nhận, đủ 76 tuổi bị từ chối (ranh giới trên)")]
+    public async Task Dob_MaxAge_Boundary()
     {
         using var e = new PplEnv();
-        Assert.Equal(new DateOnly(1800, 1, 1), (await Update(e, Valid() with { DateOfBirth = new DateOnly(1800, 1, 1) })).DateOfBirth);
+        var at75 = PplEnv.Today.AddYears(-76).AddDays(1);        // 75 tuổi 364 ngày
+        Assert.Equal(at75, (await Update(e, Valid() with { DateOfBirth = at75 })).DateOfBirth);
+        await PplEnv.Rejects(() => Update(e, Valid() with { DateOfBirth = PplEnv.Today.AddYears(-76) }), "18 đến 75");
+    }
+
+    [Theory(DisplayName = "PPL | Cán bộ | Ngày sinh | quá trẻ hoặc quá già (hôm nay, 15 tuổi, năm 1800) bị từ chối")]
+    [InlineData(0)] [InlineData(15)] [InlineData(226)]
+    public async Task Dob_OutOfRange_Rejected(int ageYears)
+    {
+        using var e = new PplEnv();
+        await PplEnv.Rejects(() => Update(e, Valid() with { DateOfBirth = PplEnv.Today.AddYears(-ageYears) }), "18 đến 75");
     }
 
     // ---------- Giới tính ----------

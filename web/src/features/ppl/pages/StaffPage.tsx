@@ -218,7 +218,11 @@ export function StaffPage() {
             <Input maxLength={150} />
           </Form.Item>
           <Form.Item label="Ngày sinh" name="dateOfBirth" rules={[{ required: true, message: 'Chọn ngày sinh.' }]}>
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(dayjs())} />
+            <DatePicker
+              format="DD/MM/YYYY" style={{ width: '100%' }} defaultPickerValue={dayjs().subtract(30, 'year')}
+              // Cán bộ từ 18 đến 75 tuổi tính đến hôm nay (server kiểm lại).
+              disabledDate={(d) => d.isAfter(dayjs().subtract(18, 'year'), 'day') || !d.isAfter(dayjs().subtract(76, 'year'), 'day')}
+            />
           </Form.Item>
           <Form.Item label="Số định danh cá nhân" name="nationalId"
             extra={editing === 'new' ? 'Đủ 12 chữ số, duy nhất toàn trường, không sửa được sau khi tạo.' : 'Không sửa được sau khi tạo.'}

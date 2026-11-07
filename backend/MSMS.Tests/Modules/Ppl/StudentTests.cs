@@ -48,19 +48,37 @@ public class StudentFieldTests
         await PplEnv.Rejects(() => Update(e, Valid() with { DateOfBirth = null }), "Ngày sinh");
     }
 
-    [Fact(DisplayName = "PPL | Học sinh | Ngày sinh | ngày mai bị từ chối, hôm nay được chấp nhận")]
-    public async Task Dob_Future_Boundary()
+    [Fact(DisplayName = "PPL | Học sinh | Ngày sinh | ngày mai (tương lai) bị từ chối")]
+    public async Task Dob_Future_Rejected()
     {
         using var e = new PplEnv();
         await PplEnv.Rejects(() => Update(e, Valid() with { DateOfBirth = PplEnv.Today.AddDays(1) }), "tương lai");
-        Assert.Equal(PplEnv.Today, (await Update(e, Valid() with { DateOfBirth = PplEnv.Today })).DateOfBirth);
     }
 
-    [Fact(DisplayName = "PPL | Học sinh | Ngày sinh | học sinh sinh hôm nay hoặc năm 1800 vẫn được chấp nhận (CHƯA kiểm tuổi hợp lý)")]
-    public async Task Dob_Age_CurrentlyUnchecked()
+    [Fact(DisplayName = "PPL | Học sinh | Ngày sinh | đúng 5 tuổi hôm nay được chấp nhận, thiếu một ngày bị từ chối (ranh giới dưới)")]
+    public async Task Dob_MinAge_Boundary()
     {
         using var e = new PplEnv();
-        Assert.NotNull(await Update(e, Valid() with { DateOfBirth = new DateOnly(1800, 1, 1) }));
+        var five = PplEnv.Today.AddYears(-5);
+        Assert.Equal(five, (await Update(e, Valid() with { DateOfBirth = five })).DateOfBirth);
+        await PplEnv.Rejects(() => Update(e, Valid() with { DateOfBirth = five.AddDays(1) }), "5 đến 25");
+    }
+
+    [Fact(DisplayName = "PPL | Học sinh | Ngày sinh | 25 tuổi được chấp nhận, đủ 26 tuổi bị từ chối (ranh giới trên)")]
+    public async Task Dob_MaxAge_Boundary()
+    {
+        using var e = new PplEnv();
+        var at25 = PplEnv.Today.AddYears(-26).AddDays(1);        // 25 tuổi 364 ngày
+        Assert.Equal(at25, (await Update(e, Valid() with { DateOfBirth = at25 })).DateOfBirth);
+        await PplEnv.Rejects(() => Update(e, Valid() with { DateOfBirth = PplEnv.Today.AddYears(-26) }), "5 đến 25");
+    }
+
+    [Theory(DisplayName = "PPL | Học sinh | Ngày sinh | quá nhỏ hoặc quá lớn (hôm nay, 3 tuổi, 40 tuổi, năm 1800) bị từ chối")]
+    [InlineData(0)] [InlineData(3)] [InlineData(40)] [InlineData(226)]
+    public async Task Dob_OutOfRange_Rejected(int ageYears)
+    {
+        using var e = new PplEnv();
+        await PplEnv.Rejects(() => Update(e, Valid() with { DateOfBirth = PplEnv.Today.AddYears(-ageYears) }), "5 đến 25");
     }
 
     [Theory(DisplayName = "PPL | Học sinh | Giới tính | các cách viết hợp lệ được chuẩn hóa")]

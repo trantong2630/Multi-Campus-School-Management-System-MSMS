@@ -150,6 +150,7 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
                 if (!ws.Cell(row, ColDob).TryReadDate(out dob))
                     Err(ColDob, ws.Cell(row, ColDob).IsEmpty() ? "Thiếu ngày sinh. Điền theo dạng dd/mm/yyyy." : "Ngày sinh sai định dạng. Điền theo dạng dd/mm/yyyy.");
                 else if (dob > clock.Today) Err(ColDob, "Ngày sinh ở tương lai. Kiểm tra lại năm sinh.");
+                else if (!Guard.StudentAgeOk(dob, clock.Today)) Err(ColDob, Guard.StudentAgeMessage);
 
                 var nationalId = ws.Cell(row, ColNationalId).NationalIdText();
                 if (nationalId.Length == 0) Err(ColNationalId, "Thiếu số định danh. Điền đủ 12 chữ số.");

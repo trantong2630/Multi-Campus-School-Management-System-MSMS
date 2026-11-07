@@ -115,6 +115,7 @@ public sealed class StaffImportService(MsmsDbContext db, IClock clock)
                 if (!ws.Cell(row, 2).TryReadDate(out dob))
                     Err(2, ws.Cell(row, 2).IsEmpty() ? "Thiếu ngày sinh. Điền theo dạng dd/mm/yyyy." : "Ngày sinh sai định dạng. Điền theo dạng dd/mm/yyyy.");
                 else if (dob > clock.Today) Err(2, "Ngày sinh ở tương lai. Kiểm tra lại năm sinh.");
+                else if (!Guard.StaffAgeOk(dob, clock.Today)) Err(2, Guard.StaffAgeMessage);
 
                 var nationalId = ws.Cell(row, 9).NationalIdText();
                 if (nationalId.Length == 0) Err(9, "Thiếu số định danh. Điền đủ 12 chữ số.");
