@@ -17,7 +17,7 @@ public sealed class HomeroomLeaveService(MsmsDbContext db, IClock clock, Current
         var today = clock.Today;
         var myHomeroomClasses = await db.HomeroomAssignment
             .AsNoTracking()
-            .Where(EffectivePeriod.EffectiveAt<HomeroomAssignment>(today))
+            .Where(EffectivePeriod.CurrentResponsibility<HomeroomAssignment>(today))
             .Where(ha => ha.StaffId == currentUser.PersonId)
             .Select(ha => ha.ClassId)
             .ToListAsync();
@@ -71,7 +71,7 @@ public sealed class HomeroomLeaveService(MsmsDbContext db, IClock clock, Current
 
         var today = clock.Today;
         var isHomeroom = await db.HomeroomAssignment
-            .Where(EffectivePeriod.EffectiveAt<HomeroomAssignment>(today))
+            .Where(EffectivePeriod.CurrentResponsibility<HomeroomAssignment>(today))
             .AnyAsync(ha => ha.ClassId == leaveRequest.ClassId && ha.StaffId == currentUser.PersonId);
 
         if (!isHomeroom)
@@ -97,7 +97,7 @@ public sealed class HomeroomLeaveService(MsmsDbContext db, IClock clock, Current
 
         var today = clock.Today;
         var isHomeroom = await db.HomeroomAssignment
-            .Where(EffectivePeriod.EffectiveAt<HomeroomAssignment>(today))
+            .Where(EffectivePeriod.CurrentResponsibility<HomeroomAssignment>(today))
             .AnyAsync(ha => ha.ClassId == leaveRequest.ClassId && ha.StaffId == currentUser.PersonId);
 
         if (!isHomeroom)

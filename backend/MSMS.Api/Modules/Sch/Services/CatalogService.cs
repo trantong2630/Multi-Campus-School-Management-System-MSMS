@@ -48,7 +48,7 @@ public sealed class CatalogService(MsmsDbContext db, IClock clock)
             var subjects = await db.Subject.CountAsync(s => s.DepartmentId == id && s.IsActive);
             if (subjects > 0)
                 throw ApiException.BadRequest($"Tổ còn {subjects} môn đang hoạt động. Ngừng hoạt động các môn đó trước.");
-            if (await db.DepartmentHead.Where(EffectivePeriod.EffectiveAt<DepartmentHead>(today)).AnyAsync(h => h.DepartmentId == id))
+            if (await db.DepartmentHead.Where(EffectivePeriod.CurrentResponsibility<DepartmentHead>(today)).AnyAsync(h => h.DepartmentId == id))
                 throw ApiException.BadRequest("Tổ đang có tổ trưởng. Kết thúc trách nhiệm tổ trưởng trước.");
         }
         dept.IsActive = isActive;

@@ -22,7 +22,7 @@ public sealed class LrnAccess(MsmsDbContext db, CurrentUser user, IClock clock, 
     /// <summary>Các tổ chuyên môn người gọi đang làm tổ trưởng tại hôm nay.</summary>
     public Task<List<int>> HeadDepartmentIdsAsync() =>
         db.DepartmentHead.AsNoTracking()
-            .Where(EffectivePeriod.EffectiveAt<DepartmentHead>(clock.Today))
+            .Where(EffectivePeriod.CurrentResponsibility<DepartmentHead>(clock.Today))
             .Where(d => d.StaffId == user.PersonId)
             .Select(d => d.DepartmentId).ToListAsync();
 
