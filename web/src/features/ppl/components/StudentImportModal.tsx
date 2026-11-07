@@ -81,6 +81,19 @@ export function StudentImportModal({ open, onClose, yearId, campusId }: Props) {
           }
         />
       )}
+      {(result?.warnings?.length ?? 0) > 0 && (
+        <InlineAlert
+          type="warning"
+          title={`${result!.warnings!.length} dòng cần kiểm tra lại`}
+          description={(
+            <ul className="import-modal__warnings">
+              {result!.warnings!.map((w) => (
+                <li key={`${w.row}-${w.personCode ?? ''}`}><b>Dòng {w.row}</b> · {w.fullName}: {w.message}</li>
+              ))}
+            </ul>
+          )}
+        />
+      )}
       {result && (!result.accepted || result.skipped.length > 0) && (
         <ImportErrorPanel errors={result.errors} totalErrors={result.totalErrors} skipped={result.skipped} />
       )}

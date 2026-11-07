@@ -123,12 +123,13 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
 
             var existingIds = await db.Person.Where(p => p.NationalId != null).Select(p => new { p.NationalId, p.PersonCode })
                 .ToDictionaryAsync(p => p.NationalId!, p => p.PersonCode);
-            var existingParents = new Dictionary<string, (int Id, string Name)>();
+            var existingParents = new Dictionary<string, (int Id, string Name, string Code)>();
             foreach (var p in await db.Person.AsNoTracking().Where(p => p.PersonType == "Parent" && p.PhoneNumber != null)
-                         .Select(p => new { p.PersonId, p.FullName, p.PhoneNumber }).ToListAsync())
-                existingParents.TryAdd(NormalizePhone(p.PhoneNumber!), (p.PersonId, p.FullName));
+                         .Select(p => new { p.PersonId, p.FullName, p.PhoneNumber, p.PersonCode }).ToListAsync())
+                existingParents.TryAdd(NormalizePhone(p.PhoneNumber!), (p.PersonId, p.FullName, p.PersonCode));
 
             var skipped = new List<StudentImportSkipped>();
+            var warnings = new List<StudentImportWarning>();
             var valid = new List<ValidRow>();
             var fileIds = new Dictionary<string, int>();
             var fileParents = new Dictionary<string, (string Name, int Row)>();
@@ -208,7 +209,15 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
                     }
                     else fileParents[phone] = (parentName, row);
 
-                    if (existingParents.TryGetValue(phone, out var existing)) existingParentId = existing.Id;
+                    if (existingParents.TryGetValue(phone, out var existing))
+                    {
+                        existingParentId = existing.Id;
+                        // Số điện thoại là khóa nhận diện nên vẫn dùng lại hồ sơ cũ, nhưng họ tên khác hẳn thường là nhầm số: cảnh báo, không chặn.
+                        if (!NamesSimilar(existing.Name, parentName))
+                            warnings.Add(new StudentImportWarning(row, name,
+                                $"File ghi phụ huynh \"{parentName}\" nhưng số {phone} đã thuộc \"{existing.Name}\" ({existing.Code}). Học sinh vẫn được gắn vào hồ sơ đó, kiểm tra lại số điện thoại.",
+                                existing.Code));
+                    }
                 }
 
                 var parentEmail = ws.Cell(row, ColParentEmail).Text();
@@ -219,7 +228,7 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
                         parentName, relationship, phone, parentEmail.Length > 0 ? parentEmail : null, existingParentId));
             }
 
-            if (errors.Count > 0) return Rejected(errors, skipped);
+            if (errors.Count > 0) return Rejected(errors, skipped, warnings);
 
             var students = 0;
             var enrollments = 0;
@@ -263,7 +272,7 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
                 await db.SaveChangesAsync();   // mỗi dòng một lần lưu để mã hồ sơ tăng đúng thứ tự dòng
             }
             await tx.CommitAsync();
-            return new StudentImportResult(true, students, enrollments, parentsCreated, skipped, [], 0);
+            return new StudentImportResult(true, students, enrollments, parentsCreated, skipped, [], 0, warnings);
         }
     }
 
@@ -320,6 +329,20 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
 
     internal static bool IsPhone(string phone) => phone.Length is >= 9 and <= 15 && phone.All(char.IsAsciiDigit);
 
-    private static StudentImportResult Rejected(List<ImportError> errors, List<StudentImportSkipped> skipped) =>
-        new(false, 0, 0, 0, skipped, errors.Take(ExcelHelpers.MaxReportedErrors).ToList(), errors.Count);
+    private static StudentImportResult Rejected(List<ImportError> errors, List<StudentImportSkipped> skipped, List<StudentImportWarning>? warnings = null) =>
+        new(false, 0, 0, 0, skipped, errors.Take(ExcelHelpers.MaxReportedErrors).ToList(), errors.Count, warnings ?? []);
+
+    /// <summary>
+    /// Hai họ tên có giống một người không: bỏ dấu, không phân biệt hoa thường, cùng tên gọi (từ cuối) và trùng ít nhất một nửa số từ.
+    /// "Nguyễn Thị Lan" và "Nguyễn Lan" giống nhau; "Trần Văn Cường" và "Nguyễn Thị Lan" thì không.
+    /// </summary>
+    internal static bool NamesSimilar(string a, string b)
+    {
+        static string[] Tokens(string s) => MSMS.Api.Common.Text.TextNormalizer.RemoveDiacritics(s).ToLowerInvariant()
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var x = Tokens(a); var y = Tokens(b);
+        if (x.Length == 0 || y.Length == 0) return false;
+        if (x[^1] != y[^1]) return false;
+        return x.Intersect(y).Count() * 2 >= Math.Max(x.Length, y.Length);
+    }
 }

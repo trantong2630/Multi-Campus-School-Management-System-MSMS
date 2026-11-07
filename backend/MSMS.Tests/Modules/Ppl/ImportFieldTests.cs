@@ -6,7 +6,8 @@ using MSMS.Api.Modules.Ppl.Services;
 namespace MSMS.Tests.Modules.Ppl;
 
 /// <summary>Kết quả chạy một lần import trong test: qua validate (dừng ở bước ghi vì cần SQL Server) hoặc bị từ chối kèm danh sách lỗi.</summary>
-internal sealed record ImportOutcome(bool Passed, bool Accepted, IReadOnlyList<ImportError> Errors, int TotalErrors, int Skipped, string? SkippedCode)
+internal sealed record ImportOutcome(bool Passed, bool Accepted, IReadOnlyList<ImportError> Errors, int TotalErrors, int Skipped, string? SkippedCode,
+    IReadOnlyList<MSMS.Api.Modules.Ppl.Dtos.StudentImportWarning>? Warnings = null)
 {
     public bool HasError(string column, string reasonPart) => Errors.Any(e => e.Column == column && e.Reason.Contains(reasonPart, StringComparison.OrdinalIgnoreCase));
 }
@@ -42,7 +43,7 @@ internal static class ImportRun
         try
         {
             var r = await svc.ImportAsync(ms);
-            return new(r.Accepted, r.Accepted, r.Errors, r.TotalErrors, r.Skipped.Count, r.Skipped.FirstOrDefault()?.PersonCode);
+            return new(r.Accepted, r.Accepted, r.Errors, r.TotalErrors, r.Skipped.Count, r.Skipped.FirstOrDefault()?.PersonCode, r.Warnings);
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("Relational")) { return new(true, false, [], 0, 0, null); }
     }
@@ -323,11 +324,43 @@ public class StudentImportFieldTests
         Assert.True(o.HasError("Phụ huynh — Số điện thoại", "họ tên khác"));
     }
 
-    [Fact(DisplayName = "PPL | Import học sinh | Phụ huynh đã có | số điện thoại đã có nhưng ghi họ tên khác vẫn được chấp nhận và dùng lại hồ sơ cũ (CHƯA cảnh báo lệch họ tên)")]
-    public async Task ExistingGuardian_DifferentName_CurrentlyAccepted()
+    [Fact(DisplayName = "PPL | Import học sinh | Phụ huynh đã có | số điện thoại đã có nhưng ghi họ tên khác vẫn qua validate và dùng lại hồ sơ cũ (không chặn)")]
+    public async Task ExistingGuardian_DifferentName_StillPassesValidation()
     {
         using var e = new PplEnv();
         Assert.True((await ImportRun.Student(e, null, Row((8, "0912345678"), (6, "Tên hoàn toàn khác")))).Passed);
+    }
+
+    [Fact(DisplayName = "PPL | Import học sinh | Phụ huynh đã có | số điện thoại đã thuộc phụ huynh khác họ tên thì có cảnh báo nêu dòng, họ tên trong file, họ tên đang có và mã hồ sơ")]
+    public async Task ExistingGuardian_DifferentName_Warns()
+    {
+        using var e = new PplEnv();
+        // Dòng 7 lệch họ tên; dòng 8 cố ý thiếu họ tên học sinh để kết quả bị từ chối và trả về cảnh báo mà không cần bước ghi.
+        var o = await ImportRun.Student(e, null, Row((8, "0912345678"), (6, "Nguyễn Thị Lan")), Row((1, ""), (10, "555555555555")));
+        Assert.False(o.Accepted);
+        var w = Assert.Single(o.Warnings!);
+        Assert.Equal(7, w.Row);
+        Assert.Equal("PH000201", w.PersonCode);
+        Assert.Contains("Nguyễn Thị Lan", w.Message); Assert.Contains("Phụ huynh A", w.Message);
+        Assert.DoesNotContain(o.Errors, er => er.Location == "Dòng 7");      // dòng lệch họ tên không bị coi là lỗi
+    }
+
+    [Theory(DisplayName = "PPL | Import học sinh | Phụ huynh đã có | họ tên viết hơi khác (không dấu, hoa thường, thiếu chữ đệm) không bị cảnh báo; khác hẳn thì cảnh báo")]
+    [InlineData("Phụ huynh A", false)] [InlineData("phu huynh a", false)] [InlineData("PHỤ HUYNH A", false)] [InlineData("Phụ A", false)]
+    [InlineData("Phụ huynh B", true)] [InlineData("Trần Văn Cường", true)] [InlineData("Lê Thị Mai", true)]
+    public async Task ExistingGuardian_NameSimilarity(string nameInFile, bool warns)
+    {
+        using var e = new PplEnv();
+        var o = await ImportRun.Student(e, null, Row((8, "0912345678"), (6, nameInFile)), Row((1, ""), (10, "555555555555")));
+        Assert.Equal(warns, o.Warnings!.Count == 1);
+    }
+
+    [Fact(DisplayName = "PPL | Import học sinh | Phụ huynh đã có | phụ huynh mới (số chưa có) hoặc cùng số cùng họ tên trong file không bị cảnh báo")]
+    public async Task NewGuardian_NoWarning()
+    {
+        using var e = new PplEnv();
+        var o = await ImportRun.Student(e, null, Row(), Row((1, "Trần Thị D"), (10, "555555555555")), Row((1, ""), (10, "666666666666")));
+        Assert.Empty(o.Warnings!);
     }
 
     [Fact(DisplayName = "PPL | Import học sinh | Số định danh | học sinh đã có bị bỏ qua cả dòng kể cả khi đổi lớp, nêu mã hồ sơ")]
