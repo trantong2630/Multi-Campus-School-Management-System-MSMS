@@ -337,7 +337,7 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
                 return;
             case AccountTypes.Teacher:
                 var today = clock.Today;
-                if (await db.HomeroomAssignment.Where(EffectivePeriod.EffectiveAt<HomeroomAssignment>(today))
+                if (await db.HomeroomAssignment.Where(EffectivePeriod.CurrentResponsibility<HomeroomAssignment>(today))
                         .AnyAsync(h => h.ClassId == cls.ClassId && h.StaffId == user.PersonId))
                     return;
                 break;

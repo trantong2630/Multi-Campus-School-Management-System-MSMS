@@ -91,7 +91,7 @@ export function ResponsibilitiesPage() {
     <>
       <PageHeader
         title="Trách nhiệm"
-        description="Mỗi đích có tối đa một người đang đảm nhiệm. Thay người thì bản cũ kết thúc vào ngày liền trước ngày bản mới bắt đầu."
+        description="Mỗi đích có tối đa một người đang đảm nhiệm. Thay người có hiệu lực ngay hôm nay, bản cũ kết thúc vào ngày liền trước."
       />
       <Tabs
         activeKey={kind}
@@ -179,11 +179,11 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
     && (!term || [r.targetName, r.targetCode, r.targetGroup, r.staffName, r.staffCode, r.nextStaffName, r.endedStaffName]
       .some((x) => x?.toLowerCase().includes(term))));
 
-  // Mỗi Hiệu phó một phân hiệu, mỗi giáo viên một lớp chủ nhiệm (cùng năm học): làm mờ người đang giữ đích khác (server vẫn kiểm lại, kể cả người được hẹn).
+  // Mỗi Hiệu phó một phân hiệu, mỗi giáo viên một tổ trưởng, mỗi giáo viên một lớp chủ nhiệm (cùng năm học): làm mờ người đang giữ đích khác (server vẫn kiểm lại, kể cả người được hẹn).
   // Gồm cả người đã được xếp cho đích khác nhưng chưa tới ngày hiệu lực: đã phân công thì không chọn thêm.
   const ledCampus = new Map<number, string>();
-  if (kind === 'campus' || kind === 'homeroom') {
-    const act = kind === 'campus' ? 'phụ trách' : 'chủ nhiệm';
+  if (kind === 'campus' || kind === 'homeroom' || kind === 'department') {
+    const act = kind === 'campus' ? 'phụ trách' : kind === 'department' ? 'làm tổ trưởng' : 'chủ nhiệm';
     rows?.forEach((r) => {
       if (r.targetId === target?.targetId) return;
       if (r.staffId) ledCampus.set(r.staffId, `đang ${act} ${r.targetName}`);
@@ -303,7 +303,7 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
             <InlineAlert
               type="info" style={{ gridColumn: '1 / -1' }}
               title={`Hiện do ${target.staffName} đảm nhiệm từ ${formatDate(target.startDate)}.`}
-              description="Người cũ kết thúc vào ngày liền trước ngày hiệu lực của người mới; dữ liệu đã phát sinh không bị đụng tới."
+              description="Người mới nhận ngay hôm nay, người cũ kết thúc vào ngày liền trước; dữ liệu đã phát sinh không bị đụng tới."
             />
           )}
           <Form.Item
@@ -323,8 +323,11 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
                 }))}
             />
           </Form.Item>
-          <Form.Item label="Ngày hiệu lực" name="startDate" rules={[{ required: true, message: 'Chọn ngày bắt đầu hiệu lực.' }]}>
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+          <Form.Item
+            label="Ngày hiệu lực" name="startDate" extra={target?.staffId ? 'Thay người có hiệu lực ngay hôm nay.' : 'Từ hôm nay trở đi: không sửa lùi lịch sử trách nhiệm.'}
+            rules={[{ required: true, message: 'Chọn ngày bắt đầu hiệu lực.' }]}
+          >
+            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabledDate={(d) => d.isBefore(dayjs(), 'day') || (!!target?.staffId && d.isAfter(dayjs(), 'day'))} />
           </Form.Item>
         </div>
       </FormModal>
@@ -336,11 +339,11 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
       >
         <InlineAlert
           type="warning"
-          title={`${ending?.staffName ?? ''} sẽ mất quyền tương ứng ngay sau ngày kết thúc.`}
-          description="Loại tài khoản không đổi."
+          title={`${ending?.staffName ?? ''} sẽ mất quyền tương ứng từ ngày kết thúc.`}
+          description="Chọn hôm nay hoặc một ngày sau đó. Loại tài khoản không đổi."
         />
         <Form.Item label="Ngày kết thúc" name="endDate" rules={[{ required: true, message: 'Chọn ngày kết thúc.' }]}>
-          <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+          <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabledDate={(d) => d.isBefore(dayjs(), 'day')} />
         </Form.Item>
       </FormModal>
 

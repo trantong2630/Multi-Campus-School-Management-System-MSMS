@@ -48,6 +48,34 @@ public static partial class Guard
 
     public static bool IsAlnum(string value) => AlnumRegex().IsMatch(value);
 
+    /// <summary>Số điện thoại di động: đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09.</summary>
+    public static bool IsMobilePhone(string value) => value.Length == 10 && value[0] == '0' && value[1] is '3' or '5' or '7' or '8' or '9' && value.All(char.IsAsciiDigit);
+
+    public const string PhoneRuleMessage = "Số điện thoại di động phải gồm đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09.";
+
+    public static string? MobilePhone(string? value, string label = "Số điện thoại")
+    {
+        var v = Optional(value, label, 20);
+        if (v != null && !IsMobilePhone(v)) throw ApiException.BadRequest(PhoneRuleMessage);
+        return v;
+    }
+
+    /// <summary>Khoảng tuổi hợp lệ (tuổi tròn tính đến hôm nay) của hồ sơ cán bộ và học sinh: chặn nhập nhầm năm sinh.</summary>
+    public const int StaffMinAge = 18, StaffMaxAge = 75, StudentMinAge = 5, StudentMaxAge = 25;
+
+    /// <summary>Tuổi tròn tại ngày <paramref name="today"/> của người sinh ngày <paramref name="dob"/>.</summary>
+    public static int AgeOn(DateOnly dob, DateOnly today)
+    {
+        var age = today.Year - dob.Year;
+        return dob.AddYears(age) > today ? age - 1 : age;
+    }
+
+    public static bool StaffAgeOk(DateOnly dob, DateOnly today) => AgeOn(dob, today) is >= StaffMinAge and <= StaffMaxAge;
+    public static bool StudentAgeOk(DateOnly dob, DateOnly today) => AgeOn(dob, today) is >= StudentMinAge and <= StudentMaxAge;
+
+    public static string StaffAgeMessage => $"Cán bộ phải từ {StaffMinAge} đến {StaffMaxAge} tuổi tính đến hôm nay. Kiểm tra lại ngày sinh.";
+    public static string StudentAgeMessage => $"Học sinh phải từ {StudentMinAge} đến {StudentMaxAge} tuổi tính đến hôm nay. Kiểm tra lại ngày sinh.";
+
     /// <summary>Địa chỉ email dạng tên@miền.đuôi: một địa chỉ duy nhất (không tên hiển thị, không dấu cách) và tên miền có dấu chấm.</summary>
     public static bool IsEmail(string value) =>
         value.Length <= 254 && MailAddress.TryCreate(value, out var mail) && mail.Address == value && mail.Host.Contains('.');

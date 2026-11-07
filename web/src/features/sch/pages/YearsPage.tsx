@@ -193,7 +193,7 @@ export function YearsPage() {
           <Form.Item label="Tên năm học" name="name" rules={[{ required: true, whitespace: true, message: 'Nhập tên năm học, ví dụ 2026-2027.' }]}>
             <Input maxLength={20} placeholder="2026-2027" />
           </Form.Item>
-          <Form.Item label="Từ ngày – đến ngày" name="range" style={{ gridColumn: '1 / -1' }} rules={[{ required: true, message: 'Chọn ngày bắt đầu và ngày kết thúc năm học.' }]}>
+          <Form.Item label="Từ ngày – đến ngày" name="range" style={{ gridColumn: '1 / -1' }} extra="Một năm học dài tối đa 13 tháng." rules={[{ required: true, message: 'Chọn ngày bắt đầu và ngày kết thúc năm học.' }, { validator: (_, v: [Dayjs, Dayjs] | undefined) => (!v || !v[0] || !v[1] || !v[1].isAfter(v[0].add(13, 'month'), 'day') ? Promise.resolve() : Promise.reject(new Error('Năm học dài tối đa 13 tháng. Kiểm tra lại ngày bắt đầu và ngày kết thúc.'))) }]}>
             <DatePicker.RangePicker format={DATE_FORMAT} style={{ width: '100%' }} />
           </Form.Item>
         </div>

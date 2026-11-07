@@ -50,7 +50,7 @@ public class CampusResponsibilityTests
     public async Task After_the_first_responsibility_ended_the_vice_principal_can_lead_another_campus()
     {
         var (f, svc) = Setup();
-        await svc.AssignAsync(Assign(1, 10, Today.AddDays(-30)));
+        f.Db.CampusLeadership.Add(new CampusLeadership { CampusId = 1, StaffId = 10, StartDate = Today.AddDays(-30) }); f.Db.SaveChanges();
         f.Db.CampusLeadership.Single().EndDate = Today.AddDays(-1);
         await f.Db.SaveChangesAsync();
 
@@ -63,7 +63,7 @@ public class CampusResponsibilityTests
     public async Task Replacing_the_holder_of_a_campus_is_not_blocked_and_other_vice_principals_are_unaffected()
     {
         var (f, svc) = Setup();
-        await svc.AssignAsync(Assign(1, 10, Today.AddDays(-10)));
+        f.Db.CampusLeadership.Add(new CampusLeadership { CampusId = 1, StaffId = 10, StartDate = Today.AddDays(-10) }); f.Db.SaveChanges();
 
         await svc.AssignAsync(Assign(1, 11, Today));   // thay người ở chính phân hiệu đó
         await svc.AssignAsync(Assign(2, 10, Today));   // hiệu phó cũ đã được giải phóng, nhận phân hiệu khác

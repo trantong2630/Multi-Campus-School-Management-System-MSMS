@@ -105,7 +105,7 @@ public sealed class WeeklyReportService(MsmsDbContext db, IClock clock, CurrentU
         var today = clock.Today;
         var myClasses = await db.HomeroomAssignment
             .AsNoTracking()
-            .Where(EffectivePeriod.EffectiveAt<HomeroomAssignment>(today))
+            .Where(EffectivePeriod.CurrentResponsibility<HomeroomAssignment>(today))
             .Where(ha => ha.StaffId == user.PersonId)
             .Select(ha => ha.ClassId)
             .ToListAsync();

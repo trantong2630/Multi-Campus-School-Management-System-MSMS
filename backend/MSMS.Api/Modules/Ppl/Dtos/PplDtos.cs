@@ -32,8 +32,11 @@ public record ResponsibilityHistoryRow(int RecordId, int StaffId, string StaffNa
 
 // Import học sinh kèm ghi danh và phụ huynh (PPL-02, 4.3.16–4.3.18)
 public record StudentImportSkipped(int Row, string FullName, string Reason, string? PersonCode = null);
+/// <summary>Cảnh báo không chặn import: dòng vẫn được nhập nhưng người dùng nên kiểm tra lại (ví dụ số điện thoại đã thuộc phụ huynh khác họ tên).</summary>
+public record StudentImportWarning(int Row, string FullName, string Message, string? PersonCode = null);
+
 public record StudentImportResult(bool Accepted, int Students, int Enrollments, int Parents, IReadOnlyList<StudentImportSkipped> Skipped,
-    IReadOnlyList<ImportError> Errors, int TotalErrors);
+    IReadOnlyList<ImportError> Errors, int TotalErrors, IReadOnlyList<StudentImportWarning>? Warnings = null);
 
 // PPL-02 Danh bạ học sinh (4.3.12–4.3.15)
 public record StudentDto(

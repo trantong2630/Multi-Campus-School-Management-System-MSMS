@@ -112,7 +112,7 @@ public sealed class ScheduleSupport(MsmsDbContext db, ScopeResolver scope, Curre
     public Task<List<int>> ViceIdsAsync(int campusId)
     {
         var today = clock.Today;
-        return db.CampusLeadership.AsNoTracking().Where(EffectivePeriod.EffectiveAt<CampusLeadership>(today))
+        return db.CampusLeadership.AsNoTracking().Where(EffectivePeriod.CurrentResponsibility<CampusLeadership>(today))
             .Where(l => l.CampusId == campusId).Select(l => l.StaffId).ToListAsync();
     }
 

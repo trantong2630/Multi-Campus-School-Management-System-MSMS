@@ -168,13 +168,16 @@ public class SchAuthorizationTests
         }
     }
 
+    /// <summary>BR-09: kết thúc từ hôm nay trở về trước thì quyền mất ngay, không đợi hết ngày kết thúc (cùng cách tính với phần đăng nhập và màn Trách nhiệm).</summary>
     [Fact]
-    public async Task Roster_AHomeroomTeacherWhoseDutyEnded_LosesAccess_ButStillHasItOnTheEndDate()
+    public async Task Roster_AHomeroomTeacherWhoseDutyEnded_LosesAccess_AlsoOnTheEndDate()
     {
         var endedYesterday = CreateRosterService(AccountTypes.Teacher, HomeroomTeacher, homeroomEnd: Today.AddDays(-1));
         var endsToday = CreateRosterService(AccountTypes.Teacher, HomeroomTeacher, homeroomEnd: Today);
+        var endsTomorrow = CreateRosterService(AccountTypes.Teacher, HomeroomTeacher, homeroomEnd: Today.AddDays(1));
 
         Assert.Equal(403, (await Assert.ThrowsAsync<ApiException>(() => endedYesterday.GetRosterAsync(ClassInCampus1, null))).StatusCode);
-        Assert.Equal(ClassInCampus1, (await endsToday.GetRosterAsync(ClassInCampus1, null)).ClassId);
+        Assert.Equal(403, (await Assert.ThrowsAsync<ApiException>(() => endsToday.GetRosterAsync(ClassInCampus1, null))).StatusCode);
+        Assert.Equal(ClassInCampus1, (await endsTomorrow.GetRosterAsync(ClassInCampus1, null)).ClassId);   // còn quyền đến hết ngày trước ngày kết thúc
     }
 }

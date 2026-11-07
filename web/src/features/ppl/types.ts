@@ -92,6 +92,13 @@ export interface GuardianImportResult {
   totalErrors: number;
 }
 
+export interface StudentImportWarning {
+  row: number;
+  fullName: string;
+  message: string;
+  personCode: string | null;
+}
+
 export interface StudentImportResult {
   accepted: boolean;
   students: number;
@@ -100,6 +107,8 @@ export interface StudentImportResult {
   skipped: SkippedRow[];
   errors: ImportError[];
   totalErrors: number;
+  /** Cảnh báo không chặn: dòng vẫn được nhập nhưng nên kiểm tra lại. */
+  warnings?: StudentImportWarning[];
 }
 
 export type ResponsibilityKind = 'campus' | 'department' | 'homeroom';

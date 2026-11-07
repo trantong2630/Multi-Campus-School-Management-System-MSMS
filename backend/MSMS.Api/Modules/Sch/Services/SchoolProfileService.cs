@@ -41,7 +41,7 @@ public sealed class SchoolProfileService(MsmsDbContext db, CurrentUser user, ICl
         }
         p.Name = name;
         p.Address = Guard.Optional(r.Address, "Địa chỉ", 255);
-        p.PhoneNumber = Guard.Optional(r.PhoneNumber, "Số điện thoại", 20);
+        p.PhoneNumber = Guard.MobilePhone(r.PhoneNumber);
         p.Email = email;
         p.Website = website;
         Stamp(p);

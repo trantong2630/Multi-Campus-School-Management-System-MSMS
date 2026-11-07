@@ -26,8 +26,9 @@ public class ResponsibilityListTests
     {
         var (f, svc) = Setup();
         // PH1: người đang giữ + người được hẹn từ 2 ngày nữa (người cũ kết thúc ngày liền trước, nên hôm nay vẫn còn đương nhiệm); PH2: từng có người nhưng đã kết thúc.
-        await svc.AssignAsync(new(ResponsibilityKinds.Campus, 1, 10, Today.AddDays(-20)));
-        await svc.AssignAsync(new(ResponsibilityKinds.Campus, 1, 11, Today.AddDays(2)));
+        f.Db.CampusLeadership.Add(new CampusLeadership { CampusId = 1, StaffId = 10, StartDate = Today.AddDays(-20), EndDate = Today.AddDays(1) });
+        f.Db.CampusLeadership.Add(new CampusLeadership { CampusId = 1, StaffId = 11, StartDate = Today.AddDays(2) });   // hẹn trước: nay không tạo được qua Thay người nên ghi thẳng
+        f.Db.SaveChanges();
         f.Db.CampusLeadership.Add(new CampusLeadership { CampusId = 2, StaffId = 10, StartDate = Today.AddDays(-60), EndDate = Today.AddDays(-30) });
         await f.Db.SaveChangesAsync();
 
@@ -69,8 +70,13 @@ public class ResponsibilityListTests
         var (f, svc) = Setup();
         f.AddAccount(20, AccountTypes.Teacher);
         f.AddAccount(21, AccountTypes.Teacher);
-        await svc.AssignAsync(new(kind, targetId, 20, Today.AddDays(-20)));
-        await svc.AssignAsync(new(kind, targetId, 21, Today.AddDays(2)));   // người cũ kết thúc ngày liền trước
+        if (kind == ResponsibilityKinds.Department) f.Db.DepartmentHead.Add(new DepartmentHead { DepartmentId = targetId, StaffId = 20, StartDate = Today.AddDays(-20) });
+        else f.Db.HomeroomAssignment.Add(new HomeroomAssignment { ClassId = targetId, StaffId = 20, StartDate = Today.AddDays(-20) });
+        f.Db.SaveChanges();
+        // người mới hẹn từ 2 ngày nữa, người cũ kết thúc ngày liền trước (ghi thẳng vì Thay người nay chỉ có hiệu lực ngay)
+        if (kind == ResponsibilityKinds.Department) { f.Db.DepartmentHead.Single().EndDate = Today.AddDays(1); f.Db.DepartmentHead.Add(new DepartmentHead { DepartmentId = targetId, StaffId = 21, StartDate = Today.AddDays(2) }); }
+        else { f.Db.HomeroomAssignment.Single().EndDate = Today.AddDays(1); f.Db.HomeroomAssignment.Add(new HomeroomAssignment { ClassId = targetId, StaffId = 21, StartDate = Today.AddDays(2) }); }
+        f.Db.SaveChanges();
 
         var row = (await svc.ListCurrentAsync(kind, null)).Single(r => r.TargetId == targetId);
 

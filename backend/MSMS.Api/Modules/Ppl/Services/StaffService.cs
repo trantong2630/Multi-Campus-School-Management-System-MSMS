@@ -141,6 +141,7 @@ public sealed class StaffService(MsmsDbContext db, IClock clock, ScopeResolver s
         var name = Guard.Required(r.FullName, "Họ và tên", 150);
         if (r.DateOfBirth is not { } dob) throw ApiException.BadRequest("Ngày sinh không được để trống.");
         if (dob > clock.Today) throw ApiException.BadRequest("Ngày sinh không được ở tương lai.");
+        if (!Guard.StaffAgeOk(dob, clock.Today)) throw ApiException.BadRequest(Guard.StaffAgeMessage);
 
         var gender = Genders.Parse(r.Gender);
         if (gender == "?") throw ApiException.BadRequest("Giới tính chỉ gồm Nam, Nữ hoặc Khác.");
@@ -150,8 +151,15 @@ public sealed class StaffService(MsmsDbContext db, IClock clock, ScopeResolver s
 
         var campus = await db.Campus.FindAsync(r.PrimaryCampusId) ?? throw ApiException.BadRequest("Chọn phân hiệu chính cho cán bộ.");
         if (!campus.IsActive) throw ApiException.BadRequest("Phân hiệu chính đã ngừng hoạt động. Chọn phân hiệu khác.");
-        if (r.DepartmentId is { } did && !await db.SubjectDepartment.AnyAsync(d => d.DepartmentId == did))
-            throw ApiException.BadRequest("Tổ chuyên môn không tồn tại.");
+        if (r.DepartmentId is { } did)
+        {
+            var dept = await db.SubjectDepartment.AsNoTracking().FirstOrDefaultAsync(d => d.DepartmentId == did)
+                       ?? throw ApiException.BadRequest("Tổ chuyên môn không tồn tại.");
+            // Tổ ngừng hoạt động không chọn được cho tổ mới; cán bộ đang thuộc tổ đó vẫn sửa được các trường khác mà không phải đổi tổ.
+            var keepsCurrent = selfId is not null && await db.StaffProfile.AnyAsync(s => s.StaffId == selfId && s.DepartmentId == did);
+            if (!dept.IsActive && !keepsCurrent)
+                throw ApiException.BadRequest("Tổ chuyên môn đã ngừng hoạt động. Chọn tổ còn hoạt động.");
+        }
 
         string? abbr = null;
         if (!string.IsNullOrWhiteSpace(r.TeacherAbbr))
@@ -171,6 +179,6 @@ public sealed class StaffService(MsmsDbContext db, IClock clock, ScopeResolver s
                 throw ApiException.BadRequest($"Số định danh {nationalId} đã thuộc hồ sơ {owner.PersonCode} ({owner.FullName}). Mở hồ sơ đó để sửa thay vì tạo mới.");
         }
 
-        return new Validated(name, nationalId, gender, Guard.Optional(r.PhoneNumber, "Số điện thoại", 20), email, abbr);
+        return new Validated(name, nationalId, gender, Guard.MobilePhone(r.PhoneNumber), email, abbr);
     }
 }

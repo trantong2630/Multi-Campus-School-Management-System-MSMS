@@ -42,7 +42,7 @@ public sealed class SchoolProfileTests : IDisposable
     }
 
     private static SchoolProfileRequest Profile(string name = "Trường THCS Ánh Sáng", string? email = null, string? website = null) =>
-        new(name, "12 Lê Lợi, Hà Nội", "0243123456", email, website);
+        new(name, "12 Lê Lợi, Hà Nội", "0912345678", email, website);
 
     private static byte[] Image(byte[] header, long size)
     {
@@ -73,7 +73,7 @@ public sealed class SchoolProfileTests : IDisposable
     {
         var (db, svc) = Create();
 
-        var saved = await svc.UpdateAsync(new SchoolProfileRequest("  Trường   THCS Ánh Sáng ", " 12 Lê Lợi ", " 0243123456 ", "info@school.vn", "https://school.vn"));
+        var saved = await svc.UpdateAsync(new SchoolProfileRequest("  Trường   THCS Ánh Sáng ", " 12 Lê Lợi ", " 0912345678 ", "info@school.vn", "https://school.vn"));
 
         Assert.Equal("Trường THCS Ánh Sáng", saved.Name);
         Assert.Equal("12 Lê Lợi", saved.Address);

@@ -205,7 +205,11 @@ export function StudentsPage() {
             <Input maxLength={150} />
           </Form.Item>
           <Form.Item label="Ngày sinh" name="dateOfBirth" rules={[{ required: true, message: 'Chọn ngày sinh.' }]}>
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(dayjs())} />
+            <DatePicker
+              format="DD/MM/YYYY" style={{ width: '100%' }} defaultPickerValue={dayjs().subtract(12, 'year')}
+              // Học sinh từ 5 đến 25 tuổi tính đến hôm nay (server kiểm lại).
+              disabledDate={(d) => d.isAfter(dayjs().subtract(5, 'year'), 'day') || !d.isAfter(dayjs().subtract(26, 'year'), 'day')}
+            />
           </Form.Item>
           <Form.Item label="Số định danh cá nhân" name="nationalId"
             extra={editing === 'new' ? 'Đủ 12 chữ số, duy nhất toàn trường, không sửa được sau khi tạo.' : 'Không sửa được sau khi tạo.'}
@@ -213,7 +217,7 @@ export function StudentsPage() {
             <Input maxLength={12} inputMode="numeric" disabled={editing !== 'new'} />
           </Form.Item>
           <Form.Item label="Giới tính" name="gender"><Select allowClear options={GENDERS} /></Form.Item>
-          <Form.Item label="Số điện thoại" name="phoneNumber"><Input maxLength={20} /></Form.Item>
+          <Form.Item label="Số điện thoại" name="phoneNumber" extra="Số di động 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09." rules={[{ pattern: /^0[35789]\d{8}$/, message: 'Số điện thoại di động phải gồm đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09.' }]}><Input maxLength={10} inputMode="tel" /></Form.Item>
           <Form.Item label="Địa chỉ" name="address"><Input maxLength={255} /></Form.Item>
           <Form.Item label="Ghi chú" name="note"><Input.TextArea rows={3} maxLength={500} /></Form.Item>
         </div>

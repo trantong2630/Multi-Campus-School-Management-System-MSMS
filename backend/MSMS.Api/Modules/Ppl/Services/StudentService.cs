@@ -143,6 +143,7 @@ public sealed class StudentService(MsmsDbContext db, IClock clock, ScopeResolver
         var name = Guard.Required(r.FullName, "Họ và tên", 150);
         if (r.DateOfBirth is not { } dob) throw ApiException.BadRequest("Ngày sinh không được để trống.");
         if (dob > clock.Today) throw ApiException.BadRequest("Ngày sinh không được ở tương lai.");
+        if (!Guard.StudentAgeOk(dob, clock.Today)) throw ApiException.BadRequest(Guard.StudentAgeMessage);
 
         var gender = Genders.Parse(r.Gender);
         if (gender == "?") throw ApiException.BadRequest("Giới tính chỉ gồm Nam, Nữ hoặc Khác.");
@@ -157,7 +158,7 @@ public sealed class StudentService(MsmsDbContext db, IClock clock, ScopeResolver
                 throw ApiException.BadRequest($"Số định danh {nationalId} đã thuộc hồ sơ {owner.PersonCode} ({owner.FullName}). Mở hồ sơ đó để sửa thay vì tạo mới.");
         }
 
-        return new Validated(name, nationalId, gender, Guard.Optional(r.PhoneNumber, "Số điện thoại", 20),
+        return new Validated(name, nationalId, gender, Guard.MobilePhone(r.PhoneNumber),
             Guard.Optional(r.Address, "Địa chỉ", 255), Guard.Optional(r.Note, "Ghi chú", 500));
     }
 }

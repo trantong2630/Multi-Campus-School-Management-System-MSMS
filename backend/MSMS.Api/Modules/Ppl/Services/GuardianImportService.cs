@@ -102,7 +102,7 @@ public sealed class GuardianImportService(MsmsDbContext db, IClock clock)
 
                 var phone = StudentImportService.NormalizePhone(StudentImportService.ReadPhone(ws.Cell(row, 2)));
                 if (phone.Length == 0) Err(2, "Thiếu số điện thoại. Đây là khóa nhận diện phụ huynh.");
-                else if (!StudentImportService.IsPhone(phone)) Err(2, "Số điện thoại chỉ gồm 9 đến 15 chữ số.");
+                else if (!StudentImportService.IsPhone(phone)) Err(2, Guard.PhoneRuleMessage);
 
                 // Khóa nhận diện hợp lệ thì mới tra người đã có; người đã có thì bỏ qua cả dòng, không kiểm các cột còn lại.
                 if (errors.Count == rowErrors)

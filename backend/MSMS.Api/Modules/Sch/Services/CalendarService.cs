@@ -24,6 +24,7 @@ public sealed class CalendarService(MsmsDbContext db, CurrentUser user, IClock c
     {
         var name = Guard.Required(r.Name, "Tên năm học", 20);
         if (r.EndDate <= r.StartDate) throw ApiException.BadRequest("Ngày kết thúc phải sau ngày bắt đầu năm học.");
+        if (r.EndDate > r.StartDate.AddMonths(13)) throw ApiException.BadRequest("Năm học dài tối đa 13 tháng. Kiểm tra lại ngày bắt đầu và ngày kết thúc.");
         if (await db.AcademicYear.AnyAsync(y => y.Name == name))
             throw ApiException.BadRequest($"Năm học \"{name}\" đã có. Chọn tên khác.");
         await EnsureNoOverlapAsync(r.StartDate, r.EndDate, exceptYearId: null);
@@ -42,6 +43,7 @@ public sealed class CalendarService(MsmsDbContext db, CurrentUser user, IClock c
             ?? throw ApiException.NotFound("Không tìm thấy năm học.");
         var name = Guard.Required(r.Name, "Tên năm học", 20);
         if (r.EndDate <= r.StartDate) throw ApiException.BadRequest("Ngày kết thúc phải sau ngày bắt đầu năm học.");
+        if (r.EndDate > r.StartDate.AddMonths(13)) throw ApiException.BadRequest("Năm học dài tối đa 13 tháng. Kiểm tra lại ngày bắt đầu và ngày kết thúc.");
         if (await db.AcademicYear.AnyAsync(y => y.AcademicYearId != id && y.Name == name))
             throw ApiException.BadRequest($"Năm học \"{name}\" đã có. Chọn tên khác.");
         await EnsureNoOverlapAsync(r.StartDate, r.EndDate, exceptYearId: id);

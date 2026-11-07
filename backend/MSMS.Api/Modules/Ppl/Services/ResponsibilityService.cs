@@ -183,6 +183,9 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
     /// <summary>Gán người mới; nếu đích đang có người thì thay người trong cùng transaction.</summary>
     public async Task AssignAsync(ResponsibilityAssignRequest r)
     {
+        // Không viết lại lịch sử: người đã duyệt đơn hoặc giao bài trong khoảng đó vẫn là người giữ trách nhiệm lúc ấy.
+        if (r.StartDate < clock.Today)
+            throw ApiException.BadRequest("Ngày hiệu lực không được trước hôm nay. Chọn hôm nay hoặc một ngày sau đó.");
         await EnsureEligibleAsync(r.Kind, r.StaffId);
         await using var tx = await db.Database.BeginTransactionAsync();
         switch (r.Kind)
@@ -194,6 +197,7 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
                 break;
             case ResponsibilityKinds.Department:
                 if (!await db.SubjectDepartment.AnyAsync(d => d.DepartmentId == r.TargetId && d.IsActive)) throw ApiException.BadRequest("Tổ chuyên môn không tồn tại hoặc đã ngừng hoạt động.");
+                await EnsureSingleDepartmentAsync(r);
                 await ReplaceAsync(db.DepartmentHead, x => x.DepartmentId == r.TargetId, r, () => new DepartmentHead { DepartmentId = r.TargetId });
                 break;
             case ResponsibilityKinds.Homeroom:
@@ -220,6 +224,8 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
         };
         if (record.EndDate is not null && record.EndDate < clock.Today)
             throw ApiException.BadRequest("Trách nhiệm này đã kết thúc từ trước.");
+        if (r.EndDate < clock.Today)
+            throw ApiException.BadRequest("Ngày kết thúc không được trước hôm nay. Chọn hôm nay hoặc một ngày sau đó.");
         if (r.EndDate < record.StartDate)
             throw ApiException.BadRequest($"Ngày kết thúc không được trước ngày bắt đầu ({record.StartDate:dd/MM/yyyy}).");
         record.EndDate = r.EndDate;
@@ -237,6 +243,9 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
         if (current is not null)
         {
             if (current.StaffId == r.StaffId) throw ApiException.BadRequest("Người này đang đảm nhiệm sẵn. Chọn người khác để thay.");
+            // Thay người có hiệu lực ngay: hẹn ngày sau sẽ để người cũ mất quyền hôm nay mà người mới chưa nhận (khoảng trống).
+            if (r.StartDate > clock.Today)
+                throw ApiException.BadRequest("Thay người có hiệu lực ngay hôm nay. Chọn hôm nay, hoặc kết thúc người hiện tại vào ngày muốn rồi gán người mới sau.");
             EffectivePeriod.CloseBefore(current, r.StartDate);
         }
 
@@ -282,6 +291,23 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
             throw ApiException.BadRequest(
                 $"{other.Staff} đang chủ nhiệm lớp {other.Class} (từ {other.StartDate:dd/MM/yyyy}). Mỗi giáo viên chỉ chủ nhiệm một lớp trong một năm học: " +
                 "kết thúc trách nhiệm đó trước khi gán sang lớp khác.");
+    }
+
+    /// <summary>
+    /// Mỗi giáo viên chỉ làm tổ trưởng một tổ tại một thời điểm: chặn nếu người này đang giữ, hoặc đã được hẹn giữ, tổ khác
+    /// từ ngày bản mới bắt đầu. Thay tổ trưởng của chính tổ đó không bị ảnh hưởng (BR-09).
+    /// </summary>
+    private async Task EnsureSingleDepartmentAsync(ResponsibilityAssignRequest r)
+    {
+        var other = await db.DepartmentHead.AsNoTracking()
+            .Where(x => x.StaffId == r.StaffId && x.DepartmentId != r.TargetId && (x.EndDate == null || x.EndDate > r.StartDate))
+            .OrderBy(x => x.StartDate)
+            .Select(x => new { Department = x.Department.Name, Staff = x.Staff.Staff.FullName, x.StartDate })
+            .FirstOrDefaultAsync();
+        if (other is not null)
+            throw ApiException.BadRequest(
+                $"{other.Staff} đang làm tổ trưởng {other.Department} (từ {other.StartDate:dd/MM/yyyy}). Mỗi giáo viên chỉ làm tổ trưởng một tổ: " +
+                "kết thúc trách nhiệm đó trước khi gán sang tổ khác.");
     }
 
     /// <summary>Phụ trách phân hiệu chỉ gán cho Vice Principal; tổ trưởng và chủ nhiệm chỉ gán cho Teacher (BR-09).</summary>

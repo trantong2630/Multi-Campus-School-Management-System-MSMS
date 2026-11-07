@@ -218,7 +218,11 @@ export function StaffPage() {
             <Input maxLength={150} />
           </Form.Item>
           <Form.Item label="Ngày sinh" name="dateOfBirth" rules={[{ required: true, message: 'Chọn ngày sinh.' }]}>
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(dayjs())} />
+            <DatePicker
+              format="DD/MM/YYYY" style={{ width: '100%' }} defaultPickerValue={dayjs().subtract(30, 'year')}
+              // Cán bộ từ 18 đến 75 tuổi tính đến hôm nay (server kiểm lại).
+              disabledDate={(d) => d.isAfter(dayjs().subtract(18, 'year'), 'day') || !d.isAfter(dayjs().subtract(76, 'year'), 'day')}
+            />
           </Form.Item>
           <Form.Item label="Số định danh cá nhân" name="nationalId"
             extra={editing === 'new' ? 'Đủ 12 chữ số, duy nhất toàn trường, không sửa được sau khi tạo.' : 'Không sửa được sau khi tạo.'}
@@ -229,10 +233,10 @@ export function StaffPage() {
             <Select options={campuses.data?.filter((c) => c.isActive).map((c) => ({ value: c.campusId, label: c.name }))} />
           </Form.Item>
           <Form.Item label="Tổ chuyên môn" name="departmentId">
-            <Select allowClear options={departments.data?.filter((d) => d.isActive).map((d) => ({ value: d.departmentId, label: d.name }))} />
+            <Select allowClear options={departments.data?.filter((d) => d.isActive || (editing !== 'new' && editing?.departmentId === d.departmentId)).map((d) => ({ value: d.departmentId, label: d.isActive ? d.name : ` (đã ngừng)` }))} />
           </Form.Item>
           <Form.Item label="Giới tính" name="gender"><Select allowClear options={GENDERS} /></Form.Item>
-          <Form.Item label="Số điện thoại" name="phoneNumber"><Input maxLength={20} /></Form.Item>
+          <Form.Item label="Số điện thoại" name="phoneNumber" extra="Số di động 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09." rules={[{ pattern: /^0[35789]\d{8}$/, message: 'Số điện thoại di động phải gồm đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09.' }]}><Input maxLength={10} inputMode="tel" /></Form.Item>
           <Form.Item label="Email nhận mã OTP" name="email" rules={[{ type: 'email', message: 'Email chưa đúng định dạng.' }]}>
             <Input maxLength={150} />
           </Form.Item>
