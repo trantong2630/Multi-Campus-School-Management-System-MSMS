@@ -17,7 +17,8 @@ namespace MSMS.Api.Modules.Scd.Services;
 /// Chỉ đổi lịch dạy, không đổi phụ trách chuyên môn (BR-14).
 /// </summary>
 public sealed class ScheduleAdjustmentService(
-    MsmsDbContext db, CurrentUser user, ScopeResolver scope, IClock clock, AuditWriter audit, ScheduleSupport support, SchoolDayService schoolDays)
+    MsmsDbContext db, CurrentUser user, ScopeResolver scope, IClock clock, AuditWriter audit, ScheduleSupport support, SchoolDayService schoolDays,
+    AssignmentEmailNotifier mailer)
 {
     // ---------------------------------------------------------------- Xem lịch tuần để điều chỉnh
     /// <summary>Lưới tuần của một lớp (Thứ 2–7) kèm cờ khóa của từng tiết và các ngày nghỉ trong tuần. Principal xem được nhưng không thao tác.</summary>
@@ -79,7 +80,13 @@ public sealed class ScheduleAdjustmentService(
             new { sessionId = s.SessionId, classId = s.ClassId, date = s.SessionDate, fromTeacherId = oldTeacherId, toTeacherId = teacher.StaffId });
         var notified = await support.NotifyAsync([s.ClassId], s.SessionDate, [oldTeacherId, teacher.StaffId],
             "Tiết đổi giáo viên", $"{what}: {oldName} → {name}.", "TeachingSession", s.SessionId);
+        await mailer.QueueAsync(teacher.StaffId, $"[MSMS] Phân công dạy thay: {what}",
+            AssignmentEmailNotifier.Body($"Bạn được phân công dạy thay tiết sau (thay {oldName}):", what, s.PeriodSlot));
+        if (oldTeacherId is { } oldId)
+            await mailer.QueueAsync(oldId, $"[MSMS] Bạn không còn dạy tiết: {what}",
+                AssignmentEmailNotifier.Body($"Tiết sau đã chuyển cho giáo viên {name}, bạn không cần đến lớp:", what, s.PeriodSlot));
         await db.SaveChangesAsync();
+        _ = mailer.Dispatch();
         return new AdjustResultDto(s.SessionId, notified);
     }
 
@@ -99,7 +106,11 @@ public sealed class ScheduleAdjustmentService(
             new { sessionId = s.SessionId, classId = s.ClassId, date = s.SessionDate, teacherId = s.TeacherId });
         var notified = await support.NotifyAsync([s.ClassId], s.SessionDate, [s.TeacherId],
             "Tiết đã hủy", $"{what} đã hủy.", "TeachingSession", s.SessionId);
+        if (s.TeacherId is { } teacherId)
+            await mailer.QueueAsync(teacherId, $"[MSMS] Tiết đã hủy: {what}",
+                AssignmentEmailNotifier.Body("Tiết sau đã bị hủy, bạn không cần đến lớp:", what, s.PeriodSlot));
         await db.SaveChangesAsync();
+        _ = mailer.Dispatch();
         return new AdjustResultDto(s.SessionId, notified);
     }
 
@@ -143,10 +154,14 @@ public sealed class ScheduleAdjustmentService(
         await db.SaveChangesAsync();   // cần mã tiết mới để audit và thông báo trỏ tới
         audit.AddLong(AuditCategories.ScheduleAdjust, "AddMakeUpSession", [makeUp.SessionId],
             new { classId = r.ClassId, date = r.Date, periodSlotId = r.PeriodSlotId, subjectId = r.SubjectId, teacherId = r.TeacherId });
+        var what = ScheduleSupport.Describe(subject.Name, cls.Name, r.Date, slot);
         var notified = await support.NotifyAsync([r.ClassId], r.Date, [r.TeacherId], "Có tiết bù mới",
-            $"Tiết bù: {ScheduleSupport.Describe(subject.Name, cls.Name, r.Date, slot)}, giáo viên {name}.", "TeachingSession", makeUp.SessionId);
+            $"Tiết bù: {what}, giáo viên {name}.", "TeachingSession", makeUp.SessionId);
+        await mailer.QueueAsync(teacher.StaffId, $"[MSMS] Phân công dạy tiết bù: {what}",
+            AssignmentEmailNotifier.Body("Bạn được phân công dạy tiết bù sau:", what, slot));
         await db.SaveChangesAsync();
         await tx.CommitAsync();
+        _ = mailer.Dispatch();
         return new AdjustResultDto(makeUp.SessionId, notified);
     }
 }

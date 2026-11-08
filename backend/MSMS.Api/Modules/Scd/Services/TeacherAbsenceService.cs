@@ -15,7 +15,8 @@ namespace MSMS.Api.Modules.Scd.Services;
 /// Giáo viên dạy nhiều phân hiệu thì hiệu phó mỗi phân hiệu khai phần của mình. Đây không phải đơn xin nghỉ của cán bộ.
 /// </summary>
 public sealed class TeacherAbsenceService(
-    MsmsDbContext db, CurrentUser user, ScopeResolver scope, IClock clock, AuditWriter audit, ScheduleSupport support)
+    MsmsDbContext db, CurrentUser user, ScopeResolver scope, IClock clock, AuditWriter audit, ScheduleSupport support,
+    AssignmentEmailNotifier mailer)
 {
     private const int MaxDays = 90;
 
@@ -220,7 +221,10 @@ public sealed class TeacherAbsenceService(
                 new { sessionId = s.SessionId, date = s.SessionDate, teacherId, absenceId = s.TeacherAbsenceId });
             var notified = await support.NotifyAsync([s.ClassId], s.SessionDate, [teacherId],
                 "Tiết có giáo viên dạy thay", $"{what}: {name} dạy thay.", "TeachingSession", s.SessionId);
+            await mailer.QueueAsync(teacherId, $"[MSMS] Phân công dạy thay: {what}",
+                AssignmentEmailNotifier.Body("Bạn được phân công dạy thay tiết sau:", what, s.PeriodSlot));
             await db.SaveChangesAsync();
+            _ = mailer.Dispatch();
             return new AdjustResultDto(s.SessionId, notified);
         }
         if (r.Action == "Cancel")

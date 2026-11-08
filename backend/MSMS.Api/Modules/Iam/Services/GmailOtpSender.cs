@@ -3,17 +3,9 @@ using MailKit.Security;
 using Microsoft.Extensions.Options;
 using MimeKit;
 using MimeKit.Utils;
+using MSMS.Api.Common.Email;
 
 namespace MSMS.Api.Modules.Iam.Services;
-
-public sealed class SmtpOptions
-{
-    public string Host { get; set; } = "smtp.gmail.com";
-    public int Port { get; set; } = 587;
-    public string Username { get; set; } = "";
-    public string AppPassword { get; set; } = "";
-    public string SenderName { get; set; } = "MSMS";
-}
 
 public interface IOtpEmailSender
 {
