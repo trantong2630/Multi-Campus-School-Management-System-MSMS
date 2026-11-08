@@ -183,6 +183,22 @@ public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, Sco
         return await ProjectSessions(query);
     }
 
+    /// <summary>
+    /// 4.9.11: lịch dạy của cả phân hiệu trong khoảng ngày để xuất Excel (ADM-03). Nguồn là lịch dạy chứ không phải phiên bản,
+    /// nên có cả tiết đổi tay, tiết bù, tiết Đã hủy và Chờ xử lý (BR-14, spec 5.2). Chỉ Hiệu phó đang phụ trách phân hiệu.
+    /// </summary>
+    public async Task<(string CampusName, List<ViewSessionDto> Sessions)> GetCampusSessionsForExportAsync(int campusId, DateOnly from, DateOnly to)
+    {
+        Common.Rules.ExportRules.CheckRange(from, to);
+        var campusName = await db.Campus.AsNoTracking().Where(c => c.CampusId == campusId).Select(c => c.Name).FirstOrDefaultAsync()
+                         ?? throw ApiException.NotFound("Không tìm thấy phân hiệu.");
+        if (user.AccountType != AccountTypes.VicePrincipal || !(await scope.LedCampusIdsAsync()).Contains(campusId))
+            throw ApiException.Forbidden("Chỉ xuất được thời khóa biểu của phân hiệu đang phụ trách.");
+        var sessions = await ProjectSessions(db.TeachingSession.AsNoTracking()
+            .Where(s => s.Class.CampusId == campusId && s.SessionDate >= from && s.SessionDate <= to));
+        return (campusName, sessions);
+    }
+
     /// <summary>Học sinh xem lịch học của mình: các tiết của lớp em có ghi danh hiệu lực vào ngày của tiết (BR-17).</summary>
     public async Task<List<ViewSessionDto>> GetStudentSessionsAsync(DateOnly from, DateOnly to)
     {
@@ -231,7 +247,7 @@ public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, Sco
     }
 
     private static Task<List<ViewSessionDto>> ProjectSessions(IQueryable<Data.Entities.TeachingSession> query) =>
-        query.OrderBy(s => s.SessionDate).ThenBy(s => s.PeriodSlot.StartTime)
+        query.OrderBy(s => s.SessionDate).ThenBy(s => s.PeriodSlot.StartTime).ThenBy(s => s.Class.Name)
             .Select(s => new ViewSessionDto(s.SessionId, s.SessionDate, s.PeriodSlotId, s.PeriodSlot.SessionOfDay, s.PeriodSlot.PeriodNo,
                 s.PeriodSlot.StartTime, s.PeriodSlot.EndTime, s.Class.Name, s.Class.Campus.Name, s.SubjectId, s.Subject.Name, s.Subject.Abbreviation,
                 s.Teacher == null ? null : s.Teacher.Staff.FullName, s.Status, s.Source))
