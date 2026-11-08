@@ -45,6 +45,13 @@ export function RolloverSuggestModal({ fromYear, toYear, rows, onClose, onCreate
   const isDuplicate = (r: RolloverRow) => (seen.get(`${r.campusId}|${drafts[r.sourceClassId].name.trim().toLowerCase()}`) ?? 0) > 1;
   const hasDuplicate = chosen.some(isDuplicate);
   const canSave = chosen.length > 0 && !hasDuplicate && chosen.every((r) => drafts[r.sourceClassId].name.trim().length > 0);
+  // Chọn tất cả chỉ áp cho các lớp có khối kế tiếp; lớp khối 9 (tốt nghiệp) luôn do người dùng tự tích.
+  const selectable = rows.filter((r) => r.suggestedGrade !== null);
+  const selectedCount = selectable.filter((r) => drafts[r.sourceClassId].include).length;
+  const toggleAll = (on: boolean) => {
+    setDrafts((d) => Object.fromEntries(Object.entries(d).map(([id, v]) => [id, selectable.some((r) => r.sourceClassId === Number(id)) ? { ...v, include: on } : v])));
+    setError(null);
+  };
   const patch = (id: number, p: Partial<Draft>) => {
     setDrafts((d) => ({ ...d, [id]: { ...d[id], ...p } }));
     setError(null);
@@ -90,7 +97,14 @@ export function RolloverSuggestModal({ fromYear, toYear, rows, onClose, onCreate
         rowKey="sourceClassId" dataSource={rows} pagination={false}
         columns={[
           {
-            title: '', key: 'include', width: 48,
+            title: (
+              <Checkbox
+                checked={selectable.length > 0 && selectedCount === selectable.length}
+                indeterminate={selectedCount > 0 && selectedCount < selectable.length}
+                disabled={selectable.length === 0} onChange={(e) => toggleAll(e.target.checked)} aria-label="Chọn tất cả lớp"
+              />
+            ),
+            key: 'include', width: 48,
             render: (_: unknown, r: RolloverRow) => (
               <Checkbox checked={drafts[r.sourceClassId].include} onChange={(e) => patch(r.sourceClassId, { include: e.target.checked })} aria-label={`Tạo lớp cho ${r.sourceName}`} />
             ),
