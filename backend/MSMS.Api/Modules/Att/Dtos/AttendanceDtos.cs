@@ -86,6 +86,26 @@ public record ClassAttendanceDto(
     IReadOnlyList<AttendanceSessionDto> Sessions,
     IReadOnlyList<ClassAttendanceStudentDto> Students);
 
+/// <summary>Dữ liệu cho file xuất điểm danh của lớp (ADM-03, 4.9.10): mỗi dòng một học sinh ở một tiết.</summary>
+public record AttendanceExportDto(
+    string ClassName,
+    string CampusName,
+    DateOnly From,
+    DateOnly To,
+    IReadOnlyList<AttendanceExportRowDto> Rows);
+
+public record AttendanceExportRowDto(
+    DateOnly Date,
+    string SessionOfDay,
+    int PeriodNo,
+    string SubjectName,
+    string? TeacherName,
+    string StudentCode,
+    string FullName,
+    /// <summary>Nhãn cuối suy ra lúc đọc (BR-18).</summary>
+    string Label,
+    string? Note);
+
 public record ClassAttendanceStudentDto(
     int StudentId,
     string StudentCode,

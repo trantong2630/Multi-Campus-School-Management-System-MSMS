@@ -246,6 +246,68 @@ public sealed class AttendanceService(MsmsDbContext db, CurrentUser user, ScopeR
         return new ClassAttendanceDto(classId, className, from, to, sessions, students);
     }
 
+    // ---------------------------------------------------------------- 4.9.10 Dữ liệu xuất điểm danh (ADM-03)
+
+    /// <summary>
+    /// 4.9.10: bản ghi điểm danh của lớp trong khoảng ngày, kèm nhãn cuối suy ra (BR-18, spec 5.2).
+    /// Chỉ chủ nhiệm (lớp đang chủ nhiệm) và Hiệu phó (lớp thuộc phân hiệu phụ trách); School Admin và Hiệu trưởng không xuất.
+    /// Gồm tiết Đã xếp lịch tới hôm nay; tiết đã qua mà học sinh chưa có bản ghi thì hiện Chưa điểm danh.
+    /// </summary>
+    public async Task<AttendanceExportDto> ExportAsync(int classId, DateOnly from, DateOnly to)
+    {
+        ExportRules.CheckRange(from, to);
+        var cls = await db.Class.AsNoTracking().Where(c => c.ClassId == classId)
+            .Select(c => new { c.Name, c.CampusId, CampusName = c.Campus.Name }).FirstOrDefaultAsync()
+            ?? throw ApiException.NotFound("Không tìm thấy lớp.");
+        var allowed = user.AccountType switch
+        {
+            AccountTypes.VicePrincipal => (await scope.LedCampusIdsAsync()).Contains(cls.CampusId),
+            AccountTypes.Teacher => (await HomeroomClassIdsAsync()).Contains(classId),
+            _ => false,
+        };
+        if (!allowed) throw ApiException.Forbidden("Chỉ xuất được điểm danh của lớp đang chủ nhiệm hoặc lớp thuộc phân hiệu đang phụ trách.");
+
+        var today = clock.Today;
+        var until = to < today ? to : today;
+        var sessions = await db.TeachingSession.AsNoTracking()
+            .Where(s => s.ClassId == classId && s.SessionDate >= from && s.SessionDate <= until && s.Status == AttendanceRules.SessionScheduled)
+            .OrderBy(s => s.SessionDate).ThenBy(s => s.PeriodSlot.StartTime)
+            .Select(s => new
+            {
+                s.SessionId, s.SessionDate, s.PeriodSlot.SessionOfDay, s.PeriodSlot.PeriodNo, SubjectName = s.Subject.Name,
+                TeacherName = s.Teacher == null ? null : s.Teacher.Staff.FullName,
+            })
+            .ToListAsync();
+        if (sessions.Count == 0) return new AttendanceExportDto(cls.Name, cls.CampusName, from, to, []);
+
+        var sessionIds = sessions.Select(s => s.SessionId).ToList();
+        var enrollments = await EnrollmentsOverlappingAsync(classId, from, until);
+        var studentIds = enrollments.Select(e => e.StudentId).Distinct().ToList();
+        var people = (await db.Person.AsNoTracking().Where(p => studentIds.Contains(p.PersonId))
+                .Select(p => new { p.PersonId, p.FullName, p.PersonCode }).ToListAsync())
+            .OrderBy(p => LastName(p.FullName)).ThenBy(p => p.FullName).ToList();
+        var records = await db.AttendanceRecord.AsNoTracking().Where(a => sessionIds.Contains(a.SessionId))
+            .Select(a => new { a.SessionId, a.StudentId, a.Status, a.Note }).ToListAsync();
+        var recordMap = records.ToDictionary(a => (a.SessionId, a.StudentId));
+        var leaves = await ApprovedLeavesAsync(studentIds, from, until);
+
+        var rows = new List<AttendanceExportRowDto>();
+        foreach (var s in sessions)
+        {
+            foreach (var p in people)
+            {
+                // Chỉ học sinh có ghi danh hiệu lực ở lớp vào ngày của tiết (BR-17).
+                if (!enrollments.Any(e => e.StudentId == p.PersonId && e.Start <= s.SessionDate && e.End >= s.SessionDate)) continue;
+                recordMap.TryGetValue((s.SessionId, p.PersonId), out var rec);
+                var label = AttendanceRules.Label(rec?.Status,
+                    AttendanceRules.IsExcused(p.PersonId, s.SessionDate, s.SessionOfDay, s.PeriodNo, leaves));
+                rows.Add(new AttendanceExportRowDto(s.SessionDate, s.SessionOfDay, s.PeriodNo, s.SubjectName, s.TeacherName,
+                    p.PersonCode, p.FullName, label, rec?.Note));
+            }
+        }
+        return new AttendanceExportDto(cls.Name, cls.CampusName, from, to, rows);
+    }
+
     // ---------------------------------------------------------------- Dựng dữ liệu
 
     private async Task<AttendanceSheetDto> BuildSheetAsync(TeachingSession session)

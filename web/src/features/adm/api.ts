@@ -1,4 +1,5 @@
 import { apiClient } from '@/app/apiClient';
+import { downloadFile } from '@/shared/lib/download';
 import type { AdminDashboard, AuditActor, AuditLogDetail, AuditLogFilters, AuditLogItem, Dashboard, DepartmentBoard, HomeroomOverview, Progress } from './types';
 
 export const admApi = {
@@ -11,4 +12,7 @@ export const admApi = {
     apiClient.get<{ items: AuditLogItem[]; total: number }>('/adm/audit-log', { params }).then((r) => r.data),
   auditActors: () => apiClient.get<AuditActor[]>('/adm/audit-log/actors').then((r) => r.data),
   auditEntry: (id: number) => apiClient.get<AuditLogDetail>(`/adm/audit-log/${id}`).then((r) => r.data),
+  /** ADM-03: tải file Excel; lỗi trả dạng Blob, đọc bằng blobErrorMessage. */
+  exportAttendance: (classId: number, from: string, to: string) => downloadFile('/adm/exports/attendance', { classId, from, to }),
+  exportTimetable: (campusId: number, from: string, to: string) => downloadFile('/adm/exports/timetable', { campusId, from, to }),
 };

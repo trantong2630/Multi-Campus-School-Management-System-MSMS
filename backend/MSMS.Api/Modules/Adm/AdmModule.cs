@@ -10,5 +10,6 @@ public static class AdmModule
         .AddScoped<HomeroomOverviewService>()
         .AddScoped<ProgressService>()
         .AddScoped<DepartmentBoardService>()
-        .AddScoped<AuditLogService>();
+        .AddScoped<AuditLogService>()
+        .AddScoped<ExportService>();
 }
