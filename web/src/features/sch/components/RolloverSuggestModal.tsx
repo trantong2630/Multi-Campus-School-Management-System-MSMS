@@ -79,7 +79,7 @@ export function RolloverSuggestModal({ fromYear, toYear, rows, onClose, onCreate
 
   return (
     <Modal
-      open width={720} title={`Tạo lớp năm học ${toYear.name}`} onCancel={onClose} mask={{ closable: false }} destroyOnHidden
+      open width={720} title={`Tạo lớp cho năm học ${toYear.name}`} onCancel={onClose} mask={{ closable: false }} destroyOnHidden
       footer={(
         <>
           <Button onClick={onClose}>Đóng</Button>
