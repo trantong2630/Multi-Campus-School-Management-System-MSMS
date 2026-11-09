@@ -182,10 +182,9 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
 
     private async Task<List<TeachingSession>> AffectedSessionsAsync(int teacherId)
     {
-        var today = clock.Today;
         return await db.TeachingSession.Include(s => s.Class).ThenInclude(c => c.Campus)
-            .Where(s => s.TeacherId == teacherId && s.Status == "Scheduled" && s.SessionDate >= today
-                        && !s.AttendanceRecord.Any())
+            .Where(SessionLockRules.NotEnded(clock))
+            .Where(s => s.TeacherId == teacherId && s.Status == "Scheduled" && !s.AttendanceRecord.Any())
             .ToListAsync();
     }
 
