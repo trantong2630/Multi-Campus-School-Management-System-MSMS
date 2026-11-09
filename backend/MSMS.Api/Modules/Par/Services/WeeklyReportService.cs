@@ -231,7 +231,10 @@ public sealed class WeeklyReportService(MsmsDbContext db, IClock clock, CurrentU
 
             // BR-22, BR-23: chưa nộp thì điểm và nhận xét AI để trống.
             decimal? score = submittedAt != null ? r.Submission!.Score : null;
-            string? aiFeedback = submittedAt != null ? r.Submission!.AiFeedback : null;
+            // AiContent lưu JSON phân tích (LRN-04); sổ liên lạc chỉ hiện phần tóm tắt.
+            string? aiFeedback = submittedAt != null && r.Submission!.AiFeedback is { } content
+                ? MSMS.Api.Modules.Lrn.Services.AnalysisService.ToDto(MSMS.Api.Modules.Lrn.Services.AnalysisStatuses.Done, content).Summary
+                : null;
 
             return new WeeklyAssignmentItemDto(r.AssignmentId, r.Title, r.SubjectName, r.DueAt, status, score, aiFeedback);
         }).ToList();

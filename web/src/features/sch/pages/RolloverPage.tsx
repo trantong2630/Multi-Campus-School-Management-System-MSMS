@@ -238,7 +238,6 @@ export function RolloverPage() {
     <>
       <PageHeader
         title="Kết chuyển năm học"
-        description="Phân loại và chuyển học sinh sang năm học mới. Chọn học sinh từ danh sách, sau đó chuyển sang lớp lưu ban hoặc lớp được lên. Hệ thống không tự xét lên lớp hay lưu ban; thời khóa biểu, phân công và trách nhiệm của năm cũ không được sao chép."
         extra={(
           <>
             <Button icon={<Plus size={16} />} disabled={withoutTarget.length === 0} onClick={() => setSuggestOpen(true)}>Tạo lớp mới</Button>
@@ -267,7 +266,7 @@ export function RolloverPage() {
       {noLaterYear && (
         <InlineAlert
           type="info"
-          title={`Chưa có năm học nào sau năm học ${fromYear.name}. Tạo năm học mới ở Thiết lập → Năm học & Học kỳ trước.`}
+          title={`Chưa có năm học nào sau năm học ${fromYear.name}. Tạo năm học mới ở Cơ cấu nhà trường → Năm học & Học kỳ trước.`}
         />
       )}
 

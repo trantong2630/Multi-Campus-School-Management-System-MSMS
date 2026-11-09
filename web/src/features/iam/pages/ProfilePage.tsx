@@ -111,7 +111,6 @@ export function ProfilePage() {
     <>
       <PageHeader
         title="Hồ sơ cá nhân"
-        description="Thông tin cá nhân, trạng thái tài khoản và ảnh đại diện của bạn. Họ tên, ngày sinh do nhà trường quản lý."
       />
       <div className="profile-grid">
         <div className="profile-col">
@@ -141,7 +140,6 @@ export function ProfilePage() {
                 <Form.Item
                   label="Số điện thoại"
                   name="phoneNumber"
-                  extra={profile && !profile.canEditPhone ? 'Số điện thoại là khóa nhận diện phụ huynh. Liên hệ nhà trường để đổi.' : undefined}
                 >
                   <Input maxLength={20} disabled={!profile?.canEditPhone} />
                 </Form.Item>
@@ -149,7 +147,6 @@ export function ProfilePage() {
                   label="Email"
                   name="email"
                   rules={[{ type: 'email', message: 'Email chưa đúng định dạng.' }]}
-                  extra="Dùng để nhận mã OTP khi quên mật khẩu."
                 >
                   <Input maxLength={150} placeholder="ten@example.com" />
                 </Form.Item>
@@ -171,7 +168,6 @@ export function ProfilePage() {
                 ? (isLoading ? <Skeleton.Avatar active size={AVATAR_SIZE} /> : <Spin />)
                 : <ProfileAvatar profile={profile} />}
             </div>
-            <p className="profile-avatar-hint">Ảnh JPG hoặc PNG, tối đa 2 MB.</p>
             <div className="profile-avatar-actions">
               <FileButton
                 accept=".png,.jpg,.jpeg"

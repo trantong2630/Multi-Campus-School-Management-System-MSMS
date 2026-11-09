@@ -157,7 +157,7 @@ School Admin là người duy nhất ghi dữ liệu của module (riêng Thông
 
 **4.2.1 — Xem danh sách phân hiệu / View Campus List**  
 `BE + Web` · 0.5 MD · dep: 4.1.4  
-Xem các phân hiệu cùng mã, tên, địa chỉ, số điện thoại và tình trạng hoạt động, kèm số lớp, học sinh, cán bộ và hiệu phó phụ trách (tính tại hôm nay, năm học hiện hành). Vice Principal chỉ thấy các phân hiệu mình phụ trách. Thông tin nhận diện của trường làm ở SCH-07.
+Xem các phân hiệu cùng mã, tên, địa chỉ, số điện thoại và tình trạng hoạt động, kèm số lớp, học sinh, cán bộ và hiệu phó phụ trách (tính tại hôm nay, năm học hiện hành). Màn hình này dành cho School Admin (sửa) và Hiệu trưởng (chỉ xem, toàn trường). Thông tin nhận diện của trường làm ở SCH-07.
 
 **4.2.2 — Tạo phân hiệu / Create Campus**  
 `BE + Web` · 1 MD · dep: 4.2.1  
@@ -325,7 +325,7 @@ Xem tên, địa chỉ, điện thoại, email, website và logo của trường
 
 **4.2.40 — Cập nhật thông tin trường / Update School Profile**
 `BE + Web` · 1.5 MD · dep: 4.2.39
-Hiệu trưởng và School Admin cùng sửa. Tên trường bắt buộc; email và website kiểm định dạng. Đúng một bản, lưu người sửa và thời điểm sửa ngay trên bản ghi; không ghi Audit vì không thuộc ba nhóm của BR-28.
+Chỉ School Admin sửa; Hiệu trưởng xem ở chế độ chỉ đọc. Tên trường bắt buộc; email và website kiểm định dạng. Đúng một bản, lưu người sửa và thời điểm sửa ngay trên bản ghi; không ghi Audit vì không thuộc ba nhóm của BR-28.
 
 **4.2.41 — Tải và gỡ logo trường / Upload and Remove School Logo**
 `BE + Web` · 2 MD · dep: 4.2.40
@@ -333,11 +333,11 @@ Một ảnh JPG hoặc PNG, tối đa 2 MB, kiểm theo nội dung file chứ kh
 
 **4.2.42 — Hiển thị tên và logo trường / Show School Identity**
 `BE + Web` · 1 MD · dep: 4.2.39
-Tên trường hiện ở thanh đường dẫn đầu trang và tiêu đề tab trình duyệt; logo trường hiện ở Trang chủ, học sinh và phụ huynh còn thấy thẻ thông tin trường (tên, địa chỉ, điện thoại, email, website). Sau đăng nhập, tiêu đề tab là `Tên trang · Tên trường` (Trang chủ chỉ có tên trường); các màn chưa đăng nhập để tiêu đề `MSMS`. Biểu tượng tab là logo MSMS, không đổi theo trường. Màn hình đăng nhập và thanh bên chỉ dùng logo chữ MSMS. Không lấy được thì dùng biểu tượng và tên mặc định, không báo lỗi.
+Tên trường hiện ở thanh đường dẫn đầu trang và tiêu đề tab trình duyệt; logo trường hiện ở Trang chủ. Sau đăng nhập, tiêu đề tab là `Tên trang · Tên trường` (Trang chủ chỉ có tên trường); các màn chưa đăng nhập để tiêu đề `MSMS`. Biểu tượng tab là logo MSMS, không đổi theo trường. Màn hình đăng nhập và thanh bên chỉ dùng logo chữ MSMS. Không lấy được thì dùng biểu tượng và tên mặc định, không báo lỗi.
 
 **4.2.43 — Kiểm thử thông tin trường / School Profile Tests**
 `QA` · 1.5 MD · dep: 4.2.41
-Chỉ Hiệu trưởng và School Admin sửa được; file không phải ảnh hoặc quá 2 MB bị từ chối; đổi logo xóa file cũ; chưa có tên thì không tải được logo; người chưa đăng nhập đọc được tên và logo nhưng không sửa được.
+Chỉ School Admin sửa được; file không phải ảnh hoặc quá 2 MB bị từ chối; đổi logo xóa file cũ; chưa có tên thì không tải được logo; người chưa đăng nhập đọc được tên và logo nhưng không sửa được.
 
 ---
 

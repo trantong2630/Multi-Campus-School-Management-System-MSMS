@@ -33,7 +33,6 @@ export function AbsencePage() {
     <>
       <PageHeader
         title="Giáo viên vắng"
-        description="Khai báo giáo viên vắng theo ngày hoặc theo tiết, rồi xử lý từng tiết Chờ xử lý: chọn giáo viên dạy thay hoặc hủy. Đây không phải đơn xin nghỉ của cán bộ."
         extra={
           <Button type="primary" icon={<UserRoundX size={16} />} disabled={effectiveCampus === undefined} onClick={() => setDeclareOpen(true)}>
             Khai báo vắng

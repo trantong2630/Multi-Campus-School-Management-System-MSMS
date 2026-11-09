@@ -10,7 +10,7 @@ namespace MSMS.Api.Modules.Adm.Services;
 
 /// <summary>
 /// Thống kê hệ thống của School Admin: quy mô, tài khoản, thiếu sót dữ liệu cần bổ sung, hoạt động hệ thống và tiến độ thời khóa biểu.
-/// Quy mô và cấu trúc trường hiển thị trên các màn Thiết lập (StructureStatsService), không lặp lại ở đây.
+/// Quy mô và cấu trúc trường hiển thị trên các màn Cơ cấu nhà trường (StructureStatsService), không lặp lại ở đây.
 /// Chỉ những việc School Admin tự sửa được (danh mục, hồ sơ, tài khoản, trách nhiệm); không có số liệu giảng dạy đứng tên người khác (BR-02).
 /// </summary>
 public sealed class AdminDashboardService(MsmsDbContext db, IClock clock)

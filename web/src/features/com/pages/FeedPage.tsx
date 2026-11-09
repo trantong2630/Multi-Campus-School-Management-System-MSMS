@@ -90,7 +90,7 @@ export function FeedPage() {
 
   return (
     <>
-      <PageHeader title="Bảng tin" description="Các bài đăng mới nhất của nhà trường." />
+      <PageHeader title="Bảng tin" />
       <div className="feed">
         {feed.isLoading && <Skeleton active avatar paragraph={{ rows: 5 }} />}
         {!feed.isLoading && items.length === 0 && (

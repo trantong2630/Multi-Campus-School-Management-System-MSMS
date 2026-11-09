@@ -49,8 +49,7 @@
 .hm-hero__title,
 .hm-card,
 .hm-row,
-.hm-later li,
-.hm-contact li {
+.hm-later li {
   animation: hm-rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   animation-delay: calc(var(--i, 0) * 70ms);
 }
@@ -70,11 +69,6 @@
   border-radius: 32px;
   box-shadow: var(--shadow-card);
   color: var(--ink);
-}
-
-.hm-hero--plain {
-  grid-template-columns: minmax(0, 1fr);
-  min-height: 200px;
 }
 
 .hm-hero--dawn { background: linear-gradient(120deg, #fff0d8 0%, #ffe9e0 35%, #e3f6ee 100%); }
@@ -127,14 +121,14 @@
   flex: none;
   align-items: center;
   justify-content: center;
-  width: 104px;
-  height: 104px;
+  width: 136px;
+  height: 136px;
   border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 4px 14px rgba(16, 42, 48, 0.14);
+  overflow: hidden;   /* cắt phần nền trắng ở bốn góc ảnh logo */
 }
 
-.hm-crest .school-logo { border-radius: 50%; }
+.hm-crest .school-logo { border-radius: 0; background: transparent; }
+.hm-crest .school-logo--image { transform: scale(1.08); }
 .hm-crest .school-logo--fallback { color: var(--c-green700); background: transparent; }
 
 .hm-hero__title {
@@ -507,19 +501,6 @@
 .hm-later em { font-size: 14px; font-style: normal; font-weight: 600; color: var(--c-ink); }
 
 /* ---------- Học sinh, phụ huynh ---------- */
-.hm-contact { margin: 0; padding: 0; list-style: none; }
-
-.hm-contact li {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 0;
-  border-top: 1px solid var(--c-border);
-  color: var(--c-text1);
-}
-
-.hm-contact svg { flex: none; color: var(--c-text3); }
-
 @media (prefers-reduced-motion: reduce) {
   .hm *,
   .hm *::before {

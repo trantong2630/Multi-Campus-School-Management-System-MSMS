@@ -28,9 +28,6 @@ export function TeacherAttendanceView() {
     <>
       <PageHeader
         title="Điểm danh"
-        description={view === 'today'
-          ? `Tiết dạy hôm nay, ${dayText(date)}. Giáo viên của tiết điểm danh và sửa được tới 23:59 ngày của tiết.`
-          : 'Chuyên cần của lớp chủ nhiệm theo ngày hoặc theo khoảng ngày.'}
       />
       {isHomeroom && (
         <FilterBar>

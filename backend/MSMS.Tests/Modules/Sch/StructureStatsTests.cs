@@ -6,7 +6,7 @@ using MSMS.Tests.Modules.Iam;
 
 namespace MSMS.Tests.Modules.Sch;
 
-/// <summary>Thống kê cấu trúc trên màn Thiết lập: Principal, Vice Principal chỉ xem và chỉ trong phạm vi của mình (BR-01).</summary>
+/// <summary>Thống kê cấu trúc trên màn Cơ cấu nhà trường: Principal chỉ xem, toàn trường (BR-01).</summary>
 public class StructureStatsTests
 {
     private static StructureStatsService Stats(AccountTestFixture f, string role, int personId)
@@ -24,7 +24,7 @@ public class StructureStatsTests
     }
 
     [Fact]
-    public async Task VicePrincipal_SeesOnlyLedCampus_PrincipalSeesAll()
+    public async Task Principal_SeesAllCampuses_WithOnlyCurrentViceLeaders()
     {
         using var f = new AccountTestFixture();
         f.AddAccount(1, AccountTypes.VicePrincipal);
@@ -35,14 +35,12 @@ public class StructureStatsTests
         Enroll(f, 100, 1);
         Enroll(f, 101, 2);
 
-        var vp = Assert.Single(await Stats(f, AccountTypes.VicePrincipal, 1).CampusesAsync());
-        Assert.Equal(1, vp.CampusId);
-        Assert.Equal(1, vp.StudentCount);
-        Assert.Equal(2, vp.StaffCount);   // hiệu phó và hiệu trưởng cùng phân hiệu chính 1
-        Assert.Equal("Nguyễn An 1", Assert.Single(vp.Leaders));
-
         var all = await Stats(f, AccountTypes.Principal, 2).CampusesAsync();
         Assert.Equal(2, all.Count);
+        var first = all.Single(c => c.CampusId == 1);
+        Assert.Equal(1, first.StudentCount);
+        Assert.Equal(2, first.StaffCount);   // hiệu phó và hiệu trưởng cùng phân hiệu chính 1
+        Assert.Equal("Nguyễn An 1", Assert.Single(first.Leaders));
         Assert.Equal(1, all.Single(c => c.CampusId == 2).StaffCount);
         Assert.Empty(all.Single(c => c.CampusId == 2).Leaders);
     }

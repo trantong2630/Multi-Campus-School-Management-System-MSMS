@@ -59,8 +59,8 @@ public class SchAuthorizationTests
     [InlineData(AccountTypes.Teacher, false)]
     [InlineData(AccountTypes.Student, false)]
     [InlineData(AccountTypes.Parent, false)]
-    public async Task SchoolProfileManagerPolicy_OnlyAdminAndPrincipalPass(string accountType, bool expected) =>
-        Assert.Equal(expected, await CanAsync(accountType, Policies.SchoolProfileManager));
+    public async Task SchoolStructureReaderPolicy_OnlyAdminAndPrincipalPass(string accountType, bool expected) =>
+        Assert.Equal(expected, await CanAsync(accountType, Policies.SchoolStructureReader));
 
     // ---- Mọi endpoint của SCH được gắn đúng policy ----
     private static List<MethodInfo> Endpoints() =>
@@ -92,14 +92,13 @@ public class SchAuthorizationTests
     }
 
     [Fact]
-    public void EveryWriteEndpoint_IsSchoolAdminOnly_ExceptSchoolProfileWhichAlsoAllowsThePrincipal()
+    public void EveryWriteEndpoint_IsSchoolAdminOnly()
     {
         var wrong = new List<string>();
         foreach (var m in Endpoints().Where(m => !IsRead(m)))
         {
             var policy = m.GetCustomAttribute<AuthorizeAttribute>()?.Policy;
-            var expected = m.DeclaringType!.Name == "SchoolController" ? Policies.SchoolProfileManager : Policies.SchoolAdmin;
-            if (policy != expected) wrong.Add($"{m.DeclaringType.Name}.{m.Name} = {policy ?? "(none)"}");
+            if (policy != Policies.SchoolAdmin) wrong.Add($"{m.DeclaringType.Name}.{m.Name} = {policy ?? "(none)"}");
         }
 
         Assert.Empty(wrong);
@@ -114,8 +113,8 @@ public class SchAuthorizationTests
             var policy = m.GetCustomAttribute<AuthorizeAttribute>()?.Policy;
             var allowed = m.Name is "Candidates" or "Overview" or "Students" ? Policies.SchoolAdmin   // danh sách học sinh để ghi danh và tổng quan kết chuyển chỉ School Admin dùng
                 : m.DeclaringType!.Name == "CampusesController" ? Policies.CampusReader   // phân hiệu: School Admin, Hiệu trưởng, Hiệu phó (SCH-01)
-                : m.DeclaringType!.Name == "PeriodSlotsController" ? Policies.StaffOrFamily   // khung giờ tiết: học sinh/phụ huynh cần để xem TKB
-                : m.DeclaringType!.Name == "StructureStatsController" ? Policies.Management   // thống kê trên màn Thiết lập: SA sửa, HT/HP chỉ xem
+                : m.DeclaringType!.Name == "PeriodSlotsController" || m.Name is "ListYears" or "ListHolidays" ? Policies.StaffOrFamily   // khung giờ tiết, năm học, ngày nghỉ: học sinh/phụ huynh cần cho Trang chủ và TKB
+                : m.DeclaringType!.Name == "StructureStatsController" ? Policies.SchoolStructureReader   // thống kê trên màn Cơ cấu nhà trường: SA sửa, HT chỉ xem
                 : Policies.Staff;
             if (policy != allowed) wrong.Add($"{m.DeclaringType!.Name}.{m.Name} = {policy ?? "(none)"}");
         }

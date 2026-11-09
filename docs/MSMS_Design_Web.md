@@ -21,7 +21,7 @@ Emerald leads; the page stays light and airy. Five adjectives: **fresh · layere
 | --- | --- |
 | Cool-white page (`bg`) with a **soft aqua sky and low green hills** behind the content; content in **white cards** (radius 20, hairline border, very soft shadow) | Bare black text on one flat white sheet; cream or beige backgrounds; heavy decoration |
 | **Solid emerald sider** (light at the bottom) flush to the left edge with a rounded right edge; the selected item is a **notched tab** that melts into the page | White or dark sider; a tab that jumps |
-| Every page opens with a large **title block** on the page background: title, description, multi-tone summary chips, actions | A boxed banner around the title |
+| Every page opens with a large **title block** on the page background: title, multi-tone summary chips, actions | A boxed banner around the title |
 | **Lists are rows of separate white cards** (radius 16, 10 apart), not a ruled grid | Dense ruled tables |
 | **One main color (emerald) plus four supporting tones** (sky, violet, amber, teal; coral only for danger) used in small doses: stat icons, chips, avatars, chart bars, calendar leaves | A rainbow, saturated blocks, or tones on large surfaces |
 | A Bảng điều khiển screen has **at most one tinted panel** (pale mint → white, dark text); Trang chủ has no tinted panel (its sky panel follows the time of day, the three cards are white) | Solid dark-green blocks; several tinted panels competing; a page that is all green |
@@ -253,7 +253,7 @@ Wrap the app with `<ConfigProvider theme={antdTheme} locale={viVN}>` and call `d
  │ TỔNG QUAN         │  • Hồ sơ                                                 [Tải mẫu][Import][+ Thêm cán bộ]
  │ ⌂ Trang chủ       │  Cán bộ
  │ QUẢN LÝ           │  Mô tả…
- │ ⚙ Thiết lập     ▾ │  ( 4 cán bộ … )
+ │ ⚙ Cơ cấu nhà trường ▾ │  ( 4 cán bộ … )
  │ 👤 Hồ sơ         ▴ │
  │  ┆ Cán bộ  ◀tab ╮ │  [Đang hoạt động|Tất cả] (Tìm…)(Tìm kiếm) (Phân hiệu ▾) (Tổ ▾) …
  │  ┆ Trách nhiệm   │
@@ -318,7 +318,7 @@ Structure is fixed by Conventions §4.7 (the order of groups never changes). Thi
 | Element | Spec |
 | --- | --- |
 | Wordmark | `<BrandLogo tone="white" size={34} />`, left-aligned in a 68px row, padding 24; collapsed: size 18, centered. No school block under it — the school name and logo appear on Trang chủ |
-| Group labels | the menu is split into three labelled clusters — **Tổng quan** (Trang chủ, Bảng điều khiển), **Quản lý** (Thiết lập, Hồ sơ, Thời khóa biểu, Điểm danh, Bài tập rèn luyện, Phụ huynh, Bảng tin), **Hệ thống** (Quản trị). Label 11/600 uppercase, letter-spacing .08em, 62% white, padding 16/10/6. The menu column has 20 padding on top so the notch of the first item is not clipped. A cluster with no visible group is not rendered. Collapsed: the label becomes a 1px 18%-white divider |
+| Group labels | the menu is split into three labelled clusters — **Tổng quan** (Trang chủ, Bảng điều khiển), **Quản lý** (Cơ cấu nhà trường, Hồ sơ, Thời khóa biểu, Điểm danh, Bài tập rèn luyện, Phụ huynh, Bảng tin), **Hệ thống** (Quản trị). Label 11/600 uppercase, letter-spacing .08em, 62% white, padding 16/10/6. The menu column has 20 padding on top so the notch of the first item is not clipped. A cluster with no visible group is not rendered. Collapsed: the label becomes a 1px 18%-white divider |
 | L1 item | height 44, radius `md`, white icon in a 32×32 tile (radius `sm`, `rgba(255,255,255,.12)` when the group is open), label 14/500, chevron right; hover `rgba(255,255,255,.12)` |
 | L2 item | height 38, indent-left 48, long labels truncate with an ellipsis on the label only, **no icon and no bullet**, label 13/400 at 86% white; a 1px vertical line at 22% white joins the items |
 | Selected | a **notched tab**: a layer in the page color (`bg`) under the menu, from the item's left (12 inset) to the sider's right edge, radius `xl` on its left corners, with two 20×20 inverted corners above and below its right end so it merges with the page like a folder tab. The menu column runs 2px past the sider's right edge and hides its scrollbar, so no seam shows where tab and page meet. It **slides** (transform + height, 280ms ease-out) to the selected item on navigation and follows groups as they open and close. Text `green700` weight 600, icon `green600`. When the selected item's group is closed (or the sider is collapsed) the tab sits on the group title, which turns `green700` |
@@ -361,13 +361,12 @@ Modules are told apart by **words**: the sider label and cluster and the header 
 
 ### 8.0 Page header
 
-Every screen except Trang chủ opens with `shared/components/PageHeader.tsx` (`title`, `description`, `extra`), drawn **directly on the page background** — no band, no card — with padding 8×4 and 24 above the next block.
+Every screen except Trang chủ opens with `shared/components/PageHeader.tsx` (`title`, `extra`), drawn **directly on the page background** — no band, no card — with padding 8×4 and 24 above the next block.
 
 - **Title** — 32/40 700 `text1`, letter-spacing −0.025em (§3).
-- **Description** — 14/22 `text2`, max width 720.
 - **Actions** (`extra`) — the screen's buttons, bottom-aligned on the right, gap 10, wrapping.
 
-No icon tile and no decoration in the header.
+No icon tile, no decoration and no explanatory caption under the title; the same goes for hint lines under form fields (a rule is stated once, in its validation message).
 
 ### 8.1 Buttons
 
@@ -509,12 +508,11 @@ Two different things; do not merge them (Business Spec §5.1).
 
 Every account type. Everything is in `features/adm/pages/HomePage.tsx` and `home.css` (prefix `hm-`). It never carries KPI tiles, charts, shortcuts or a news feed.
 
-- **Sky panel (greeting).** A wide panel whose gradient follows the clock — dawn, day, dusk, night — with two soft clouds. Left: the school crest (84px) and the greeting in two lines, "Chào buổi sáng," / the given name (sáng before 12h, chiều before 18h, else tối). Staff accounts also get a 12-hour **analog dial** on the right: the day's period slots are drawn as arcs on the face at their real clock positions (a period not yet reached is faint, the current one solid), the digital time under the hands, and one sentence saying which period is running. Student and Parent get the panel without the dial.
-- **Staff: three white cards** in a grid.
-  - **Hôm nay** — head: today's weekday and `DD/MM`. Body: a **vertical timeline** of every active period slot: start time over end time on the left, a node on a 2px `border` rail, then "Tiết n" and, for every staff account except School Admin, the class (700) · subject of their own lesson. Sáng / Chiều captions open each session. Rows not started are faint, past rows fainter; **only the current row is full `ink` with a filled `amber` node, a soft halo pulse and an "Đang diễn ra" pill.** Sunday or a school-wide holiday replaces it with "Hôm nay trường nghỉ" + reason; no slots configured shows "Trường chưa khai khung giờ tiết."
+- **Sky panel (greeting).** A wide panel whose gradient follows the clock — dawn, day, dusk, night — with two soft clouds. Left: the school crest (84px) and the greeting in two lines, "Chào buổi sáng," / the given name (sáng before 12h, chiều before 18h, else tối). Every account also gets a 12-hour **analog dial** on the right: the day's period slots are drawn as arcs on the face at their real clock positions (a period not yet reached is faint, the current one solid), the digital time under the hands, and one sentence saying which period is running. Student and Parent get the panel without the dial.
+- **Three white cards** in a grid, for every account type.
+  - **Hôm nay** — head: today's weekday and `DD/MM`. Body: a **vertical timeline** of every active period slot: start time over end time on the left, a node on a 2px `border` rail, then "Tiết n" and, for teachers, the class (700) · subject of their own lesson. Sáng / Chiều captions open each session. Rows not started are faint, past rows fainter; **only the current row is full `ink` with a filled `amber` node, a soft halo pulse and an "Đang diễn ra" pill.** Sunday or a school-wide holiday replaces it with "Hôm nay trường nghỉ" + reason; no slots configured shows "Trường chưa khai khung giờ tiết."
   - **Năm học** (year name aside on the title row) — the semester name 22/600 `ink` with "Tuần **n** / N" at the right (counts up); under it **one block per week** of the semester: past weeks `green600`, the current week `amber`, taller with a halo, future weeks `neutralBg`; they grow up with a 30ms stagger. Start and end dates under it. Outside a semester: "Sắp tới: …" with all weeks grey. No year: "Chưa có năm học nào."
   - **Ngày nghỉ sắp tới** — left the **countdown**: days left 80/84 600 `ink` (counts up; "Nay" on the day itself) with "ngày nữa là {reason}"; right a **month calendar** (Monday-first, T2…CN) of that holiday's month headed "Tháng n" and, for a campus holiday, the campus name: the holiday a solid `amber` disc with a halo, other holidays `amber` 30% discs, today a 2px `ink` ring. Up to two more holidays follow as hairline rows (date, reason, "n ngày"). Empty: "Không còn ngày nghỉ nào trong năm học."
-- **Student and Parent:** below the sky panel one full-width card with the school name as title and its address, phone, email, website as hairline-separated rows with a 16px `text3` icon.
 - Cards fade and rise in one after another; all motion is off under `prefers-reduced-motion`.
 
 #### Bảng điều khiển

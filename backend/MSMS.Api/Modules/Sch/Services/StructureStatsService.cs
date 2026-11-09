@@ -10,8 +10,8 @@ using MSMS.Api.Modules.Scd.Services;
 namespace MSMS.Api.Modules.Sch.Services;
 
 /// <summary>
-/// Thống kê cấu trúc hiển thị ngay trên màn Thiết lập (phân hiệu, tổ và môn, lớp). Dashboard chỉ giữ số liệu vận hành.
-/// Phạm vi theo người xem (BR-01): School Admin và Principal toàn trường, Vice Principal chỉ phân hiệu đang phụ trách.
+/// Thống kê cấu trúc hiển thị ngay trên màn Cơ cấu nhà trường (phân hiệu, tổ và môn, lớp). Dashboard chỉ giữ số liệu vận hành.
+/// School Admin và Principal xem toàn trường (BR-01); các loại tài khoản khác không có màn này.
 /// Tổ và môn là danh mục chung toàn trường nên ai xem được màn cũng thấy đủ.
 /// </summary>
 public sealed class StructureStatsService(MsmsDbContext db, CurrentUser user, ScopeResolver scope, IClock clock,
@@ -21,11 +21,6 @@ public sealed class StructureStatsService(MsmsDbContext db, CurrentUser user, Sc
     {
         var today = clock.Today;
         var campuses = db.Campus.AsNoTracking();
-        if (user.AccountType == AccountTypes.VicePrincipal)
-        {
-            var led = await scope.LedCampusIdsAsync();
-            campuses = campuses.Where(c => led.Contains(c.CampusId));
-        }
 
         var classes = await (await scope.FilterClassesAsync(db.Class.AsNoTracking()))
             .Where(c => c.IsActive && c.AcademicYear.IsCurrent)
@@ -36,6 +31,7 @@ public sealed class StructureStatsService(MsmsDbContext db, CurrentUser user, Sc
             .Select(g => new { CampusId = g.Key, Count = g.Count() }).ToDictionaryAsync(g => g.CampusId, g => g.Count);
         var leaders = (await db.CampusLeadership.AsNoTracking()
                 .Where(EffectivePeriod.CurrentResponsibility<CampusLeadership>(today))
+                .Where(l => l.Staff.Staff.Account != null && l.Staff.Staff.Account.AccountType == AccountTypes.VicePrincipal)
                 .Select(l => new { l.CampusId, l.Staff.Staff.FullName }).ToListAsync())
             .GroupBy(l => l.CampusId).ToDictionary(g => g.Key, g => g.Select(x => x.FullName).Order().ToList());
 

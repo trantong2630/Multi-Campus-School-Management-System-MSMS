@@ -90,7 +90,6 @@ export function TimetablePage() {
     <>
       <PageHeader
         title="Thời khóa biểu"
-        description="Tải mẫu điền sẵn theo phiên bản đã phát hành gần nhất, sửa vài ô và giữ các lớp cần đổi, tải lên, sửa bản Nháp trên lưới rồi phát hành."
         extra={
           <>
             <Button icon={<FileDown size={16} />} disabled={!ready} onClick={template}>Tải file mẫu</Button>

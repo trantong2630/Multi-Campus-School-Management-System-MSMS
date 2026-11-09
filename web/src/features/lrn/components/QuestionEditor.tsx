@@ -91,7 +91,6 @@ export function QuestionEditor({ open, editing, subjects, defaultSubjectId, onCl
       </Form.Item>
       <Form.Item
         name="gradeLevel" label="Khối" rules={[{ required: true, message: 'Chọn khối của câu hỏi.' }]}
-        extra={fromBook ? 'Môn và khối theo bài trong sách nên không đổi được. Muốn môn hoặc khối khác, soạn câu mới.' : undefined}
       >
         <Segmented disabled={fromBook} options={GRADES.map((g) => ({ value: g, label: `Khối ${g}` }))} />
       </Form.Item>

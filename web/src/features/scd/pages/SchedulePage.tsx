@@ -47,11 +47,6 @@ function CampusSchedule() {
     <>
       <PageHeader
         title="Lịch dạy"
-        description={mode === 'day'
-          ? 'Lịch dạy thực tế của phân hiệu theo ngày. Tiết đã hủy gạch ngang, tiết chờ xử lý nền vàng.'
-          : mode === 'adjust'
-            ? 'Nhấp vào tiết để đổi giáo viên hoặc hủy, nhấp vào ô trống để thêm tiết bù. Tiết đã qua hoặc đã điểm danh bị khóa.'
-            : 'Lịch dạy theo tuần của một lớp hoặc một giáo viên. Tiết đã hủy gạch ngang, tiết chờ xử lý nền vàng.'}
       />
       {campusHead}
       {campuses.isSuccess && campuses.data.length === 0 && (
@@ -180,7 +175,7 @@ function MySchedule() {
 
   return (
     <>
-      <PageHeader title="Lịch dạy của tôi" description="Gồm tiết bù và tiết được phân dạy thay. Tiết đã hủy gạch ngang, tiết chờ xử lý nền vàng." />
+      <PageHeader title="Lịch dạy của tôi" />
       {sessions.isSuccess && sessions.data.length === 0 && (
         <InlineAlert type="info" title="Tuần này không có tiết dạy nào" description="Tuần nghỉ, tuần chưa phát hành thời khóa biểu hoặc bạn chưa được phân công dạy." />
       )}

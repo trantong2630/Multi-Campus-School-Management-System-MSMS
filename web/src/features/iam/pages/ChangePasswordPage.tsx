@@ -5,7 +5,7 @@ import { ChangePasswordForm } from '../components/ChangePasswordForm';
 export function ChangePasswordPage() {
   return (
     <>
-      <PageHeader title="Đổi mật khẩu" description="Mật khẩu mới có ít nhất 8 ký tự." />
+      <PageHeader title="Đổi mật khẩu" />
       <Card style={{ maxWidth: 520 }}>
         <ChangePasswordForm />
       </Card>
