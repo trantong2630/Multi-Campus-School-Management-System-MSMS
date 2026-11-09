@@ -102,7 +102,8 @@ public sealed class DashboardService(MsmsDbContext db, CurrentUser user, ScopeRe
     private async Task<DashboardAttention> AttentionAsync(List<int> campusIds, List<int> classIds, DateOnly today, int classesWithoutHomeroom)
     {
         var pendingSessions = await db.TeachingSession.AsNoTracking()
-            .CountAsync(s => s.Status == "Pending" && s.SessionDate >= today && classIds.Contains(s.ClassId));
+            .Where(SessionLockRules.NotEnded(clock))
+            .CountAsync(s => s.Status == "Pending" && classIds.Contains(s.ClassId));
         var absences = await db.TeacherAbsence.AsNoTracking()
             .Where(a => a.FromDate <= today && a.ToDate >= today && campusIds.Contains(a.Teacher.PrimaryCampusId))
             .Select(a => a.TeacherId).Distinct().CountAsync();
