@@ -47,6 +47,7 @@ internal sealed class PplEnv : IDisposable
         SchTestSupport.AddClass(Db, Class9A, Campus1, Year1, "9A", 9);
         Db.SubjectDepartment.AddRange(new SubjectDepartment { DepartmentId = Dept1, Name = "Tổ Toán", IsActive = true },
             new SubjectDepartment { DepartmentId = DeptInactive, Name = "Tổ cũ", IsActive = false });
+        Db.PeriodSlot.Add(new PeriodSlot { PeriodSlotId = 1, SessionOfDay = "Morning", PeriodNo = 1, StartTime = new(8, 30), EndTime = new(9, 15), IsActive = true });
         Db.SaveChanges();
 
         AddStaff(Admin, "Quản trị", AccountTypes.SchoolAdmin);

@@ -116,9 +116,9 @@ public sealed class StaffService(MsmsDbContext db, IClock clock, ScopeResolver s
             if (duties.Count > 0)
                 throw ApiException.BadRequest($"Cán bộ đang giữ: {string.Join(", ", duties)}. Chuyển giao hoặc kết thúc các trách nhiệm đó trước.");
 
-            var sessions = await db.TeachingSession.CountAsync(s => s.TeacherId == id && s.Status == "Scheduled" && s.SessionDate >= today);
+            var sessions = await db.TeachingSession.Where(SessionLockRules.NotEnded(clock)).CountAsync(s => s.TeacherId == id && s.Status == "Scheduled");
             if (sessions > 0)
-                throw ApiException.BadRequest($"Cán bộ còn {sessions} tiết Đã xếp lịch từ hôm nay. Đổi giáo viên hoặc hủy các tiết đó trước.");
+                throw ApiException.BadRequest($"Cán bộ còn {sessions} tiết Đã xếp lịch chưa kết thúc. Đổi giáo viên hoặc hủy các tiết đó trước.");
         }
         staff.IsActive = isActive;
         await db.SaveChangesAsync();
