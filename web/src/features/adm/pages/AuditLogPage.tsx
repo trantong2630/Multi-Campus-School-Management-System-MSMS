@@ -33,7 +33,7 @@ export function AuditLogPage() {
 
   return (
     <>
-      <PageHeader title="Nhật ký" description="Thao tác về tài khoản, phát hành thời khóa biểu và điều chỉnh lịch. Nhật ký chỉ ghi thêm, không sửa hay xóa được." />
+      <PageHeader title="Nhật ký" />
       <FilterBar>
         <Select
           allowClear placeholder="Nhóm" value={category} onChange={(v) => { setCategory(v); setPage(1); }}

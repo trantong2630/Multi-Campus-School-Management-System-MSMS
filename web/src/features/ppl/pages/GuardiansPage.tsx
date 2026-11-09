@@ -92,7 +92,6 @@ export function GuardiansPage() {
     <>
       <PageHeader
         title="Phụ huynh"
-        description="Danh bạ phụ huynh và các con được liên kết. Số điện thoại bắt buộc, duy nhất và là khóa nhận diện khi import."
         extra={canWrite && (
           <>
             <Button icon={<FileDown size={16} />} onClick={template}>Tải file mẫu</Button>
@@ -171,7 +170,7 @@ export function GuardiansPage() {
           <Form.Item label="Họ và tên" name="fullName" rules={[{ required: true, whitespace: true, message: 'Nhập họ và tên đầy đủ.' }]}>
             <Input maxLength={150} />
           </Form.Item>
-          <Form.Item label="Số điện thoại" name="phoneNumber" extra="Duy nhất giữa các phụ huynh. Số di động 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09."
+          <Form.Item label="Số điện thoại" name="phoneNumber"
             rules={[{ required: true, message: 'Nhập số điện thoại.' }, { pattern: /^0[35789]\d{8}$/, message: 'Số điện thoại di động phải gồm đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09.' }]}>
             <Input maxLength={20} inputMode="tel" />
           </Form.Item>

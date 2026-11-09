@@ -50,7 +50,6 @@ export function StudentSchedulePage() {
     <>
       <PageHeader
         title={isParent ? 'Lịch học của con' : 'Lịch học'}
-        description="Lịch học của lớp theo tuần. Tiết đã hủy gạch ngang, tiết chờ xử lý nền vàng."
       />
       {className && (
         <div className="tt-class-head">

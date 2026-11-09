@@ -29,6 +29,7 @@ public class IamPolicyTests
             [Policies.Student] = role == AccountTypes.Student,
             [Policies.Parent] = role == AccountTypes.Parent,
             [Policies.ConversationParticipant] = role is AccountTypes.Parent or AccountTypes.Teacher,
+            [Policies.ReportViewer] = role is AccountTypes.Teacher or AccountTypes.Student or AccountTypes.Parent,
             [Policies.TimetableManager] = role == AccountTypes.VicePrincipal,
             [Policies.DashboardReader] = role is AccountTypes.Principal or AccountTypes.VicePrincipal,
             [Policies.AssignmentOversight] = role is AccountTypes.Principal or AccountTypes.VicePrincipal or AccountTypes.Teacher,

@@ -21,7 +21,7 @@ const MAX_RANGE_DAYS = 186;
 
 function RangeField({ value, onChange }: { value: Range; onChange: (v: Range) => void }) {
   return (
-    <Form.Item label="Khoảng ngày" extra={`Tối đa ${MAX_RANGE_DAYS} ngày mỗi lần.`}>
+    <Form.Item label="Khoảng ngày">
       <DatePicker.RangePicker
         format="DD/MM/YYYY" allowClear={false} value={value} style={{ width: '100%' }}
         onChange={(v) => v && v[0] && v[1] && onChange([v[0], v[1]])}
@@ -53,10 +53,6 @@ function AttendanceExport() {
 
   return (
     <Card title="Điểm danh theo lớp">
-      <p className="exports-hint">
-        Mỗi dòng là một học sinh ở một tiết, kèm nhãn cuối (có phép hoặc không phép tính theo đơn xin nghỉ đã duyệt).
-        Chỉ gồm tiết Đã xếp lịch tính tới hôm nay.
-      </p>
       <Form layout="vertical" requiredMark={false}>
         <Form.Item label="Lớp">
           <Select
@@ -87,9 +83,6 @@ function TimetableExport() {
 
   return (
     <Card title="Thời khóa biểu theo phân hiệu">
-      <p className="exports-hint">
-        Lấy từ lịch dạy nên có cả tiết đổi giáo viên, tiết bù, tiết Đã hủy và Chờ xử lý. Mỗi dòng là một tiết, kèm trạng thái và nguồn tiết.
-      </p>
       <Form layout="vertical" requiredMark={false}>
         <Form.Item label="Phân hiệu">
           <Select
@@ -117,7 +110,7 @@ export function ExportsPage() {
 
   return (
     <>
-      <PageHeader title="Xuất dữ liệu" description="Tải file Excel trong phạm vi đang phụ trách. File sinh ngay khi bấm, hệ thống không lưu lại." />
+      <PageHeader title="Xuất dữ liệu" />
       <div className="exports-grid">
         {(leadsCampus || isHomeroom) && <AttendanceExport />}
         {leadsCampus && <TimetableExport />}

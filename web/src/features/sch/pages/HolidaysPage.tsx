@@ -81,7 +81,6 @@ export function HolidaysPage() {
     <>
       <PageHeader
         title="Ngày nghỉ"
-        description="Ngày nghỉ khai trước khi phát hành thì phát hành bỏ qua ngày đó. Ngày nghỉ đột xuất khai ở Lịch dạy."
         extra={canWrite && <Button type="primary" icon={<Plus size={16} />} onClick={() => setAdding({})} disabled={!effectiveYear}>Thêm ngày nghỉ</Button>}
       />
       <FilterBar>
@@ -136,7 +135,6 @@ export function HolidaysPage() {
         <div className="form-grid">
           <Form.Item
             label="Ngày nghỉ" name="date" rules={[{ required: true, message: 'Chọn ngày nghỉ.' }]}
-            extra={yearRange ? `Phải nằm trong năm học ${yearRange.name}.` : undefined}
           >
             <DatePicker
               format="DD/MM/YYYY" style={{ width: '100%' }}

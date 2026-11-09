@@ -38,11 +38,11 @@ public sealed class TimetableTemplateService(MsmsDbContext db, ScopeResolver sco
             .Where(c => c.CampusId == campusId && c.AcademicYearId == semester.AcademicYearId && c.IsActive)
             .OrderBy(c => c.GradeLevel).ThenBy(c => c.Name).ToListAsync();
         if (classes.Count == 0)
-            throw ApiException.BadRequest($"{campus.Name} chưa có lớp nào trong năm học {semester.AcademicYear.Name}. Tạo lớp ở Thiết lập trước khi tải mẫu.");
+            throw ApiException.BadRequest($"{campus.Name} chưa có lớp nào trong năm học {semester.AcademicYear.Name}. Tạo lớp ở Cơ cấu nhà trường trước khi tải mẫu.");
 
         var slots = await db.PeriodSlot.AsNoTracking().Where(p => p.IsActive)
             .OrderBy(p => p.SessionOfDay == SessionOfDay.Morning ? 0 : 1).ThenBy(p => p.PeriodNo).ToListAsync();
-        if (slots.Count == 0) throw ApiException.BadRequest("Chưa khai khung giờ tiết nào. Khai ở Thiết lập → Khung giờ tiết trước khi tải mẫu.");
+        if (slots.Count == 0) throw ApiException.BadRequest("Chưa khai khung giờ tiết nào. Khai ở Cơ cấu nhà trường → Khung giờ tiết trước khi tải mẫu.");
 
         // Nội dung điền sẵn: phiên bản Đã phát hành gần nhất của (phân hiệu, học kỳ).
         var latest = await db.TimetableVersion.AsNoTracking()

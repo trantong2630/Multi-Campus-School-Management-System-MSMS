@@ -30,7 +30,7 @@ public sealed record DashboardAttention(
 
 /// <summary>
 /// Dashboard cấp quản lý theo phạm vi: chỉ số liệu vận hành (hôm nay, 8 tuần, nộp bài, việc cần chú ý).
-/// Cấu trúc tổ chức (tổ, môn, phân hiệu chi tiết) nằm trên các màn Thiết lập.
+/// Cấu trúc tổ chức (tổ, môn, phân hiệu chi tiết) nằm trên các màn Cơ cấu nhà trường.
 /// CampusId trống = toàn trường (Principal) hoặc mọi phân hiệu đang phụ trách (Vice Principal).
 /// </summary>
 public sealed record DashboardDto(
@@ -53,7 +53,7 @@ public sealed record CategoryCount(string Category, int Count);
 
 public sealed record CampusTimetable(int CampusId, string Name, int ClassCount, int PublishedClassCount);
 
-/// <summary>Thống kê hệ thống của School Admin: quy mô, tài khoản, dữ liệu cần bổ sung, hoạt động hệ thống, tiến độ thời khóa biểu. Chi tiết cấu trúc trường nằm trên các màn Thiết lập.</summary>
+/// <summary>Thống kê hệ thống của School Admin: quy mô, tài khoản, dữ liệu cần bổ sung, hoạt động hệ thống, tiến độ thời khóa biểu. Chi tiết cấu trúc trường nằm trên các màn Cơ cấu nhà trường.</summary>
 public sealed record AdminDashboardDto(
     string? AcademicYearName, string? SemesterName, DateOnly? SemesterStart, DateOnly? SemesterEnd,
     int CampusCount, int ClassCount, int StudentCount, int StaffCount,

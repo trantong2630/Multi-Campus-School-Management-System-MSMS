@@ -51,9 +51,7 @@ export function ClassesPage() {
 
 
   const navigate = useNavigate();
-  // Hiệu phó chỉ đọc lớp của phân hiệu đang phụ trách (API đã lọc), nên ô chọn cũng chỉ còn các phân hiệu đó.
   const campusOptions = (campuses.data ?? [])
-    .filter((c) => user?.accountType !== 'VicePrincipal' || user.scope?.ledCampusIds.includes(c.campusId))
     .map((c) => ({ value: c.campusId, label: c.name }));
 
   // Số liệu theo đúng bộ lọc đang chọn, chỉ tính lớp đang hoạt động.
@@ -84,9 +82,6 @@ export function ClassesPage() {
     <>
       <PageHeader
         title="Lớp & Ghi danh"
-        description={canWrite
-          ? 'Tên lớp duy nhất trong phạm vi (phân hiệu, năm học). Ghi danh học sinh làm cùng danh bạ học sinh.'
-          : 'Lớp, sĩ số và chủ nhiệm theo năm học và phân hiệu đã chọn. Bấm một lớp để xem danh sách học sinh.'}
         extra={canWrite && (
           <>
             <Button icon={<Upload size={16} />} onClick={() => setImportOpen(true)}>Import học sinh</Button>
@@ -100,7 +95,7 @@ export function ClassesPage() {
           options={years.data?.map((y) => ({ value: y.academicYearId, label: `Năm học ${y.name}` }))}
         />
         <Select
-          allowClear placeholder={user?.accountType === 'VicePrincipal' ? 'Tất cả phân hiệu phụ trách' : 'Tất cả phân hiệu'}
+          allowClear placeholder="Tất cả phân hiệu"
           value={campusId} onChange={setCampusId} options={campusOptions}
         />
         <label className="inline-switch"><Switch checked={includeInactive} onChange={setIncludeInactive} /> Hiện cả lớp ngừng hoạt động</label>

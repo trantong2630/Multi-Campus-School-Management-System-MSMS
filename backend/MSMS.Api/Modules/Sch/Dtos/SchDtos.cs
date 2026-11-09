@@ -49,7 +49,7 @@ public record EnrollManyRequest(List<int> StudentIds, DateOnly StartDate);
 public record TransferManyRequest(List<int> EnrollmentIds, int ToClassId, DateOnly EffectiveDate);
 public record CloseManyRequest(List<int> EnrollmentIds, string Reason);
 
-// Thống kê cấu trúc đặt ngay trên các màn Thiết lập (thay cho các bảng cấu trúc trước đây nằm ở Dashboard).
+// Thống kê cấu trúc đặt ngay trên các màn Cơ cấu nhà trường (thay cho các bảng cấu trúc trước đây nằm ở Dashboard).
 // Tính tại hôm nay, năm học hiện hành; không lưu số liệu suy ra.
 public record CampusStatDto(int CampusId, int ClassCount, int StudentCount, int StaffCount, IReadOnlyList<string> Leaders);
 public record DepartmentStatDto(int DepartmentId, string? HeadName, int TeacherCount);

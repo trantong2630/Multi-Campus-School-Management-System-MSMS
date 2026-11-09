@@ -42,9 +42,6 @@ export function ManageAttendanceView() {
     <>
       <PageHeader
         title="Điểm danh"
-        description={isAdmin
-          ? 'Chọn lớp và khoảng ngày để tìm tiết cần nhập bù. Nhập bù và sửa tiết đã qua ghi nhận người sửa trên từng bản ghi.'
-          : 'Số liệu điểm danh theo lớp. Hiệu trưởng và hiệu phó xem, không sửa điểm danh.'}
       />
       <FilterBar>
         <Segmented<View>

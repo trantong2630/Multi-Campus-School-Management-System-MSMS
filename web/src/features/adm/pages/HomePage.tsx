@@ -2,13 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from 'antd';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
-import { Globe, Mail, MapPin, Phone } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useAuth } from '@/app/AuthProvider';
 import { schApi } from '@/features/sch/api';
 import { SchoolLogo } from '@/features/sch/components/SchoolLogo';
-import { useSchool } from '@/features/sch/hooks/useSchool';
 import { nextSemester as nextSemesterOf, semesterAt, semesterProgress } from '@/features/sch/semester';
 import type { AcademicYear, Holiday, PeriodSlot } from '@/features/sch/types';
 import { scdApi } from '@/features/scd/api';
@@ -18,7 +16,6 @@ import { Count } from '../components/BoardKit';
 import './home.css';
 
 /** Trang chủ chung cho mọi loại tài khoản: lời chào, hôm nay của trường và năm học. Không có số liệu thống kê (số liệu ở Dashboard). */
-const STAFF = ['SchoolAdmin', 'Principal', 'VicePrincipal', 'Teacher'];
 
 function greetingOf(now: Dayjs) {
   const h = now.hour();
@@ -83,17 +80,16 @@ type Day = ReturnType<typeof useDay>;
 export function HomePage() {
   const { user } = useAuth();
   const now = useNow();
-  const isStaff = !!user && STAFF.includes(user.accountType);
   const today = now.format('YYYY-MM-DD');
 
-  const years = useQuery({ queryKey: ['sch', 'years'], queryFn: schApi.years.list, enabled: isStaff });
+  const years = useQuery({ queryKey: ['sch', 'years'], queryFn: schApi.years.list });
   const year = years.data?.find((y) => y.isCurrent) ?? years.data?.[0];
   const holidays = useQuery({
     queryKey: ['sch', 'holidays', year?.academicYearId, undefined],
     queryFn: () => schApi.holidays.list({ yearId: year!.academicYearId }),
-    enabled: isStaff && !!year,
+    enabled: !!year,
   });
-  const slots = useQuery({ queryKey: ['sch', 'slots'], queryFn: schApi.periodSlots.list, enabled: isStaff });
+  const slots = useQuery({ queryKey: ['sch', 'slots'], queryFn: schApi.periodSlots.list });
   const mine = useQuery({ queryKey: ['scd', 'mine', today, today], queryFn: () => scdApi.mine(today, today), enabled: user?.accountType === 'Teacher' });
   const day = useDay(now, slots.data ?? [], mine.data ?? [], holidays.data ?? [], user?.accountType !== 'SchoolAdmin');
 
@@ -102,27 +98,23 @@ export function HomePage() {
 
   return (
     <div className="hm">
-      <section className={`hm-hero hm-hero--${skyOf(now)}${isStaff ? '' : ' hm-hero--plain'}`} aria-label="Lời chào">
+      <section className={`hm-hero hm-hero--${skyOf(now)}`} aria-label="Lời chào">
         <i className="hm-cloud hm-cloud--a" aria-hidden />
         <i className="hm-cloud hm-cloud--b" aria-hidden />
         <div className="hm-hero__text">
-          <span className="hm-crest" style={stagger(0)} aria-hidden><SchoolLogo size={84} /></span>
+          <span className="hm-crest" style={stagger(0)} aria-hidden><SchoolLogo size={136} /></span>
           <div className="hm-hero__words">
             <h1 className="hm-hero__title" style={stagger(1)}>{greetingOf(now)},<br />{given}</h1>
           </div>
         </div>
-        {isStaff && <DayDial now={now} day={day} loading={slots.isLoading} />}
+        <DayDial now={now} day={day} loading={slots.isLoading} />
       </section>
 
-      {isStaff ? (
-        <div className="hm-grid">
-          <TodayCard now={now} day={day} loading={slots.isLoading} />
-          <YearCard now={now} year={year} loading={years.isLoading} />
-          <HolidaysCard now={now} holidays={holidays.data ?? []} loading={years.isLoading || holidays.isLoading} />
-        </div>
-      ) : (
-        <SchoolCard />
-      )}
+      <div className="hm-grid">
+        <TodayCard now={now} day={day} loading={slots.isLoading} />
+        <YearCard now={now} year={year} loading={years.isLoading} />
+        <HolidaysCard now={now} holidays={holidays.data ?? []} loading={years.isLoading || holidays.isLoading} />
+      </div>
     </div>
   );
 }
@@ -368,29 +360,6 @@ function HolidaysCard({ now, holidays, loading }: { now: Dayjs; holidays: Holida
             </ul>
           )}
         </>
-      )}
-    </section>
-  );
-}
-
-/** Học sinh và phụ huynh: chưa đọc được lịch năm học, nên chỉ hiện thông tin liên hệ của trường (API công khai). */
-function SchoolCard() {
-  const { profile, name } = useSchool();
-  const rows = [
-    { icon: MapPin, value: profile?.address },
-    { icon: Phone, value: profile?.phoneNumber },
-    { icon: Mail, value: profile?.email },
-    { icon: Globe, value: profile?.website },
-  ].filter((r) => r.value);
-  return (
-    <section className="hm-card hm-school" style={stagger(3)} aria-label="Thông tin trường">
-      <h2 className="hm-card__title">{name}</h2>
-      {rows.length === 0 ? (
-        <span className="hm-term__dates">Trường chưa cập nhật thông tin liên hệ.</span>
-      ) : (
-        <ul className="hm-contact">
-          {rows.map(({ icon: Icon, value }, i) => <li key={value} style={stagger(i)}><Icon size={16} /> {value}</li>)}
-        </ul>
       )}
     </section>
   );

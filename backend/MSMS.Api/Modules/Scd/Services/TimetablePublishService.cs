@@ -188,7 +188,7 @@ public sealed class TimetablePublishService(
         var inactiveClasses = await db.Class.AsNoTracking().Where(c => classIds.Contains(c.ClassId) && !c.IsActive)
             .OrderBy(c => c.Name).Select(c => c.Name).ToListAsync();
         if (inactiveClasses.Count > 0)
-            plan.BlockingIssues.Add($"Lớp {string.Join(", ", inactiveClasses)} đã ngừng hoạt động. Mở lại lớp ở Thiết lập, hoặc import lại file không có lớp này.");
+            plan.BlockingIssues.Add($"Lớp {string.Join(", ", inactiveClasses)} đã ngừng hoạt động. Mở lại lớp ở Cơ cấu nhà trường, hoặc import lại file không có lớp này.");
 
         // Giáo viên có thể đã bị khóa hoặc ngừng hoạt động sau lúc import.
         foreach (var teacher in entries.Select(e => e.Teacher).DistinctBy(t => t.StaffId))

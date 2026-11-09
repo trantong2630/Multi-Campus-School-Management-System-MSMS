@@ -483,7 +483,6 @@ export function ChatPage() {
     <div className="page-container">
       <PageHeader
         title="Hộp thư Phụ huynh – Giáo viên"
-        description="Trao đổi trực tiếp 1-1 giữa Phụ huynh và Giáo viên phụ trách giảng dạy"
       />
 
       <div className="chat-container">

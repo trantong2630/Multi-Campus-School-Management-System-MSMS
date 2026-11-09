@@ -9,7 +9,7 @@ namespace MSMS.Api.Modules.Sch.Controllers;
 [ApiController, Route("api/sch")]
 public class CalendarController(CalendarService service) : ControllerBase
 {
-    [HttpGet("academic-years"), Authorize(Policy = Policies.Staff)]
+    [HttpGet("academic-years"), Authorize(Policy = Policies.StaffOrFamily)]
     public Task<List<AcademicYearDto>> ListYears() => service.ListYearsAsync();
 
     [HttpPost("academic-years"), Authorize(Policy = Policies.SchoolAdmin)]
@@ -27,7 +27,7 @@ public class CalendarController(CalendarService service) : ControllerBase
     [HttpDelete("academic-years/{id:int}"), Authorize(Policy = Policies.SchoolAdmin)]
     public async Task<IActionResult> DeleteYear(int id) { await service.DeleteYearAsync(id); return NoContent(); }
 
-    [HttpGet("holidays"), Authorize(Policy = Policies.Staff)]
+    [HttpGet("holidays"), Authorize(Policy = Policies.StaffOrFamily)]
     public Task<List<HolidayDto>> ListHolidays([FromQuery] int? yearId, [FromQuery] int? campusId) => service.ListHolidaysAsync(yearId, campusId);
 
     [HttpPost("holidays"), Authorize(Policy = Policies.SchoolAdmin)]

@@ -119,9 +119,6 @@ export function AttendanceSheetPage() {
     <>
       <PageHeader
         title={`${s.subjectName} — lớp ${s.className}`}
-        description={editable
-          ? 'Chọn Có mặt, Muộn hoặc Vắng cho từng học sinh rồi bấm Lưu. Lưu lại là cập nhật bản ghi đã có.'
-          : 'Bảng điểm danh chỉ xem.'}
         extra={(
           <div className="att-sheet-actions">
             <Button icon={<ArrowLeft size={16} />} onClick={back}>Quay lại</Button>

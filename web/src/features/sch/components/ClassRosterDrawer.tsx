@@ -244,7 +244,6 @@ export function ClassRosterDrawer({ cls, canWrite, onClose }: Props) {
         </Form.Item>
         <Form.Item
           label="Ngày hiệu lực" name="effectiveDate" rules={[{ required: true, message: 'Chọn ngày hiệu lực.' }]}
-          extra={latestStart ? `Phải sau ngày bắt đầu ghi danh hiện tại (${formatDate(latestStart)}).` : undefined}
         >
           <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabledDate={outOfYear} />
         </Form.Item>

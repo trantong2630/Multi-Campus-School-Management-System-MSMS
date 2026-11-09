@@ -48,7 +48,6 @@ export function StudentAttendanceView() {
     <>
       <PageHeader
         title={isParent ? 'Chuyên cần của con' : 'Chuyên cần'}
-        description="Chuyên cần theo tiết và theo tuần: Có mặt, Muộn, Vắng có phép, Vắng không phép. Vắng có phép khi có đơn xin nghỉ đã duyệt đúng ngày và buổi."
       />
       <FilterBar>
         <Segmented<View> value={view} onChange={setView} options={[{ value: 'week', label: 'Theo tuần' }, { value: 'list', label: 'Theo tiết' }]} />

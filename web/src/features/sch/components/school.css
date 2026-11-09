@@ -433,3 +433,23 @@ button.hol-chip {
   background: var(--c-sunken);
   color: var(--c-text3);
 }
+
+/* Chế độ chỉ xem: giữ chữ đậm màu thường, không phủ xám cả form. */
+.school-form--readonly .ant-input-disabled,
+.school-form--readonly .ant-input[disabled],
+.school-form--readonly .ant-select-disabled .ant-select-content,
+.school-form--readonly .ant-select-disabled .ant-select-selector {
+  color: var(--c-text1);
+  -webkit-text-fill-color: var(--c-text1);
+  background: var(--c-surface);
+  cursor: default;
+}
+
+.school-form--readonly .ant-input-disabled,
+.school-form--readonly .ant-select-disabled .ant-select-selector {
+  border-color: var(--c-borderMint);
+}
+
+.school-form--readonly .ant-select-disabled .ant-select-suffix {
+  display: none;
+}

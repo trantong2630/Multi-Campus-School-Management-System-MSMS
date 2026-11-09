@@ -114,7 +114,6 @@ export function StaffPage() {
     <>
       <PageHeader
         title="Cán bộ"
-        description="Danh bạ cán bộ gồm cả Hiệu trưởng và Hiệu phó. Viết tắt GV chỉ điền cho giáo viên, duy nhất toàn trường."
         extra={canWrite && (
           <>
             <Button icon={<FileDown size={16} />} onClick={template}>Tải file mẫu</Button>
@@ -225,7 +224,6 @@ export function StaffPage() {
             />
           </Form.Item>
           <Form.Item label="Số định danh cá nhân" name="nationalId"
-            extra={editing === 'new' ? 'Đủ 12 chữ số, duy nhất toàn trường, không sửa được sau khi tạo.' : 'Không sửa được sau khi tạo.'}
             rules={editing === 'new' ? [{ required: true, message: 'Nhập số định danh cá nhân.' }, { pattern: /^\d{12}$/, message: 'Số định danh gồm đúng 12 chữ số.' }] : []}>
             <Input maxLength={12} inputMode="numeric" disabled={editing !== 'new'} />
           </Form.Item>
@@ -236,13 +234,12 @@ export function StaffPage() {
             <Select allowClear options={departments.data?.filter((d) => d.isActive || (editing !== 'new' && editing?.departmentId === d.departmentId)).map((d) => ({ value: d.departmentId, label: d.isActive ? d.name : ` (đã ngừng)` }))} />
           </Form.Item>
           <Form.Item label="Giới tính" name="gender"><Select allowClear options={GENDERS} /></Form.Item>
-          <Form.Item label="Số điện thoại" name="phoneNumber" extra="Số di động 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09." rules={[{ pattern: /^0[35789]\d{8}$/, message: 'Số điện thoại di động phải gồm đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09.' }]}><Input maxLength={10} inputMode="tel" /></Form.Item>
+          <Form.Item label="Số điện thoại" name="phoneNumber" rules={[{ pattern: /^0[35789]\d{8}$/, message: 'Số điện thoại di động phải gồm đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09.' }]}><Input maxLength={10} inputMode="tel" /></Form.Item>
           <Form.Item label="Email nhận mã OTP" name="email" rules={[{ type: 'email', message: 'Email chưa đúng định dạng.' }]}>
             <Input maxLength={150} />
           </Form.Item>
           <Form.Item
             label="Viết tắt GV" name="teacherAbbr"
-            extra="Chỉ gồm chữ và số, duy nhất toàn trường. Không có viết tắt thì không xuất hiện được trong file thời khóa biểu."
             rules={[{ pattern: /^[A-Za-z0-9]*$/, message: 'Viết tắt chỉ gồm chữ và số, không dấu cách, không dấu gạch.' }]}
           >
             <Input maxLength={10} />

@@ -203,7 +203,7 @@ Cột Đọc là quyền đọc **dữ liệu**, không phải quyền có **mà
 | IAM-03 | Mật khẩu | Buộc đổi lần đầu, đổi khi đang dùng, quên mật khẩu bằng OTP, School Admin reset | chính chủ 📱, SA | — | BR-04 |
 | IAM-04 | Hồ sơ cá nhân | Xem hồ sơ, trách nhiệm đang giữ và trạng thái tài khoản; tự sửa số điện thoại, email nhận OTP, địa chỉ (phụ huynh không tự sửa số điện thoại) và ảnh đại diện; đổi mật khẩu | chính chủ 📱 | chính chủ 📱 | BR-04 |
 
-### SCH — School Setup (7) — chỉ SA ghi (riêng SCH-07: SA và HT cùng ghi), chỉ web
+### SCH — School Setup (7) — chỉ SA ghi, chỉ web
 
 SA là người duy nhất ghi (riêng Thông tin trường: SA và HT). HT và HP có các màn hình xem Phân hiệu, Tổ chuyên môn & Môn học, Năm học & Học kỳ, Lớp & Ghi danh kèm thống kê cấu trúc (HP chỉ thấy phân hiệu mình phụ trách); HT có thêm Thông tin trường. Ngày nghỉ, Khung giờ tiết và Kết chuyển năm học chỉ có cho SA. GV không có màn hình nào của SCH — cột Đọc thêm là dữ liệu họ dùng ở màn hình khác.
 
@@ -215,7 +215,7 @@ SA là người duy nhất ghi (riêng Thông tin trường: SA và HT). HT và 
 | SCH-04 | Khung giờ tiết | Khung giờ dùng chung toàn trường, khóa là cặp (Buổi, Tiết) | HT, HP, GV, HS, PH | BR-07 |
 | SCH-05 | Lớp & Ghi danh | Lớp theo phân hiệu và năm học; ghi danh có hiệu lực (một hoặc nhiều học sinh một lượt); chuyển lớp giữa năm; kết thúc ghi danh | HT, HP, CN | BR-07, 09 |
 | SCH-06 | Kết chuyển năm học | Sao chép danh sách lớp sang năm mới (gợi ý tên và khối tăng 1, sửa được trước khi tạo); chuyển nguyên lớp hoặc từng học sinh sang lớp đích do người dùng chọn; cho học sinh khối 9 tốt nghiệp. Không tự xét lên lớp hay lưu ban, không sao chép thời khóa biểu hay trách nhiệm | — | BR-09 |
-| SCH-07 | Thông tin trường | Tên trường, địa chỉ, điện thoại, email, website và logo. Đúng một bản; tên trường hiện ở thanh đường dẫn đầu trang và tiêu đề tab trình duyệt, logo hiện ở Trang chủ (học sinh và phụ huynh còn thấy thẻ thông tin trường); ai cũng đọc được, kể cả chưa đăng nhập. **HT và SA cùng ghi** | HP, GV | BR-27 |
+| SCH-07 | Thông tin trường | Tên trường, địa chỉ, điện thoại, email, website và logo. Đúng một bản; tên trường hiện ở thanh đường dẫn đầu trang và tiêu đề tab trình duyệt, logo hiện ở Trang chủ; ai cũng đọc được, kể cả chưa đăng nhập. **Chỉ SA ghi**; HT xem trên màn Cơ cấu nhà trường | HP, GV | BR-27 |
 
 ### PPL — People & Responsibility (4)
 

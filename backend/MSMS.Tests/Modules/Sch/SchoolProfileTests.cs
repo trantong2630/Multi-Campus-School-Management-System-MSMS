@@ -336,11 +336,11 @@ public sealed class SchoolProfileTests : IDisposable
     [InlineData(nameof(SchoolController.Update))]
     [InlineData(nameof(SchoolController.UploadLogo))]
     [InlineData(nameof(SchoolController.RemoveLogo))]
-    public void ChangingTheProfileOrLogo_IsOnlyForThePrincipalAndSchoolAdmin(string endpoint)
+    public void ChangingTheProfileOrLogo_IsOnlyForTheSchoolAdmin(string endpoint)
     {
         var method = Endpoint(endpoint);
 
         Assert.Null(method.GetCustomAttribute<AllowAnonymousAttribute>());
-        Assert.Equal(Policies.SchoolProfileManager, method.GetCustomAttribute<AuthorizeAttribute>()?.Policy);
+        Assert.Equal(Policies.SchoolAdmin, method.GetCustomAttribute<AuthorizeAttribute>()?.Policy);
     }
 }

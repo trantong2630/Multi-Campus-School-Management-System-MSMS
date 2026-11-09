@@ -263,7 +263,6 @@ export function AssignBuilderPage() {
                 {customDuration && <InputNumber min={1} max={600} precision={0} value={duration} onChange={(v) => setDuration(v)} addonAfter="phút" />}
                 </div>
               </div>
-              {duration !== null && <p className="when__hint">Đồng hồ chạy từ lúc học sinh bấm Bắt đầu và tự nộp bài khi hết giờ, không muộn hơn hạn nộp.</p>}
             </div>
           </div>
         </section>

@@ -48,7 +48,6 @@ export function PeriodSlotsPage() {
     <>
       <PageHeader
         title="Khung giờ tiết"
-        description="Khung giờ dùng chung toàn trường, khóa là cặp (Buổi, Tiết). Số tiết mỗi buổi do trường tự khai."
         extra={canWrite && <Button type="primary" icon={<Plus size={16} />} onClick={() => setEditing('new')}>Thêm khung giờ</Button>}
       />
       <Card className="table-card">

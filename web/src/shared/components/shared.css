@@ -25,14 +25,6 @@
   color: var(--c-text1);
 }
 
-.page-header__desc {
-  max-width: 720px;
-  margin: 6px 0 0;
-  font-size: 14px;
-  line-height: 22px;
-  color: var(--c-text2);
-}
-
 .page-header__extra {
   position: relative;
   display: flex;
