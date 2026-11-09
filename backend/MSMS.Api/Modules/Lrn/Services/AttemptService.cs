@@ -123,7 +123,7 @@ public sealed class AttemptService(MsmsDbContext db, CurrentUser user, IClock cl
     private Task<Submission?> FindSubmissionAsync(int assignmentId) =>
         db.Submission.AsNoTracking().FirstOrDefaultAsync(s => s.AssignmentId == assignmentId && s.StudentId == user.PersonId);
 
-    private static void EnsureCanWork(Assignment a, Submission? submission, DateTime now)
+    internal static void EnsureCanWork(Assignment a, Submission? submission, DateTime now)
     {
         if (submission?.SubmittedAt is not null)
             throw ApiException.BadRequest("Đã nộp bài này, mỗi bài chỉ nộp một lần.");
@@ -131,7 +131,8 @@ public sealed class AttemptService(MsmsDbContext db, CurrentUser user, IClock cl
             throw ApiException.BadRequest($"Bài chưa mở. Mở lúc {a.OpenAt:HH:mm dd/MM/yyyy}.");
         var deadline = AssignmentRules.EffectiveDeadline(a.DueAt, a.DurationMinutes, submission?.StartedAt);
         if (AssignmentRules.IsPastDeadline(deadline, now))
-            throw ApiException.BadRequest(a.DurationMinutes is not null && submission is not null
+            // "Hết giờ" chỉ khi thời lượng làm bài là mốc đến trước; nếu hạn nộp đến trước thì là quá hạn nộp.
+            throw ApiException.BadRequest(deadline < a.DueAt
                 ? "Đã hết giờ làm bài. Bài đã đóng, không làm hay lưu được nữa."
                 : "Đã quá hạn nộp. Bài đã đóng, không làm hay lưu được nữa.");
     }
