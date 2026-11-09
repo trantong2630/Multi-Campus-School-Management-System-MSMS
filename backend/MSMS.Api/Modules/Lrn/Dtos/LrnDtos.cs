@@ -93,10 +93,16 @@ public record ResultQuestionDto(
 
 public record AnalysisMistakeDto(int QuestionNo, string Why);
 
-/// <summary>Phân tích của MSMS AI cho một bài nộp. Status: Pending (đang phân tích), Done, Failed (để trống, không thử lại).</summary>
+/// <summary>Nơi nên ôn trong sách: bài nguồn của các câu học sinh làm sai (trang theo số in), kèm số thứ tự các câu sai thuộc bài đó.</summary>
+public record StudyRefDto(int LessonId, string BookTitle, string LessonTitle, int StartPage, int EndPage, IReadOnlyList<int> QuestionNos);
+
+/// <summary>
+/// Phân tích của MSMS AI cho một bài nộp. Status: Pending (đang phân tích), Done, Failed (để trống, không thử lại).
+/// <c>StudyRefs</c> do Backend ghép từ bài nguồn của các câu sai, không do AI sinh; chỉ có khi Status là Done.
+/// </summary>
 public record AnalysisDto(
     string Status, string? Summary, IReadOnlyList<string> Strengths, IReadOnlyList<string> Weaknesses,
-    IReadOnlyList<AnalysisMistakeDto> Mistakes, IReadOnlyList<string> Suggestions);
+    IReadOnlyList<AnalysisMistakeDto> Mistakes, IReadOnlyList<string> Suggestions, IReadOnlyList<StudyRefDto>? StudyRefs = null);
 
 /// <summary>Học sinh chưa nộp: <c>Submitted</c> là false, không có câu hỏi và đáp án.</summary>
 public record PracticeResultDto(

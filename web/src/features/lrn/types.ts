@@ -226,6 +226,8 @@ export interface ResultQuestion {
 }
 
 export interface AnalysisMistake { questionNo: number; why: string }
+/** Nơi nên ôn trong sách: bài nguồn của các câu sai, trang theo số in. Do Backend ghép, không do AI sinh. */
+export interface StudyRef { lessonId: number; bookTitle: string; lessonTitle: string; startPage: number; endPage: number; questionNos: number[] }
 export interface Analysis {
   status: AnalysisStatus;
   summary: string | null;
@@ -233,6 +235,7 @@ export interface Analysis {
   weaknesses: string[];
   mistakes: AnalysisMistake[];
   suggestions: string[];
+  studyRefs?: StudyRef[] | null;
 }
 
 export interface PracticeResult {

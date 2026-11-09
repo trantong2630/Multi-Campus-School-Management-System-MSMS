@@ -925,3 +925,10 @@
 .lessonline__title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lessonpick .lessonline__title { white-space: normal; }
 .lessonline__pg { flex: none; padding: 0 9px; border-radius: 999px; background: var(--c-green100); color: var(--c-green800); font-size: 12px; font-weight: 700; line-height: 20px; white-space: nowrap; }
+
+/* Phân tích bài làm: nơi nên ôn trong sách, mỗi bài một dòng (tên bài, viên thuốc số trang, câu sai và tên sách). */
+.rv-ai__refs { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.rv-ai__refs li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 14px; line-height: 20px; }
+.rv-ai__reflesson { color: var(--c-text1); font-weight: 700; }
+.rv-ai__pg { display: inline-block; padding: 0 9px; border-radius: 999px; background: var(--c-green100); color: var(--c-green800); font-size: 12px; font-weight: 700; line-height: 20px; white-space: nowrap; }
+.rv-ai__refmeta { color: var(--c-text2); }

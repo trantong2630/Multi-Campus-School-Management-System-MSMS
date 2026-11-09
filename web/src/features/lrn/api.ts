@@ -46,6 +46,9 @@ export const lrnApi = {
     submit: (id: number, answers: AnswerInput[]) => post<{ submittedAt: string }>(`/lrn/my-assignments/${id}/submit`, { answers }),
   },
   results: {
+    /** Ảnh một trang sách trong mục "Xem lại trong sách" của học sinh hoặc phụ huynh (của con thì kèm studentId). */
+    page: (assignmentId: number, lessonId: number, page: number, studentId?: number) =>
+      apiClient.get<Blob>(`/lrn/results/${assignmentId}/pages/${lessonId}/${page}`, { params: { studentId }, responseType: 'blob' }).then((r) => URL.createObjectURL(r.data)),
     children: () => get<Child[]>('/lrn/results/children'),
     childList: (studentId: number) => get<ChildResultItem[]>(`/lrn/results/children/${studentId}`),
     detail: (assignmentId: number, studentId?: number) => get<PracticeResult>(`/lrn/results/${assignmentId}`, { studentId }),

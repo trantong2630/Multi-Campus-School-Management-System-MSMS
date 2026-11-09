@@ -118,7 +118,7 @@ Cả hai đều là **tiện ích, không phải điều kiện vận hành**: h
 
 Trợ lý AI của hệ thống tên là **MSMS AI**. Câu hỏi do AI sinh là **nháp** cho tới khi giáo viên xác nhận. Phân tích bài làm do AI sinh **tự động khi học sinh nộp bài**, không qua giáo viên duyệt. **AI hỏng hoặc thiếu dữ liệu:** chấm, nộp bài, xem điểm vẫn chạy; phần phân tích để trống, không thử lại; giáo viên soạn câu hỏi thủ công.
 
-**Cần rà soát trước khi vận hành thật:** sự đồng ý của phụ huynh về việc gửi dữ liệu học tập cho nhà cung cấp AI, điều khoản không dùng dữ liệu để huấn luyện, quy định bảo vệ dữ liệu cá nhân; quyền sử dụng ảnh trang sách giáo khoa (bản quyền thuộc nhà xuất bản) khi lưu trên kho ảnh, gửi cho nhà cung cấp AI để soạn câu hỏi.
+**Cần rà soát trước khi vận hành thật:** sự đồng ý của phụ huynh về việc gửi dữ liệu học tập cho nhà cung cấp AI, điều khoản không dùng dữ liệu để huấn luyện, quy định bảo vệ dữ liệu cá nhân; quyền sử dụng ảnh trang sách giáo khoa (bản quyền thuộc nhà xuất bản) khi lưu trên kho ảnh, gửi cho nhà cung cấp AI để soạn câu hỏi và hiển thị cho học sinh, phụ huynh ở mục xem lại trong sách.
 
 ### 3.2. Gmail SMTP
 

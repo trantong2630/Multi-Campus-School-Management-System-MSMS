@@ -15,7 +15,7 @@ namespace MSMS.Api.Modules.Lrn.Services;
 /// Học sinh chưa nộp thì không bao giờ thấy đáp án.
 /// </summary>
 public sealed class ResultService(
-    MsmsDbContext db, CurrentUser user, IClock clock, LrnAccess access, AssignmentService assignments, AttemptGrader grader)
+    MsmsDbContext db, CurrentUser user, IClock clock, LrnAccess access, AssignmentService assignments, AttemptGrader grader, TextbookService textbooks)
 {
     // ---- giáo viên ----
 
@@ -120,6 +120,28 @@ public sealed class ResultService(
         return result;
     }
 
+    /// <summary>
+    /// Ảnh một trang sách trong mục "Xem lại trong sách" (4.6.20) cho học sinh hoặc phụ huynh của con được liên kết.
+    /// Chỉ xem được trang của bài là nguồn của các câu trong bài mình đã nộp.
+    /// </summary>
+    public async Task<byte[]> SourcePageAsync(int assignmentId, int lessonId, int page, int? studentId)
+    {
+        var sid = await access.ResolveStudentAsync(studentId);
+        await EnsureCanViewSourceAsync(db, assignmentId, sid, lessonId);
+        return await textbooks.GetPageImageAsync(lessonId, page);
+    }
+
+    /// <summary>
+    /// Bài phải do học sinh này đã nộp (chưa nộp thì chưa xem được gì, như đáp án), và bài nguồn phải là nguồn của một câu trong bài đó.
+    /// Không đạt thì báo không tìm thấy, không nói rõ lý do, để không dùng được endpoint này mà duyệt cả cuốn sách.
+    /// </summary>
+    internal static async Task EnsureCanViewSourceAsync(MsmsDbContext db, int assignmentId, int studentId, int lessonId)
+    {
+        var allowed = await db.Submission.AsNoTracking().AnyAsync(s => s.AssignmentId == assignmentId && s.StudentId == studentId && s.SubmittedAt != null)
+            && await db.AssignmentQuestion.AsNoTracking().AnyAsync(aq => aq.AssignmentId == assignmentId && aq.Question.LessonId == lessonId);
+        if (!allowed) throw ApiException.NotFound("Không tìm thấy trang sách.");
+    }
+
     // ---- dùng chung ----
 
     /// <summary>Dựng kết quả: điểm, từng câu với lựa chọn và đáp án đúng, phân tích AI. Chưa nộp thì không có câu hỏi.</summary>
@@ -145,9 +167,37 @@ public sealed class ResultService(
                     .Select(o => new ResultOptionDto(o.OptionId, o.OptionLabel, o.Content, o.IsCorrect, selected.Contains(o.OptionId))).ToList());
         }).ToList();
 
+        var analysis = await ResolveAnalysisAsync(submission);
+        if (analysis is { Status: AnalysisStatuses.Done })
+        {
+            var wrong = lines.Where(l => answers.FirstOrDefault(x => x.AssignmentQuestionId == l.AssignmentQuestionId)?.IsCorrect != true)
+                .Select(l => ((int)l.OrderNo, l.Question.LessonId));
+            analysis = analysis with { StudyRefs = await StudyRefsAsync(wrong) };
+        }
         return new PracticeResultDto(a.AssignmentId, a.Title, a.Subject.Name, a.Class.Name, student, a.DueAt, true, submission.SubmittedAt,
-            submission.Score, submission.CorrectCount, questions, await ResolveAnalysisAsync(submission));
+            submission.Score, submission.CorrectCount, questions, analysis);
     }
+
+    private async Task<IReadOnlyList<StudyRefDto>> StudyRefsAsync(IEnumerable<(int OrderNo, int? LessonId)> wrong)
+    {
+        var list = wrong.Where(w => w.LessonId is not null).ToList();
+        if (list.Count == 0) return [];
+        var ids = list.Select(w => w.LessonId!.Value).Distinct().ToList();
+        var lessons = await db.TextbookLesson.AsNoTracking().Include(l => l.Book).Where(l => ids.Contains(l.LessonId)).ToDictionaryAsync(l => l.LessonId);
+        return BuildStudyRefs(list, lessons);
+    }
+
+    /// <summary>
+    /// Gom các câu sai theo bài nguồn thành danh sách "nên ôn": mỗi bài một dòng kèm số thứ tự các câu sai, bài có câu sai sớm nhất đứng trước.
+    /// Câu không có bài nguồn (soạn tay, câu cũ) không có dòng nào.
+    /// </summary>
+    internal static IReadOnlyList<StudyRefDto> BuildStudyRefs(IEnumerable<(int OrderNo, int? LessonId)> wrong, IReadOnlyDictionary<int, TextbookLesson> lessons) =>
+        wrong.Where(w => w.LessonId is not null && lessons.ContainsKey(w.LessonId.Value))
+            .GroupBy(w => w.LessonId!.Value)
+            .Select(g => (Lesson: lessons[g.Key], Nos: g.Select(x => x.OrderNo).Distinct().OrderBy(n => n).ToList()))
+            .OrderBy(x => x.Nos[0])
+            .Select(x => new StudyRefDto(x.Lesson.LessonId, x.Lesson.Book.Title, x.Lesson.Title, x.Lesson.StartPage, x.Lesson.EndPage, x.Nos))
+            .ToList();
 
     private static string? StaleAware(string? status, DateTime submittedAt, DateTime now) =>
         status == AnalysisStatuses.Pending && now - submittedAt > AnalysisService.StaleAfter ? AnalysisStatuses.Failed : status;

@@ -803,7 +803,7 @@ Mỗi bài nộp (kể cả bị tự nộp) được gửi AI MỘT LẦN, tự
 
 **4.6.20 — Xem phân tích bài làm / View Analysis**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.6.19  
-Khung phân tích AI nằm dưới kết quả từng bài, hiện cho Student, Parent và Teacher đang phụ trách chuyên môn. Đang phân tích hiện avatar MSMS AI chờ; Lỗi để trống. Phân tích kẹt ở trạng thái đang chạy quá 5 phút (tiến trình dừng giữa chừng) được coi là Lỗi.
+Khung phân tích AI nằm dưới kết quả từng bài, hiện cho Student, Parent và Teacher đang phụ trách chuyên môn. Khi phân tích xong, Backend ghép thêm mục "Xem lại trong sách" từ bài nguồn của các câu sai (tên bài, trang theo số in, số thứ tự các câu sai), không do AI sinh và không gửi thêm gì cho AI; câu không có bài nguồn (soạn tay) thì không có dòng nào. Mỗi dòng có nút xem ảnh các trang của bài: giáo viên xem qua đường của giáo viên, Student và Parent (của con được liên kết) chỉ xem được trang của bài là nguồn của các câu trong bài mình đã nộp; chưa nộp hoặc bài không thuộc bài đã nộp thì báo không tìm thấy, để không duyệt được cả cuốn sách. Kiểm thử: học sinh chưa nộp, học sinh khác, bài ngoài bài đã nộp đều bị từ chối. Đang phân tích hiện avatar MSMS AI chờ; Lỗi để trống. Phân tích kẹt ở trạng thái đang chạy quá 5 phút (tiến trình dừng giữa chừng) được coi là Lỗi.
 
 **4.6.21 — Giao diện MSMS AI / MSMS AI Presence**  
 `Web + Mobile` · 2 MD · dep: 4.6.5, 4.6.12, 4.6.20  
