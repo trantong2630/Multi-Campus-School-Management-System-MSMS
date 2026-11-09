@@ -270,6 +270,10 @@ export interface Absence {
   handledCount: number;
   /** Chỉ xóa được khi chưa có tiết nào của khai báo bị xử lý. */
   canDelete: boolean;
+  /** Tiết Chờ xử lý đã kết thúc mà không ai xử lý. */
+  missedCount: number;
+  /** Mọi tiết đã kết thúc: chỉ để tra cứu. */
+  isPast: boolean;
 }
 
 export interface DeclareAbsenceBody {

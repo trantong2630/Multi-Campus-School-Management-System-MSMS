@@ -348,7 +348,7 @@ Lược đồ CSDL thiết kế sau, từ tài liệu này. Mục này chốt **
 | Trạng thái | Điều kiện |
 | --- | --- |
 | Tiết **đã diễn ra** | Đã xếp lịch **và** (đã có ít nhất một bản ghi điểm danh **hoặc** ngày của tiết < hôm nay) |
-| Tiết **bị khóa** | Đã diễn ra, hoặc ngày của tiết < hôm nay. Tiết bị khóa không đổi giáo viên, không hủy |
+| Tiết **bị khóa** | Đã diễn ra, hoặc **đã kết thúc**: ngày của tiết < hôm nay, hoặc là hôm nay và đã quá giờ kết thúc của khung giờ. Tiết đang diễn ra chưa bị khóa. Tiết bị khóa không đổi giáo viên, không hủy |
 | Điểm danh **có phép** | Vắng **và** có đơn Đã duyệt của học sinh phủ ngày của tiết, cùng buổi hoặc cả ngày |
 | Điểm danh **không phép** | Vắng và không có đơn như trên |
 | Bài **đã đóng** | Thời điểm hiện tại > hạn nộp |
@@ -472,11 +472,11 @@ Khai báo **không tự đổi lịch** và **chỉ tác động tiết ở phâ
 1. **Chọn giáo viên dạy thay** → Đã xếp lịch với giáo viên được chọn, lấy từ danh sách gợi ý bên dưới.
 2. **Hủy** → Đã hủy. Muốn dạy lại thì thêm tiết bù (BR-15).
 
-Tiết Chờ xử lý **không điểm danh được**. Tiết Chờ xử lý cũng bị khóa khi qua ngày (mục 6.2): không còn trong danh sách của SCD-03, không dạy thay, không hủy được nữa.
+Tiết Chờ xử lý **không điểm danh được**. Tiết Chờ xử lý cũng bị khóa khi đã kết thúc (mục 6.2): không còn trong danh sách của SCD-03, không dạy thay, không hủy được nữa.
 
-**Xóa khai báo vắng** theo kiểu tất cả hoặc không: chỉ xóa được khi **chưa có tiết nào** của khai báo bị xử lý (dạy thay, hủy), giáo viên **vẫn đủ điều kiện dạy** (BR-06) và **không trùng lịch** ở tiết nào (BR-13). Khi đó mọi tiết của khai báo từ hôm nay trở đi trở về giáo viên, trạng thái Đã xếp lịch; tiết đã qua ngày bị khóa nên giữ nguyên. Không đạt thì báo lỗi nêu rõ nguyên nhân và không xóa gì; Vice Principal xử lý các tiết còn lại rồi xóa lại. Tiết trống do khóa hoặc đổi loại tài khoản không thuộc khai báo nào nên không tự khôi phục.
+**Xóa khai báo vắng** theo kiểu tất cả hoặc không: chỉ xóa được khi **chưa có tiết nào** của khai báo bị xử lý (dạy thay, hủy), giáo viên **vẫn đủ điều kiện dạy** (BR-06) và **không trùng lịch** ở tiết nào (BR-13). Khi đó mọi tiết của khai báo chưa kết thúc trở về giáo viên, trạng thái Đã xếp lịch; tiết đã kết thúc bị khóa nên giữ nguyên. Không đạt thì báo lỗi nêu rõ nguyên nhân và không xóa gì; Vice Principal xử lý các tiết còn lại rồi xóa lại. Tiết trống do khóa hoặc đổi loại tài khoản không thuộc khai báo nào nên không tự khôi phục.
 
-**Gợi ý giáo viên rảnh:** Teacher đủ điều kiện dạy (BR-06), không có tiết Đã xếp lịch tại (ngày, khung giờ) đó ở bất kỳ phân hiệu nào (BR-13), không có khai báo vắng phủ ngày và tiết đó. Trả danh sách sắp theo tên, tối đa 10 người; **không xếp hạng ưu tiên** — Vice Principal tự chọn.
+**Gợi ý giáo viên rảnh:** Teacher đủ điều kiện dạy (BR-06), cùng tổ chuyên môn với môn của tiết, không có tiết Đã xếp lịch tại (ngày, khung giờ) đó ở bất kỳ phân hiệu nào (BR-13), không có khai báo vắng phủ ngày và tiết đó. Trả danh sách sắp theo tên, tối đa 10 người; **không xếp hạng ưu tiên** — Vice Principal tự chọn.
 
 ### 7.5. Điểm danh và đơn xin nghỉ
 
