@@ -25,5 +25,12 @@ export function labelCountItems(counts: AttendanceCounts): CountItem[] {
 export const slotText = (s: Pick<AttendanceSession, 'sessionOfDay' | 'periodNo' | 'startTime' | 'endTime'>) =>
   `${sessionOfDayLabel(s.sessionOfDay)} · Tiết ${s.periodNo} (${formatTime(s.startTime)}–${formatTime(s.endTime)})`;
 
+/** ["Sáng · Tiết 2", "07:50–08:35"] — dùng khi cần xuống dòng giờ. */
+export const slotParts = (s: Pick<AttendanceSession, 'sessionOfDay' | 'periodNo' | 'startTime' | 'endTime'>): [string, string] =>
+  [`${sessionOfDayLabel(s.sessionOfDay)} · Tiết ${s.periodNo}`, `${formatTime(s.startTime)}–${formatTime(s.endTime)}`];
+
+/** ["Thứ 3", "12/10/2026"] */
+export const dayParts = (date: string): [string, string] => [weekdayOfDate(date), formatDate(date)];
+
 /** "Thứ 3 12/10/2026" */
 export const dayText = (date: string) => `${weekdayOfDate(date)} ${formatDate(date)}`;
