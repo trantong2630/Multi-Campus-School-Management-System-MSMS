@@ -371,7 +371,7 @@ Gán viết tắt duy nhất toàn trường, chỉ gồm chữ và số. Không
 
 **4.3.7 — Ngừng hoạt động hồ sơ cán bộ / Deactivate Staff Profile**  
 `BE + Web` · 1 MD · dep: 4.3.4  
-Bị chặn nếu người đó còn giữ trách nhiệm (phụ trách phân hiệu, tổ trưởng, chủ nhiệm) hoặc còn tiết Đã xếp lịch từ hôm nay chưa chuyển giao.
+Bị chặn nếu người đó còn giữ trách nhiệm (phụ trách phân hiệu, tổ trưởng, chủ nhiệm) hoặc còn tiết Đã xếp lịch chưa kết thúc chưa chuyển giao.
 
 **4.3.8 — Tải file mẫu import cán bộ / Download Staff Import Template**  
 `BE + Web` · 0.5 MD  
@@ -599,7 +599,7 @@ Không thao tác được trên tiết bị khóa; tiết bù trùng khung giờ
 
 **4.4.25 — Khai báo giáo viên vắng / Declare Teacher Absence**  
 `BE + Web` · 2 MD  
-Vice Principal khai giáo viên có tiết ở phân hiệu mình theo một trong hai cách: theo ngày (từ ngày – đến ngày, vắng cả ngày) hoặc theo tiết (một ngày, chọn các tiết vắng, liền hay rời đều được), kèm lý do (tùy chọn). Chỉ khai từ hôm nay trở đi, một khai báo tối đa 90 ngày, và giáo viên phải có tiết ở phân hiệu của người khai trong phạm vi đó. Đây KHÔNG phải đơn xin nghỉ của cán bộ — MSMS chỉ ghi nhận hệ quả lên lịch dạy (BR-16).
+Vice Principal khai giáo viên có tiết ở phân hiệu mình theo một trong hai cách: theo ngày (từ ngày – đến ngày, vắng cả ngày) hoặc theo tiết (một ngày, chọn các tiết vắng, liền hay rời đều được), kèm lý do (tùy chọn). Chỉ khai cho tiết chưa kết thúc (từ hôm nay trở đi, tiết hôm nay đã quá giờ kết thúc thì bỏ qua), một khai báo tối đa 90 ngày, và giáo viên phải có tiết ở phân hiệu của người khai trong phạm vi đó. Đây KHÔNG phải đơn xin nghỉ của cán bộ — MSMS chỉ ghi nhận hệ quả lên lịch dạy (BR-16).
 
 **4.4.26 — Đưa tiết bị ảnh hưởng về Chờ xử lý / Move Affected Lessons to Pending**  
 `BE` · 1.5 MD · dep: 4.4.25  
@@ -607,11 +607,11 @@ Khai báo không tự đổi lịch và chỉ tác động tiết ở phân hi�
 
 **4.4.27 — Xem danh sách tiết Chờ xử lý / View Pending Lessons**  
 `BE + Web` · 1.5 MD · dep: 4.4.26  
-Danh sách tiết Chờ xử lý theo phân hiệu từ hôm nay trở đi (tối đa 500 tiết), lọc theo khoảng ngày và lớp, mỗi dòng ghi nguyên nhân (giáo viên vắng nào) và mở được màn hình quyết định từng tiết. Màn hình Giáo viên vắng có hai tab: Tiết chờ xử lý và Khai báo vắng.
+Danh sách tiết Chờ xử lý chưa kết thúc theo phân hiệu (tối đa 500 tiết), lọc theo khoảng ngày và lớp, mỗi dòng ghi nguyên nhân (giáo viên vắng nào) và mở được màn hình quyết định từng tiết. Màn hình Giáo viên vắng có hai tab: Tiết chờ xử lý và Khai báo vắng. Tab Khai báo vắng ghi trạng thái mỗi khai báo: Đang hiệu lực (còn tiết chưa kết thúc) hoặc Đã qua (mọi tiết đã kết thúc, chỉ để tra cứu, không xóa được); mặc định chỉ hiện khai báo đang hiệu lực, có công tắc hiện cả khai báo đã qua. "Còn chờ xử lý" chỉ đếm tiết chưa kết thúc, tiết Chờ xử lý đã kết thúc mà không ai xử lý đếm ở cột "Bỏ lỡ".
 
 **4.4.28 — Xem gợi ý giáo viên rảnh / View Free Teacher Suggestions**  
 `BE + Web` · 2 MD · dep: 4.4.27  
-Teacher đủ điều kiện dạy, không có tiết Đã xếp lịch tại (ngày, khung giờ) đó ở bất kỳ phân hiệu nào và không có khai báo vắng phủ ngày và tiết đó. Danh sách sắp theo tên, tối đa 10 người, KHÔNG xếp hạng ưu tiên — Vice Principal tự chọn (BR-06, BR-13, BR-16).
+Teacher đủ điều kiện dạy, cùng tổ chuyên môn với môn của tiết, không có tiết Đã xếp lịch tại (ngày, khung giờ) đó ở bất kỳ phân hiệu nào và không có khai báo vắng phủ ngày và tiết đó. Danh sách sắp theo tên, tối đa 10 người, KHÔNG xếp hạng ưu tiên — Vice Principal tự chọn (BR-06, BR-13, BR-16).
 
 **4.4.29 — Xử lý tiết chờ bằng cách chọn giáo viên dạy thay / Resolve by Substitute Teacher**  
 `BE + Web` · 1.5 MD · dep: 4.4.28  
@@ -621,13 +621,13 @@ Lựa chọn 1: gán giáo viên được chọn, tiết quay lại Đã xếp l
 `BE + Web` · 0.5 MD · dep: 4.4.27  
 Lựa chọn 2: tiết chuyển sang Đã hủy.
 
-**4.4.31 — Khóa tiết chờ đã qua ngày / Lock Past Pending Lesson**  
+**4.4.31 — Khóa tiết chờ đã kết thúc / Lock Ended Pending Lesson**  
 `BE + Web` · 0.5 MD · dep: 4.4.27, 4.4.29  
-Tiết Chờ xử lý đã qua ngày bị khóa (mục 6.2): không còn trong danh sách ở 4.4.27, không dạy thay, không hủy được nữa (BR-16).
+Tiết Chờ xử lý đã kết thúc bị khóa (mục 6.2): không còn trong danh sách ở 4.4.27, không dạy thay, không hủy được nữa (BR-16).
 
 **4.4.32 — Xóa khai báo giáo viên vắng / Delete Teacher Absence**  
 `BE + Web` · 1.5 MD · dep: 4.4.26  
-Xóa khai báo theo kiểu tất cả hoặc không: chỉ xóa được khi chưa có tiết nào của khai báo bị xử lý (dạy thay, hủy), giáo viên vẫn đủ điều kiện dạy (tài khoản Teacher không bị khóa, BR-06) và không trùng lịch ở tiết nào (BR-13). Khi đó mọi tiết của khai báo từ hôm nay trở đi trở về giáo viên, trạng thái Đã xếp lịch, tiết đã qua ngày giữ nguyên; không đạt thì báo lỗi nêu nguyên nhân và không xóa gì. Tiết trống do khóa hoặc đổi loại tài khoản không tự khôi phục. Ghi Audit, thông báo giáo viên và học sinh của lớp (BR-06, BR-13, BR-16, BR-26, BR-28).
+Xóa khai báo theo kiểu tất cả hoặc không: không xóa được khai báo đã qua; chỉ xóa được khi chưa có tiết nào của khai báo bị xử lý (dạy thay, hủy), giáo viên vẫn đủ điều kiện dạy (tài khoản Teacher không bị khóa, BR-06) và không trùng lịch ở tiết nào (BR-13). Khi đó mọi tiết của khai báo từ hôm nay trở đi trở về giáo viên, trạng thái Đã xếp lịch, tiết đã qua ngày giữ nguyên; không đạt thì báo lỗi nêu nguyên nhân và không xóa gì. Tiết trống do khóa hoặc đổi loại tài khoản không tự khôi phục. Ghi Audit, thông báo giáo viên và học sinh của lớp (BR-06, BR-13, BR-16, BR-26, BR-28).
 
 **4.4.33 — Chọn giáo viên toàn trường kèm trạng thái rảnh hoặc bận / Pick School-wide Teacher with Availability**  
 `BE + Web` · 1.5 MD · dep: 4.4.14  

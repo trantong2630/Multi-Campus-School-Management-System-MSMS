@@ -29,7 +29,7 @@ export function TeacherSelect({ value, onChange, date, slotId, excludeSessionId,
     <Select
       showSearch optionFilterProp="label" placeholder={ready ? placeholder : 'Chọn ngày và tiết trước'} disabled={!ready}
       loading={list.isLoading} value={value} onChange={onChange}
-      notFoundContent={suggest && list.isSuccess ? 'Không có giáo viên rảnh ở khung giờ này' : undefined}
+      notFoundContent={suggest && list.isSuccess ? 'Không có giáo viên rảnh trong tổ ở khung giờ này' : undefined}
       options={list.data?.map((t) => ({
         value: t.teacherId,
         disabled: t.busy || t.absent,

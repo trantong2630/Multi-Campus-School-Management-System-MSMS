@@ -25,9 +25,9 @@ public sealed class TeacherAbsenceService(
     public async Task<List<TeacherOptionDto>> TeachersAsync(int campusId)
     {
         await scope.EnsureCanManageCampusAsync(campusId);
-        var today = clock.Today;
         return await db.TeachingSession.AsNoTracking()
-            .Where(s => s.TeacherId != null && s.Class.CampusId == campusId && s.Status == "Scheduled" && s.SessionDate >= today)
+            .Where(support.NotEnded())
+            .Where(s => s.TeacherId != null && s.Class.CampusId == campusId && s.Status == "Scheduled")
             .Select(s => new { Id = s.TeacherId!.Value, Name = s.Teacher!.Staff.FullName, Abbr = s.Teacher.TeacherAbbr }).Distinct()
             .OrderBy(t => t.Name).ThenBy(t => t.Id)
             .Select(t => new TeacherOptionDto(t.Id, t.Name, t.Abbr)).ToListAsync();
@@ -61,12 +61,27 @@ public sealed class TeacherAbsenceService(
         var led = await scope.LedCampusIdsAsync();
         await using var tx = await db.Database.BeginTransactionAsync();
         var sessions = await db.TeachingSession.Include(s => s.Class)
+            .Where(support.NotEnded())
             .Where(s => s.TeacherId == r.TeacherId && s.Status == "Scheduled" && s.SessionDate >= start && s.SessionDate <= r.ToDate
                         && led.Contains(s.Class.CampusId) && !s.AttendanceRecord.Any()
                         && (slotIds.Count == 0 || slotIds.Contains(s.PeriodSlotId)))
             .ToListAsync();
         if (sessions.Count == 0)
-            throw ApiException.BadRequest($"{name} không có tiết nào cần xử lý ở phân hiệu bạn phụ trách trong phạm vi này. Chỉ khai được khi giáo viên có tiết ở phân hiệu của bạn.");
+        {
+            // Không có tiết nào để chuyển Chờ xử lý: nói đúng lý do. Tiết của giáo viên gồm cả tiết đã khai vắng (đang để trống giáo viên).
+            var mine = await db.TeachingSession.AsNoTracking().Include(s => s.PeriodSlot)
+                .Where(s => s.SessionDate >= r.FromDate && s.SessionDate <= r.ToDate && led.Contains(s.Class.CampusId)
+                            && (slotIds.Count == 0 || slotIds.Contains(s.PeriodSlotId))
+                            && (s.TeacherId == r.TeacherId || (s.TeacherAbsence != null && s.TeacherAbsence.TeacherId == r.TeacherId)))
+                .Select(s => new { s.Status, s.SessionDate, s.PeriodSlot, Marked = s.AttendanceRecord.Any() }).ToListAsync();
+            if (mine.Any(m => m.Status == "Pending" && !support.HasEnded(m.SessionDate, m.PeriodSlot)))
+                throw ApiException.BadRequest($"Các tiết của {name} trong phạm vi này đã được khai vắng và đang Chờ xử lý. Xử lý ở tab Tiết chờ xử lý.");
+            if (mine.Any(m => m.Marked || support.HasEnded(m.SessionDate, m.PeriodSlot)))
+                throw ApiException.BadRequest($"Các tiết của {name} trong phạm vi này đã kết thúc hoặc đã có điểm danh nên bị khóa, không khai vắng được.");
+            if (mine.Count > 0)
+                throw ApiException.BadRequest($"Các tiết của {name} trong phạm vi này đã được xử lý (hủy hoặc có người dạy thay).");
+            throw ApiException.BadRequest($"{name} không có tiết nào trong phạm vi này. Chọn ngày hoặc tiết khác.");
+        }
 
         var absence = new TeacherAbsence
         {
@@ -101,13 +116,30 @@ public sealed class TeacherAbsenceService(
             {
                 a.AbsenceId, a.TeacherId, TeacherName = a.Teacher.Staff.FullName, a.Teacher.TeacherAbbr, a.FromDate, a.ToDate, a.SlotIds, a.Reason,
                 DeclaredBy = a.DeclaredByPerson == null ? null : a.DeclaredByPerson.FullName, a.CreatedAt,
-                Pending = a.TeachingSession.Count(s => s.Class.CampusId == campusId && s.Status == "Pending"),
-                Handled = a.TeachingSession.Count(s => s.Class.CampusId == campusId && s.Status != "Pending"),
-                HandledAnywhere = a.TeachingSession.Count(s => s.Status != "Pending"),   // DeleteAsync đếm mọi phân hiệu
             }).ToListAsync();
-        return rows.Select(a => new AbsenceDto(
-            a.AbsenceId, a.TeacherId, a.TeacherName, a.TeacherAbbr, a.FromDate, a.ToDate, AbsenceQueries.ParseSlots(a.SlotIds), a.Reason,
-            a.DeclaredBy, a.CreatedAt, a.Pending, a.Handled, a.HandledAnywhere == 0)).ToList();
+
+        // Đếm trong bộ nhớ vì "đã kết thúc" cần so giờ kết thúc của khung giờ.
+        var ids = rows.Select(a => a.AbsenceId).ToList();
+        var sessions = (await db.TeachingSession.AsNoTracking()
+                .Where(s => s.TeacherAbsenceId != null && ids.Contains(s.TeacherAbsenceId.Value))
+                .Select(s => new { Id = s.TeacherAbsenceId!.Value, s.Class.CampusId, s.Status, s.SessionDate, s.PeriodSlot })
+                .ToListAsync())
+            .ToLookup(s => s.Id);
+
+        return rows.Select(a =>
+        {
+            var all = sessions[a.AbsenceId].ToList();
+            var here = all.Where(s => s.CampusId == campusId).ToList();
+            bool Ended(DateOnly d, PeriodSlot p) => support.HasEnded(d, p);
+            var pending = here.Count(s => s.Status == "Pending" && !Ended(s.SessionDate, s.PeriodSlot));
+            var missed = here.Count(s => s.Status == "Pending" && Ended(s.SessionDate, s.PeriodSlot));
+            var handled = here.Count(s => s.Status != "Pending");
+            var isPast = all.Count > 0 && all.All(s => Ended(s.SessionDate, s.PeriodSlot));
+            var handledAnywhere = all.Count(s => s.Status != "Pending");   // DeleteAsync đếm mọi phân hiệu
+            return new AbsenceDto(
+                a.AbsenceId, a.TeacherId, a.TeacherName, a.TeacherAbbr, a.FromDate, a.ToDate, AbsenceQueries.ParseSlots(a.SlotIds), a.Reason,
+                a.DeclaredBy, a.CreatedAt, pending, handled, handledAnywhere == 0 && !isPast, missed, isPast);
+        }).ToList();
     }
 
     /// <summary>
@@ -119,14 +151,17 @@ public sealed class TeacherAbsenceService(
         var absence = await db.TeacherAbsence.Include(a => a.Teacher).ThenInclude(t => t.Staff).ThenInclude(p => p.Account)
                           .FirstOrDefaultAsync(a => a.AbsenceId == absenceId)
                       ?? throw ApiException.NotFound("Không tìm thấy khai báo vắng.");
-        var linked = await db.TeachingSession.Include(s => s.Class)
+        var linked = await db.TeachingSession.Include(s => s.Class).Include(s => s.PeriodSlot)
             .Where(s => s.TeacherAbsenceId == absenceId).ToListAsync();
-        var restorable = linked.Where(s => s.SessionDate >= clock.Today).ToList();   // tiết đã qua bị khóa: giữ nguyên
+        var restorable = linked.Where(s => !support.HasEnded(s.SessionDate, s.PeriodSlot)).ToList();   // tiết đã qua bị khóa: giữ nguyên
 
         var led = await scope.LedCampusIdsAsync();
         if (user.AccountType != AccountTypes.VicePrincipal
             || (absence.DeclaredByPersonId != user.PersonId && !linked.Any(s => led.Contains(s.Class.CampusId))))
             throw ApiException.Forbidden("Chỉ hiệu phó khai báo, hoặc hiệu phó có tiết thuộc khai báo này, mới xóa được.");
+
+        if (linked.Count > 0 && restorable.Count == 0)
+            throw ApiException.BadRequest("Khai báo này đã qua: mọi tiết đã kết thúc nên bị khóa. Khai báo chỉ để tra cứu, không xóa được.");
 
         var handled = linked.Count(s => s.Status != "Pending");
         if (handled > 0)
@@ -176,8 +211,7 @@ public sealed class TeacherAbsenceService(
     public async Task<List<PendingSessionDto>> ListPendingAsync(int campusId, DateOnly? from, DateOnly? to, int? classId)
     {
         await scope.EnsureCanManageCampusAsync(campusId);
-        var today = clock.Today;
-        var query = db.TeachingSession.AsNoTracking().Where(s => s.Class.CampusId == campusId && s.Status == "Pending" && s.SessionDate >= today);
+        var query = db.TeachingSession.AsNoTracking().Where(support.NotEnded()).Where(s => s.Class.CampusId == campusId && s.Status == "Pending");
         if (from is { } f) query = query.Where(s => s.SessionDate >= f);
         if (to is { } t) query = query.Where(s => s.SessionDate <= t);
         if (classId is { } c) query = query.Where(s => s.ClassId == c);
@@ -189,14 +223,16 @@ public sealed class TeacherAbsenceService(
             .ToListAsync();
     }
 
-    /// <summary>Gợi ý giáo viên rảnh: đủ điều kiện dạy, không có tiết Đã xếp lịch cùng (ngày, khung giờ), không có khai báo vắng phủ ngày và tiết đó. Sắp theo tên, tối đa 10, không xếp hạng.</summary>
+    /// <summary>Gợi ý giáo viên rảnh cùng tổ chuyên môn với môn của tiết: đủ điều kiện dạy, không có tiết Đã xếp lịch cùng (ngày, khung giờ), không có khai báo vắng phủ ngày và tiết đó. Sắp theo tên, tối đa 10, không xếp hạng.</summary>
     public async Task<List<TeacherAvailabilityDto>> SuggestionsAsync(long sessionId)
     {
         var s = await support.LoadManagedSessionAsync(sessionId);
         EnsurePending(s);
         await support.EnsureNotLockedAsync(s);
+        var departmentId = s.Subject.DepartmentId;
+        var sameDepartment = (await db.StaffProfile.AsNoTracking().Where(t => t.DepartmentId == departmentId).Select(t => t.StaffId).ToListAsync()).ToHashSet();
         var all = await support.AvailabilityAsync(s.SessionDate, s.PeriodSlot, s.SessionId);
-        return all.Where(t => !t.Busy && !t.Absent).Take(10).ToList();
+        return all.Where(t => !t.Busy && !t.Absent && sameDepartment.Contains(t.TeacherId)).Take(10).ToList();
     }
 
     /// <summary>Hai lựa chọn cho tiết Chờ xử lý chưa bị khóa: chọn giáo viên dạy thay, hoặc hủy. Muốn bù thì thêm tiết bù sau khi hủy.</summary>

@@ -29,6 +29,7 @@ public sealed class ScheduleAdjustmentService(
         var from = weekStart.AddDays(-(((int)weekStart.DayOfWeek + 6) % 7));
         var to = from.AddDays(5);
         var today = clock.Today;
+        var now = TimeOnly.FromDateTime(clock.Now);
 
         var sessions = await db.TeachingSession.AsNoTracking()
             .Where(s => s.ClassId == classId && s.SessionDate >= from && s.SessionDate <= to)
@@ -36,7 +37,7 @@ public sealed class ScheduleAdjustmentService(
             .Select(s => new AdjustSessionDto(
                 s.SessionId, s.SessionDate, s.PeriodSlotId, s.SubjectId, s.Subject.Name, s.Subject.Abbreviation,
                 s.TeacherId, s.Teacher == null ? null : s.Teacher.Staff.FullName, s.Teacher == null ? null : s.Teacher.TeacherAbbr,
-                s.Status, s.Source, s.SessionDate < today || s.AttendanceRecord.Any(), s.VersionId == null, s.ChangeNote))
+                s.Status, s.Source, s.SessionDate < today || (s.SessionDate == today && s.PeriodSlot.EndTime <= now) || s.AttendanceRecord.Any(), s.VersionId == null, s.ChangeNote))
             .ToListAsync();
         var holidays = await db.Holiday.AsNoTracking()
             .Where(h => h.AcademicYearId == cls.AcademicYearId && (h.CampusId == null || h.CampusId == cls.CampusId)
@@ -136,6 +137,7 @@ public sealed class ScheduleAdjustmentService(
                       ?? throw ApiException.BadRequest("Môn không tồn tại hoặc đã ngừng dùng.");
         var slot = await db.PeriodSlot.FirstOrDefaultAsync(p => p.PeriodSlotId == r.PeriodSlotId && p.IsActive)
                    ?? throw ApiException.BadRequest("Khung giờ tiết không tồn tại hoặc đã ngừng dùng.");
+        if (support.HasEnded(r.Date, slot)) throw ApiException.BadRequest("Khung giờ này hôm nay đã kết thúc. Chọn khung giờ chưa qua hoặc ngày khác.");
         await support.EnsureClassFreeAsync(r.ClassId, r.Date, r.PeriodSlotId);
         var teacher = await support.EnsureEligibleTeacherAsync(r.TeacherId);
         var name = teacher.Staff.FullName;

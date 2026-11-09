@@ -58,7 +58,8 @@ public sealed class DepartmentBoardService(MsmsDbContext db, CurrentUser user, I
             .Where(s => subjectIds.Contains(s.SubjectId) && classIds.Contains(s.ClassId) && s.Status == AttendanceRules.SessionScheduled && s.SessionDate == today)
             .Select(s => s.AttendanceRecord.Any()).ToListAsync();
         var pending = await db.TeachingSession.AsNoTracking()
-            .CountAsync(s => subjectIds.Contains(s.SubjectId) && classIds.Contains(s.ClassId) && s.Status == "Pending" && s.SessionDate >= today);
+            .Where(SessionLockRules.NotEnded(clock))
+            .CountAsync(s => subjectIds.Contains(s.SubjectId) && classIds.Contains(s.ClassId) && s.Status == "Pending");
 
         var days = await AttendanceSupport.DaysAsync(db, classIds, DashboardSupport.WeekStart(today).AddDays(-49), today, subjectIds);
         var recent = days.Where(d => d.Date > today.AddDays(-UnmarkedDays)).ToList();

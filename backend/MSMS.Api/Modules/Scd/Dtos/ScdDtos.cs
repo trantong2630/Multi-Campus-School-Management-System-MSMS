@@ -84,10 +84,10 @@ public record AdjustResultDto(long SessionId, int NotifiedCount);
 public record TeacherAvailabilityDto(int TeacherId, string Name, string? Abbr, string CampusName, bool Busy, string? BusyNote, bool Absent);
 
 // ---- SCD-03: Giáo viên vắng (BR-16) ----
-/// <summary>SlotIds trống nghĩa là vắng cả ngày; có thì chỉ vắng các tiết đó và FromDate = ToDate.</summary>
+/// <summary>SlotIds trống nghĩa là vắng cả ngày; có thì chỉ vắng các tiết đó và FromDate = ToDate. PendingCount chỉ tính tiết Chờ xử lý chưa kết thúc; MissedCount là tiết Chờ xử lý đã kết thúc mà không ai xử lý. IsPast: mọi tiết của khai báo đã kết thúc, chỉ để tra cứu.</summary>
 public record AbsenceDto(
     int AbsenceId, int TeacherId, string TeacherName, string? TeacherAbbr, DateOnly FromDate, DateOnly ToDate, IReadOnlyList<int> SlotIds,
-    string? Reason, string? DeclaredByName, DateTime CreatedAt, int PendingCount, int HandledCount, bool CanDelete);
+    string? Reason, string? DeclaredByName, DateTime CreatedAt, int PendingCount, int HandledCount, bool CanDelete, int MissedCount, bool IsPast);
 public record DeclareAbsenceRequest(int TeacherId, DateOnly FromDate, DateOnly ToDate, IReadOnlyList<int>? SlotIds, string? Reason);
 public record DeclareAbsenceResultDto(int AbsenceId, int PendingCount);
 public record DeleteAbsenceResultDto(int RestoredCount);

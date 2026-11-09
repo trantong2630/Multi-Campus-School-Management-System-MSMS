@@ -433,3 +433,17 @@
 }
 .wk-title__pill b { font-weight: 700; letter-spacing: .01em; font-variant-numeric: tabular-nums; }
 .wk-title__pill i { display: block; width: 22px; height: 2px; border-radius: 2px; background: var(--c-green800); opacity: .5; }
+
+/* ---------- Chọn cách xử lý tiết Chờ xử lý: hai thẻ cạnh nhau, thẻ chọn viền và nền xanh ---------- */
+.rs-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.rs-choice__opt {
+  display: flex; flex-direction: column; gap: 4px; text-align: left;
+  padding: 14px 16px; border: 1.5px solid var(--c-border); border-radius: var(--radius-md, 12px);
+  background: var(--c-surface); font: inherit; cursor: pointer;
+  transition: border-color .15s, background-color .15s;
+}
+.rs-choice__opt:hover { border-color: var(--c-green200); background: var(--c-green50); }
+.rs-choice__opt--on { border-color: var(--c-green800); background: var(--c-green50); }
+.rs-choice__opt--danger.rs-choice__opt--on { border-color: var(--c-danger); background: var(--c-dangerBg, var(--c-sunken)); }
+.rs-choice__title { font-size: 15px; font-weight: 700; color: var(--c-ink); }
+.rs-choice__hint { font-size: 13px; color: var(--c-text2); line-height: 18px; }

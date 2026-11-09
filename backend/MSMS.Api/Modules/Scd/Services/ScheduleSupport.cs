@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
@@ -19,6 +20,12 @@ public sealed class ScheduleSupport(MsmsDbContext db, ScopeResolver scope, Curre
 {
     public DateOnly Today => clock.Today;
 
+    /// <summary>Tiết đã kết thúc: ngày của tiết đã qua, hoặc là hôm nay và đã quá giờ kết thúc của khung giờ.</summary>
+    public bool HasEnded(DateOnly date, PeriodSlot slot) => SessionLockRules.HasEnded(clock, date, slot);
+
+    /// <summary>Điều kiện truy vấn: tiết chưa kết thúc (ngược của <see cref="HasEnded"/>).</summary>
+    public Expression<Func<TeachingSession, bool>> NotEnded() => SessionLockRules.NotEnded(clock);
+
     /// <summary>Tải tiết kèm lớp, khung giờ, môn, giáo viên; người gọi phải là hiệu phó đang phụ trách phân hiệu của lớp.</summary>
     public async Task<TeachingSession> LoadManagedSessionAsync(long sessionId)
     {
@@ -31,11 +38,11 @@ public sealed class ScheduleSupport(MsmsDbContext db, ScopeResolver scope, Curre
         return session;
     }
 
-    /// <summary>Tiết bị khóa (mục 6.2): ngày của tiết đã qua, hoặc đã có điểm danh. Tiết bị khóa không đổi giáo viên, không hủy.</summary>
+    /// <summary>Tiết bị khóa (mục 6.2): tiết đã kết thúc, hoặc đã có điểm danh. Tiết bị khóa không đổi giáo viên, không hủy.</summary>
     public async Task EnsureNotLockedAsync(TeachingSession s)
     {
-        if (s.SessionDate < clock.Today)
-            throw ApiException.BadRequest("Tiết đã qua ngày nên bị khóa: không đổi giáo viên, không hủy. School Admin sửa điểm danh của tiết đã qua.");
+        if (HasEnded(s.SessionDate, s.PeriodSlot))
+            throw ApiException.BadRequest("Tiết đã kết thúc nên bị khóa: không đổi giáo viên, không hủy. School Admin sửa điểm danh của tiết đã qua.");
         if (await db.TeachingSession.AnyAsync(x => x.SessionId == s.SessionId && x.AttendanceRecord.Any()))
             throw ApiException.BadRequest("Tiết đã có điểm danh nên bị khóa: không đổi giáo viên, không hủy.");
     }

@@ -1,20 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
-import { Card, DatePicker, Segmented, Select } from 'antd';
+import { Card, Segmented, Select } from 'antd';
 import { InlineAlert } from '@/shared/components/InlineAlert';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useAuth } from '@/app/AuthProvider';
 import { DataTable } from '@/shared/components/DataTable';
 import { FilterBar } from '@/shared/components/FilterBar';
 import { PageHeader } from '@/shared/components/PageHeader';
-import { formatTime, sessionOfDayLabel, toDateString, weekdayOfDate } from '@/shared/lib/format';
+import { formatTime, sessionOfDayLabel, toDateString } from '@/shared/lib/format';
 import { scdApi } from '../api';
 import { subjectColorStyle } from '../subjectColor';
 import type { DaySchedule, MySession, SessionCell } from '../types';
 import { AdjustView } from '../components/AdjustView';
 import { useScdCampus } from '../useScdCampus';
-import { WeekFrame, WeekNav } from '../components/WeekFrame';
+import { DayNav, DayTitle, WeekFrame, WeekNav } from '../components/WeekFrame';
 import '../components/scd.css';
 
 /** Lịch dạy là tiết thực tế theo ngày, có điều chỉnh tay — nguồn sự thật của thời khóa biểu hiện hành (BR-14). */
@@ -77,14 +77,13 @@ function CampusDayView({ campusId, lead }: { campusId: number; lead: React.React
     <>
       <FilterBar>
         {lead}
-        <DatePicker format="DD/MM/YYYY" allowClear={false} value={date} onChange={(d) => d && setDate(d)} />
-        <span className="muted">{weekdayOfDate(date)}</span>
+        <DayNav date={date} onChange={setDate} />
       </FilterBar>
       {day.data?.isHoliday && (
         <InlineAlert type="info" title={`Ngày nghỉ: ${day.data.holidayReason}`} description="Ngày nghỉ không có tiết dạy." />
       )}
       <Card className="table-card">
-        {day.isLoading ? <DataTable<object> rowKey="x" loading dataSource={[]} columns={[]} /> : day.data && <DayGrid day={day.data} />}
+        {day.isLoading ? <DataTable<object> rowKey="x" loading dataSource={[]} columns={[]} /> : day.data && <><DayTitle date={date} /><DayGrid day={day.data} /></>}
       </Card>
     </>
   );
@@ -101,7 +100,7 @@ function DayGrid({ day }: { day: DaySchedule }) {
         <InlineAlert type="info" title="Ngày này chưa có tiết nào" description="Chủ nhật, ngày chưa phát hành thời khóa biểu hoặc ngày đã qua trước lần phát hành." />
       )}
       <div className="tt-scroll">
-        <table className="tt-grid">
+        <table className="tt-grid tt-week">
           <thead>
             <tr>
               <th className="tt-sticky tt-col-session" style={{ left: 0 }}>Buổi</th>
@@ -110,16 +109,27 @@ function DayGrid({ day }: { day: DaySchedule }) {
             </tr>
           </thead>
           <tbody>
-            {day.rows.map((row) => (
-              <tr key={row.periodSlotId}>
-                <td className="tt-sticky tt-col-session" style={{ left: 0 }}>{sessionOfDayLabel(row.sessionOfDay)}</td>
-                <td className="tt-sticky tabular" style={{ left: 64, minWidth: 110 }}>
-                  {row.periodNo}
-                  <span className="tt-time">{formatTime(row.startTime)}–{formatTime(row.endTime)}</span>
-                </td>
-                {row.cells.map((cell, i) => <SessionTd key={day.classes[i].classId} cell={cell} />)}
-              </tr>
-            ))}
+            {day.rows.map((row, i) => {
+              const newSession = i > 0 && day.rows[i - 1].sessionOfDay !== row.sessionOfDay;
+              const firstOfSession = i === 0 || newSession;
+              return (
+                <Fragment key={row.periodSlotId}>
+                  {newSession && <tr className="tt-band"><td colSpan={2 + day.classes.length} /></tr>}
+                  <tr>
+                    {firstOfSession && (
+                      <td className="tt-sticky tt-col-session" style={{ left: 0 }} rowSpan={day.rows.filter((r) => r.sessionOfDay === row.sessionOfDay).length}>
+                        {sessionOfDayLabel(row.sessionOfDay)}
+                      </td>
+                    )}
+                    <td className="tt-sticky tabular" style={{ left: 64, minWidth: 110 }}>
+                      {row.periodNo}
+                      <span className="tt-time">{formatTime(row.startTime)}–{formatTime(row.endTime)}</span>
+                    </td>
+                    {row.cells.map((cell, ci) => <SessionTd key={day.classes[ci].classId} cell={cell} />)}
+                  </tr>
+                </Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>
