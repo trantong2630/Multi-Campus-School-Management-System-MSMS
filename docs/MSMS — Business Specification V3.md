@@ -112,13 +112,13 @@ Cả hai đều là **tiện ích, không phải điều kiện vận hành**: h
 |  |  |
 | --- | --- |
 | Dùng ở đâu | Sinh nháp câu hỏi trắc nghiệm (LRN-01); phân tích từng bài làm của học sinh (LRN-04) |
-| Nhận vào | Nội dung câu hỏi, các lựa chọn, đáp án đúng, lựa chọn của học sinh ở từng câu và điểm — **không kèm danh tính** |
+| Nhận vào | Sinh nháp: môn, khối, tên bài, ghi chú tùy chọn của giáo viên và ảnh các trang sách giáo khoa của bài. Phân tích bài làm: nội dung câu hỏi, các lựa chọn, đáp án đúng, lựa chọn của học sinh ở từng câu và điểm — **không kèm danh tính** |
 | Không bao giờ nhận | Tên, mã học sinh, ngày sinh, tên lớp, tên trường |
 | Không bao giờ làm | Chấm điểm; quyết định đúng/sai; ghi trực tiếp vào dữ liệu nghiệp vụ ngoài phân tích của chính bài làm |
 
 Trợ lý AI của hệ thống tên là **MSMS AI**. Câu hỏi do AI sinh là **nháp** cho tới khi giáo viên xác nhận. Phân tích bài làm do AI sinh **tự động khi học sinh nộp bài**, không qua giáo viên duyệt. **AI hỏng hoặc thiếu dữ liệu:** chấm, nộp bài, xem điểm vẫn chạy; phần phân tích để trống, không thử lại; giáo viên soạn câu hỏi thủ công.
 
-**Cần rà soát trước khi vận hành thật:** sự đồng ý của phụ huynh về việc gửi dữ liệu học tập cho nhà cung cấp AI, điều khoản không dùng dữ liệu để huấn luyện, quy định bảo vệ dữ liệu cá nhân.
+**Cần rà soát trước khi vận hành thật:** sự đồng ý của phụ huynh về việc gửi dữ liệu học tập cho nhà cung cấp AI, điều khoản không dùng dữ liệu để huấn luyện, quy định bảo vệ dữ liệu cá nhân; quyền sử dụng ảnh trang sách giáo khoa (bản quyền thuộc nhà xuất bản) khi lưu trên kho ảnh, gửi cho nhà cung cấp AI để soạn câu hỏi.
 
 ### 3.2. Gmail SMTP
 
@@ -494,7 +494,7 @@ Parent rút được khi còn Chờ duyệt. Khi gửi, đơn ghi lại **lớp 
 
 ### 7.6. Bài tập và phân tích
 
-**BR-20 — Câu hỏi.** Câu hỏi thuộc một môn, có khối (6–9) và chủ đề (bắt buộc), gồm 4 lựa chọn (A–D) với **từ 1 đến 3 đáp án đúng**; giải thích tùy chọn. Giáo viên chỉ soạn câu (kể cả nhờ AI) cho các môn thuộc **tổ chuyên môn của mình**. Soạn thủ công **hoặc từ nháp AI**: giáo viên chọn môn, khối, chủ đề, số câu (1 đến 10 mỗi lần) → MSMS AI trả về các câu Nháp gắn cờ AI → giáo viên sửa và xác nhận thành **Sẵn dùng**. AI bám Chương trình giáo dục phổ thông 2018 và bộ sách giáo khoa Kết nối tri thức với cuộc sống (bộ dùng thống nhất toàn quốc theo Quyết định 3588/QĐ-BGDĐT); bộ sách không phải lựa chọn của người dùng và không lưu trên câu hỏi. Chỉ câu Sẵn dùng mới đưa vào bài tập được.
+**BR-20 — Câu hỏi.** Câu hỏi thuộc một môn, có khối (6–9) và chủ đề (bắt buộc), gồm 4 lựa chọn (A–D) với **từ 1 đến 3 đáp án đúng**; giải thích tùy chọn. Giáo viên chỉ soạn câu (kể cả nhờ AI) cho các môn thuộc **tổ chuyên môn của mình**. Soạn thủ công **hoặc từ nháp AI**: giáo viên chọn môn, khối, bài trong sách giáo khoa và số câu (1 đến 10 mỗi lần) → MSMS AI đọc các trang của bài và trả về các câu Nháp gắn cờ AI → giáo viên đối chiếu với trang sách, sửa và xác nhận thành **Sẵn dùng**. AI chỉ soạn từ các trang của bài đã chọn trong bộ sách giáo khoa Kết nối tri thức với cuộc sống (bộ dùng thống nhất toàn quốc theo Quyết định 3588/QĐ-BGDĐT); bộ sách không phải lựa chọn của người dùng. Câu do AI soạn lưu bài nguồn, chủ đề của câu là tên bài. Chỉ câu Sẵn dùng mới đưa vào bài tập được.
 
 Ngân hàng câu hỏi **dùng chung toàn trường**: mọi Teacher xem và dùng câu Sẵn dùng của mọi môn; câu Nháp và câu đã ẩn chỉ người tạo thấy; **chỉ người tạo sửa** được. Câu hỏi đã nằm trong một bài tập thì không sửa được nữa — chỉ còn **ẩn khỏi ngân hàng**; ẩn không ảnh hưởng bài cũ và người tạo bỏ ẩn được để đưa câu trở lại ngân hàng chung; muốn phiên bản khác thì soạn câu mới. Câu Nháp không ẩn mà xóa.
 

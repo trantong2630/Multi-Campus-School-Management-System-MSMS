@@ -649,6 +649,18 @@
 .qrow__detail li em { color: var(--c-green700); font-size: 12px; font-style: normal; font-weight: 700; }
 .qrow__why { margin: 10px 0 0; padding: 10px 14px; border: 1px solid var(--c-green200); border-radius: 12px; background: var(--c-green50); color: var(--c-text1); }
 .qrow__why strong { color: var(--c-green800); }
+.qsrc { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 8px 0 0; font-size: 13px; line-height: 20px; }
+.qsrc__k { color: var(--c-text2); font-weight: 600; }
+.qsrc__lesson { color: var(--c-text1); font-weight: 700; }
+.qsrc__pg { display: inline-block; padding: 0 9px; border-radius: 999px; background: var(--c-green100); color: var(--c-green800); font-size: 12px; font-weight: 700; line-height: 20px; white-space: nowrap; }
+.qsrc__book { color: var(--c-text2); }
+.qsrc__btn { padding: 0; border: 0; background: none; color: var(--c-green800); font-weight: 700; text-decoration: underline; cursor: pointer; }
+.qsrc__title { display: inline-flex; align-items: center; gap: 10px; }
+.srcpages { display: flex; flex-direction: column; gap: 16px; max-height: 70vh; overflow-y: auto; }
+.srcpages__page { margin: 0; }
+.srcpages__page img { display: block; width: 100%; border: 1px solid var(--c-borderMint); border-radius: 12px; }
+.srcpages__page figcaption { margin-top: 8px; text-align: center; }
+.srcpages__wait { display: grid; place-items: center; min-height: 160px; color: var(--c-text2); font-size: 13px; }
 .bank__more { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; color: var(--c-text2); font-size: 13px; }
 
 .oe { display: flex; flex-direction: column; gap: 8px; }
@@ -907,3 +919,9 @@
 .dept__chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: var(--radius-pill); background: var(--c-sunken); color: var(--c-text2); font-size: 12px; }
 .dept__chip b { padding: 1px 9px; border-radius: var(--radius-pill); background: var(--sj-bg); color: var(--sj-fg); font-weight: 700; }
 @media (max-width: 1100px) { .dept__member { grid-template-columns: 36px minmax(0, 1fr) 72px; } .dept__teach { grid-column: 2 / -1; } }
+
+/* Ô chọn bài trong quầy soạn: tên bài rút gọn khi hẹp, trang in luôn nằm gọn trong viên thuốc bên phải. */
+.lessonline { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.lessonline__title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lessonpick .lessonline__title { white-space: normal; }
+.lessonline__pg { flex: none; padding: 0 9px; border-radius: 999px; background: var(--c-green100); color: var(--c-green800); font-size: 12px; font-weight: 700; line-height: 20px; white-space: nowrap; }

@@ -31,7 +31,17 @@ export interface QuestionItem {
 export interface QuestionDetail extends QuestionItem {
   explanation: string | null;
   options: QuestionOption[];
+  /** Bài trong sách mà AI dựa vào; trống với câu soạn tay. */
+  lessonId: number | null;
+  /** Nguồn của câu do AI soạn từ sách: tên sách, bài và trang in. */
+  sourceBook: string | null;
+  sourceLesson: string | null;
+  sourceStartPage: number | null;
+  sourceEndPage: number | null;
 }
+
+/** Một bài trong mục lục sách để chọn khi nhờ AI soạn; trang theo số in trên sách. */
+export interface TextbookLesson { lessonId: number; bookTitle: string; chapter: string; title: string; startPage: number; endPage: number }
 
 export interface SaveQuestionInput {
   subjectId: number;
@@ -45,7 +55,9 @@ export interface SaveQuestionInput {
 export interface GenerateQuestionsInput {
   subjectId: number;
   gradeLevel: number;
-  topic: string;
+  lessonId: number;
+  /** Gợi ý thu hẹp trong bài, không bắt buộc. */
+  note?: string;
   count: number;
 }
 export interface GenerateQuestionsResult { drafts: QuestionDetail[]; discarded: number }

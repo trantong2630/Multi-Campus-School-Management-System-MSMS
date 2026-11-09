@@ -16,11 +16,15 @@ public record QuestionDetailDto(
     int QuestionId, int SubjectId, string SubjectName, byte? GradeLevel, string? Topic, string Content, string? Explanation,
     string Status, bool IsAiGenerated, bool IsHidden, bool IsMultiple,
     int CreatedByPersonId, string CreatedByName, bool IsMine, bool IsLocked, DateTime CreatedAt,
-    IReadOnlyList<OptionDto> Options);
+    IReadOnlyList<OptionDto> Options, int? LessonId, string? SourceBook, string? SourceLesson, int? SourceStartPage, int? SourceEndPage);
 
 public record SaveQuestionDto(int SubjectId, byte GradeLevel, string? Topic, string? Content, string? Explanation, List<OptionInputDto>? Options);
 
-public record GenerateQuestionsDto(int SubjectId, byte GradeLevel, string? Topic, int Count);
+/// <summary>Yêu cầu AI sinh nháp: chọn một bài trong sách; <c>Note</c> là gợi ý thêm để thu hẹp trong bài (không bắt buộc).</summary>
+public record GenerateQuestionsDto(int SubjectId, byte GradeLevel, int LessonId, string? Note, int Count);
+
+/// <summary>Một bài trong mục lục sách để giáo viên chọn khi nhờ AI soạn câu hỏi. Trang theo số in trên sách.</summary>
+public record TextbookLessonDto(int LessonId, string BookTitle, string Chapter, string Title, int StartPage, int EndPage);
 public record GenerateQuestionsResultDto(IReadOnlyList<QuestionDetailDto> Drafts, int Discarded);
 
 // ---- LRN-02: Giao bài (giáo viên) ----

@@ -737,11 +737,11 @@ Người tạo ẩn câu Sẵn dùng khỏi ngân hàng chung; ẩn không ảnh
 
 **4.6.5 — Yêu cầu MSMS AI sinh nháp câu hỏi / Request AI Question Drafts**  
 `BE + Web` · 2.5 MD · dep: 4.6.2  
-Giáo viên chọn môn thuộc tổ chuyên môn của mình, khối, chủ đề và số câu (1 đến 10 câu mỗi lần); bộ sách cố định là Kết nối tri thức với cuộc sống (bộ dùng thống nhất toàn quốc), không phải đầu vào của yêu cầu mà nằm trong chỉ dẫn hệ thống để AI bám đúng chương trình, không lưu trên câu hỏi. AI trả về các câu ở trạng thái Nháp gắn cờ AI; Backend loại câu không đủ 4 lựa chọn hoặc không có đáp án đúng. AI hỏng thì giáo viên soạn thủ công, không ảnh hưởng luồng nào khác (mục 3.1, BR-20).
+Giáo viên chọn môn thuộc tổ chuyên môn của mình, khối, **bài trong sách giáo khoa** và số câu (1 đến 10 câu mỗi lần), có thể ghi thêm một gợi ý ngắn để thu hẹp trong bài. Bộ sách cố định là Kết nối tri thức với cuộc sống (bộ dùng thống nhất toàn quốc) nên không phải lựa chọn; danh sách bài lấy từ mục lục sách đã nạp theo môn và khối. Backend gửi AI ảnh các trang của bài (tối đa 10 trang mỗi lần; bài dài hơn thì soạn thủ công) cùng yêu cầu, để AI chỉ soạn từ nội dung trang sách. AI trả về các câu ở trạng thái Nháp gắn cờ AI, câu lưu bài nguồn (chủ đề của câu là tên bài); Backend loại câu không đủ 4 lựa chọn hoặc không có đáp án đúng. Sách được nạp trước bằng công cụ `tools/textbook-import` từ file PDF: tải ảnh từng trang lên kho ảnh, dò độ lệch giữa số trang PDF và số in của từng cuốn, đọc trang mục lục để lập bảng bài với trang bắt đầu và kết thúc (theo số in) rồi ghi thành file JSON trong mã nguồn; khi API khởi động, mục lục được nạp vào CSDL (bảng TextbookBook, TextbookLesson). Trang hiển thị theo số in trên sách ("trang 27" khi bài một trang, "trang 9–12" khi nhiều trang). AI hỏng thì giáo viên soạn thủ công, không ảnh hưởng luồng nào khác (mục 3.1, BR-20).
 
 **4.6.6 — Xem và sửa nháp AI / Review and Edit AI Drafts**  
 `BE + Web` · 1.5 MD · dep: 4.6.5  
-Giáo viên sửa nội dung, lựa chọn và đáp án của câu nháp trước khi xác nhận.
+Giáo viên sửa nội dung, lựa chọn, đáp án, giải thích và chủ đề của câu nháp trước khi xác nhận. Câu nháp do AI soạn từ sách hiện dòng nguồn (sách, bài, trang) và nút xem ảnh các trang của bài để đối chiếu; môn và khối của câu này theo bài trong sách nên không đổi được (Backend từ chối, giao diện khóa hai ô), muốn môn hoặc khối khác thì soạn câu mới.
 
 **4.6.7 — Xác nhận nháp AI thành câu Sẵn dùng / Confirm AI Draft**  
 `BE + Web` · 1 MD · dep: 4.6.6  

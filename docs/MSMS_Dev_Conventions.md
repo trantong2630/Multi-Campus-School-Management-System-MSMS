@@ -20,7 +20,8 @@ Tài liệu kỹ thuật đi kèm Business Specification V3. Chốt bốn thứ:
 | Excel | ClosedXML |
 | Realtime | ASP.NET Core SignalR, một hub cho thông báo và chat. Server → client: `NotificationCreated`, `MessageReceived`, `MessageRead`, `Typing`, `PresenceChanged`; client → server chỉ `Typing` và `JoinConversation`, gửi tin vẫn qua REST. Web dùng `@microsoft/signalr`, mobile dùng `signalr_netcore` (chỉ khi app mở, có polling dự phòng). Token truyền qua query `access_token`, hub đi qua cùng kiểm tài khoản và phiên như REST. Đẩy sau `SaveChanges`. Đang nhập và online chỉ ở bộ nhớ, không thêm bảng; không backplane khi chạy một instance |
 | Email OTP | Gmail SMTP (`smtp.gmail.com:587`, STARTTLS) bằng App Password của hộp thư chung của trường; tài khoản và mật khẩu ứng dụng đặt trong cấu hình môi trường, không commit (spec mục 3.2) |
-| Gọi AI | HttpClient + REST của nhà cung cấp (Gemini); khóa và model đặt ở mục `Ai` trong `appsettings.json` (`Ai:ApiKey`, `Ai:Model`) |
+| Gọi AI | HttpClient + REST của nhà cung cấp (Gemini); khóa và model đặt ở mục `Ai` trong `appsettings.json` (`Ai:ApiKey`, `Ai:Model`). Yêu cầu có thể kèm ảnh (`IAiClient`, `AiImage`) |
+| Sách giáo khoa | Ảnh từng trang nằm trên Cloudinary qua `IImageStorage`, thư mục `msms/textbooks`, tên `<mã sách>-p-<trang PDF>.jpg`; API lấy ảnh rồi trả lại qua endpoint có kiểm quyền, ảnh không đi thẳng từ Cloudinary tới người dùng. Mục lục (bài, trang in bắt đầu và kết thúc, độ lệch số trang của cuốn) nằm trong mã nguồn ở `backend/MSMS.Api/Data/Textbooks/<mã sách>.json` và `TextbookSeeder` nạp vào CSDL mỗi lần API khởi động, ở mọi môi trường. Nạp một cuốn mới bằng `python -I tools/textbook-import/import_textbook.py` (cần thư viện `pymupdf`; khóa Gemini và Cloudinary lấy từ biến môi trường hoặc user-secrets); chữ do Gemini đọc từ mục lục phải được người rà lại trước khi commit file JSON |
 | Lưu ảnh | Cloudinary (gói Free) qua `CloudinaryDotNet`, cho ảnh đại diện, logo trường và ảnh bài đăng (BR-27). Code chỉ làm việc với `IImageStorage` (`Common/Storage`). CSDL chỉ giữ tên file; ảnh nằm ở thư mục `msms/avatars`, `msms/school`, `msms/posts` và vẫn đi qua API có kiểm quyền, API lấy từ Cloudinary rồi trả lại trình duyệt. Khóa `Cloudinary:CloudName`, `Cloudinary:ApiKey`, `Cloudinary:ApiSecret` đặt trong user-secrets hoặc biến môi trường, không commit; thiếu khóa thì API không khởi động |
 | Log | Serilog, ghi ra file |
 | Test | xUnit |
@@ -243,6 +244,8 @@ Chốt chữ nào hiện trên màn hình. Mọi màn hình, mọi file xuất E
 | Attendance | Điểm danh |
 | LeaveRequest | Đơn xin nghỉ |
 | Question | Câu hỏi |
+| TextbookBook | Sách giáo khoa đã nạp |
+| TextbookLesson | Bài trong mục lục sách |
 | AssignmentQuestion | Câu hỏi của bài tập |
 | Assignment | Bài tập |
 | Submission | Lượt làm bài |

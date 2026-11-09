@@ -67,6 +67,9 @@ export function QuestionEditor({ open, editing, subjects, defaultSubjectId, onCl
     message.success(editing ? 'Đã lưu câu hỏi.' : 'Đã thêm câu hỏi vào kho.');
   };
 
+  // Câu AI soạn từ sách giữ môn và khối của bài nguồn; backend cũng chặn.
+  const fromBook = editing?.lessonId != null;
+
   const initial: Partial<Values> = editing
     ? {
       subjectId: editing.subjectId, gradeLevel: editing.gradeLevel ?? undefined, topic: editing.topic ?? '', content: editing.content,
@@ -84,10 +87,13 @@ export function QuestionEditor({ open, editing, subjects, defaultSubjectId, onCl
       variant="drawer" width={620} form={form} onClose={onClose} onSubmit={save} initialValues={initial}
     >
       <Form.Item name="subjectId" label="Môn học" rules={[{ required: true, message: 'Chọn môn học cho câu hỏi.' }]}>
-        <Select placeholder="Chọn môn" options={subjects.map((s) => ({ value: s.subjectId, label: s.name }))} showSearch optionFilterProp="label" />
+        <Select disabled={fromBook} placeholder="Chọn môn" options={subjects.map((s) => ({ value: s.subjectId, label: s.name }))} showSearch optionFilterProp="label" />
       </Form.Item>
-      <Form.Item name="gradeLevel" label="Khối" rules={[{ required: true, message: 'Chọn khối của câu hỏi.' }]}>
-        <Segmented options={GRADES.map((g) => ({ value: g, label: `Khối ${g}` }))} />
+      <Form.Item
+        name="gradeLevel" label="Khối" rules={[{ required: true, message: 'Chọn khối của câu hỏi.' }]}
+        extra={fromBook ? 'Môn và khối theo bài trong sách nên không đổi được. Muốn môn hoặc khối khác, soạn câu mới.' : undefined}
+      >
+        <Segmented disabled={fromBook} options={GRADES.map((g) => ({ value: g, label: `Khối ${g}` }))} />
       </Form.Item>
       <Form.Item name="topic" label="Chủ đề" rules={[{ required: true, whitespace: true, message: 'Nhập chủ đề để dễ tìm lại câu hỏi.' }]}>
         <Input maxLength={150} placeholder="Ví dụ: Phân số, Quang hợp, Thì hiện tại đơn" />
