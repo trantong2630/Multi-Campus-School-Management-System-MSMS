@@ -88,6 +88,35 @@ function WeekTitle({ monday }: { monday: Dayjs }) {
   );
 }
 
+/** Ngày đang xem, đặt giữa ngay trên khung lịch ngày — cùng kiểu với khoảng ngày của khung tuần. */
+export function DayTitle({ date }: { date: Dayjs }) {
+  return (
+    <div className="wk-title">
+      <span className="wk-title__pill">
+        <b>{weekdayOfDate(date)}</b>
+        <i aria-hidden />
+        <b>{date.format('DD/MM/YYYY')}</b>
+      </span>
+    </div>
+  );
+}
+
+/** Chuyển ngày: Hôm qua · Hôm nay · Ngày mai (so với ngày đang xem). */
+export function DayNav({ date, onChange }: { date: Dayjs; onChange: (d: Dayjs) => void }) {
+  const isToday = date.isSame(dayjs(), 'day');
+  return (
+    <div className="wk-nav" role="group" aria-label="Chuyển ngày">
+      <button type="button" className="wk-nav__btn" onClick={() => onChange(date.subtract(1, 'day'))}>
+        <ChevronLeft size={18} />Hôm qua
+      </button>
+      <button type="button" className="wk-nav__now" disabled={isToday} onClick={() => onChange(dayjs())}>Hôm nay</button>
+      <button type="button" className="wk-nav__btn" onClick={() => onChange(date.add(1, 'day'))}>
+        Ngày mai<ChevronRight size={18} />
+      </button>
+    </div>
+  );
+}
+
 /** Chuyển tuần: Tuần trước · Tuần này · Tuần sau. Khoảng ngày hiện ở giữa khung lịch (WeekFrame). */
 export function WeekNav({ monday, onChange }: { monday: Dayjs; onChange: (m: Dayjs) => void }) {
   const thisMonday = dayjs().startOf('week');
