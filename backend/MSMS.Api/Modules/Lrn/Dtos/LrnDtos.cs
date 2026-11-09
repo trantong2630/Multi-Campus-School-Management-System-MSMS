@@ -16,11 +16,15 @@ public record QuestionDetailDto(
     int QuestionId, int SubjectId, string SubjectName, byte? GradeLevel, string? Topic, string Content, string? Explanation,
     string Status, bool IsAiGenerated, bool IsHidden, bool IsMultiple,
     int CreatedByPersonId, string CreatedByName, bool IsMine, bool IsLocked, DateTime CreatedAt,
-    IReadOnlyList<OptionDto> Options);
+    IReadOnlyList<OptionDto> Options, int? LessonId, string? SourceBook, string? SourceLesson, int? SourceStartPage, int? SourceEndPage);
 
 public record SaveQuestionDto(int SubjectId, byte GradeLevel, string? Topic, string? Content, string? Explanation, List<OptionInputDto>? Options);
 
-public record GenerateQuestionsDto(int SubjectId, byte GradeLevel, string? Topic, int Count);
+/// <summary>Yêu cầu AI sinh nháp: chọn một bài trong sách; <c>Note</c> là gợi ý thêm để thu hẹp trong bài (không bắt buộc).</summary>
+public record GenerateQuestionsDto(int SubjectId, byte GradeLevel, int LessonId, string? Note, int Count);
+
+/// <summary>Một bài trong mục lục sách để giáo viên chọn khi nhờ AI soạn câu hỏi. Trang theo số in trên sách.</summary>
+public record TextbookLessonDto(int LessonId, string BookTitle, string Chapter, string Title, int StartPage, int EndPage);
 public record GenerateQuestionsResultDto(IReadOnlyList<QuestionDetailDto> Drafts, int Discarded);
 
 // ---- LRN-02: Giao bài (giáo viên) ----
@@ -89,10 +93,16 @@ public record ResultQuestionDto(
 
 public record AnalysisMistakeDto(int QuestionNo, string Why);
 
-/// <summary>Phân tích của MSMS AI cho một bài nộp. Status: Pending (đang phân tích), Done, Failed (để trống, không thử lại).</summary>
+/// <summary>Nơi nên ôn trong sách: bài nguồn của các câu học sinh làm sai (trang theo số in), kèm số thứ tự các câu sai thuộc bài đó.</summary>
+public record StudyRefDto(int LessonId, string BookTitle, string LessonTitle, int StartPage, int EndPage, IReadOnlyList<int> QuestionNos);
+
+/// <summary>
+/// Phân tích của MSMS AI cho một bài nộp. Status: Pending (đang phân tích), Done, Failed (để trống, không thử lại).
+/// <c>StudyRefs</c> do Backend ghép từ bài nguồn của các câu sai, không do AI sinh; chỉ có khi Status là Done.
+/// </summary>
 public record AnalysisDto(
     string Status, string? Summary, IReadOnlyList<string> Strengths, IReadOnlyList<string> Weaknesses,
-    IReadOnlyList<AnalysisMistakeDto> Mistakes, IReadOnlyList<string> Suggestions);
+    IReadOnlyList<AnalysisMistakeDto> Mistakes, IReadOnlyList<string> Suggestions, IReadOnlyList<StudyRefDto>? StudyRefs = null);
 
 /// <summary>Học sinh chưa nộp: <c>Submitted</c> là false, không có câu hỏi và đáp án.</summary>
 public record PracticeResultDto(

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Dropdown, Skeleton } from 'antd';
+import dayjs from 'dayjs';
 import { ArrowRight, ChevronDown, Filter, Lock } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -27,9 +28,10 @@ export function TodoPage() {
   const nowMs = useNow(0, 30_000);
   const list = useQuery({ queryKey: ['lrn', 'my-assignments'], queryFn: lrnApi.student.list });
 
+  // Bài vừa qua hạn khi trang đang mở không còn là việc cần làm, dù danh sách chưa tải lại từ máy chủ.
   const todo = useMemo(
-    () => (list.data ?? []).filter(isTodo).sort((a, b) => a.dueAt.localeCompare(b.dueAt)),
-    [list.data],
+    () => (list.data ?? []).filter((a) => isTodo(a) && dayjs(a.dueAt).valueOf() > nowMs).sort((a, b) => a.dueAt.localeCompare(b.dueAt)),
+    [list.data, nowMs],
   );
 
   const subjects = useMemo(() => {

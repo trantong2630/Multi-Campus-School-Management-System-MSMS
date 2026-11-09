@@ -2,8 +2,11 @@ import { Check, X } from 'lucide-react';
 import { useState } from 'react';
 import { formatDateTime } from '@/shared/lib/format';
 import { resultLine } from '../aiLines';
-import type { Analysis, PracticeResult, ResultQuestion } from '../types';
+import { lrnApi } from '../api';
+import { pagesText } from '../labels';
+import type { Analysis, PracticeResult, ResultQuestion, StudyRef } from '../types';
 import { AiAvatar, AiBubble, AiDots, MsmsAi, TypedText } from './MsmsAi';
+import { PageViewer } from './PageViewer';
 import { ScoreRing } from './parts';
 
 export type Viewer = 'student' | 'parent' | 'teacher';
@@ -49,7 +52,8 @@ function QuestionCard({ q, viewer }: { q: ResultQuestion; viewer: Viewer }) {
   );
 }
 
-function AnalysisSection({ analysis }: { analysis: Analysis }) {
+function AnalysisSection({ analysis, assignmentId, viewer, studentId }: { analysis: Analysis; assignmentId: number; viewer: Viewer; studentId?: number }) {
+  const [viewing, setViewing] = useState<StudyRef | null>(null);
   // Phân tích lỗi thì để trống, không báo lỗi và không có nút thử lại (BR-23).
   if (analysis.status === 'Failed') return null;
 
@@ -113,6 +117,32 @@ function AnalysisSection({ analysis }: { analysis: Analysis }) {
           <ul className="rv-ai__tags">{analysis.suggestions.map((s) => <li key={s}>{s}</li>)}</ul>
         </div>
       )}
+
+      {analysis.studyRefs && analysis.studyRefs.length > 0 && (
+        <div className="rv-ai__block">
+          <h3>Xem lại trong sách</h3>
+          <ul className="rv-ai__refs">
+            {analysis.studyRefs.map((r) => (
+              <li key={r.lessonId}>
+                <span className="rv-ai__reflesson">{r.lessonTitle}</span>
+                <span className="rv-ai__pg">{pagesText(r.startPage, r.endPage)}</span>
+                {/* Số câu chỉ có ích khi cần phân biệt câu nào thuộc bài nào; một bài thì mục "Các câu sai" đã liệt kê. */}
+                <span className="rv-ai__refmeta">{analysis.studyRefs!.length > 1 ? `câu ${r.questionNos.join(', ')} · ${r.bookTitle}` : r.bookTitle}</span>
+                <button type="button" className="qsrc__btn" onClick={() => setViewing(r)}>Xem trang sách</button>
+              </li>
+            ))}
+          </ul>
+          {viewing && (
+            <PageViewer
+              open onClose={() => setViewing(null)} startPage={viewing.startPage} endPage={viewing.endPage}
+              title={<span className="qsrc__title">{viewing.lessonTitle}<span className="rv-ai__pg">{pagesText(viewing.startPage, viewing.endPage)}</span></span>}
+              // Giáo viên xem qua đường của giáo viên; học sinh và phụ huynh qua đường kiểm theo bài đã nộp.
+              cacheKey={['lrn', 'result-page', viewer, assignmentId, studentId ?? 'me', viewing.lessonId]}
+              load={(p) => (viewer === 'teacher' ? lrnApi.textbooks.page(viewing.lessonId, p) : lrnApi.results.page(assignmentId, viewing.lessonId, p, studentId))}
+            />
+          )}
+        </div>
+      )}
     </section>
   );
 }
@@ -121,7 +151,7 @@ function AnalysisSection({ analysis }: { analysis: Analysis }) {
  * Kết quả một bài làm: vòng điểm, lời của MSMS AI, dải câu đúng/sai để nhảy tới từng câu, đáp án và giải thích,
  * rồi khung phân tích AI ở cuối. Học sinh, phụ huynh và giáo viên dùng chung một giao diện.
  */
-export function ResultView({ data, viewer }: { data: PracticeResult; viewer: Viewer }) {
+export function ResultView({ data, viewer, studentId }: { data: PracticeResult; viewer: Viewer; studentId?: number }) {
   const [only, setOnly] = useState<'all' | 'wrong'>('all');
   const total = data.questions.length;
   const wrong = data.questions.filter((q) => q.isCorrect !== true);
@@ -187,7 +217,7 @@ export function ResultView({ data, viewer }: { data: PracticeResult; viewer: Vie
         )}
       </div>
 
-      {data.analysis && <AnalysisSection analysis={data.analysis} />}
+      {data.analysis && <AnalysisSection analysis={data.analysis} assignmentId={data.assignmentId} viewer={viewer} studentId={studentId} />}
     </div>
   );
 }

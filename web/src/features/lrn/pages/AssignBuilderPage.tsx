@@ -254,10 +254,10 @@ export function AssignBuilderPage() {
                 <span>Thời gian làm</span>
                 <div className="when__ctl when__ctl--col">
                 <div className="pillset pillset--wrap">
+                  <button type="button" className={customDuration ? 'is-on' : ''} onClick={() => { setCustomDuration(true); setDuration((d) => d ?? 20); }}>Tự nhập</button>
                   {DURATION_PRESETS.map((m) => (
                     <button key={m} type="button" className={duration === m && !customDuration ? 'is-on' : ''} onClick={() => { setDuration(m); setCustomDuration(false); }}>{m} phút</button>
                   ))}
-                  <button type="button" className={customDuration ? 'is-on' : ''} onClick={() => { setCustomDuration(true); setDuration((d) => d ?? 20); }}>Tự nhập</button>
                   <button type="button" className={duration === null && !customDuration ? 'is-on' : ''} onClick={() => { setDuration(null); setCustomDuration(false); }}>Không giới hạn</button>
                 </div>
                 {customDuration && <InputNumber min={1} max={600} precision={0} value={duration} onChange={(v) => setDuration(v)} addonAfter="phút" />}

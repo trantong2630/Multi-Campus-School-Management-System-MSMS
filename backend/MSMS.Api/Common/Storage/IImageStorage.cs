@@ -9,6 +9,7 @@ public static class ImageFolders
     public const string Posts = "posts";
     public const string Avatars = "avatars";
     public const string School = "school";
+    public const string Textbooks = "textbooks";
 }
 
 /// <summary>

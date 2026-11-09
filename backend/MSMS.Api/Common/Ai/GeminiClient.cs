@@ -10,16 +10,23 @@ public sealed class GeminiClient(HttpClient http, IOptions<AiOptions> options, I
 {
     private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(3);
 
-    public async Task<string> GenerateJsonAsync(string systemInstruction, string prompt, CancellationToken ct = default)
+    public Task<string> GenerateJsonAsync(string systemInstruction, string prompt, CancellationToken ct = default) =>
+        GenerateJsonAsync(systemInstruction, prompt, [], ct);
+
+    public async Task<string> GenerateJsonAsync(string systemInstruction, string prompt, IReadOnlyList<AiImage> images, CancellationToken ct = default)
     {
         var o = options.Value;
         if (string.IsNullOrWhiteSpace(o.ApiKey) || string.IsNullOrWhiteSpace(o.Model))
             throw new AiException("Chưa cấu hình AI. Liên hệ quản trị để cấu hình khóa và model.");
 
+        // Ảnh đứng trước lời nhắc để AI đọc trang rồi mới nhận yêu cầu.
+        var parts = new List<object>();
+        foreach (var image in images) parts.Add(new { inline_data = new { mime_type = image.MimeType, data = Convert.ToBase64String(image.Data) } });
+        parts.Add(new { text = prompt });
         var body = JsonSerializer.Serialize(new
         {
             systemInstruction = new { parts = new[] { new { text = systemInstruction } } },
-            contents = new[] { new { role = "user", parts = new[] { new { text = prompt } } } },
+            contents = new[] { new { role = "user", parts } },
             generationConfig = new { responseMimeType = "application/json", temperature = 0.4, maxOutputTokens = o.MaxOutputTokens },
         });
         var url = $"{o.BaseUrl.TrimEnd('/')}/models/{o.Model}:generateContent";

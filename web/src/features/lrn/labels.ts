@@ -9,3 +9,6 @@ export const OPTION_LABELS = ['A', 'B', 'C', 'D'] as const;
 
 /** Thời lượng gợi ý khi giao bài (phút). */
 export const DURATION_PRESETS = [15, 30] as const;
+
+/** Trang sách theo số in: "trang 27" khi bài chỉ một trang, "trang 9–12" khi nhiều trang. */
+export const pagesText = (start: number, end: number) => (start === end ? `trang ${start}` : `trang ${start}–${end}`);
