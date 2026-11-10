@@ -119,14 +119,14 @@ public class ResponsibilityFieldTests
         _ => (await e.Db.HomeroomAssignment.SingleAsync()).AssignedByPersonId,
     };
 
-    [Fact(DisplayName = "PPL | Trách nhiệm | Thay người | bản cũ kết thúc vào ngày liền trước ngày hiệu lực của bản mới, bản cũ giữ làm lịch sử")]
-    public async Task Replace_ClosesOldDayBefore()
+    [Fact(DisplayName = "PPL | Trách nhiệm | Thay người | bản cũ kết thúc hôm nay (ngày người mới nhận), bản cũ giữ làm lịch sử")]
+    public async Task Replace_ClosesOldToday()
     {
         using var e = new PplEnv();
         e.Seed("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-10));
         await e.Resp.AssignAsync(Assign("homeroom", PplEnv.Class6A, PplEnv.OtherTeacher, T));
         var old = await e.Db.HomeroomAssignment.SingleAsync(x => x.StaffId == PplEnv.Teacher);
-        Assert.Equal(T.AddDays(-1), old.EndDate);
+        Assert.Equal(T, old.EndDate);
         Assert.Equal(PplEnv.OtherTeacher, (await e.Resp.ListCurrentAsync("homeroom", null)).Single(r => r.TargetId == PplEnv.Class6A).StaffId);
         Assert.Equal(2, (await e.Resp.HistoryAsync("homeroom", PplEnv.Class6A)).Count);
     }
@@ -201,13 +201,13 @@ public class ResponsibilityFieldTests
         Assert.Equal(1, await e.Db.DepartmentHead.CountAsync(d => d.StaffId == PplEnv.Teacher));
     }
 
-    [Fact(DisplayName = "PPL | Trách nhiệm | Tổ trưởng | thay tổ trưởng của tổ: bản cũ kết thúc ngày liền trước")]
+    [Fact(DisplayName = "PPL | Trách nhiệm | Tổ trưởng | thay tổ trưởng của tổ: bản cũ kết thúc hôm nay")]
     public async Task Department_Replace()
     {
         using var e = new PplEnv();
         e.Seed("department", PplEnv.Dept1, PplEnv.Teacher, T.AddDays(-20));
         await e.Resp.AssignAsync(Assign("department", PplEnv.Dept1, PplEnv.OtherTeacher, T));
-        Assert.Equal(T.AddDays(-1), (await e.Db.DepartmentHead.SingleAsync(d => d.StaffId == PplEnv.Teacher)).EndDate);
+        Assert.Equal(T, (await e.Db.DepartmentHead.SingleAsync(d => d.StaffId == PplEnv.Teacher)).EndDate);
     }
 
     // ---------- Kết thúc ----------
@@ -266,7 +266,7 @@ public class ResponsibilityFieldTests
         Assert.Equal(T, row.EndedDate);
     }
 
-    [Fact(DisplayName = "PPL | Trách nhiệm | Kết thúc rồi gán lại | kết thúc hôm nay rồi gán người mới từ hôm nay được: người cũ kết thúc ngày liền trước, người mới đang đảm nhiệm")]
+    [Fact(DisplayName = "PPL | Trách nhiệm | Kết thúc rồi gán lại | kết thúc hôm nay rồi gán người mới từ hôm nay được: người cũ vẫn kết thúc hôm nay, người mới đang đảm nhiệm")]
     public async Task End_Then_AssignSameDay()
     {
         using var e = new PplEnv();
@@ -274,7 +274,7 @@ public class ResponsibilityFieldTests
         var id = (await e.Db.DepartmentHead.SingleAsync()).Id;
         await e.Resp.EndAsync(new ResponsibilityEndRequest("department", id, T));
         await e.Resp.AssignAsync(Assign("department", PplEnv.Dept1, PplEnv.OtherTeacher, T));
-        Assert.Equal(T.AddDays(-1), (await e.Db.DepartmentHead.SingleAsync(d => d.StaffId == PplEnv.Teacher)).EndDate);
+        Assert.Equal(T, (await e.Db.DepartmentHead.SingleAsync(d => d.StaffId == PplEnv.Teacher)).EndDate);
         Assert.Equal(PplEnv.OtherTeacher, (await e.Resp.ListCurrentAsync("department", null)).Single(r => r.TargetId == PplEnv.Dept1).StaffId);
     }
 

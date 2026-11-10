@@ -306,7 +306,7 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
             <InlineAlert
               type="info" style={{ gridColumn: '1 / -1' }}
               title={`Hiện do ${target.staffName} đảm nhiệm từ ${formatDate(target.startDate)}${timeOn(target.startedAt, target.startDate)}.`}
-              description="Người mới nhận ngay hôm nay, người cũ kết thúc vào ngày liền trước; dữ liệu đã phát sinh không bị đụng tới."
+              description="Người mới nhận ngay hôm nay, người cũ kết thúc trách nhiệm hôm nay (ghi cả giờ); dữ liệu đã phát sinh không bị đụng tới."
             />
           )}
           <Form.Item

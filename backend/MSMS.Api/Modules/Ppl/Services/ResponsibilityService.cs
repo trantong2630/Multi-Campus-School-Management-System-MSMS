@@ -240,18 +240,17 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
         if (records.Any(x => x.StartDate > r.StartDate))
             throw ApiException.BadRequest("Đích này đã có người nhận trách nhiệm bắt đầu sau ngày đã chọn. Chọn ngày muộn hơn.");
 
-        // Thay nhiều lần trong một ngày: bản cũ đã đóng cùng ngày vẫn "chạm" ngày này, nên lấy bản mới nhất làm người đương nhiệm.
-        var current = records.Where(x => x.IsEffectiveAt(r.StartDate)).OrderByDescending(x => x.StartDate).ThenByDescending(x => x.CreatedAt)
-            .ThenByDescending(x => x.Id).FirstOrDefault();
+        // Người đương nhiệm tại ngày này: bản kết thúc đúng ngày này (đã kết thúc hoặc vừa được thay) không còn đương nhiệm (BR-09).
+        var current = records.Where(x => x.StartDate <= r.StartDate && (x.EndDate == null || x.EndDate > r.StartDate))
+            .OrderByDescending(x => x.StartDate).ThenByDescending(x => x.CreatedAt).ThenByDescending(x => x.Id).FirstOrDefault();
         if (current is not null)
         {
             if (current.StaffId == r.StaffId) throw ApiException.BadRequest("Người này đang đảm nhiệm sẵn. Chọn người khác để thay.");
             // Thay người có hiệu lực ngay: hẹn ngày sau sẽ để người cũ mất quyền hôm nay mà người mới chưa nhận (khoảng trống).
             if (r.StartDate > clock.Today)
                 throw ApiException.BadRequest("Thay người có hiệu lực ngay hôm nay. Chọn hôm nay, hoặc kết thúc người hiện tại vào ngày muốn rồi gán người mới sau.");
-            // Người đương nhiệm được gán chính hôm nay: bản của họ chỉ còn trong ngày này (từ ngày = đến ngày), giờ mất quyền ghi ở EndedAt.
-            if (r.StartDate == current.StartDate) current.EndDate = current.StartDate;
-            else EffectivePeriod.CloseBefore(current, r.StartDate);
+            // Thay người = kết thúc người cũ ngay bây giờ: ngày kết thúc là hôm nay (như nút Kết thúc), kèm giờ. Quyền đã mất vì kết thúc hôm nay là hết quyền (BR-09).
+            current.EndDate = r.StartDate;
             current.EndedAt = clock.Now;
         }
 

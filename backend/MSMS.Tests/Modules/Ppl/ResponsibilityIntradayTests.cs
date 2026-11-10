@@ -59,15 +59,15 @@ public class ResponsibilityIntradayTests
         Assert.Equal(PplEnv.Teacher, (await new HomeroomService(e.Db).GetHomeroomAsync(PplEnv.Class6A, T))!.StaffId);
     }
 
-    [Fact(DisplayName = "PPL | Trách nhiệm | Thay người | người cũ giữ từ lâu: kết thúc ngày liền trước và có giờ mất quyền")]
-    public async Task Replace_LongHolder_EndsYesterday_WithTime()
+    [Fact(DisplayName = "PPL | Trách nhiệm | Thay người | người cũ giữ từ lâu: kết thúc hôm nay và có giờ kết thúc trách nhiệm")]
+    public async Task Replace_LongHolder_EndsToday_WithTime()
     {
         using var e = new PplEnv();
         e.Seed("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-30));
         await e.Resp.AssignAsync(Assign(PplEnv.OtherTeacher));
 
         var old = await e.Db.HomeroomAssignment.OrderBy(x => x.Id).FirstAsync();
-        Assert.Equal(T.AddDays(-1), old.EndDate);
+        Assert.Equal(T, old.EndDate);
         Assert.Equal(e.Clock.Now, old.EndedAt);
     }
 
@@ -100,5 +100,20 @@ public class ResponsibilityIntradayTests
         Assert.Equal(PplEnv.Teacher, history[1].StaffId);
         Assert.False(history[1].IsEffective);                    // kết thúc hôm nay = đã mất quyền
         Assert.Equal(e.Clock.Now, history[1].EndedAt);
+    }
+
+    [Fact(DisplayName = "PPL | Trách nhiệm | Kết thúc rồi gán lại | kết thúc hôm nay rồi gán lại chính người đó hôm nay được (bản cũ không bị ghi đè)")]
+    public async Task End_Then_AssignSamePerson_SameDay()
+    {
+        using var e = new PplEnv();
+        e.Seed("homeroom", PplEnv.Class6A, PplEnv.Teacher, T.AddDays(-30));
+        var id = (await e.Db.HomeroomAssignment.SingleAsync()).Id;
+        await e.Resp.EndAsync(new ResponsibilityEndRequest("homeroom", id, T));
+        await e.Resp.AssignAsync(Assign(PplEnv.Teacher));
+
+        var records = await e.Db.HomeroomAssignment.OrderBy(x => x.Id).ToListAsync();
+        Assert.Equal(2, records.Count);
+        Assert.Equal(T, records[0].EndDate);
+        Assert.Null(records[1].EndDate);
     }
 }
