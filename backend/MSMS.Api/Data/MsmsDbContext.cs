@@ -307,6 +307,8 @@ public partial class MsmsDbContext : DbContext
                 .HasPrecision(0)
                 .HasDefaultValueSql("(CONVERT([datetime2](0),(sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time')))");
 
+            entity.Property(e => e.EndedAt).HasPrecision(0);
+
             entity.HasOne(d => d.AssignedByPerson).WithMany(p => p.CampusLeadership)
                 .HasForeignKey(d => d.AssignedByPersonId)
                 .HasConstraintName("FK__CampusLea__Assig__1BC821DD");
@@ -388,6 +390,8 @@ public partial class MsmsDbContext : DbContext
                 .HasPrecision(0)
                 .HasDefaultValueSql("(CONVERT([datetime2](0),(sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time')))");
 
+            entity.Property(e => e.EndedAt).HasPrecision(0);
+
             entity.HasOne(d => d.AssignedByPerson).WithMany(p => p.DepartmentHead)
                 .HasForeignKey(d => d.AssignedByPersonId)
                 .HasConstraintName("FK__Departmen__Assig__2180FB33");
@@ -463,6 +467,8 @@ public partial class MsmsDbContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasPrecision(0)
                 .HasDefaultValueSql("(CONVERT([datetime2](0),(sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time')))");
+
+            entity.Property(e => e.EndedAt).HasPrecision(0);
 
             entity.HasOne(d => d.AssignedByPerson).WithMany(p => p.HomeroomAssignment)
                 .HasForeignKey(d => d.AssignedByPersonId)

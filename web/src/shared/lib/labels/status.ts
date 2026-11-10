@@ -72,7 +72,7 @@ const registry: Record<StatusDomain, Record<string, Entry>> = {
   handover: {
     Current: ['Đang đảm nhiệm', 'active'],
     Upcoming: ['Sắp hiệu lực', 'info'],
-    Ended: ['Đã kết thúc', 'neutral'],
+    Ended: ['Đã kết thúc trách nhiệm', 'neutral'],
   },
   responsibility: {
     Assigned: ['Đã phân công', 'active'],

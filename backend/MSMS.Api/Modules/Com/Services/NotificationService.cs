@@ -128,7 +128,7 @@ public sealed class NotificationService(MsmsDbContext db, CurrentUser user, IClo
                     : isVice
                         ? await db.TimetableVersion.Where(x => x.VersionId == v)
                             .AnyAsync(x => db.CampusLeadership.Any(l => l.CampusId == x.CampusId && l.StaffId == me
-                                                                         && l.StartDate <= today && (l.EndDate == null || l.EndDate >= today)))
+                                                                         && l.StartDate <= today && (l.EndDate == null || l.EndDate > today)))
                         : await myEnrollments().AnyAsync(e => classIds.Contains(e.ClassId) && e.StartDate <= today && (e.EndDate == null || e.EndDate >= today));
                 return ok ? (true, scheduleRoute, null) : (false, null, Denied);
             }
@@ -140,14 +140,14 @@ public sealed class NotificationService(MsmsDbContext db, CurrentUser user, IClo
                 if (s is null) return (false, null, Gone);
                 var ok = s.TeacherId == me
                          || (isVice && await db.CampusLeadership.AnyAsync(l => l.CampusId == s.CampusId && l.StaffId == me
-                                                                                && l.StartDate <= today && (l.EndDate == null || l.EndDate >= today)))
+                                                                                && l.StartDate <= today && (l.EndDate == null || l.EndDate > today)))
                          || ((isStudent || isParent) && InClass(myEnrollments(), s.ClassId));
                 return ok ? (true, scheduleRoute, null) : (false, null, Denied);
             }
 
             case NotificationTypes.SessionPending:
                 // Chỉ người phụ trách phân hiệu còn hiệu lực xử lý tiết Chờ xử lý.
-                return isVice && await db.CampusLeadership.AnyAsync(l => l.StaffId == me && l.StartDate <= today && (l.EndDate == null || l.EndDate >= today))
+                return isVice && await db.CampusLeadership.AnyAsync(l => l.StaffId == me && l.StartDate <= today && (l.EndDate == null || l.EndDate > today))
                     ? (true, "/scd/schedule", null)
                     : (false, null, Denied);
 
@@ -185,9 +185,9 @@ public sealed class NotificationService(MsmsDbContext db, CurrentUser user, IClo
                 if (isParent)
                     return r.ParentId == me ? (true, "/par/leave-requests", null) : (false, null, Denied);
                 var ok = (isTeacher && await db.HomeroomAssignment.AnyAsync(h => h.ClassId == r.ClassId && h.StaffId == me
-                                                                                  && h.StartDate <= today && (h.EndDate == null || h.EndDate >= today)))
+                                                                                  && h.StartDate <= today && (h.EndDate == null || h.EndDate > today)))
                          || (isVice && await db.CampusLeadership.AnyAsync(x => x.CampusId == r.CampusId && x.StaffId == me
-                                                                               && x.StartDate <= today && (x.EndDate == null || x.EndDate >= today)));
+                                                                               && x.StartDate <= today && (x.EndDate == null || x.EndDate > today)));
                 return ok ? (true, "/par/leave-requests", null) : (false, null, Denied);
             }
 

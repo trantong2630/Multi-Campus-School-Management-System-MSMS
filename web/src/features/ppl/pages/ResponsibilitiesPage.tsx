@@ -16,10 +16,14 @@ import { RowActions } from '@/shared/components/RowActions';
 import { StatusBadge } from '@/shared/components/StatusBadge';
 import { message } from '@/shared/lib/antdStatic';
 import { blobErrorMessage, downloadFile } from '@/shared/lib/download';
-import { formatDate, toDateString } from '@/shared/lib/format';
+import { formatDate, formatDateTime, toDateString } from '@/shared/lib/format';
 import { pplApi } from '../api';
 import { HandoverPopover, hasHandover } from '../components/HandoverPopover';
 import type { ResponsibilityHistoryRow, ResponsibilityKind, ResponsibilityRow } from '../types';
+
+/** Giờ trong ngày, chỉ hiện khi sự kiện xảy ra đúng ngày đó (nhận ngay, mất quyền ngay). */
+const timeOn = (at: string | null | undefined, date: string | null | undefined) =>
+  at && date && dayjs(at).isSame(dayjs(date), 'day') ? ` lúc ${dayjs(at).format('HH:mm')}` : '';
 
 interface AssignValues { targetId?: number; staffId: number; startDate: Dayjs }
 interface EndValues { endDate: Dayjs }
@@ -301,8 +305,8 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
           {target?.staffId && (
             <InlineAlert
               type="info" style={{ gridColumn: '1 / -1' }}
-              title={`Hiện do ${target.staffName} đảm nhiệm từ ${formatDate(target.startDate)}.`}
-              description="Người mới nhận ngay hôm nay, người cũ kết thúc vào ngày liền trước; dữ liệu đã phát sinh không bị đụng tới."
+              title={`Hiện do ${target.staffName} đảm nhiệm từ ${formatDate(target.startDate)}${timeOn(target.startedAt, target.startDate)}.`}
+              description="Người mới nhận ngay hôm nay, người cũ kết thúc trách nhiệm hôm nay (ghi cả giờ); dữ liệu đã phát sinh không bị đụng tới."
             />
           )}
           <Form.Item
@@ -351,8 +355,14 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
           emptyText="Chưa có ai từng đảm nhiệm."
           columns={[
             { title: 'Người đảm nhiệm', dataIndex: 'staffName' },
-            { title: 'Từ ngày', dataIndex: 'startDate', width: 110, className: 'tabular', render: (v: string) => formatDate(v) },
-            { title: 'Đến ngày', dataIndex: 'endDate', width: 110, className: 'tabular', render: (v: string | null) => (v ? formatDate(v) : 'Hiện tại') },
+            {
+              title: 'Từ ngày', dataIndex: 'startDate', width: 120, className: 'tabular',
+              render: (v: string, r: ResponsibilityHistoryRow) => <>{formatDate(v)}<div className="muted">{timeOn(r.assignedAt, v).trim()}</div></>,
+            },
+            {
+              title: 'Đến ngày', dataIndex: 'endDate', width: 120, className: 'tabular',
+              render: (v: string | null, r: ResponsibilityHistoryRow) => (v ? <>{formatDate(v)}{r.endedAt && <div className="muted">kết thúc trách nhiệm {formatDateTime(r.endedAt)}</div>}</> : 'Hiện tại'),
+            },
             { title: 'Trạng thái', key: 'status', width: 150, render: (_: unknown, r: ResponsibilityHistoryRow) => <StatusBadge domain="handover" value={handoverStatus(r)} /> },
           ]}
         />

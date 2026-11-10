@@ -240,7 +240,7 @@ export function RolloverPage() {
         title="Kết chuyển năm học"
         extra={(
           <>
-            <Button icon={<Plus size={16} />} disabled={withoutTarget.length === 0} onClick={() => setSuggestOpen(true)}>Tạo lớp mới</Button>
+            <Button icon={<Plus size={16} />} disabled={withoutTarget.length === 0} onClick={() => setSuggestOpen(true)}>Tạo lớp cho năm học mới</Button>
             <Button type="primary" icon={<ArrowRightLeft size={16} />} disabled={!ready} onClick={() => { setScope(null); resetPicks(); setStarted(true); }}>Chuyển học sinh</Button>
           </>
         )}
@@ -357,7 +357,7 @@ export function RolloverPage() {
             tone="promote" icon={<ArrowRight size={18} />} title="Được lên lớp" yearName={toYear.name} grade={source ? source.gradeLevel + 1 : undefined}
             options={promoteOptions} classId={promoteId} onClassChange={setPromotePick}
             roster={promoteRoster.data?.students ?? []} loading={promoteRoster.isFetching} onRemove={askUndo}
-            disabledHint={source && promoteOptions.length === 0 ? `Chưa có lớp khối ${source.gradeLevel + 1} ở năm học ${toYear.name}. Bấm Tạo lớp năm mới.` : undefined}
+            disabledHint={source && promoteOptions.length === 0 ? `Chưa có lớp khối ${source.gradeLevel + 1} ở năm học ${toYear.name}. Bấm Tạo lớp cho năm học mới.` : undefined}
           />
           )}
         </div>

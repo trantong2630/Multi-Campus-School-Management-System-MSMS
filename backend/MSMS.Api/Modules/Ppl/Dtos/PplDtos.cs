@@ -24,11 +24,11 @@ public record ResponsibilityRow(
     int? RecordId, int? StaffId, string? StaffName, DateOnly? StartDate,
     string? NextStaffName = null, DateOnly? NextStartDate = null,
     string? StaffCode = null, DateOnly? EndDate = null, string? EndedStaffName = null, DateOnly? EndedDate = null, string? TargetCode = null,
-    int? NextStaffId = null);
+    int? NextStaffId = null, DateTime? StartedAt = null);
 
 public record ResponsibilityAssignRequest(string Kind, int TargetId, int StaffId, DateOnly StartDate);
 public record ResponsibilityEndRequest(string Kind, int RecordId, DateOnly EndDate);
-public record ResponsibilityHistoryRow(int RecordId, int StaffId, string StaffName, DateOnly StartDate, DateOnly? EndDate, bool IsEffective);
+public record ResponsibilityHistoryRow(int RecordId, int StaffId, string StaffName, DateOnly StartDate, DateOnly? EndDate, bool IsEffective, DateTime AssignedAt, DateTime? EndedAt);
 
 // Import học sinh kèm ghi danh và phụ huynh (PPL-02, 4.3.16–4.3.18)
 public record StudentImportSkipped(int Row, string FullName, string Reason, string? PersonCode = null);
