@@ -17,13 +17,13 @@ import { StatusBadge } from '@/shared/components/StatusBadge';
 import { message } from '@/shared/lib/antdStatic';
 import { blobErrorMessage, downloadFile } from '@/shared/lib/download';
 import { formatDate, formatDateTime, toDateString } from '@/shared/lib/format';
-
-/** Giờ trong ngày, chỉ hiện khi sự kiện xảy ra đúng ngày đó (nhận ngay, mất quyền ngay). */
-const timeOn = (at: string | null | undefined, date: string | null | undefined) =>
-  at && date && dayjs(at).isSame(dayjs(date), 'day') ?  lúc  : '';
 import { pplApi } from '../api';
 import { HandoverPopover, hasHandover } from '../components/HandoverPopover';
 import type { ResponsibilityHistoryRow, ResponsibilityKind, ResponsibilityRow } from '../types';
+
+/** Giờ trong ngày, chỉ hiện khi sự kiện xảy ra đúng ngày đó (nhận ngay, mất quyền ngay). */
+const timeOn = (at: string | null | undefined, date: string | null | undefined) =>
+  at && date && dayjs(at).isSame(dayjs(date), 'day') ? ` lúc ${dayjs(at).format('HH:mm')}` : '';
 
 interface AssignValues { targetId?: number; staffId: number; startDate: Dayjs }
 interface EndValues { endDate: Dayjs }
