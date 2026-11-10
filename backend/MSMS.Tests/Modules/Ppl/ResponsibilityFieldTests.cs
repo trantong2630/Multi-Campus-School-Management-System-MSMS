@@ -174,14 +174,6 @@ public class ResponsibilityFieldTests
         Assert.Empty(e.Db.CampusLeadership); Assert.Empty(e.Db.DepartmentHead);
     }
 
-    [Fact(DisplayName = "PPL | Trách nhiệm | Thay người | không thay được trong ngày người cũ vừa bắt đầu (ngày hiệu lực phải sau ngày bắt đầu của người cũ)")]
-    public async Task Replace_SameDayAsOldStart_Rejected()
-    {
-        using var e = new PplEnv();
-        await e.Resp.AssignAsync(Assign("homeroom", PplEnv.Class6A, PplEnv.Teacher, T));
-        await PplEnv.Rejects(() => e.Resp.AssignAsync(Assign("homeroom", PplEnv.Class6A, PplEnv.OtherTeacher, T)), "phải sau ngày bắt đầu");
-    }
-
     [Fact(DisplayName = "PPL | Trách nhiệm | Gán | chọn lại đúng người đang đảm nhiệm bị từ chối")]
     public async Task Assign_SameHolder_Rejected()
     {

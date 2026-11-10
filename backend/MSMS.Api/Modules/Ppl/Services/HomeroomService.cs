@@ -27,7 +27,7 @@ public sealed class HomeroomService(MsmsDbContext db)
         var rows = await db.HomeroomAssignment.AsNoTracking()
             .Where(EffectivePeriod.EffectiveAt<HomeroomAssignment>(date))
             .Where(h => classIds.Contains(h.ClassId))
-            .OrderByDescending(h => h.StartDate)
+            .OrderByDescending(h => h.StartDate).ThenByDescending(h => h.CreatedAt).ThenByDescending(h => h.Id)
             .Select(h => new
             {
                 h.ClassId,
@@ -37,7 +37,9 @@ public sealed class HomeroomService(MsmsDbContext db)
             })
             .ToListAsync();
 
+        // Thay nhiều lần trong một ngày thì ngày đó có nhiều bản chạm nhau: lấy bản mới nhất của mỗi lớp.
         return rows
+            .GroupBy(h => h.ClassId).Select(g => g.First())
             .Select(h => new HomeroomDto(h.ClassId, h.StaffId, h.FullName, h.TeacherAbbr))
             .ToList();
     }

@@ -33,7 +33,7 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
             case ResponsibilityKinds.Campus:
             {
                 var holders = await db.CampusLeadership.AsNoTracking().Where(EffectivePeriod.CurrentResponsibility<CampusLeadership>(today))
-                    .Select(x => new { x.Id, x.CampusId, x.StaffId, Name = x.Staff.Staff.FullName, Code = x.Staff.Staff.PersonCode, x.StartDate, x.EndDate }).ToListAsync();
+                    .Select(x => new { x.Id, x.CampusId, x.StaffId, Name = x.Staff.Staff.FullName, Code = x.Staff.Staff.PersonCode, x.StartDate, x.EndDate, x.CreatedAt }).ToListAsync();
                 var upcoming = await db.CampusLeadership.AsNoTracking().Where(x => x.StartDate > today).OrderBy(x => x.StartDate)
                     .Select(x => new { x.CampusId, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
                 var ended = (await db.CampusLeadership.AsNoTracking().Where(x => x.EndDate != null && x.EndDate <= today)
@@ -52,13 +52,13 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
                     var u = upcoming.FirstOrDefault(x => x.CampusId == c.CampusId);
                     var e = ended.GetValueOrDefault(c.CampusId);
                     return new ResponsibilityRow(kind, c.CampusId, c.Name, null, h?.Id, h?.StaffId, h?.Name, h?.StartDate, u?.Name, u?.StartDate,
-                        h?.Code, h?.EndDate, e?.Name, e?.EndDate, c.Code, u?.StaffId);
+                        h?.Code, h?.EndDate, e?.Name, e?.EndDate, c.Code, u?.StaffId, h?.CreatedAt);
                 }).ToList();
             }
             case ResponsibilityKinds.Department:
             {
                 var holders = await db.DepartmentHead.AsNoTracking().Where(EffectivePeriod.CurrentResponsibility<DepartmentHead>(today))
-                    .Select(x => new { x.Id, x.DepartmentId, x.StaffId, Name = x.Staff.Staff.FullName, Code = x.Staff.Staff.PersonCode, x.StartDate, x.EndDate }).ToListAsync();
+                    .Select(x => new { x.Id, x.DepartmentId, x.StaffId, Name = x.Staff.Staff.FullName, Code = x.Staff.Staff.PersonCode, x.StartDate, x.EndDate, x.CreatedAt }).ToListAsync();
                 var upcoming = await db.DepartmentHead.AsNoTracking().Where(x => x.StartDate > today).OrderBy(x => x.StartDate)
                     .Select(x => new { x.DepartmentId, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
                 var ended = (await db.DepartmentHead.AsNoTracking().Where(x => x.EndDate != null && x.EndDate <= today)
@@ -79,14 +79,14 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
                     var u = upcoming.FirstOrDefault(x => x.DepartmentId == d.DepartmentId);
                     var e = ended.GetValueOrDefault(d.DepartmentId);
                     return new ResponsibilityRow(kind, d.DepartmentId, d.Name, null, h?.Id, h?.StaffId, h?.Name, h?.StartDate, u?.Name, u?.StartDate,
-                        h?.Code, h?.EndDate, e?.Name, e?.EndDate, NextStaffId: u?.StaffId);
+                        h?.Code, h?.EndDate, e?.Name, e?.EndDate, NextStaffId: u?.StaffId, StartedAt: h?.CreatedAt);
                 }).ToList();
             }
             case ResponsibilityKinds.Homeroom:
             {
                 var year = yearId ?? await db.AcademicYear.Where(y => y.IsCurrent).Select(y => (int?)y.AcademicYearId).FirstOrDefaultAsync();
                 var holders = await db.HomeroomAssignment.AsNoTracking().Where(EffectivePeriod.CurrentResponsibility<HomeroomAssignment>(today))
-                    .Select(x => new { x.Id, x.ClassId, x.StaffId, Name = x.Staff.Staff.FullName, Code = x.Staff.Staff.PersonCode, x.StartDate, x.EndDate }).ToListAsync();
+                    .Select(x => new { x.Id, x.ClassId, x.StaffId, Name = x.Staff.Staff.FullName, Code = x.Staff.Staff.PersonCode, x.StartDate, x.EndDate, x.CreatedAt }).ToListAsync();
                 var upcoming = await db.HomeroomAssignment.AsNoTracking().Where(x => x.StartDate > today).OrderBy(x => x.StartDate)
                     .Select(x => new { x.ClassId, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate }).ToListAsync();
                 var ended = (await db.HomeroomAssignment.AsNoTracking().Where(x => x.EndDate != null && x.EndDate <= today)
@@ -102,7 +102,7 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
                     var u = upcoming.FirstOrDefault(x => x.ClassId == c.ClassId);
                     var e = ended.GetValueOrDefault(c.ClassId);
                     return new ResponsibilityRow(kind, c.ClassId, c.Name, c.Campus, h?.Id, h?.StaffId, h?.Name, h?.StartDate, u?.Name, u?.StartDate,
-                        h?.Code, h?.EndDate, e?.Name, e?.EndDate, NextStaffId: u?.StaffId);
+                        h?.Code, h?.EndDate, e?.Name, e?.EndDate, NextStaffId: u?.StaffId, StartedAt: h?.CreatedAt);
                 }).ToList();
             }
             default:
@@ -167,16 +167,16 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
         var rows = kind switch
         {
             ResponsibilityKinds.Campus => await db.CampusLeadership.AsNoTracking().Where(x => x.CampusId == targetId)
-                .Select(x => new { x.Id, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate, x.EndDate }).ToListAsync(),
+                .Select(x => new { x.Id, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate, x.EndDate, x.CreatedAt, x.EndedAt }).ToListAsync(),
             ResponsibilityKinds.Department => await db.DepartmentHead.AsNoTracking().Where(x => x.DepartmentId == targetId)
-                .Select(x => new { x.Id, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate, x.EndDate }).ToListAsync(),
+                .Select(x => new { x.Id, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate, x.EndDate, x.CreatedAt, x.EndedAt }).ToListAsync(),
             ResponsibilityKinds.Homeroom => await db.HomeroomAssignment.AsNoTracking().Where(x => x.ClassId == targetId)
-                .Select(x => new { x.Id, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate, x.EndDate }).ToListAsync(),
+                .Select(x => new { x.Id, x.StaffId, Name = x.Staff.Staff.FullName, x.StartDate, x.EndDate, x.CreatedAt, x.EndedAt }).ToListAsync(),
             _ => throw ApiException.BadRequest("Loại trách nhiệm không hợp lệ."),
         };
-        return rows.OrderByDescending(x => x.StartDate)
+        return rows.OrderByDescending(x => x.StartDate).ThenByDescending(x => x.CreatedAt).ThenByDescending(x => x.Id)
             .Select(x => new ResponsibilityHistoryRow(x.Id, x.StaffId, x.Name, x.StartDate, x.EndDate,
-                x.StartDate <= today && (x.EndDate == null || x.EndDate >= today)))
+                x.StartDate <= today && (x.EndDate == null || x.EndDate > today), x.CreatedAt, x.EndedAt))
             .ToList();
     }
 
@@ -229,6 +229,7 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
         if (r.EndDate < record.StartDate)
             throw ApiException.BadRequest($"Ngày kết thúc không được trước ngày bắt đầu ({record.StartDate:dd/MM/yyyy}).");
         record.EndDate = r.EndDate;
+        if (r.EndDate <= clock.Today) record.EndedAt = clock.Now;   // mất quyền ngay: ghi lại giờ để đọc lịch sử
         await db.SaveChangesAsync();
     }
 
@@ -239,14 +240,19 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
         if (records.Any(x => x.StartDate > r.StartDate))
             throw ApiException.BadRequest("Đích này đã có người nhận trách nhiệm bắt đầu sau ngày đã chọn. Chọn ngày muộn hơn.");
 
-        var current = records.FirstOrDefault(x => x.IsEffectiveAt(r.StartDate));
+        // Thay nhiều lần trong một ngày: bản cũ đã đóng cùng ngày vẫn "chạm" ngày này, nên lấy bản mới nhất làm người đương nhiệm.
+        var current = records.Where(x => x.IsEffectiveAt(r.StartDate)).OrderByDescending(x => x.StartDate).ThenByDescending(x => x.CreatedAt)
+            .ThenByDescending(x => x.Id).FirstOrDefault();
         if (current is not null)
         {
             if (current.StaffId == r.StaffId) throw ApiException.BadRequest("Người này đang đảm nhiệm sẵn. Chọn người khác để thay.");
             // Thay người có hiệu lực ngay: hẹn ngày sau sẽ để người cũ mất quyền hôm nay mà người mới chưa nhận (khoảng trống).
             if (r.StartDate > clock.Today)
                 throw ApiException.BadRequest("Thay người có hiệu lực ngay hôm nay. Chọn hôm nay, hoặc kết thúc người hiện tại vào ngày muốn rồi gán người mới sau.");
-            EffectivePeriod.CloseBefore(current, r.StartDate);
+            // Người đương nhiệm được gán chính hôm nay: bản của họ chỉ còn trong ngày này (từ ngày = đến ngày), giờ mất quyền ghi ở EndedAt.
+            if (r.StartDate == current.StartDate) current.EndDate = current.StartDate;
+            else EffectivePeriod.CloseBefore(current, r.StartDate);
+            current.EndedAt = clock.Now;
         }
 
         var record = create();
@@ -254,6 +260,7 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
         record.StartDate = r.StartDate;
         record.EndDate = null;
         record.AssignedByPersonId = user.PersonId;
+        record.CreatedAt = clock.Now;
         set.Add(record);
     }
 

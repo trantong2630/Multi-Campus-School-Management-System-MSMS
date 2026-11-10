@@ -13,8 +13,11 @@ namespace MSMS.Api.Data.Entities
     /// <summary>Ba loại trách nhiệm: phụ trách phân hiệu, tổ trưởng, chủ nhiệm. Mỗi đích tối đa một bản đang hiệu lực.</summary>
     public interface IResponsibilityRecord : IEffectivePeriod
     {
+        int Id { get; }
         int StaffId { get; set; }
         int? AssignedByPersonId { get; set; }
+        DateTime CreatedAt { get; set; }
+        DateTime? EndedAt { get; set; }
     }
 
     public partial class CampusLeadership : IResponsibilityRecord { }

@@ -130,6 +130,8 @@ export interface ResponsibilityRow {
   /** Người giữ gần nhất đã kết thúc, khi đích không còn ai đảm nhiệm. */
   endedStaffName: string | null;
   endedDate: string | null;
+  /** Giờ người đang giữ nhận trách nhiệm (thời điểm tạo bản ghi). */
+  startedAt?: string | null;
   targetCode: string | null;
   nextStaffId: number | null;
 }
@@ -141,4 +143,8 @@ export interface ResponsibilityHistoryRow {
   startDate: string;
   endDate: string | null;
   isEffective: boolean;
+  /** Thời điểm bản ghi được tạo (giờ nhận trách nhiệm khi nhận ngay). */
+  assignedAt: string;
+  /** Giờ mất quyền, khi thay người hoặc kết thúc có hiệu lực ngay. */
+  endedAt: string | null;
 }
