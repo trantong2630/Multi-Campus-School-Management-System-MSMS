@@ -361,7 +361,7 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
             },
             {
               title: 'Đến ngày', dataIndex: 'endDate', width: 120, className: 'tabular',
-              render: (v: string | null, r: ResponsibilityHistoryRow) => (v ? <>{formatDate(v)}{r.endedAt && <div className="muted">mất quyền {formatDateTime(r.endedAt)}</div>}</> : 'Hiện tại'),
+              render: (v: string | null, r: ResponsibilityHistoryRow) => (v ? <>{formatDate(v)}{r.endedAt && <div className="muted">kết thúc trách nhiệm {formatDateTime(r.endedAt)}</div>}</> : 'Hiện tại'),
             },
             { title: 'Trạng thái', key: 'status', width: 150, render: (_: unknown, r: ResponsibilityHistoryRow) => <StatusBadge domain="handover" value={handoverStatus(r)} /> },
           ]}
