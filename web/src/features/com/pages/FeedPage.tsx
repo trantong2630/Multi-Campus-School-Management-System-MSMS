@@ -14,7 +14,7 @@ const PAGE_SIZE = 8;
 
 /** Ảnh trong bảng tin: bấm để xem phóng to, cả nhóm ảnh của bài xem được bằng nút trước/sau. `hidden` là ảnh thứ 5 trở đi, chỉ hiện trong chế độ xem. */
 function FeedImage({ postId, imageId, alt, hidden }: { postId: number; imageId: number; alt: string; hidden?: boolean }) {
-  const q = useQuery({ queryKey: ['com', 'post-image', postId, imageId], queryFn: () => postApi.image(postId, imageId), staleTime: Infinity });
+  const q = useQuery({ queryKey: ['com', 'post-image', postId, imageId], queryFn: () => postApi.image(postId, imageId), staleTime: Infinity, meta: { silent: true } });
   const url = useObjectUrl(q.data);
   if (!url) return hidden ? null : <span className="post-img post-img--empty" aria-hidden />;
   return <Image src={url} alt={alt} className="post-img" rootClassName={hidden ? 'feed-image--hidden' : 'feed-image'} preview={{ cover: null }} />;
@@ -90,7 +90,7 @@ export function FeedPage() {
 
   return (
     <>
-      <PageHeader title="Bảng tin" description="Các bài đăng mới nhất của nhà trường." />
+      <PageHeader title="Bảng tin" />
       <div className="feed">
         {feed.isLoading && <Skeleton active avatar paragraph={{ rows: 5 }} />}
         {!feed.isLoading && items.length === 0 && (

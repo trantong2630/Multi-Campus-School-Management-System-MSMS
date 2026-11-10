@@ -16,6 +16,10 @@ public class ResultsController(ResultService service) : ControllerBase
     [HttpGet("children/{studentId:int}"), Authorize(Policy = Policies.Parent)]
     public Task<IReadOnlyList<ChildResultItemDto>> ChildResults(int studentId) => service.ChildResultsAsync(studentId);
 
+    [HttpGet("{assignmentId:int}/pages/{lessonId:int}/{page:int}"), Authorize(Policy = Policies.StudentOrParent)]
+    public async Task<IActionResult> SourcePage(int assignmentId, int lessonId, int page, [FromQuery] int? studentId) =>
+        File(await service.SourcePageAsync(assignmentId, lessonId, page, studentId), "image/jpeg");
+
     [HttpGet("{assignmentId:int}"), Authorize(Policy = Policies.StudentOrParent)]
     public Task<PracticeResultDto> Detail(int assignmentId, [FromQuery] int? studentId) => service.ResultAsync(assignmentId, studentId);
 }

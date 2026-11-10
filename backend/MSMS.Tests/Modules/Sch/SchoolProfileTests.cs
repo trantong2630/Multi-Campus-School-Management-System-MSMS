@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
+using MSMS.Api.Common.Storage;
 using MSMS.Api.Data;
 using MSMS.Api.Modules.Sch.Controllers;
 using MSMS.Api.Modules.Sch.Dtos;
@@ -30,28 +31,18 @@ public sealed class SchoolProfileTests : IDisposable
 
     public void Dispose()
     {
-        if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true);
-    }
-
-    private sealed class FakeEnvironment(string root) : IWebHostEnvironment
-    {
-        public string ApplicationName { get; set; } = "MSMS.Tests";
-        public IFileProvider WebRootFileProvider { get; set; } = new NullFileProvider();
-        public string WebRootPath { get; set; } = root;
-        public string EnvironmentName { get; set; } = "Test";
-        public string ContentRootPath { get; set; } = root;
-        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
+        try { if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true); } catch (IOException) { }
     }
 
     private (MsmsDbContext Db, SchoolProfileService Service) Create()
     {
         var db = NewDb();
         var user = UserOf(AccountTypes.Principal, personId: 7);
-        return (db, new SchoolProfileService(db, user, ClockAt(), new FakeEnvironment(_root)));
+        return (db, new SchoolProfileService(db, user, ClockAt(), new DiskImageStorage(_root)));
     }
 
     private static SchoolProfileRequest Profile(string name = "Trường THCS Ánh Sáng", string? email = null, string? website = null) =>
-        new(name, "12 Lê Lợi, Hà Nội", "0243123456", email, website);
+        new(name, "12 Lê Lợi, Hà Nội", "0912345678", email, website);
 
     private static byte[] Image(byte[] header, long size)
     {
@@ -82,7 +73,7 @@ public sealed class SchoolProfileTests : IDisposable
     {
         var (db, svc) = Create();
 
-        var saved = await svc.UpdateAsync(new SchoolProfileRequest("  Trường   THCS Ánh Sáng ", " 12 Lê Lợi ", " 0243123456 ", "info@school.vn", "https://school.vn"));
+        var saved = await svc.UpdateAsync(new SchoolProfileRequest("  Trường   THCS Ánh Sáng ", " 12 Lê Lợi ", " 0912345678 ", "info@school.vn", "https://school.vn"));
 
         Assert.Equal("Trường THCS Ánh Sáng", saved.Name);
         Assert.Equal("12 Lê Lợi", saved.Address);
@@ -169,8 +160,9 @@ public sealed class SchoolProfileTests : IDisposable
         Assert.True(saved.HasLogo);
         Assert.NotNull(saved.LogoVersion);
         var logo = await svc.FindLogoAsync();
-        Assert.Equal("image/png", logo!.Value.ContentType);
-        Assert.True(File.Exists(logo.Value.Path));
+        using var content = logo!.Content;
+        Assert.Equal("image/png", logo.ContentType);
+        Assert.Single(LogoFiles());
     }
 
     [Fact]
@@ -181,7 +173,9 @@ public sealed class SchoolProfileTests : IDisposable
 
         await svc.SetLogoAsync(Upload(Image(JpgHeader, 2048), "logo.jpg", "image/jpeg"));
 
-        Assert.Equal("image/jpeg", (await svc.FindLogoAsync())!.Value.ContentType);
+        var logo = (await svc.FindLogoAsync())!;
+        using var content = logo.Content;
+        Assert.Equal("image/jpeg", logo.ContentType);
     }
 
     [Theory]
@@ -241,14 +235,16 @@ public sealed class SchoolProfileTests : IDisposable
         var (_, svc) = Create();
         await svc.UpdateAsync(Profile());
         await svc.SetLogoAsync(Upload(Image(PngHeader, 1000)));
-        var oldPath = (await svc.FindLogoAsync())!.Value.Path;
+        var oldPath = LogoFiles().Single();
 
         await svc.SetLogoAsync(Upload(Image(JpgHeader, 1000), "moi.jpg", "image/jpeg"));
 
         Assert.False(File.Exists(oldPath));
         var only = Assert.Single(LogoFiles());
         Assert.EndsWith(".jpg", only);
-        Assert.Equal(only, (await svc.FindLogoAsync())!.Value.Path);
+        var logo = (await svc.FindLogoAsync())!;
+        await using var stream = logo.Content;
+        Assert.Equal("image/jpeg", logo.ContentType);
     }
 
     [Fact]
@@ -257,12 +253,12 @@ public sealed class SchoolProfileTests : IDisposable
         var (_, svc) = Create();
         await svc.UpdateAsync(Profile());
         await svc.SetLogoAsync(Upload(Image(PngHeader, 1000)));
-        var before = (await svc.FindLogoAsync())!.Value.Path;
+        var before = LogoFiles().Single();
 
         await Assert.ThrowsAsync<ApiException>(() => svc.SetLogoAsync(Upload(System.Text.Encoding.UTF8.GetBytes("khong phai anh"))));
 
         Assert.True(File.Exists(before));
-        Assert.Equal(before, (await svc.FindLogoAsync())!.Value.Path);
+        Assert.Equal(before, LogoFiles().Single());
     }
 
     [Fact]
@@ -316,7 +312,9 @@ public sealed class SchoolProfileTests : IDisposable
 
         var logo = await svc.FindLogoAsync();
 
-        Assert.Equal(Path.Combine(LogoDirectory, "evil.png"), logo!.Value.Path);
+        using var content = logo!.Content;
+        Assert.Equal("image/png", logo.ContentType);
+        Assert.Equal(PngHeader.Length, content.Length);
     }
 
     // ---- Ai đọc, ai sửa (4.2.42, BR-27) ----
@@ -338,11 +336,11 @@ public sealed class SchoolProfileTests : IDisposable
     [InlineData(nameof(SchoolController.Update))]
     [InlineData(nameof(SchoolController.UploadLogo))]
     [InlineData(nameof(SchoolController.RemoveLogo))]
-    public void ChangingTheProfileOrLogo_IsOnlyForThePrincipalAndSchoolAdmin(string endpoint)
+    public void ChangingTheProfileOrLogo_IsOnlyForTheSchoolAdmin(string endpoint)
     {
         var method = Endpoint(endpoint);
 
         Assert.Null(method.GetCustomAttribute<AllowAnonymousAttribute>());
-        Assert.Equal(Policies.SchoolProfileManager, method.GetCustomAttribute<AuthorizeAttribute>()?.Policy);
+        Assert.Equal(Policies.SchoolAdmin, method.GetCustomAttribute<AuthorizeAttribute>()?.Policy);
     }
 }

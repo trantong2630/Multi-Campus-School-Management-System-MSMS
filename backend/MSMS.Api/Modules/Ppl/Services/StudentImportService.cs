@@ -123,12 +123,13 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
 
             var existingIds = await db.Person.Where(p => p.NationalId != null).Select(p => new { p.NationalId, p.PersonCode })
                 .ToDictionaryAsync(p => p.NationalId!, p => p.PersonCode);
-            var existingParents = new Dictionary<string, (int Id, string Name)>();
+            var existingParents = new Dictionary<string, (int Id, string Name, string Code)>();
             foreach (var p in await db.Person.AsNoTracking().Where(p => p.PersonType == "Parent" && p.PhoneNumber != null)
-                         .Select(p => new { p.PersonId, p.FullName, p.PhoneNumber }).ToListAsync())
-                existingParents.TryAdd(NormalizePhone(p.PhoneNumber!), (p.PersonId, p.FullName));
+                         .Select(p => new { p.PersonId, p.FullName, p.PhoneNumber, p.PersonCode }).ToListAsync())
+                existingParents.TryAdd(NormalizePhone(p.PhoneNumber!), (p.PersonId, p.FullName, p.PersonCode));
 
             var skipped = new List<StudentImportSkipped>();
+            var warnings = new List<StudentImportWarning>();
             var valid = new List<ValidRow>();
             var fileIds = new Dictionary<string, int>();
             var fileParents = new Dictionary<string, (string Name, int Row)>();
@@ -150,6 +151,7 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
                 if (!ws.Cell(row, ColDob).TryReadDate(out dob))
                     Err(ColDob, ws.Cell(row, ColDob).IsEmpty() ? "Thiếu ngày sinh. Điền theo dạng dd/mm/yyyy." : "Ngày sinh sai định dạng. Điền theo dạng dd/mm/yyyy.");
                 else if (dob > clock.Today) Err(ColDob, "Ngày sinh ở tương lai. Kiểm tra lại năm sinh.");
+                else if (!Guard.StudentAgeOk(dob, clock.Today)) Err(ColDob, Guard.StudentAgeMessage);
 
                 var nationalId = ws.Cell(row, ColNationalId).NationalIdText();
                 if (nationalId.Length == 0) Err(ColNationalId, "Thiếu số định danh. Điền đủ 12 chữ số.");
@@ -196,7 +198,7 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
                 var phone = NormalizePhone(ReadPhone(ws.Cell(row, ColPhone)));
                 int? existingParentId = null;
                 if (phone.Length == 0) Err(ColPhone, "Thiếu số điện thoại phụ huynh. Đây là khóa nhận diện phụ huynh.");
-                else if (!IsPhone(phone)) Err(ColPhone, "Số điện thoại phụ huynh chỉ gồm 9 đến 15 chữ số.");
+                else if (!IsPhone(phone)) Err(ColPhone, "Số điện thoại phụ huynh phải là số di động đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09.");
                 else
                 {
                     // Cùng số điện thoại thì cùng một phụ huynh: khác họ tên trong cùng file là lỗi (BR-11).
@@ -207,7 +209,15 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
                     }
                     else fileParents[phone] = (parentName, row);
 
-                    if (existingParents.TryGetValue(phone, out var existing)) existingParentId = existing.Id;
+                    if (existingParents.TryGetValue(phone, out var existing))
+                    {
+                        existingParentId = existing.Id;
+                        // Số điện thoại là khóa nhận diện nên vẫn dùng lại hồ sơ cũ, nhưng họ tên khác hẳn thường là nhầm số: cảnh báo, không chặn.
+                        if (!NamesSimilar(existing.Name, parentName))
+                            warnings.Add(new StudentImportWarning(row, name,
+                                $"File ghi phụ huynh \"{parentName}\" nhưng số {phone} đã thuộc \"{existing.Name}\" ({existing.Code}). Học sinh vẫn được gắn vào hồ sơ đó, kiểm tra lại số điện thoại.",
+                                existing.Code));
+                    }
                 }
 
                 var parentEmail = ws.Cell(row, ColParentEmail).Text();
@@ -218,7 +228,7 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
                         parentName, relationship, phone, parentEmail.Length > 0 ? parentEmail : null, existingParentId));
             }
 
-            if (errors.Count > 0) return Rejected(errors, skipped);
+            if (errors.Count > 0) return Rejected(errors, skipped, warnings);
 
             var students = 0;
             var enrollments = 0;
@@ -262,7 +272,7 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
                 await db.SaveChangesAsync();   // mỗi dòng một lần lưu để mã hồ sơ tăng đúng thứ tự dòng
             }
             await tx.CommitAsync();
-            return new StudentImportResult(true, students, enrollments, parentsCreated, skipped, [], 0);
+            return new StudentImportResult(true, students, enrollments, parentsCreated, skipped, [], 0, warnings);
         }
     }
 
@@ -275,7 +285,7 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
             return null;
         }
         var year = (await db.AcademicYear.AsNoTracking().ToListAsync()).FirstOrDefault(y => string.Equals(y.Name, text, StringComparison.OrdinalIgnoreCase));
-        if (year is null) errors.Add(new ImportError("B3", "Năm học", text, $"Năm học \"{text}\" chưa khai trong hệ thống. Khai ở Thiết lập → Năm học hoặc sửa lại tên cho đúng."));
+        if (year is null) errors.Add(new ImportError("B3", "Năm học", text, $"Năm học \"{text}\" chưa khai trong hệ thống. Khai ở Cơ cấu nhà trường → Năm học hoặc sửa lại tên cho đúng."));
         return year;
     }
 
@@ -294,7 +304,7 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
     }
 
     /// <summary>Ô số điện thoại: Excel hay chuyển số có số 0 đầu thành số và làm mất số 0, nên bù lại cho số di động 10 chữ số.</summary>
-    private static string ReadPhone(IXLCell cell)
+    internal static string ReadPhone(IXLCell cell)
     {
         if (cell.IsEmpty()) return string.Empty;
         if (cell.DataType == XLDataType.Number)
@@ -317,8 +327,22 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
         return s;
     }
 
-    internal static bool IsPhone(string phone) => phone.Length is >= 9 and <= 15 && phone.All(char.IsAsciiDigit);
+    internal static bool IsPhone(string phone) => Guard.IsMobilePhone(phone);
 
-    private static StudentImportResult Rejected(List<ImportError> errors, List<StudentImportSkipped> skipped) =>
-        new(false, 0, 0, 0, skipped, errors.Take(ExcelHelpers.MaxReportedErrors).ToList(), errors.Count);
+    private static StudentImportResult Rejected(List<ImportError> errors, List<StudentImportSkipped> skipped, List<StudentImportWarning>? warnings = null) =>
+        new(false, 0, 0, 0, skipped, errors.Take(ExcelHelpers.MaxReportedErrors).ToList(), errors.Count, warnings ?? []);
+
+    /// <summary>
+    /// Hai họ tên có giống một người không: bỏ dấu, không phân biệt hoa thường, cùng tên gọi (từ cuối) và trùng ít nhất một nửa số từ.
+    /// "Nguyễn Thị Lan" và "Nguyễn Lan" giống nhau; "Trần Văn Cường" và "Nguyễn Thị Lan" thì không.
+    /// </summary>
+    internal static bool NamesSimilar(string a, string b)
+    {
+        static string[] Tokens(string s) => MSMS.Api.Common.Text.TextNormalizer.RemoveDiacritics(s).ToLowerInvariant()
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var x = Tokens(a); var y = Tokens(b);
+        if (x.Length == 0 || y.Length == 0) return false;
+        if (x[^1] != y[^1]) return false;
+        return x.Intersect(y).Count() * 2 >= Math.Max(x.Length, y.Length);
+    }
 }

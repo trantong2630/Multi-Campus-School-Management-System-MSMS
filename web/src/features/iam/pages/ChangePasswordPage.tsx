@@ -16,7 +16,7 @@ const TIPS: { icon: ReactNode; title: string; text: string }[] = [
 export function ChangePasswordPage() {
   return (
     <>
-      <PageHeader title="Đổi mật khẩu" description={`Nhập mật khẩu đang dùng rồi đặt mật khẩu mới có ít nhất ${MIN_PASSWORD_LENGTH} ký tự.`} />
+      <PageHeader title="Đổi mật khẩu" />
       <div className="cpw-grid">
         <Card title="Mật khẩu đăng nhập" className="cpw-card">
           <ChangePasswordForm />

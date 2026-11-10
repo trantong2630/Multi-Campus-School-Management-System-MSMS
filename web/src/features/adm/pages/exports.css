@@ -1,0 +1,11 @@
+.exports-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.exports-hint {
+  margin: 0 0 16px;
+  color: var(--c-text2);
+}

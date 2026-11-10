@@ -1,5 +1,5 @@
 import { apiClient } from '@/app/apiClient';
-import type { Paged, ResponsibilityHistoryRow, ResponsibilityKind, ResponsibilityRow, ChangeGuardianBody, Guardian, GuardianChild, Staff, StaffImportResult, Student, StudentImportResult } from './types';
+import type { Paged, ResponsibilityHistoryRow, ResponsibilityKind, ResponsibilityRow, ChangeGuardianBody, Guardian, GuardianChild, GuardianImportResult, Staff, StaffImportResult, Student, StudentImportResult } from './types';
 
 export interface StaffQuery {
   search?: string;
@@ -29,6 +29,11 @@ export const pplApi = {
     children: (id: number) => apiClient.get<GuardianChild[]>(`/ppl/guardians/${id}/students`).then((r) => r.data),
     create: (b: object) => apiClient.post<Guardian>('/ppl/guardians', b).then((r) => r.data),
     update: (id: number, b: object) => apiClient.put<Guardian>(`/ppl/guardians/${id}`, b).then((r) => r.data),
+    import: (file: File) => {
+      const fd = new FormData();
+      fd.append('file', file);
+      return apiClient.post<GuardianImportResult>('/ppl/guardians/import', fd).then((r) => r.data);
+    },
     changeRepresentative: (studentId: number, b: ChangeGuardianBody) => apiClient.put(`/ppl/students/${studentId}/guardian`, b),
   },
   staff: {

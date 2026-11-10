@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Form, Input } from 'antd';
 import { message } from '@/shared/lib/antdStatic';
-import { Building2, GraduationCap, Pencil, Plus, Power, School, UsersRound } from 'lucide-react';
+import { Pencil, Plus, Power } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/app/AuthProvider';
 import { AddressInput } from '@/shared/components/AddressInput';
@@ -15,7 +15,6 @@ import { StatusBadge } from '@/shared/components/StatusBadge';
 import { confirmAction, showError } from '@/shared/lib/feedback';
 import { formatNumber as fmt } from '@/shared/lib/format';
 import { schApi } from '../api';
-import { DataGapAlert } from '../components/DataGapAlert';
 import { useCampuses, useCampusStats } from '../hooks/useCatalogs';
 import type { Campus, CampusStat } from '../types';
 import '../components/school.css';
@@ -47,7 +46,7 @@ export function CampusPage() {
   const sum = (pick: (s: CampusStat) => number) => active.reduce((n, c) => n + pick(c.stat), 0);
   const studentCount = sum((s) => s.studentCount);
   const classCount = sum((s) => s.classCount);
-  const withoutLeader = active.filter((c) => !c.stat.leaders.length).length;
+
 
   const refresh = () => Promise.all([
     qc.invalidateQueries({ queryKey: ['sch', 'campuses'] }),
@@ -70,25 +69,17 @@ export function CampusPage() {
     <>
       <PageHeader
         title="Phân hiệu"
-        description={canWrite
-          ? 'Mã và tên phân hiệu là khóa tra cứu của các file import nên không được trùng.'
-          : 'Quy mô từng phân hiệu trong năm học hiện hành, tính tại hôm nay.'}
         extra={canWrite && (
           <Button type="primary" icon={<Plus size={16} />} onClick={() => setEditing('new')}>Thêm phân hiệu</Button>
         )}
       />
       <StatStrip>
-        <StatCard icon={Building2} tone="green" label="Phân hiệu đang hoạt động" value={fmt(data && active.length)}
+        <StatCard label="Phân hiệu đang hoạt động" value={fmt(data && active.length)}
           hint={data && data.length > active.length ? `${data.length - active.length} phân hiệu ngừng hoạt động` : undefined} />
-        <StatCard icon={School} tone="sky" label="Lớp đang hoạt động" value={fmt(data && classCount)} />
-        <StatCard icon={GraduationCap} tone="violet" label="Học sinh đang học" value={fmt(data && studentCount)}
-          hint={classCount > 0 ? `Bình quân ${Math.round(studentCount / classCount)} học sinh mỗi lớp` : undefined} />
-        <StatCard icon={UsersRound} tone="amber" label="Cán bộ đang công tác" value={fmt(data && sum((s) => s.staffCount))}
-          hint="Theo phân hiệu chính" />
+        <StatCard label="Lớp đang hoạt động" value={fmt(data && classCount)} />
+        <StatCard label="Học sinh đang học" value={fmt(data && studentCount)} />
+        <StatCard label="Cán bộ đang công tác" value={fmt(data && sum((s) => s.staffCount))} />
       </StatStrip>
-      <DataGapAlert items={[
-        { key: 'leader', label: 'phân hiệu chưa có hiệu phó phụ trách', count: withoutLeader, to: '/ppl/responsibilities' },
-      ]} />
       <Card className="table-card">
         <DataTable<CampusRow>
           rowKey="campusId"
@@ -142,6 +133,7 @@ export function CampusPage() {
       </Card>
 
       <FormModal<FormValues>
+        variant="drawer" width={640}
         open={editing !== null}
         title={editing === 'new' ? 'Thêm phân hiệu' : 'Sửa phân hiệu'}
         form={form}
@@ -149,16 +141,18 @@ export function CampusPage() {
         onSubmit={save}
         initialValues={editing && editing !== 'new' ? editing : undefined}
       >
-        <Form.Item label="Mã phân hiệu" name="code" rules={[{ required: true, whitespace: true, message: 'Nhập mã phân hiệu, ví dụ PH1.' }]}>
-          <Input maxLength={20} />
-        </Form.Item>
-        <Form.Item label="Tên phân hiệu" name="name" rules={[{ required: true, whitespace: true, message: 'Nhập tên phân hiệu.' }]}>
-          <Input maxLength={150} />
-        </Form.Item>
-        <Form.Item label="Địa chỉ" name="address" rules={[{ max: 255, message: 'Địa chỉ tối đa 255 ký tự. Rút gọn số nhà, đường.' }]}>
-          <AddressInput />
-        </Form.Item>
-        <Form.Item label="Số điện thoại" name="phoneNumber"><Input maxLength={20} /></Form.Item>
+        <div className="form-grid">
+          <Form.Item label="Mã phân hiệu" name="code" rules={[{ required: true, whitespace: true, message: 'Nhập mã phân hiệu, ví dụ PH1.' }]}>
+            <Input maxLength={20} />
+          </Form.Item>
+          <Form.Item label="Tên phân hiệu" name="name" rules={[{ required: true, whitespace: true, message: 'Nhập tên phân hiệu.' }]}>
+            <Input maxLength={150} />
+          </Form.Item>
+          <Form.Item label="Địa chỉ" name="address" style={{ gridColumn: '1 / -1' }} rules={[{ max: 255, message: 'Địa chỉ tối đa 255 ký tự. Rút gọn số nhà, đường.' }]}>
+            <AddressInput />
+          </Form.Item>
+          <Form.Item label="Số điện thoại" name="phoneNumber" rules={[{ pattern: /^0[35789]\d{8}$/, message: 'Số điện thoại di động phải gồm đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09.' }]}><Input maxLength={10} inputMode="tel" /></Form.Item>
+        </div>
       </FormModal>
     </>
   );

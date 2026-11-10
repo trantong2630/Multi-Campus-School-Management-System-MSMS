@@ -54,7 +54,7 @@ public sealed partial class TimetableImportService(MsmsDbContext db, CurrentUser
                 else
                 {
                     semester = await db.Semester.FirstOrDefaultAsync(s => s.AcademicYearId == year.AcademicYearId && s.SemesterNo == semNo);
-                    if (semester is null) Err(semesterCell, "Học kỳ", $"Năm học {year.Name} chưa khai học kỳ {semNo}. Khai ở Thiết lập → Năm học & Học kỳ.");
+                    if (semester is null) Err(semesterCell, "Học kỳ", $"Năm học {year.Name} chưa khai học kỳ {semNo}. Khai ở Cơ cấu nhà trường → Năm học & Học kỳ.");
                 }
             }
             if (campus is null || year is null || semester is null) return Rejected(errors);
@@ -89,7 +89,7 @@ public sealed partial class TimetableImportService(MsmsDbContext db, CurrentUser
                 }
                 seenClassCols[name] = header.Address();
                 if (!classByName.TryGetValue(name, out var cls))
-                    Err(header, "Lớp", $"Lớp \"{name}\" không thuộc {campus.Name}, năm học {year.Name}. Sửa tên lớp hoặc tạo lớp ở Thiết lập.");
+                    Err(header, "Lớp", $"Lớp \"{name}\" không thuộc {campus.Name}, năm học {year.Name}. Sửa tên lớp hoặc tạo lớp ở Cơ cấu nhà trường.");
                 else classColumns.Add((col, cls));
             }
 
@@ -128,7 +128,7 @@ public sealed partial class TimetableImportService(MsmsDbContext db, CurrentUser
 
                 if (!slotByKey.TryGetValue((sessionOfDay!, period), out var slot))
                 {
-                    Err(c, "Tiết", $"Khung giờ {TimetableLayout.SessionLabel(sessionOfDay!)} tiết {period} chưa khai hoặc đã ngừng dùng. Khai ở Thiết lập → Khung giờ tiết.");
+                    Err(c, "Tiết", $"Khung giờ {TimetableLayout.SessionLabel(sessionOfDay!)} tiết {period} chưa khai hoặc đã ngừng dùng. Khai ở Cơ cấu nhà trường → Khung giờ tiết.");
                     continue;
                 }
                 if (rowKeys.TryGetValue((day!.Value, slot.PeriodSlotId), out var firstRow))
@@ -156,7 +156,7 @@ public sealed partial class TimetableImportService(MsmsDbContext db, CurrentUser
                     var cellOk = true;
                     if (!subjects.TryGetValue(subjectAbbr, out var subject))
                     {
-                        Err(cell, $"Lớp {cls.Name}", $"Viết tắt môn \"{subjectAbbr}\" không khớp môn nào đang hoạt động. Kiểm tra ở Thiết lập → Tổ chuyên môn & Môn học.");
+                        Err(cell, $"Lớp {cls.Name}", $"Viết tắt môn \"{subjectAbbr}\" không khớp môn nào đang hoạt động. Kiểm tra ở Cơ cấu nhà trường → Tổ chuyên môn & Môn học.");
                         cellOk = false;
                     }
                     if (!teachers.TryGetValue(teacherAbbr, out var teacher))

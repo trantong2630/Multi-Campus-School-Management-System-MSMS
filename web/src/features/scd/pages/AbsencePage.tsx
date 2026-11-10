@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, Card, DatePicker, Select, Tabs, Tag, Tooltip } from 'antd';
+import { Button, Card, DatePicker, Select, Switch, Tabs, Tag, Tooltip } from 'antd';
 import type { Dayjs } from 'dayjs';
 import { ClipboardCheck, Trash2, UserRoundX } from 'lucide-react';
 import { useState } from 'react';
@@ -26,13 +26,13 @@ export function AbsencePage() {
   const [declareOpen, setDeclareOpen] = useState(false);
   const [tab, setTab] = useState('pending');
 
-  const refresh = () => qc.invalidateQueries({ queryKey: ['scd'] });
+  // Không làm mới gợi ý giáo viên: ô chọn trong hộp "Xử lý tiết" vẫn đang mở, gọi lại cho tiết vừa xử lý xong sẽ bị báo lỗi vì tiết không còn Chờ xử lý.
+  const refresh = () => qc.invalidateQueries({ queryKey: ['scd'], predicate: (q) => q.queryKey[1] !== 'teacherAvailability' });
 
   return (
     <>
       <PageHeader
         title="Giáo viên vắng"
-        description="Khai báo giáo viên vắng theo ngày hoặc theo tiết, rồi xử lý từng tiết Chờ xử lý: chọn giáo viên dạy thay hoặc hủy. Đây không phải đơn xin nghỉ của cán bộ."
         extra={
           <Button type="primary" icon={<UserRoundX size={16} />} disabled={effectiveCampus === undefined} onClick={() => setDeclareOpen(true)}>
             Khai báo vắng
@@ -99,10 +99,15 @@ function PendingTab({ campusId, lead, onChanged }: { campusId: number; lead: Rea
           rowKey="sessionId" loading={pending.isLoading} dataSource={pending.data ?? []}
           emptyText="Không có tiết nào đang chờ xử lý."
           columns={[
-            { title: 'Ngày', dataIndex: 'date', width: 150, className: 'tabular', render: (v: string) => `${weekdayOfDate(v)} ${formatDate(v)}` },
+            {
+              title: 'Ngày', dataIndex: 'date', width: 150, className: 'tabular',
+              render: (v: string) => <>{weekdayOfDate(v)}<span className="cell-sub cell-sub--date">{formatDate(v)}</span></>,
+            },
             {
               title: 'Tiết', key: 'slot', width: 170,
-              render: (_: unknown, s: PendingSession) => `${sessionOfDayLabel(s.sessionOfDay)} tiết ${s.periodNo} (${formatTime(s.startTime)}–${formatTime(s.endTime)})`,
+              render: (_: unknown, s: PendingSession) => (
+                <>{sessionOfDayLabel(s.sessionOfDay)} · Tiết {s.periodNo}<span className="cell-sub">{formatTime(s.startTime)}–{formatTime(s.endTime)}</span></>
+              ),
             },
             { title: 'Lớp', dataIndex: 'className', width: 100 },
             { title: 'Môn', dataIndex: 'subjectName', width: 160 },
@@ -132,6 +137,9 @@ function PendingTab({ campusId, lead, onChanged }: { campusId: number; lead: Rea
 function AbsenceTab({ campusId, lead, onChanged }: { campusId: number; lead: React.ReactNode; onChanged: () => void }) {
   const absences = useQuery({ queryKey: ['scd', 'absences', campusId], queryFn: () => scdApi.absences(campusId) });
   const slots = useQuery({ queryKey: ['sch', 'slots'], queryFn: schApi.periodSlots.list });
+  const [showPast, setShowPast] = useState(false);
+  const visible = (absences.data ?? []).filter((a) => showPast || !a.isPast);
+  const hiddenPast = (absences.data ?? []).length - (absences.data ?? []).filter((a) => !a.isPast).length;
 
   const remove = (a: Absence) => confirmAction({
     title: `Xóa khai báo vắng của ${a.teacherName}?`,
@@ -151,11 +159,17 @@ function AbsenceTab({ campusId, lead, onChanged }: { campusId: number; lead: Rea
 
   return (
     <>
-      <FilterBar>{lead}</FilterBar>
+      <FilterBar>
+        {lead}
+        <label className="filter-switch">
+          <Switch size="small" checked={showPast} onChange={setShowPast} />
+          <span>Hiện cả khai báo đã qua{hiddenPast > 0 && !showPast ? ` (${hiddenPast})` : ''}</span>
+        </label>
+      </FilterBar>
       <Card className="table-card">
         <DataTable<Absence>
-          rowKey="absenceId" loading={absences.isLoading} dataSource={absences.data ?? []}
-          emptyText="Chưa có khai báo giáo viên vắng nào."
+          rowKey="absenceId" loading={absences.isLoading} dataSource={visible}
+          emptyText={hiddenPast > 0 && !showPast ? 'Không có khai báo nào đang hiệu lực. Bật "Hiện cả khai báo đã qua" để tra cứu.' : 'Chưa có khai báo giáo viên vắng nào.'}
           columns={[
             { title: 'Giáo viên', key: 't', width: 200, render: (_: unknown, a: Absence) => <>{a.teacherName} {a.teacherAbbr && <code className="mono">{a.teacherAbbr}</code>}</> },
             {
@@ -165,11 +179,17 @@ function AbsenceTab({ campusId, lead, onChanged }: { campusId: number; lead: Rea
             { title: 'Phạm vi', key: 'scope', render: (_: unknown, a: Absence) => absenceScopeLabel(a.slotIds, slots.data) },
             { title: 'Lý do', dataIndex: 'reason', render: (v: string | null) => v ?? <span className="muted">—</span> },
             { title: 'Người khai', dataIndex: 'declaredByName', width: 150, render: (v: string | null) => v ?? '—' },
+            {
+              title: 'Trạng thái', key: 'state', width: 130, align: 'center',
+              render: (_: unknown, a: Absence) => a.isPast ? <Tag>Đã qua</Tag> : <Tag color="green">Đang hiệu lực</Tag>,
+            },
             { title: 'Còn chờ xử lý', dataIndex: 'pendingCount', width: 120, align: 'right', className: 'tabular' },
+            { title: 'Bỏ lỡ', dataIndex: 'missedCount', width: 90, align: 'right', className: 'tabular', render: (v: number) => v > 0 ? <span style={{ color: 'var(--c-amber)' }}>{v}</span> : v },
             { title: 'Đã xử lý', dataIndex: 'handledCount', width: 100, align: 'right', className: 'tabular' },
             {
               title: 'Thao tác', key: 'actions', width: 90, align: 'center', fixed: 'right',
-              render: (_: unknown, a: Absence) => (
+              // Khai báo đã qua không còn thao tác nào: để trống thay vì một nút tắt.
+              render: (_: unknown, a: Absence) => a.isPast ? null : (
                 <div className="row-actions">
                   <Tooltip title={a.canDelete ? 'Xóa khai báo' : 'Đã có tiết được xử lý (dạy thay hoặc hủy), không xóa được'}>
                     <Button

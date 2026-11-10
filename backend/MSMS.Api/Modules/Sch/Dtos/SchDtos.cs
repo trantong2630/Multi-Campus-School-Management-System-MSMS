@@ -41,7 +41,7 @@ public record SchoolProfileRequest(string Name, string? Address, string? PhoneNu
 public record RosterItemDto(int EnrollmentId, int StudentId, string PersonCode, string FullName, DateOnly? DateOfBirth,
     string? Gender, DateOnly StartDate, DateOnly? EndDate, string? Reason);
 public record RosterDto(int ClassId, string ClassName, DateOnly Date, IReadOnlyList<RosterItemDto> Students);
-public record StudentCandidateDto(int StudentId, string PersonCode, string FullName, DateOnly? DateOfBirth);
+public record StudentCandidateDto(int StudentId, string PersonCode, string FullName, DateOnly? DateOfBirth, string? Gender = null);
 public record EnrollRequest(int StudentId, DateOnly StartDate);
 public record TransferRequest(int ToClassId, DateOnly EffectiveDate);
 public record CloseEnrollmentRequest(string Reason);
@@ -49,7 +49,7 @@ public record EnrollManyRequest(List<int> StudentIds, DateOnly StartDate);
 public record TransferManyRequest(List<int> EnrollmentIds, int ToClassId, DateOnly EffectiveDate);
 public record CloseManyRequest(List<int> EnrollmentIds, string Reason);
 
-// Thống kê cấu trúc đặt ngay trên các màn Thiết lập (thay cho các bảng cấu trúc trước đây nằm ở Dashboard).
+// Thống kê cấu trúc đặt ngay trên các màn Cơ cấu nhà trường (thay cho các bảng cấu trúc trước đây nằm ở Dashboard).
 // Tính tại hôm nay, năm học hiện hành; không lưu số liệu suy ra.
 public record CampusStatDto(int CampusId, int ClassCount, int StudentCount, int StaffCount, IReadOnlyList<string> Leaders);
 public record DepartmentStatDto(int DepartmentId, string? HeadName, int TeacherCount);
@@ -72,7 +72,8 @@ public record RolloverMoveRequest(List<RolloverMovePair> Pairs);
 public record RolloverMoveItemResult(int SourceClassId, int TargetClassId, int Moved, int Skipped);
 public record RolloverMoveResult(int Moved, int Skipped, IReadOnlyList<RolloverMoveItemResult> Items);
 /// <summary>Học sinh còn học ở cuối năm cũ của một lớp, kèm lớp năm mới em đã được xếp (nếu có).</summary>
-public record RolloverStudentDto(int StudentId, string PersonCode, string FullName, int? NewClassId, string? NewClassName, bool Graduated = false);
+public record RolloverStudentDto(int StudentId, string PersonCode, string FullName, int? NewClassId, string? NewClassName, bool Graduated = false,
+    DateOnly? DateOfBirth = null, string? Gender = null);
 public record GraduateRequest(List<int> StudentIds);
 public record RolloverStudentsMoveRequest(int FromClassId, int ToClassId, List<int> StudentIds);
 public record RolloverUndoRequest(List<int> EnrollmentIds);

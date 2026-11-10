@@ -14,6 +14,7 @@ export function useAvatarSrc(personId: number | undefined, version: string | num
     enabled,
     staleTime: Infinity,
     retry: false,
+    meta: { silent: true },   // ảnh mất thì quay về chữ cái đầu tên, không hiện hộp báo lỗi
   });
   const blob = enabled ? photo.data : undefined;
 

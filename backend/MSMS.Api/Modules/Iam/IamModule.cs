@@ -1,4 +1,5 @@
 using System.Threading.RateLimiting;
+using MSMS.Api.Common.Email;
 using MSMS.Api.Common.Errors;
 using MSMS.Api.Modules.Iam.Services;
 

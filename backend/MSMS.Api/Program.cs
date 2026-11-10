@@ -6,9 +6,11 @@ using MSMS.Api.Common.Audit;
 using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
 using MSMS.Api.Common.Notifications;
+using MSMS.Api.Common.Storage;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
 using MSMS.Api.Modules.Adm;
+using MSMS.Api.Modules.Att;
 using MSMS.Api.Modules.Com;
 using MSMS.Api.Modules.Iam;
 using MSMS.Api.Modules.Lrn;
@@ -29,6 +31,7 @@ builder.Services.AddDbContext<MsmsDbContext>(o =>
     o.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddSingleton<IClock, SystemClock>();
+builder.Services.AddImageStorage(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<AccountAccessValidator>();
@@ -83,6 +86,7 @@ builder.Services.AddIamModule();
 builder.Services.AddSchModule();
 builder.Services.AddPplModule();
 builder.Services.AddScdModule();
+builder.Services.AddAttModule();
 builder.Services.AddComModule();
 builder.Services.AddParModule();
 builder.Services.AddLrnModule(builder.Configuration);
@@ -115,6 +119,15 @@ if (app.Environment.IsDevelopment())
     await DevSeeder.RunAsync(
         scope.ServiceProvider.GetRequiredService<MsmsDbContext>(),
         scope.ServiceProvider.GetRequiredService<IClock>(),
+        scope.ServiceProvider.GetRequiredService<ILogger<Program>>());
+}
+
+// Mục lục sách giáo khoa cần có ở mọi môi trường (khác dữ liệu mẫu chỉ dành cho Development).
+using (var scope = app.Services.CreateScope())
+{
+    await TextbookSeeder.RunAsync(
+        scope.ServiceProvider.GetRequiredService<MsmsDbContext>(),
+        app.Environment.ContentRootPath,
         scope.ServiceProvider.GetRequiredService<ILogger<Program>>());
 }
 

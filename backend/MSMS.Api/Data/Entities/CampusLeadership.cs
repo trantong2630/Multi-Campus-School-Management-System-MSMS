@@ -19,6 +19,9 @@ public partial class CampusLeadership
 
     public DateTime CreatedAt { get; set; }
 
+    /// <summary>Thời điểm người này thực sự mất quyền (thay người hoặc kết thúc có hiệu lực ngay). Chỉ để đọc lịch sử; quyền vẫn tính theo ngày.</summary>
+    public DateTime? EndedAt { get; set; }
+
     public virtual Person? AssignedByPerson { get; set; }
 
     public virtual Campus Campus { get; set; } = null!;

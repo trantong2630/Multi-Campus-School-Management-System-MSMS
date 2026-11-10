@@ -472,6 +472,10 @@ namespace MSMS.Api.Migrations
                     b.Property<DateOnly?>("EndDate")
                         .HasColumnType("date");
 
+                    b.Property<DateTime?>("EndedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)");
+
                     b.Property<int>("StaffId")
                         .HasColumnType("int");
 
@@ -603,6 +607,10 @@ namespace MSMS.Api.Migrations
                     b.Property<DateOnly?>("EndDate")
                         .HasColumnType("date");
 
+                    b.Property<DateTime?>("EndedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)");
+
                     b.Property<int>("StaffId")
                         .HasColumnType("int");
 
@@ -730,6 +738,10 @@ namespace MSMS.Api.Migrations
 
                     b.Property<DateOnly?>("EndDate")
                         .HasColumnType("date");
+
+                    b.Property<DateTime?>("EndedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)");
 
                     b.Property<int>("StaffId")
                         .HasColumnType("int");
@@ -1255,6 +1267,9 @@ namespace MSMS.Api.Migrations
                     b.Property<bool>("IsHidden")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("LessonId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -1277,6 +1292,8 @@ namespace MSMS.Api.Migrations
                         .HasName("PK__Question__0DC06FAC89AD8931");
 
                     b.HasIndex("CreatedByPersonId");
+
+                    b.HasIndex("LessonId");
 
                     b.HasIndex(new[] { "SubjectId", "Status", "IsHidden" }, "IX_Question_Bank");
 
@@ -1753,6 +1770,87 @@ namespace MSMS.Api.Migrations
                     b.HasIndex(new[] { "TeacherId", "SessionDate", "PeriodSlotId" }, "IX_Session_Teacher");
 
                     b.ToTable("TeachingSession");
+                });
+
+            modelBuilder.Entity("MSMS.Api.Data.Entities.TextbookBook", b =>
+                {
+                    b.Property<int>("BookId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BookId"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<byte>("GradeLevel")
+                        .HasColumnType("tinyint");
+
+                    b.Property<short>("PageOffset")
+                        .HasColumnType("smallint");
+
+                    b.Property<short>("PdfPageCount")
+                        .HasColumnType("smallint");
+
+                    b.Property<int>("SubjectId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<byte>("Volume")
+                        .HasColumnType("tinyint");
+
+                    b.HasKey("BookId");
+
+                    b.HasIndex("SubjectId");
+
+                    b.HasIndex(new[] { "Code" }, "UQ_TextbookBook_Code")
+                        .IsUnique();
+
+                    b.ToTable("TextbookBook");
+                });
+
+            modelBuilder.Entity("MSMS.Api.Data.Entities.TextbookLesson", b =>
+                {
+                    b.Property<int>("LessonId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LessonId"));
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Chapter")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<short>("EndPage")
+                        .HasColumnType("smallint");
+
+                    b.Property<short>("SortOrder")
+                        .HasColumnType("smallint");
+
+                    b.Property<short>("StartPage")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("LessonId");
+
+                    b.HasIndex(new[] { "BookId", "SortOrder" }, "UQ_TextbookLesson_Order")
+                        .IsUnique();
+
+                    b.ToTable("TextbookLesson");
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.TimetableEntry", b =>
@@ -2320,6 +2418,11 @@ namespace MSMS.Api.Migrations
                         .IsRequired()
                         .HasConstraintName("FK__Question__Create__5F7E2DAC");
 
+                    b.HasOne("MSMS.Api.Data.Entities.TextbookLesson", "Lesson")
+                        .WithMany("Question")
+                        .HasForeignKey("LessonId")
+                        .HasConstraintName("FK_Question_TextbookLesson");
+
                     b.HasOne("MSMS.Api.Data.Entities.Subject", "Subject")
                         .WithMany("Question")
                         .HasForeignKey("SubjectId")
@@ -2327,6 +2430,8 @@ namespace MSMS.Api.Migrations
                         .HasConstraintName("FK__Question__Subjec__5BAD9CC8");
 
                     b.Navigation("CreatedByPerson");
+
+                    b.Navigation("Lesson");
 
                     b.Navigation("Subject");
                 });
@@ -2544,6 +2649,28 @@ namespace MSMS.Api.Migrations
                     b.Navigation("UpdatedByPerson");
 
                     b.Navigation("Version");
+                });
+
+            modelBuilder.Entity("MSMS.Api.Data.Entities.TextbookBook", b =>
+                {
+                    b.HasOne("MSMS.Api.Data.Entities.Subject", "Subject")
+                        .WithMany("TextbookBook")
+                        .HasForeignKey("SubjectId")
+                        .IsRequired()
+                        .HasConstraintName("FK_TextbookBook_Subject");
+
+                    b.Navigation("Subject");
+                });
+
+            modelBuilder.Entity("MSMS.Api.Data.Entities.TextbookLesson", b =>
+                {
+                    b.HasOne("MSMS.Api.Data.Entities.TextbookBook", "Book")
+                        .WithMany("TextbookLesson")
+                        .HasForeignKey("BookId")
+                        .IsRequired()
+                        .HasConstraintName("FK_TextbookLesson_Book");
+
+                    b.Navigation("Book");
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.TimetableEntry", b =>
@@ -2834,6 +2961,8 @@ namespace MSMS.Api.Migrations
 
                     b.Navigation("TeachingSession");
 
+                    b.Navigation("TextbookBook");
+
                     b.Navigation("TimetableEntry");
                 });
 
@@ -2866,6 +2995,16 @@ namespace MSMS.Api.Migrations
             modelBuilder.Entity("MSMS.Api.Data.Entities.TeachingSession", b =>
                 {
                     b.Navigation("AttendanceRecord");
+                });
+
+            modelBuilder.Entity("MSMS.Api.Data.Entities.TextbookBook", b =>
+                {
+                    b.Navigation("TextbookLesson");
+                });
+
+            modelBuilder.Entity("MSMS.Api.Data.Entities.TextbookLesson", b =>
+                {
+                    b.Navigation("Question");
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.TimetableVersion", b =>

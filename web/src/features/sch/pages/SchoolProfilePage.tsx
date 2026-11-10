@@ -25,10 +25,10 @@ interface FormValues {
 
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 
-/** SCH-07: thông tin nhận diện của trường. Hiệu trưởng và School Admin sửa; các loại còn lại chỉ xem. */
+/** SCH-07: thông tin nhận diện của trường. School Admin sửa; Hiệu trưởng chỉ xem. */
 export function SchoolProfilePage() {
   const { user } = useAuth();
-  const canWrite = user?.accountType === 'SchoolAdmin' || user?.accountType === 'Principal';
+  const canWrite = user?.accountType === 'SchoolAdmin';
   const qc = useQueryClient();
   const { profile, logoSrc, name, isLoading } = useSchool();
   const [form] = Form.useForm<FormValues>();
@@ -73,12 +73,11 @@ export function SchoolProfilePage() {
     <>
       <PageHeader
         title="Thông tin trường"
-        description="Tên trường hiện ở đầu trang và Trang chủ; logo trường hiện ở Trang chủ. Hiệu trưởng và quản trị hệ thống được sửa."
       />
       <div className="school-grid">
         <Card title="Thông tin chung" loading={isLoading}>
           <Form<FormValues>
-            form={form} layout="vertical" requiredMark={false} disabled={!canWrite}
+            form={form} layout="vertical" requiredMark={false} disabled={!canWrite} className={canWrite ? undefined : 'school-form--readonly'}
             onFinish={(v) => { setError(null); save.mutate(v); }}
             onValuesChange={() => setError(null)}
           >
@@ -89,7 +88,7 @@ export function SchoolProfilePage() {
               <AddressInput />
             </Form.Item>
             <div className="form-grid">
-              <Form.Item label="Số điện thoại" name="phoneNumber"><Input maxLength={20} /></Form.Item>
+              <Form.Item label="Số điện thoại" name="phoneNumber" rules={[{ pattern: /^0[35789]\d{8}$/, message: 'Số điện thoại di động phải gồm đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09.' }]}><Input maxLength={10} inputMode="tel" /></Form.Item>
               <Form.Item label="Email" name="email" rules={[{ type: 'email', message: 'Email chưa đúng định dạng.' }]}>
                 <Input maxLength={150} />
               </Form.Item>
@@ -111,9 +110,6 @@ export function SchoolProfilePage() {
           <div className="school-logo-box">
             {logoSrc ? <img src={logoSrc} alt={`Logo ${name}`} /> : <SchoolLogo size={72} />}
           </div>
-          <p className="school-logo-hint">
-            Ảnh JPG hoặc PNG, tối đa 2 MB.
-          </p>
           {canWrite && (
             <>
               <div className="school-logo-actions">

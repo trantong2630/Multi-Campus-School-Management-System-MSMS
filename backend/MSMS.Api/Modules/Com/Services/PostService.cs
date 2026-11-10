@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
+using MSMS.Api.Common.Storage;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
 using MSMS.Api.Data.Entities;
@@ -80,13 +81,13 @@ public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock
             CanEdit(p.AuthorPersonId), CanHide(p.Status, p.AuthorPersonId), CanUnhide(p.Status, p.HiddenByPersonId), CanDelete(p.AuthorPersonId));
     }
 
-    /// <summary>Đường dẫn file ảnh nếu người đọc được xem bài chứa ảnh đó.</summary>
-    public async Task<(string Path, string ContentType)> FindImageAsync(int postId, int imageId)
+    /// <summary>Ảnh nếu người đọc được xem bài chứa ảnh đó.</summary>
+    public async Task<StoredImage> FindImageAsync(int postId, int imageId)
     {
         var file = await VisibleToMe().Where(p => p.PostId == postId)
             .SelectMany(p => p.PostImage).Where(i => i.PostImageId == imageId).Select(i => i.FilePath)
             .FirstOrDefaultAsync() ?? throw NotFound();
-        return storage.Find(file) ?? throw NotFound();
+        return await storage.OpenAsync(file) ?? throw NotFound();
     }
 
     // ---- 4.8.12, 4.8.13 Soạn bài, đính kèm ảnh ----
@@ -116,7 +117,7 @@ public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock
         }
         catch
         {
-            saved.ForEach(storage.Delete);
+            await storage.DeleteAllAsync(saved);
             throw;
         }
         return await GetAsync(post.PostId);
@@ -140,7 +141,7 @@ public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock
         }
         catch
         {
-            saved.ForEach(storage.Delete);
+            await storage.DeleteAllAsync(saved);
             throw;
         }
         return await GetAsync(id);
@@ -154,7 +155,7 @@ public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock
         db.PostImage.Remove(image);
         post.UpdatedAt = clock.Now;
         await db.SaveChangesAsync();
-        storage.Delete(image.FilePath);
+        await storage.DeleteAsync(image.FilePath);
         return await GetAsync(id);
     }
 
@@ -217,7 +218,7 @@ public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock
         db.PostImage.RemoveRange(post.PostImage);
         db.Post.Remove(post);
         await db.SaveChangesAsync();
-        files.ForEach(storage.Delete);
+        await storage.DeleteAllAsync(files);
     }
 
     // ---- helpers ----

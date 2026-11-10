@@ -6,6 +6,7 @@ SignalR Hub (`/signalr`) cung cấp kênh realtime cho:
 - **Thông báo** (NotificationCreated)
 - **Tin nhắn** (MessageReceived, MessagesRead)
 - **Trạng thái gõ tin** (UserTyping)
+- **Trạng thái online/offline** (PresenceChanged)
 
 **Luật chính (BR-25)**: Gửi tin vẫn qua REST API và kiểm tra quan hệ. SignalR chỉ là kênh đẩy nhẹ sau khi SaveChanges thành công.
 
@@ -30,6 +31,10 @@ Khi kết nối thành công, client tự động được thêm vào:
 Nhóm cá nhân: user_{personId}
 ```
 
+Nhóm hội thoại `conversation_{conversationId}` chỉ có sau khi client gọi `JoinConversation` (xem bên dưới).
+
+School Admin không tham gia hội thoại: không được báo online, không gọi được `SendTyping` và `JoinConversation`.
+
 ---
 
 ## Sự kiện từ Server → Client
@@ -48,8 +53,22 @@ Nhóm cá nhân: user_{personId}
 }
 ```
 
+`MessageReceived` được gửi tới cả nhóm hội thoại và nhóm cá nhân của người nhận (để cập nhật bản xem trước và số tin chưa đọc khi họ đang ở hội thoại khác).
+
 ### NotificationCreated (Thông báo)
-**Payload**:
+Gửi tới nhóm cá nhân `user_{personId}` của người nhận. Thông báo thường (thời khóa biểu, tiết, bài tập…) được đẩy sau khi lưu thành công, payload:
+```json
+{
+  "notificationId": 88,
+  "type": "AssignmentAssigned",
+  "title": "Bài tập mới: Ôn tập chương 1",
+  "preview": "Môn Toán, hạn nộp 21:00 05/11/2026.",
+  "refEntityType": "Assignment",
+  "refEntityId": 12,
+  "createdAt": "2026-10-24T09:15:00Z"
+}
+```
+Thông báo tin nhắn mới do dịch vụ hộp thư đẩy riêng, payload:
 ```json
 {
   "type": "MessageReceived",
@@ -62,10 +81,13 @@ Nhóm cá nhân: user_{personId}
 ```
 
 ### MessagesRead (Tin đã xem)
-**Payload**: `[conversationId, readAt]`
+**Payload**: `[conversationId, readAt]`. Gửi tới nhóm hội thoại khi người nhận mở hội thoại và các tin chưa đọc được đánh dấu đã xem.
 
 ### UserTyping (Đang gõ)
-**Payload**: `[conversationId, personId, isTyping]`
+**Payload**: `[conversationId, personId, isTyping]`. Chỉ gửi cho bên kia trong nhóm hội thoại, không lưu CSDL; client tự tắt chỉ báo sau vài giây.
+
+### PresenceChanged (Online/offline)
+**Payload**: `[personId, isOnline]`. Gửi tới bên kia của mọi hội thoại chung khi tài khoản có kết nối đầu tiên (online) hoặc mất kết nối cuối cùng (offline); nhiều tab hay nhiều thiết bị vẫn tính là online.
 
 ---
 
@@ -77,8 +99,9 @@ await connection.invoke("SendTyping", conversationId, isTyping);
 ```
 
 ### JoinConversation
+Kiểm người gọi thuộc hội thoại rồi thêm kết nối vào nhóm hội thoại; trả về `true` nếu bên kia đang online.
 ```csharp
-await connection.invoke("JoinConversation", conversationId);
+var otherIsOnline = await connection.invoke<bool>("JoinConversation", conversationId);
 ```
 
 ---

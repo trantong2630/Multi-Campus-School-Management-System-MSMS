@@ -167,7 +167,7 @@ public sealed class RolloverService(MsmsDbContext db, IClock clock)
 
         var students = await db.Enrollment.AsNoTracking().Where(EnrollmentRules.ActiveAt(source.AcademicYear.EndDate))
             .Where(e => e.ClassId == fromClassId && (e.Student.Status == Studying || (e.Student.Status == "Graduated" && e.Reason == EnrollmentCloseReasons.Graduated)))
-            .Select(e => new { e.StudentId, e.Student.Student.PersonCode, e.Student.Student.FullName, Graduated = e.Student.Status == "Graduated" })
+            .Select(e => new { e.StudentId, e.Student.Student.PersonCode, e.Student.Student.FullName, Graduated = e.Student.Status == "Graduated", e.Student.Student.DateOfBirth, e.Student.Student.Gender })
             .Distinct().ToListAsync();
         var ids = students.Select(s => s.StudentId).ToList();
         var placed = await db.Enrollment.AsNoTracking()
@@ -177,8 +177,8 @@ public sealed class RolloverService(MsmsDbContext db, IClock clock)
         var byStudent = placed.GroupBy(p => p.StudentId).ToDictionary(g => g.Key, g => g.First());
 
         return students.OrderBy(s => s.FullName).Select(s => byStudent.TryGetValue(s.StudentId, out var p)
-            ? new RolloverStudentDto(s.StudentId, s.PersonCode, s.FullName, p.ClassId, p.ClassName, s.Graduated)
-            : new RolloverStudentDto(s.StudentId, s.PersonCode, s.FullName, null, null, s.Graduated)).ToList();
+            ? new RolloverStudentDto(s.StudentId, s.PersonCode, s.FullName, p.ClassId, p.ClassName, s.Graduated, s.DateOfBirth, s.Gender)
+            : new RolloverStudentDto(s.StudentId, s.PersonCode, s.FullName, null, null, s.Graduated, s.DateOfBirth, s.Gender)).ToList();
     }
 
     /// <summary>

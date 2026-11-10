@@ -1,23 +1,21 @@
 import { useQuery } from '@tanstack/react-query';
-import { Card, Skeleton } from 'antd';
+import { Skeleton } from 'antd';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
-import { Globe, Mail, MapPin, Phone } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { useAuth } from '@/app/AuthProvider';
 import { schApi } from '@/features/sch/api';
 import { SchoolLogo } from '@/features/sch/components/SchoolLogo';
-import { useSchool } from '@/features/sch/hooks/useSchool';
 import { nextSemester as nextSemesterOf, semesterAt, semesterProgress } from '@/features/sch/semester';
 import type { AcademicYear, Holiday, PeriodSlot } from '@/features/sch/types';
 import { scdApi } from '@/features/scd/api';
 import type { MySession } from '@/features/scd/types';
-import { HeroBanner } from '@/shared/components/HeroBanner';
 import { formatTime, sessionOfDayLabel } from '@/shared/lib/format';
+import { Count } from '../components/BoardKit';
 import './home.css';
 
 /** Trang chủ chung cho mọi loại tài khoản: lời chào, hôm nay của trường và năm học. Không có số liệu thống kê (số liệu ở Dashboard). */
-const STAFF = ['SchoolAdmin', 'Principal', 'VicePrincipal', 'Teacher'];
 
 function greetingOf(now: Dayjs) {
   const h = now.hour();
@@ -27,7 +25,16 @@ function greetingOf(now: Dayjs) {
   return 'Chào buổi tối';
 }
 
-/** Đồng hồ phút: đủ để vạch "đang diễn ra" tự chuyển tiết mà không làm render dày. */
+/** Bầu trời của khối đầu trang đổi theo giờ: sáng sớm, ban ngày, hoàng hôn, ban đêm. */
+function skyOf(now: Dayjs) {
+  const h = now.hour() + now.minute() / 60;
+  if (h < 5 || h >= 19) return 'night';
+  if (h < 9) return 'dawn';
+  if (h < 16.5) return 'day';
+  return 'dusk';
+}
+
+/** Đồng hồ phút: đủ để mặt trời và vạch "bây giờ" tự dịch chuyển mà không làm render dày. */
 function useNow() {
   const [now, setNow] = useState(() => dayjs());
   useEffect(() => {
@@ -37,61 +44,14 @@ function useNow() {
   return now;
 }
 
-export function HomePage() {
-  const { user } = useAuth();
-  const school = useSchool();
-  const now = useNow();
-  const isStaff = !!user && STAFF.includes(user.accountType);
-  const today = now.format('YYYY-MM-DD');
-
-  const years = useQuery({ queryKey: ['sch', 'years'], queryFn: schApi.years.list, enabled: isStaff });
-  const year = years.data?.find((y) => y.isCurrent) ?? years.data?.[0];
-  const holidays = useQuery({
-    queryKey: ['sch', 'holidays', year?.academicYearId, undefined],
-    queryFn: () => schApi.holidays.list({ yearId: year!.academicYearId }),
-    enabled: isStaff && !!year,
-  });
-  const slots = useQuery({ queryKey: ['sch', 'slots'], queryFn: schApi.periodSlots.list, enabled: isStaff });
-  const mine = useQuery({ queryKey: ['scd', 'mine', today, today], queryFn: () => scdApi.mine(today, today), enabled: user?.accountType === 'Teacher' });
-
-  if (!user) return null;
-  const given = user.fullName.trim().split(/\s+/).at(-1) ?? user.fullName;
-  const context = [school.hasName ? school.name : null, year && `Năm học ${year.name}`].filter(Boolean).join(' · ');
-
-  // Bento 3 cột: lời chào (ô nhấn xanh) + năm học ở hàng trên; hôm nay + ngày nghỉ ở hàng dưới.
-  return (
-    <div className="home-bento">
-      <section className={`bento-tile bento-tile--accent home-bento__greet${isStaff ? '' : ' home-bento__greet--wide'}`}>
-        <HeroBanner
-          eyebrow={context || undefined}
-          title={`${greetingOf(now)}, ${given}`}
-          description={now.format('dddd, DD/MM/YYYY')}
-          extra={<span className="home-crest" aria-hidden><SchoolLogo size={104} /></span>}
-        />
-      </section>
-
-      {isStaff ? (
-        <>
-          <YearCard now={now} year={year} loading={years.isLoading} />
-          <TodayCard
-            now={now} loading={slots.isLoading}
-            slots={slots.data ?? []} sessions={mine.data ?? []} holidays={holidays.data ?? []}
-            showMine={user.accountType !== 'SchoolAdmin'}
-          />
-          <HolidaysCard now={now} holidays={holidays.data ?? []} loading={years.isLoading || holidays.isLoading} />
-        </>
-      ) : (
-        <SchoolCard />
-      )}
-    </div>
-  );
-}
+/** "HH:mm[:ss]" → số phút trong ngày. */
+const minutesOf = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+const stagger = (i: number): CSSProperties => ({ ['--i' as string]: i });
 
 type SlotState = 'done' | 'current' | 'next' | 'later';
 
-function TodayCard({ now, slots, sessions, holidays, loading, showMine }: {
-  now: Dayjs; slots: PeriodSlot[]; sessions: MySession[]; holidays: Holiday[]; loading: boolean; showMine: boolean;
-}) {
+/** Các tiết đang dùng hôm nay, trạng thái từng tiết và tiết của chính người dùng. */
+function useDay(now: Dayjs, slots: PeriodSlot[], sessions: MySession[], holidays: Holiday[], showMine: boolean) {
   const today = now.format('YYYY-MM-DD');
   const clock = now.format('HH:mm:ss');
   const active = useMemo(
@@ -99,131 +59,259 @@ function TodayCard({ now, slots, sessions, holidays, loading, showMine }: {
     [slots],
   );
   const offToday = holidays.find((h) => h.holidayDate.slice(0, 10) === today && h.campusId === null);
-  const isSunday = now.day() === 0;
-
+  const off = now.day() === 0 || !!offToday;
   const nextIndex = active.findIndex((s) => s.startTime > clock);
-  const stateOf = (s: PeriodSlot, i: number): SlotState => {
+  const currentIndex = active.findIndex((s) => s.startTime <= clock && s.endTime > clock);
+  const stateOf = (i: number): SlotState => {
+    const s = active[i];
     if (s.endTime <= clock) return 'done';
     if (s.startTime <= clock) return 'current';
-    if (i === nextIndex && !active.some((x) => x.startTime <= clock && x.endTime > clock)) return 'next';
+    if (i === nextIndex && currentIndex < 0) return 'next';
     return 'later';
   };
-  const mineAt = (s: PeriodSlot) =>
-    sessions.find((m) => m.sessionOfDay === s.sessionOfDay && m.periodNo === s.periodNo && m.status !== 'Cancelled');
+  const mineAt = (s: PeriodSlot) => showMine
+    ? sessions.find((m) => m.sessionOfDay === s.sessionOfDay && m.periodNo === s.periodNo && m.status !== 'Cancelled')
+    : undefined;
+  const focusIndex = currentIndex >= 0 ? currentIndex : nextIndex;
+  return { active, off, offReason: offToday?.reason ?? 'Chủ nhật', stateOf, mineAt, currentIndex, focusIndex };
+}
+type Day = ReturnType<typeof useDay>;
+
+export function HomePage() {
+  const { user } = useAuth();
+  const now = useNow();
+  const today = now.format('YYYY-MM-DD');
+
+  const years = useQuery({ queryKey: ['sch', 'years'], queryFn: schApi.years.list });
+  const year = years.data?.find((y) => y.isCurrent) ?? years.data?.[0];
+  const holidays = useQuery({
+    queryKey: ['sch', 'holidays', year?.academicYearId, undefined],
+    queryFn: () => schApi.holidays.list({ yearId: year!.academicYearId }),
+    enabled: !!year,
+  });
+  const slots = useQuery({ queryKey: ['sch', 'slots'], queryFn: schApi.periodSlots.list });
+  const mine = useQuery({ queryKey: ['scd', 'mine', today, today], queryFn: () => scdApi.mine(today, today), enabled: user?.accountType === 'Teacher' });
+  const day = useDay(now, slots.data ?? [], mine.data ?? [], holidays.data ?? [], user?.accountType !== 'SchoolAdmin');
+
+  if (!user) return null;
+  const given = user.fullName.trim().split(/\s+/).at(-1) ?? user.fullName;
 
   return (
-    <Card className="home-card home-bento__today" title="Hôm nay" extra={<span className="home-clock tabular">{now.format('HH:mm')}</span>}>
+    <div className="hm">
+      <section className={`hm-hero hm-hero--${skyOf(now)}`} aria-label="Lời chào">
+        <i className="hm-cloud hm-cloud--a" aria-hidden />
+        <i className="hm-cloud hm-cloud--b" aria-hidden />
+        <div className="hm-hero__text">
+          <span className="hm-crest" style={stagger(0)} aria-hidden><SchoolLogo size={136} /></span>
+          <div className="hm-hero__words">
+            <h1 className="hm-hero__title" style={stagger(1)}>{greetingOf(now)},<br />{given}</h1>
+          </div>
+        </div>
+        <DayDial now={now} day={day} loading={slots.isLoading} />
+      </section>
+
+      <div className="hm-grid">
+        <TodayCard now={now} day={day} loading={slots.isLoading} />
+        <YearCard now={now} year={year} loading={years.isLoading} />
+        <HolidaysCard now={now} holidays={holidays.data ?? []} loading={years.isLoading || holidays.isLoading} />
+      </div>
+    </div>
+  );
+}
+
+const DIAL = { size: 300, c: 150, arc: 116, num: 90 };
+/** Điểm trên mặt đồng hồ: t = 0 ở vị trí 12 giờ, đi theo chiều kim đồng hồ, t = 1 là một vòng. */
+function dialPoint(t: number, r: number) {
+  const a = t * 2 * Math.PI;
+  return { x: DIAL.c + r * Math.sin(a), y: DIAL.c - r * Math.cos(a) };
+}
+function dialPath(t1: number, t2: number, r: number) {
+  const a = dialPoint(t1, r);
+  const b = dialPoint(t2, r);
+  return `M ${a.x.toFixed(2)} ${a.y.toFixed(2)} A ${r} ${r} 0 ${t2 - t1 > 0.5 ? 1 : 0} 1 ${b.x.toFixed(2)} ${b.y.toFixed(2)}`;
+}
+
+/**
+ * Đồng hồ kim thường (12 giờ): các tiết nằm trên mặt đồng hồ đúng vị trí giờ của chúng, nên buổi sáng nằm ở
+ * khoảng 7–11 giờ và buổi chiều ở khoảng 1–6 giờ, chỗ giữa là khoảng nghỉ trống. Tiết nào chưa tới thì mờ,
+ * đến giờ tiết đó mới đậm lên. Bên cạnh là giờ số và một câu nói đang học tiết nào.
+ */
+function DayDial({ now, day, loading }: { now: Dayjs; day: Day; loading: boolean }) {
+  const { active, off, offReason, stateOf, mineAt, currentIndex, focusIndex } = day;
+  if (loading) return <div className="hm-arc"><Skeleton active title={false} paragraph={{ rows: 4 }} /></div>;
+  if (off || active.length === 0) {
+    return (
+      <div className="hm-arc hm-arc--rest">
+        <span className="hm-clock tabular">{now.format('HH:mm')}</span>
+        <b>{off ? `Hôm nay trường nghỉ · ${offReason}` : 'Trường chưa khai khung giờ tiết'}</b>
+      </div>
+    );
+  }
+
+  const focus = focusIndex >= 0 ? active[focusIndex] : undefined;
+  const lesson = focus ? mineAt(focus) : undefined;
+  const live = currentIndex >= 0;
+  const line = !focus ? 'Hôm nay đã hết tiết' : live ? `Đang học tiết ${focus.periodNo}` : `Tiết ${focus.periodNo} lúc ${formatTime(focus.startTime)}`;
+  const hourDeg = ((now.hour() % 12) + now.minute() / 60) * 30;
+  const minuteDeg = now.minute() * 6;
+
+  return (
+    <div className="hm-arc">
+      <svg className="hm-dial" viewBox={`0 0 ${DIAL.size} ${DIAL.size}`} role="img" aria-label={`Đồng hồ ${now.format('HH:mm')}`}>
+        <circle cx={DIAL.c} cy={DIAL.c} r={138} className="hm-dial__face" />
+        {Array.from({ length: 12 }, (_, i) => {
+          const n = i === 0 ? 12 : i;
+          const p = dialPoint(i / 12, DIAL.num);
+          return <text key={n} x={p.x} y={p.y + 5} textAnchor="middle" className="hm-dial__num">{n}</text>;
+        })}
+        {active.map((sl, i) => {
+          const t1 = (minutesOf(sl.startTime) % 720) / 720;
+          let t2 = (minutesOf(sl.endTime) % 720) / 720;
+          if (t2 <= t1) t2 += 1;
+          return (
+            <path
+              key={sl.periodSlotId}
+              d={dialPath(t1, t2, DIAL.arc)}
+              className={`hm-dial__seg hm-dial__seg--${stateOf(i) === 'current' ? 'current' : 'idle'}`}
+              style={stagger(i)}
+            >
+              <title>{`${sessionOfDayLabel(sl.sessionOfDay)} · Tiết ${sl.periodNo} · ${formatTime(sl.startTime)}–${formatTime(sl.endTime)}`}</title>
+            </path>
+          );
+        })}
+        <g className="hm-dial__hand" style={{ ['--rot' as string]: `${hourDeg}deg` }}>
+          <line x1={DIAL.c} y1={DIAL.c + 8} x2={DIAL.c} y2={DIAL.c - 52} className="hm-dial__hour" />
+        </g>
+        <g className="hm-dial__hand" style={{ ['--rot' as string]: `${minuteDeg}deg` }}>
+          <line x1={DIAL.c} y1={DIAL.c + 12} x2={DIAL.c} y2={DIAL.c - 76} className="hm-dial__minute" />
+        </g>
+        <circle cx={DIAL.c} cy={DIAL.c} r={6} className="hm-dial__pin" />
+      </svg>
+      <div className="hm-arc__centre">
+        <span className="hm-clock tabular" aria-label={`Bây giờ là ${now.format('HH:mm')}`}>{now.format('HH:mm')}</span>
+        <b className={live ? 'is-live' : ''}>{line}</b>
+        {lesson && <span>{lesson.className} · {lesson.subjectName}</span>}
+      </div>
+    </div>
+  );
+}
+
+/** Hôm nay: trục thời gian dọc của các tiết trong ngày, giáo viên thấy thêm lớp · môn của chính mình ở từng tiết. */
+/** Hôm nay: đầu thẻ là tờ lịch ngày hôm nay và số tiết, bên dưới là trục thời gian dọc; giáo viên thấy thêm lớp · môn của chính mình ở từng tiết. */
+function TodayCard({ now, day, loading }: { now: Dayjs; day: Day; loading: boolean }) {
+  const { active, off, offReason, stateOf, mineAt } = day;
+  return (
+    <section className="hm-card hm-today" style={stagger(3)} aria-label="Hôm nay">
+      <header className="hm-campus">
+        <span className="hm-campus__mark">
+          <b>{now.format('dddd').replace(/(^|\s)\S/g, (c) => c.toUpperCase())}</b>
+          <i className="tabular">{now.format('DD/MM')}</i>
+        </span>
+      </header>
       {loading ? (
         <Skeleton active title={false} paragraph={{ rows: 6 }} />
-      ) : isSunday || offToday ? (
-        <div className="home-rest">
-          <b>Hôm nay trường nghỉ</b>
-          <span>{offToday?.reason ?? 'Chủ nhật'}</span>
-        </div>
+      ) : off ? (
+        <div className="hm-rest"><b>Hôm nay trường nghỉ</b><span>{offReason}</span></div>
       ) : active.length === 0 ? (
-        <div className="home-rest"><span>Trường chưa khai khung giờ tiết.</span></div>
+        <div className="hm-rest"><span>Trường chưa khai khung giờ tiết.</span></div>
       ) : (
-        <ol className="home-periods">
-          {active.map((s, i) => {
-            const state = stateOf(s, i);
-            const m = showMine ? mineAt(s) : undefined;
-            const firstOfSession = i === 0 || active[i - 1].sessionOfDay !== s.sessionOfDay;
+        <ol className="hm-periods">
+          {active.map((sl, i) => {
+            const state = stateOf(i);
+            const m = mineAt(sl);
+            const first = i === 0 || active[i - 1].sessionOfDay !== sl.sessionOfDay;
             return (
-              <li key={s.periodSlotId} className={`home-period home-period--${state}`}>
-                {firstOfSession && <span className="home-period__session">{sessionOfDayLabel(s.sessionOfDay)}</span>}
-                <span className="home-period__time tabular">{formatTime(s.startTime)}<i>{formatTime(s.endTime)}</i></span>
-                <span className="home-period__node" aria-hidden />
-                <span className="home-period__what">
-                  <span className="home-period__no">Tiết {s.periodNo}</span>
-                  {m && <span className="home-period__lesson"><b>{m.className}</b> · {m.subjectName}</span>}
+              <li key={sl.periodSlotId} className={`hm-period hm-period--${state}`} style={stagger(i)}>
+                {first && <span className="hm-period__session">{sessionOfDayLabel(sl.sessionOfDay)}</span>}
+                <span className="hm-period__time tabular">{formatTime(sl.startTime)}<i>{formatTime(sl.endTime)}</i></span>
+                <span className="hm-period__node" aria-hidden />
+                <span className="hm-period__what">
+                  <b>Tiết {sl.periodNo}</b>
+                  {m && <span><strong>{m.className}</strong> · {m.subjectName}</span>}
                 </span>
-                {state === 'current' && <span className="home-period__tag">Đang diễn ra</span>}
-                {state === 'next' && <span className="home-period__tag home-period__tag--next">Tiếp theo</span>}
+                {state === 'current' && <em className="hm-period__tag">Đang diễn ra</em>}
               </li>
             );
           })}
         </ol>
       )}
-    </Card>
+    </section>
   );
 }
 
+/** Năm học: học kỳ là một dãy ô tuần, tuần đã qua tô xanh, tuần này màu cam và cao hơn. */
 function YearCard({ now, year, loading }: { now: Dayjs; year?: AcademicYear; loading: boolean }) {
   const today = dayjs(now.format('YYYY-MM-DD'));
   const semester = semesterAt(year, today);
   const nextSemester = nextSemesterOf(year, today);
   const progress = semester ? semesterProgress(semester, today) : null;
+  const shown = semester ?? nextSemester;
+  const total = shown ? semesterProgress(shown, dayjs(shown.endDate)).total : 0;
 
   return (
-    <Card className="home-card home-bento__year" title="Năm học" extra={year && <span className="home-year tabular">{year.name}</span>}>
+    <section className="hm-card hm-year" style={stagger(4)} aria-label="Năm học">
+      <h2 className="hm-card__title">Năm học{year && <span className="hm-card__aside tabular">{year.name}</span>}</h2>
       {loading ? (
-        <Skeleton active title={false} paragraph={{ rows: 4 }} />
+        <Skeleton active title={false} paragraph={{ rows: 3 }} />
       ) : !year ? (
-        <div className="home-rest"><span>Chưa có năm học nào.</span></div>
+        <div className="hm-rest"><span>Chưa có năm học nào.</span></div>
       ) : (
-        <div className="home-term">
-          <TermDonut today={today} semester={semester ?? nextSemester} progress={progress} />
-          <div className="home-term__text">
+        <>
+          <div className="hm-term">
             <b>{semester?.name ?? (nextSemester ? `Sắp tới: ${nextSemester.name}` : 'Ngoài học kỳ')}</b>
-            <span className="home-term__sub tabular">
-              {semester
-                ? `${dayjs(semester.startDate).format('DD/MM')} → ${dayjs(semester.endDate).format('DD/MM/YYYY')}`
-                : nextSemester ? `Bắt đầu ${dayjs(nextSemester.startDate).format('DD/MM/YYYY')}` : `Năm học ${year.name}`}
-            </span>
+            {progress && (
+              <span className="hm-term__week tabular">Tuần <strong><Count value={progress.week} /></strong> / {progress.total}</span>
+            )}
           </div>
-        </div>
+          {shown && (
+            <>
+              <ol className="hm-weeks" aria-label={progress ? `Tuần ${progress.week} trên ${progress.total}` : 'Ngoài học kỳ'}>
+                {Array.from({ length: total }, (_, i) => (
+                  <li
+                    key={i}
+                    className={progress ? (i + 1 < progress.week ? 'is-done' : i + 1 === progress.week ? 'is-now' : '') : ''}
+                    style={stagger(i)}
+                  />
+                ))}
+              </ol>
+              <div className="hm-term__dates tabular">
+                <span>{dayjs(shown.startDate).format('DD/MM')}</span>
+                <span>{dayjs(shown.endDate).format('DD/MM/YYYY')}</span>
+              </div>
+            </>
+          )}
+        </>
       )}
-    </Card>
+    </section>
   );
 }
 
-const DONUT = { size: 160, r: 68, stroke: 12 };
-
-/** Tọa độ trên vòng, 0° ở đỉnh, chiều kim đồng hồ. */
-function polar(deg: number) {
-  const rad = ((deg - 90) * Math.PI) / 180;
-  const c = DONUT.size / 2;
-  return { x: c + DONUT.r * Math.cos(rad), y: c + DONUT.r * Math.sin(rad) };
-}
-
-/**
- * Vòng tiến độ của học kỳ đang diễn ra (hoặc sắp tới): cả vòng là học kỳ, phần đã qua tô đặc, phần còn lại mờ.
- */
-function TermDonut({ today, semester, progress }: {
-  today: Dayjs; semester?: AcademicYear['semesters'][number]; progress: { week: number; total: number } | null;
-}) {
-  let elapsed = 0;
-  if (semester) {
-    const start = dayjs(semester.startDate);
-    const span = dayjs(semester.endDate).diff(start, 'day') + 1;
-    elapsed = Math.min(Math.max((today.diff(start, 'day') + 1) / span, 0), 1);
-  }
-  const end = polar(elapsed * 359.99);
-
+/** Lịch của tháng có ngày nghỉ gần nhất: ngày đó tô cam đặc, các ngày nghỉ khác trong tháng tô cam nhạt, hôm nay có vòng viền. */
+function MiniMonth({ month, campus, firstKey, todayKey, offDays }: { month: Dayjs; campus?: string | null; firstKey: string; todayKey: string; offDays: Holiday[] }) {
+  const offSet = new Set(offDays.map((h) => h.holidayDate.slice(0, 10)));
+  const lead = (month.startOf('month').day() + 6) % 7;
+  const cells: (number | null)[] = [...Array<null>(lead).fill(null), ...Array.from({ length: month.daysInMonth() }, (_, i) => i + 1)];
   return (
-    <div className="home-donut">
-      <svg viewBox={`0 0 ${DONUT.size} ${DONUT.size}`} width={DONUT.size} height={DONUT.size} role="img"
-           aria-label={progress ? `Tuần ${progress.week} trên ${progress.total}` : 'Ngoài học kỳ'}>
-        <circle cx={DONUT.size / 2} cy={DONUT.size / 2} r={DONUT.r} fill="none" strokeWidth={DONUT.stroke}
-                stroke="var(--c-green600)" strokeOpacity={0.14} />
-        {elapsed > 0 && (
-          <path d={`M ${DONUT.size / 2} ${DONUT.size / 2 - DONUT.r} A ${DONUT.r} ${DONUT.r} 0 ${elapsed > 0.5 ? 1 : 0} 1 ${end.x} ${end.y}`}
-                fill="none" stroke="var(--c-green600)" strokeWidth={DONUT.stroke} strokeLinecap="round" />
-        )}
-      </svg>
-      <span className="home-ring">
-        {progress
-          ? <><small>Tuần</small><b className="tabular">{progress.week}</b><small className="tabular">/ {progress.total}</small></>
-          : <small>—</small>}
-      </span>
+    <div className="hm-cal" aria-label={month.format('[Tháng] M/YYYY')}>
+      <div className="hm-cal__head"><b>{month.format('[Tháng] M')}</b>{campus && <span>{campus}</span>}</div>
+      <ol className="hm-cal__grid">
+        {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((d) => <li key={d} className="hm-cal__dow">{d}</li>)}
+        {cells.map((d, i) => {
+          if (d === null) return <li key={`e${i}`} />;
+          const key = month.date(d).format('YYYY-MM-DD');
+          const cls = key === firstKey ? 'is-first' : offSet.has(key) ? 'is-off' : '';
+          return <li key={key} className={`${cls}${key === todayKey ? ' is-today' : ''}`}>{d}</li>;
+        })}
+      </ol>
     </div>
   );
 }
 
+/** Ngày nghỉ sắp tới: ngày gần nhất là một con số đếm ngược lớn, những ngày sau là dòng gọn. */
 function HolidaysCard({ now, holidays, loading }: { now: Dayjs; holidays: Holiday[]; loading: boolean }) {
   const todayKey = now.format('YYYY-MM-DD');
 
-  // Ngày nghỉ sắp tới: gộp các dòng cùng ngày cùng lý do (nghỉ cấp trường lẫn phân hiệu), lấy bốn ngày gần nhất.
+  // Gộp các dòng cùng ngày cùng lý do (nghỉ cấp trường lẫn phân hiệu), lấy bốn ngày gần nhất.
   const upcoming = useMemo(() => {
     const today = dayjs(todayKey);
     const seen = new Set<string>();
@@ -236,55 +324,43 @@ function HolidaysCard({ now, holidays, loading }: { now: Dayjs; holidays: Holida
         seen.add(k);
         return true;
       })
-      .slice(0, 4);
+      .slice(0, 3);
   }, [holidays, todayKey]);
 
-  return (
-    <Card className="home-card home-bento__holidays" title="Ngày nghỉ sắp tới">
-      {loading ? (
-        <Skeleton active title={false} paragraph={{ rows: 4 }} />
-      ) : upcoming.length === 0 ? (
-        <div className="home-rest"><span>Không còn ngày nghỉ nào trong năm học.</span></div>
-      ) : (
-        <ul className="home-holidays">
-          {upcoming.map((h) => {
-            const d = dayjs(h.holidayDate);
-            const left = d.diff(dayjs(todayKey), 'day');
-            return (
-              <li key={h.holidayId}>
-                <span className="home-date tabular"><b>{d.format('DD')}</b>{d.format('[Th]M')}</span>
-                <span className="home-holiday__text">
-                  <span>{h.reason ?? 'Ngày nghỉ'}</span>
-                  {h.campusName && <span className="home-holiday__campus">{h.campusName}</span>}
-                </span>
-                <span className="home-holiday__left tabular">{left === 0 ? 'Hôm nay' : `còn ${left} ngày`}</span>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </Card>
-  );
-}
+  const [first, ...rest] = upcoming;
+  const left = (h: Holiday) => dayjs(h.holidayDate).diff(dayjs(todayKey), 'day');
 
-/** Học sinh và phụ huynh: chưa đọc được lịch năm học, nên chỉ hiện thông tin liên hệ của trường (API công khai). */
-function SchoolCard() {
-  const { profile, name } = useSchool();
-  const rows = [
-    { icon: MapPin, value: profile?.address },
-    { icon: Phone, value: profile?.phoneNumber },
-    { icon: Mail, value: profile?.email },
-    { icon: Globe, value: profile?.website },
-  ].filter((r) => r.value);
   return (
-    <Card className="home-card home-card--school home-bento__school" title={name}>
-      {rows.length === 0 ? (
-        <span className="home-term__sub">Trường chưa cập nhật thông tin liên hệ.</span>
+    <section className="hm-card hm-holidays" style={stagger(5)} aria-label="Ngày nghỉ sắp tới">
+      <h2 className="hm-card__title">Ngày nghỉ sắp tới</h2>
+      {loading ? (
+        <Skeleton active title={false} paragraph={{ rows: 3 }} />
+      ) : !first ? (
+        <div className="hm-rest"><span>Không còn ngày nghỉ nào trong năm học.</span></div>
       ) : (
-        <ul className="home-contact">
-          {rows.map(({ icon: Icon, value }) => <li key={value}><Icon size={16} /> {value}</li>)}
-        </ul>
+        <>
+          <div className="hm-holiday">
+            <div className="hm-next">
+              <b className="hm-next__n tabular">{left(first) === 0 ? 'Nay' : <Count value={left(first)} />}</b>
+              <span className="hm-next__text">
+                <b>{left(first) === 0 ? 'là' : 'ngày nữa là'} {first.reason && first.reason !== 'Ngày nghỉ' ? first.reason : 'ngày nghỉ'}</b>
+              </span>
+            </div>
+            <MiniMonth month={dayjs(first.holidayDate)} campus={first.campusName} firstKey={first.holidayDate.slice(0, 10)} todayKey={todayKey} offDays={holidays} />
+          </div>
+          {rest.length > 0 && (
+            <ul className="hm-later">
+              {rest.map((h, i) => (
+                <li key={h.holidayId} style={stagger(i)}>
+                  <span className="tabular">{dayjs(h.holidayDate).format('DD/MM')}</span>
+                  <span>{h.reason ?? 'Ngày nghỉ'}{h.campusName ? ` · ${h.campusName}` : ''}</span>
+                  <em className="tabular">{left(h)} ngày</em>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
-    </Card>
+    </section>
   );
 }

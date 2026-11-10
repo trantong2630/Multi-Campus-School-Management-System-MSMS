@@ -649,6 +649,18 @@
 .qrow__detail li em { color: var(--c-green700); font-size: 12px; font-style: normal; font-weight: 700; }
 .qrow__why { margin: 10px 0 0; padding: 10px 14px; border: 1px solid var(--c-green200); border-radius: 12px; background: var(--c-green50); color: var(--c-text1); }
 .qrow__why strong { color: var(--c-green800); }
+.qsrc { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 8px 0 0; font-size: 13px; line-height: 20px; }
+.qsrc__k { color: var(--c-text2); font-weight: 600; }
+.qsrc__lesson { color: var(--c-text1); font-weight: 700; }
+.qsrc__pg { display: inline-block; padding: 0 9px; border-radius: 999px; background: var(--c-green100); color: var(--c-green800); font-size: 12px; font-weight: 700; line-height: 20px; white-space: nowrap; }
+.qsrc__book { color: var(--c-text2); }
+.qsrc__btn { padding: 0; border: 0; background: none; color: var(--c-green800); font-weight: 700; text-decoration: underline; cursor: pointer; }
+.qsrc__title { display: inline-flex; align-items: center; gap: 10px; }
+.srcpages { display: flex; flex-direction: column; gap: 16px; max-height: 70vh; overflow-y: auto; }
+.srcpages__page { margin: 0; }
+.srcpages__page img { display: block; width: 100%; border: 1px solid var(--c-borderMint); border-radius: 12px; }
+.srcpages__page figcaption { margin-top: 8px; text-align: center; }
+.srcpages__wait { display: grid; place-items: center; min-height: 160px; color: var(--c-text2); font-size: 13px; }
 .bank__more { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; color: var(--c-text2); font-size: 13px; }
 
 .oe { display: flex; flex-direction: column; gap: 8px; }
@@ -810,8 +822,8 @@
 
 .dept__pulse { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 12px 36px; margin-bottom: 20px; padding: 18px 24px; border: 1px solid var(--c-border); border-radius: 28px; background: var(--c-surface); box-shadow: var(--shadow-card); }
 .dept__gauge { display: flex; align-items: center; gap: 18px; padding-right: 36px; border-right: 1px dashed var(--c-border); }
-.dept__gauge strong { display: block; font-size: 17px; }
-.dept__gauge span { display: block; max-width: 150px; margin-top: 2px; color: var(--c-text2); font-size: 13px; line-height: 18px; }
+.dept__gauge > div > strong { display: block; font-size: 17px; }
+.dept__gauge > div > span { display: block; max-width: 150px; margin-top: 2px; color: var(--c-text2); font-size: 13px; line-height: 18px; }
 .dept__stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .dept__stat { display: flex; flex-direction: column; align-items: flex-start; gap: 0; padding: 12px 16px; border: 0; border-radius: 20px; background: none; font: inherit; text-align: left; cursor: pointer; transition: background 140ms; }
 .dept__stat:hover { background: var(--c-rowHoverBg); }
@@ -907,3 +919,16 @@
 .dept__chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: var(--radius-pill); background: var(--c-sunken); color: var(--c-text2); font-size: 12px; }
 .dept__chip b { padding: 1px 9px; border-radius: var(--radius-pill); background: var(--sj-bg); color: var(--sj-fg); font-weight: 700; }
 @media (max-width: 1100px) { .dept__member { grid-template-columns: 36px minmax(0, 1fr) 72px; } .dept__teach { grid-column: 2 / -1; } }
+
+/* Ô chọn bài trong quầy soạn: tên bài rút gọn khi hẹp, trang in luôn nằm gọn trong viên thuốc bên phải. */
+.lessonline { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.lessonline__title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lessonpick .lessonline__title { white-space: normal; }
+.lessonline__pg { flex: none; padding: 0 9px; border-radius: 999px; background: var(--c-green100); color: var(--c-green800); font-size: 12px; font-weight: 700; line-height: 20px; white-space: nowrap; }
+
+/* Phân tích bài làm: nơi nên ôn trong sách, mỗi bài một dòng (tên bài, viên thuốc số trang, câu sai và tên sách). */
+.rv-ai__refs { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.rv-ai__refs li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 14px; line-height: 20px; }
+.rv-ai__reflesson { color: var(--c-text1); font-weight: 700; }
+.rv-ai__pg { display: inline-block; padding: 0 9px; border-radius: 999px; background: var(--c-green100); color: var(--c-green800); font-size: 12px; font-weight: 700; line-height: 20px; white-space: nowrap; }
+.rv-ai__refmeta { color: var(--c-text2); }

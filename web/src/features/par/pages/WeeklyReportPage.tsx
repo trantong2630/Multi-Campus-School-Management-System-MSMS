@@ -85,7 +85,7 @@ export function WeeklyReportPage() {
 
   return (
     <div className="weekly-report-page">
-      <PageHeader title="Sổ liên lạc điện tử" description="Xem chuyên cần và bài tập rèn luyện theo tuần" />
+      <PageHeader title="Sổ liên lạc điện tử" />
       <div className="weekly-report__controls">
         <Space size="large" wrap>
           {!isStudent && (

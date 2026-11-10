@@ -14,7 +14,7 @@ public class SchoolController(SchoolProfileService service) : ControllerBase
     [HttpGet, AllowAnonymous]
     public Task<SchoolProfileDto> Get() => service.GetAsync();
 
-    [HttpPut, Authorize(Policy = Policies.SchoolProfileManager)]
+    [HttpPut, Authorize(Policy = Policies.SchoolAdmin)]
     public Task<SchoolProfileDto> Update(SchoolProfileRequest r) => service.UpdateAsync(r);
 
     [HttpGet("logo"), AllowAnonymous]
@@ -24,10 +24,10 @@ public class SchoolController(SchoolProfileService service) : ControllerBase
         if (logo is null) return NotFound();
         // Giao diện thêm ?v=<phiên bản> vào đường dẫn nên có thể cho trình duyệt cache lâu.
         Response.Headers.CacheControl = "public, max-age=604800";
-        return PhysicalFile(logo.Value.Path, logo.Value.ContentType);
+        return File(logo.Content, logo.ContentType);
     }
 
-    [HttpPost("logo"), Authorize(Policy = Policies.SchoolProfileManager)]
+    [HttpPost("logo"), Authorize(Policy = Policies.SchoolAdmin)]
     [RequestSizeLimit(3_000_000)]
     public Task<SchoolProfileDto> UploadLogo(IFormFile file)
     {
@@ -35,6 +35,6 @@ public class SchoolController(SchoolProfileService service) : ControllerBase
         return service.SetLogoAsync(file);
     }
 
-    [HttpDelete("logo"), Authorize(Policy = Policies.SchoolProfileManager)]
+    [HttpDelete("logo"), Authorize(Policy = Policies.SchoolAdmin)]
     public Task<SchoolProfileDto> RemoveLogo() => service.RemoveLogoAsync();
 }

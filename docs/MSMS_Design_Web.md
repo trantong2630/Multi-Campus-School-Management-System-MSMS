@@ -21,10 +21,10 @@ Emerald leads; the page stays light and airy. Five adjectives: **fresh · layere
 | --- | --- |
 | Cool-white page (`bg`) with a **soft aqua sky and low green hills** behind the content; content in **white cards** (radius 20, hairline border, very soft shadow) | Bare black text on one flat white sheet; cream or beige backgrounds; heavy decoration |
 | **Solid emerald sider** (light at the bottom) flush to the left edge with a rounded right edge; the selected item is a **notched tab** that melts into the page | White or dark sider; a tab that jumps |
-| Every page opens with a large **title block** on the page background: title, description, multi-tone summary chips, actions | A boxed banner around the title |
+| Every page opens with a large **title block** on the page background: title, multi-tone summary chips, actions | A boxed banner around the title |
 | **Lists are rows of separate white cards** (radius 16, 10 apart), not a ruled grid | Dense ruled tables |
 | **One main color (emerald) plus four supporting tones** (sky, violet, amber, teal; coral only for danger) used in small doses: stat icons, chips, avatars, chart bars, calendar leaves | A rainbow, saturated blocks, or tones on large surfaces |
-| Each Dashboard / Trang chủ screen has **exactly one tinted tile** (`gradient.accent`: pale mint → pale sky, dark text) inside a bento grid | Solid dark-green blocks; several tinted tiles competing |
+| A Bảng điều khiển screen has **at most one tinted panel** (pale mint → white, dark text); Trang chủ has no tinted panel (its sky panel follows the time of day, the three cards are white) | Solid dark-green blocks; several tinted panels competing; a page that is all green |
 | Icons where they do a job: menu, buttons, row actions, and the tinted icon chip on a stat tile | Decorative circles and orbs |
 | **Amber is the marker color** — "you are here / happening now / needs attention" — and the tone of the "Đang diễn ra" pill | Amber for buttons or links |
 
@@ -69,10 +69,10 @@ Six accents — `green`, `sky`, `violet`, `amber`, `teal`, `coral` (`*Fg` / `*Bg
 | Where | How |
 | --- | --- |
 | Timetable grid | one accent per subject (§9.1) |
-| Stat tiles (§8.6) | the icon chip takes the tile's tone |
+| Stat strip (§8.6) | four pastel tiles in one strip, one tone each, no icons |
 | Person avatars (§8.2b) | tone chosen by a hash of the name, so a person keeps one color everywhere |
-| Dashboard grade chart | one tone per grade |
-| Trang chủ holiday leaves | leaves cycle green → sky → violet → amber |
+| Bảng điều khiển bars and rings | one colour per state: ổn `green600`, cần nhắc `amber`, thấp `coralFg`, chưa có dữ liệu `disabled` |
+| Trang chủ holiday | the nearest holiday as a 64px countdown number, the rest as hairline rows |
 
 `coral` is reserved for danger and subject variety; do not use it for decoration. Accents sit on small surfaces only (chips, icon tiles, bars) in their pale `*Bg` fill with the `*Fg` ink.
 
@@ -253,7 +253,7 @@ Wrap the app with `<ConfigProvider theme={antdTheme} locale={viVN}>` and call `d
  │ TỔNG QUAN         │  • Hồ sơ                                                 [Tải mẫu][Import][+ Thêm cán bộ]
  │ ⌂ Trang chủ       │  Cán bộ
  │ QUẢN LÝ           │  Mô tả…
- │ ⚙ Thiết lập     ▾ │  ( 4 cán bộ … )
+ │ ⚙ Cơ cấu nhà trường ▾ │  ( 4 cán bộ … )
  │ 👤 Hồ sơ         ▴ │
  │  ┆ Cán bộ  ◀tab ╮ │  [Đang hoạt động|Tất cả] (Tìm…)(Tìm kiếm) (Phân hiệu ▾) (Tổ ▾) …
  │  ┆ Trách nhiệm   │
@@ -318,7 +318,7 @@ Structure is fixed by Conventions §4.7 (the order of groups never changes). Thi
 | Element | Spec |
 | --- | --- |
 | Wordmark | `<BrandLogo tone="white" size={34} />`, left-aligned in a 68px row, padding 24; collapsed: size 18, centered. No school block under it — the school name and logo appear on Trang chủ |
-| Group labels | the menu is split into three labelled clusters — **Tổng quan** (Trang chủ, Dashboard), **Quản lý** (Thiết lập, Hồ sơ, Thời khóa biểu, Điểm danh, Bài tập rèn luyện, Phụ huynh, Bảng tin), **Hệ thống** (Quản trị). Label 11/600 uppercase, letter-spacing .08em, 62% white, padding 16/10/6. The menu column has 20 padding on top so the notch of the first item is not clipped. A cluster with no visible group is not rendered. Collapsed: the label becomes a 1px 18%-white divider |
+| Group labels | the menu is split into three labelled clusters — **Tổng quan** (Trang chủ, Bảng điều khiển), **Quản lý** (Cơ cấu nhà trường, Hồ sơ, Thời khóa biểu, Điểm danh, Bài tập rèn luyện, Phụ huynh, Bảng tin), **Hệ thống** (Quản trị). Label 11/600 uppercase, letter-spacing .08em, 62% white, padding 16/10/6. The menu column has 20 padding on top so the notch of the first item is not clipped. A cluster with no visible group is not rendered. Collapsed: the label becomes a 1px 18%-white divider |
 | L1 item | height 44, radius `md`, white icon in a 32×32 tile (radius `sm`, `rgba(255,255,255,.12)` when the group is open), label 14/500, chevron right; hover `rgba(255,255,255,.12)` |
 | L2 item | height 38, indent-left 48, long labels truncate with an ellipsis on the label only, **no icon and no bullet**, label 13/400 at 86% white; a 1px vertical line at 22% white joins the items |
 | Selected | a **notched tab**: a layer in the page color (`bg`) under the menu, from the item's left (12 inset) to the sider's right edge, radius `xl` on its left corners, with two 20×20 inverted corners above and below its right end so it merges with the page like a folder tab. The menu column runs 2px past the sider's right edge and hides its scrollbar, so no seam shows where tab and page meet. It **slides** (transform + height, 280ms ease-out) to the selected item on navigation and follows groups as they open and close. Text `green700` weight 600, icon `green600`. When the selected item's group is closed (or the sider is collapsed) the tab sits on the group title, which turns `green700` |
@@ -331,9 +331,14 @@ The tab does not animate under `prefers-reduced-motion`.
 
 ### 6.2 Header
 
-Height 72, transparent on the page, no border, padding 20 left and 32 right. Left: the **location bar** — a white pill (height 44, padding 0 20, 1px `border`) holding the path (14 `text3`, current page 500 `text2`, `ChevronRight` between levels; pages outside the menu show "Trang chủ"), a 1px `border` divider, then the school name from SCH-07 (15/700 `text1`, ellipsis, no logo; "MSMS" until a name is saved). Middle-right: the **quick-search pill** — height 44, white, 1px `border`, `Search` icon, "Tìm nhanh màn hình" 13 `text3` and a `Ctrl K` key cap; click opens §6.3. Far right: the **account chip** — pill, height 48, white, 1px `border`, shadow `card`: 34px `green500` avatar with a white initial, name 13/600 `text1` over account type 12 `text3`, chevron; hover border `green300`. Click opens `Hồ sơ cá nhân` · `Đổi mật khẩu` · `Đăng xuất` below it.
+Height 72, transparent on the page, no border, padding 20 left and 32 right. From left to right:
 
-No current-year chip: the year lives on Trang chủ and in each screen's own filters. A notification bell with count badge joins the right side only once COM notifications ship — never render a bell that does nothing.
+- **Location**: the path as breadcrumb — group › screen from the menu, the last item in `text1` 600 and the earlier ones `text3`; Trang chủ shows only "Trang chủ", Hồ sơ cá nhân and Đổi mật khẩu show "Tài khoản › …". Beside it the school name (truncated, full name in a tooltip).
+- **Quick search pill** "Tìm nhanh màn hình" with a `Ctrl K` key cap; it opens the command palette (§6.3).
+- **Notification bell** (`features/com/components/NotificationBell`).
+- **Account chip**: 34px avatar (photo or initials), full name over the account type, a chevron; it opens a dropdown **Hồ sơ cá nhân · Đổi mật khẩu · Đăng xuất**.
+
+The header never carries the timetable, clock or date — those live on Trang chủ (§9.4).
 
 ### 6.3 Command palette (quick search)
 
@@ -356,13 +361,12 @@ Modules are told apart by **words**: the sider label and cluster and the header 
 
 ### 8.0 Page header
 
-Every screen except Trang chủ opens with `shared/components/PageHeader.tsx` (`title`, `description`, `extra`), drawn **directly on the page background** — no band, no card — with padding 8×4 and 24 above the next block.
+Every screen except Trang chủ opens with `shared/components/PageHeader.tsx` (`title`, `extra`), drawn **directly on the page background** — no band, no card — with padding 8×4 and 24 above the next block.
 
 - **Title** — 32/40 700 `text1`, letter-spacing −0.025em (§3).
-- **Description** — 14/22 `text2`, max width 720.
 - **Actions** (`extra`) — the screen's buttons, bottom-aligned on the right, gap 10, wrapping.
 
-No icon tile and no decoration in the header.
+No icon tile, no decoration and no explanatory caption under the title; the same goes for hint lines under form fields (a rule is stated once, in its validation message).
 
 ### 8.1 Buttons
 
@@ -400,7 +404,6 @@ The screen users spend most time in. Follow exactly. `DataTable` (AntD `Table`) 
 
 Column headers use the short forms from Conventions §4.6: `Lớp · Môn · Giáo viên · Ngày · Tiết · Trạng thái`.
 
-A list inside a titled card (Dashboard) does not nest cards: it keeps flat rows with a hairline between them, runs flush to the card edges, indents its first and last column 24 to match the card title, and drops pagination.
 
 ### 8.2b People rows (avatar cell)
 
@@ -426,35 +429,24 @@ Any table or list whose rows are people (staff, students, parents, accounts) lea
 - Focus: border `green500` + 3px ring `focusRing`.
 - Error: border `danger`, 12px message below the field. The message must state **cause and remedy**, not just failure (Conventions §4.6).
 - Modal: radius `lg`, 18/600 `text1` title, width 520 (standard) / 720 (contains a table). Footer right-aligned, Đóng left of Lưu.
-- Long forms (about 8 fields or more, e.g. a staff profile) use `FormModal` with `variant="drawer"`: slides in from the right, width 640, two-column `form-grid`, footer pinned to the bottom with Đóng · Lưu right-aligned. Same validation, error and close rules as the modal.
+- Long forms (about 8 fields or more: Cán bộ, Học sinh, Đơn xin nghỉ, Câu hỏi…) use `FormModal` with `variant="drawer"`: slides in from the right, width 560–640, footer pinned to the bottom with Đóng · Lưu right-aligned. Same validation, error and close rules as the modal. Short forms (Phân hiệu, Lớp, Năm học, Môn học, Ngày nghỉ, Khung giờ tiết, Bài đăng…) stay a centred modal.
 - **Irreversible actions** (cancel session, publish timetable, lock account) require a confirm modal containing a **numeric impact summary**, e.g. `"Sẽ hủy 23 tiết của 6 lớp."`
 
 ### 8.5 Status
 
 A tag (height 26, padding 0 10 0 8, radius 8) with the group's solid mid-tone background, a 14px white icon (active `CircleCheck`, pending `Clock`, neutral `CircleMinus`, danger `CircleAlert`, info `Info`), then the label 12/600 in white (§2.4). No border. Rendered by one shared `<StatusBadge domain value />` that calls `statusGroup()` and `labels.ts`.
 
-### 8.5b Greeting (Trang chủ)
+### 8.6 Stat tiles
 
-Rendered by `shared/components/HeroBanner.tsx` (props: `eyebrow`, `title`, `description`, `extra`) inside the Trang chủ **tinted tile** (`.bento-tile--accent`: pale mint → pale sky, `borderMint` border, padding 28×32, min height 188):
+`shared/components/StatCard.tsx` (props: `label`, `value`, `hint`, `variant`, `attention`, `icon`, `tone`, `meter`, `onClick`, `className`, `children`); never hand-build a KPI tile. Catalog screens (Phân hiệu, Lớp, Môn học, Học sinh…) put their tiles in `shared/components/StatStrip.tsx`:
 
-- Eyebrow: school name · năm học, 12/18 600 uppercase, letter-spacing 0.08em, `text2`; omitted when neither is known.
-- Greeting: 34/42 700 `text1`, following the time of day (Chào buổi sáng / trưa / chiều / tối) + the given name, no trailing punctuation.
-- Description: weekday + date, 15/22 `text2`, first letter capitalised.
-- Spacing: 14 between eyebrow and greeting, 12 between greeting and description.
-- `extra`: the school crest — logo at 84px in a 116px white circle with a 10px `green100` halo.
+- **Strip.** Four tiles in one row, gap 14, 16 above the list. Each tile is a flat pastel card (radius 22, no border, no shadow, padding 18×22) and the four take one tone each, in order: `green50`, `skyBg`, `violetBg`, `amberBg` (`--cell` is the matching `*Fg`). No icons.
+- **Tile.** Label 14/600 `text2`; value 38/46 700 `ink`, `tabular-nums`, `vi-VN` thousands separator; foot (min height 20, 13 `text2`) holds `hint` — context derived from the data (an average, a date), never a repeat of the label. `meter` (0–100) adds a 7px bar in the tile's tone under the value, only when there is a real ratio.
+- `attention` (a "needs attention" metric above zero): amber dot before the label, value in `amberInk`. Never as decoration.
+- Clickable when a source list screen exists: hover lifts 2px, "Xem →" 13/600 `green700` at the right of the foot. Not clickable when the target is not built or the viewer cannot open it.
+- Below 1100px the strip folds to two columns.
 
-Do not repeat the account here — the header account chip already shows it.
-
-### 8.6 Stat tiles (Dashboard)
-
-`shared/components/StatCard.tsx` (props: `label`, `value`, `hint`, `variant`, `attention`, `icon`, `tone`, `onClick`, `className`, `children`); never hand-build a KPI tile. Each tile is a bento tile: white, radius `xl`, 1px `border`, shadow `card`, padding 22×24.
-
-- Top row: the label (13/500 `text2`) on the left; on the right a 40×40 **icon chip** (radius `md`, a 20px lucide icon) in the pale fill and ink of the tile's `tone` (§2.2b: sky, violet, amber, teal…). The tinted tile uses a white chip with a `green700` icon.
-- Value: 36/44 700 `ink`, `tabular-nums`, `vi-VN` thousands separator.
-- Foot (pushed to the bottom, min height 20): `hint` 12 `text3` — context derived from the data (an average, a date), never a repeat of the label; on clickable tiles "Xem →" 12/600 `green700` on the right (the arrow slides 3px on hover).
-- `variant="accent"`: the tinted tile (`gradient.accent`, dark text), value 56/64 in `green700`. **One per screen.**
-- `attention` (a "needs attention" metric whose value is above zero): amber dot before the label, value in `amberInk`. Never as decoration.
-- Clickable when a source list screen exists; hover lifts the tile 2px with shadow `lift`. Not clickable when the target screen is not built yet.
+Outside a strip a tile is a bento tile (white, radius `xl`, 1px `border`, shadow `card`, padding 22×24) that may carry the `icon` chip (40×40, tone fill) and `variant="accent"` (the tinted tile, `gradient.accent`, value 56/64 `green700`, at most one per screen). The Bảng điều khiển screens use their own `Tile` (§9.4).
 
 ### 8.7 System feedback
 
@@ -508,39 +500,53 @@ Students render as **row cards**, not a table: avatar + name on the left, three 
 
 Top bar shows live counts per status. When School Admin is backfilling, show an amber banner: `"Nhập bù cho tiết ngày 12/10 — ghi nhận người sửa."`
 
-### 9.4 Dashboard (ADM-01) and Trang chủ
+### 9.4 Trang chủ and Bảng điều khiển
 
-Two different screens; do not merge them (Business Spec §5.1). Both use a **bento grid** (gap 16) with exactly one tinted tile.
+Two different things; do not merge them (Business Spec §5.1).
 
-**Dashboard** — Principal and Vice Principal only.
+#### Trang chủ
 
-- `PageHeader` titled "Dashboard"; description = scope · năm học · today's date. Right slot: a 240px scope `Select` ("Toàn trường" + each campus) for Principal; Vice Principal gets it only when leading more than one campus.
-- 4-column bento. Row 1, four stat tiles (§8.6): **Học sinh đang học (tinted, `GraduationCap`)** · Lớp đang hoạt động (sky, `School`) · Cán bộ đang công tác (violet, `UsersRound`) · Tiết dạy hôm nay (amber, `CalendarClock`). Hints: "n khối đang có lớp" · "Bình quân n học sinh mỗi lớp" (only when both counts are above zero) · "Trên n phân hiệu" (only when the scope covers more than one campus) · today's weekday and date. A tile is clickable only when it has a source screen: Cán bộ opens the staff list, Tiết dạy hôm nay opens Lịch dạy, Lớp and Học sinh are not clickable.
-- Row 2: card "Học sinh theo khối" (2 columns; 4 when there is no comparison) — header right shows "Tổng n học sinh" (13/500 `text2`). A single-series `recharts` bar chart, height 280, one tone per grade (green, sky, violet, amber, teal, coral in order; `accent.*.fg`) with 8px rounded tops, max width 52, each bar labelled with its student count above it (13/600 `ink`), dotted horizontal grid in `border`, x-axis line `borderStrong`, axis text 12 `text2`/`text3`, hover tooltip (white, shadow `pop`) with student and class count. No legend (one series).
-- Beside it (2 columns), only when the scope covers more than one campus: card "So sánh phân hiệu" — a `DataTable` (Phân hiệu · Lớp · Học sinh · Cán bộ, numbers right-aligned) flush to the card edges as flat rows (§8.2); the Học sinh cell puts a 96×4 share bar (`green600` on `neutralBg`, relative to the largest campus) left of the number. Clicking a row sets the scope filter to that campus.
+Every account type. Everything is in `features/adm/pages/HomePage.tsx` and `home.css` (prefix `hm-`). It never carries KPI tiles, charts, shortcuts or a news feed.
 
-**Trang chủ** — every account type. 3-column bento:
+- **Sky panel (greeting).** A wide panel whose gradient follows the clock — dawn, day, dusk, night — with two soft clouds. Left: the school crest (84px) and the greeting in two lines, "Chào buổi sáng," / the given name (sáng before 12h, chiều before 18h, else tối). Every account also gets a 12-hour **analog dial** on the right: the day's period slots are drawn as arcs on the face at their real clock positions (a period not yet reached is faint, the current one solid), the digital time under the hands, and one sentence saying which period is running. Student and Parent get the panel without the dial.
+- **Three white cards** in a grid, for every account type.
+  - **Hôm nay** — head: today's weekday and `DD/MM`. Body: a **vertical timeline** of every active period slot: start time over end time on the left, a node on a 2px `border` rail, then "Tiết n" and, for teachers, the class (700) · subject of their own lesson. Sáng / Chiều captions open each session. Rows not started are faint, past rows fainter; **only the current row is full `ink` with a filled `amber` node, a soft halo pulse and an "Đang diễn ra" pill.** Sunday or a school-wide holiday replaces it with "Hôm nay trường nghỉ" + reason; no slots configured shows "Trường chưa khai khung giờ tiết."
+  - **Năm học** (year name aside on the title row) — the semester name 22/600 `ink` with "Tuần **n** / N" at the right (counts up); under it **one block per week** of the semester: past weeks `green600`, the current week `amber`, taller with a halo, future weeks `neutralBg`; they grow up with a 30ms stagger. Start and end dates under it. Outside a semester: "Sắp tới: …" with all weeks grey. No year: "Chưa có năm học nào."
+  - **Ngày nghỉ sắp tới** — left the **countdown**: days left 80/84 600 `ink` (counts up; "Nay" on the day itself) with "ngày nữa là {reason}"; right a **month calendar** (Monday-first, T2…CN) of that holiday's month headed "Tháng n" and, for a campus holiday, the campus name: the holiday a solid `amber` disc with a halo, other holidays `amber` 30% discs, today a 2px `ink` ring. Up to two more holidays follow as hairline rows (date, reason, "n ngày"). Empty: "Không còn ngày nghỉ nào trong năm học."
+- Cards fade and rise in one after another; all motion is off under `prefers-reduced-motion`.
 
-- Row 1: the **greeting tinted tile** (§8.5b, 2 columns) · card **Năm học** — a 132px `Progress` ring (stroke 9, `green500` on `neutralBg`) showing the week of the current semester: centre "n" 34/700 over "/ N tuần" 12 `text2`; below it the semester name 17/700 and its date range 13 `text2` (or "Sắp tới: …" / "Bắt đầu dd/mm/yyyy" outside a semester).
-- Row 2 (staff): card **Hôm nay** (2 columns) — header right shows the clock 22/700 `green700` (refreshed every 30s). Body is a **vertical timeline**: a 1px `border` rail; each active period slot is a row with its start time (13/500 `text1`) over its end time (`text3`) on the left, a node on the rail, then "Tiết n" and, for every staff account except School Admin, the class (600) · subject of their own lesson in that period. Sáng / Chiều captions (12/600 `text3`) open each session. Nodes: past = filled `border`, content at 45% opacity; next = `ink` ring + a "Tiếp theo" pill (`neutralBg`, `ink`); **current = filled `amber` dot with a slow `amberSoft` halo pulse** + an "Đang diễn ra" pill (`amberSoft`, `amberInk`). Sunday or a school-wide holiday replaces the timeline with a centred "Hôm nay trường nghỉ" (17/600) + reason. · card **Ngày nghỉ sắp tới** — up to four rows separated by hairlines: a calendar leaf (48×52, radius `md`, day 20/700 over "Th M" 11) and a "còn n ngày" pill, both `green50`/`green700`, plus the reason and the campus name in `text3` when campus-specific.
-- Card titles on Trang chủ have no divider line.
-- Student and Parent: the greeting tile spans all 3 columns; below it one card with the school name as title and its address, phone, email, website as hairline-separated rows with a 16px `text3` icon.
-- No KPI tiles, charts, shortcuts or news feed on Trang chủ.
+#### Bảng điều khiển
+
+The sider group **Bảng điều khiển** (cluster Tổng quan) holds one screen per role, all in `features/adm` and routed under `/dashboard/*`: **Tình hình toàn trường** (Principal) · **Tình hình phân hiệu** (Vice Principal) · **Tình hình tổ chuyên môn** (tổ trưởng) · **Tình hình lớp chủ nhiệm** (chủ nhiệm) · **Tiến độ bài tập rèn luyện** (Principal, Vice Principal, chủ nhiệm, tổ trưởng) · **Thống kê hệ thống** (School Admin). `/dashboard` itself redirects to the first screen the viewer may open. These are not lists (§8.2): each screen has its own layout, but all share one kit (`components/BoardKit.tsx` and `board.css`, prefix `bd-`; per-screen layouts in `pages/views.css`, prefix `v-`).
+
+- **Shell.** A column (`.bd`, gap 20): a header with the title 28/36 700, a 15 `text2` line (scope · năm học · học kỳ) and, at the right, the scope tools — a pill `Seg` of campuses ("Cả trường" + each campus; shown only when there is more than one) and a grade `Select` where it applies. No `PageHeader` here.
+- **Panels.** `bd-panel`: white, radius 24, 1px `border`, shadow `card`, padding 24×28, title 18/700. A screen may have **one** tinted panel (`bd-panel--tint`, pale mint → white; used by Thống kê hệ thống) and never more.
+- **Tiles.** A row of four `Tile`s (`v-tiles4`), each one of four pastel hues — mint, sky, sun, lilac — with the label, a count-up number and a hint; a tile with a source screen is clickable, and a "needs attention" number turns `amberInk`.
+- **Charts are drawn in code** (SVG and CSS, no charting library): `Trend` (weekly bars plus rate line), `Columns`, `Donut`, `HBars`, `StackBar`, `Ring`, `Meter`, `Figure`, `Compare` (change against last week), all in `BoardKit`.
+- **Colour follows the rate** (`rateTone`): from 80% **good** `green600`, from 60% **warn** `amber`, below 60% **low** `coralFg`, no data **none** `disabled`; text in `green800`, `amberInk`, `danger`, `text2`. Attendance rates use the same tones.
+- **"Cần chú ý"** lists only items above zero as rows (a ring with the count, the sentence, an arrow) that open the screen where they are fixed; with nothing left it says "Không có việc nào tồn đọng."
+- **Tình hình toàn trường**: tiles (Vắng không phép · Học sinh · Cán bộ · Giáo viên vắng hôm nay); "Chuyên cần theo tuần" trend and "Chuyên cần theo phân hiệu" columns; "Học sinh theo khối" donut and "Cần chú ý"; "Các phân hiệu" rows (leaders, share bar, students, attendance, classes) where a click filters the whole screen to that campus.
+- **Tình hình phân hiệu**: tiles (Tiết hôm nay · Giáo viên vắng · Đơn nghỉ chờ duyệt · Tiết chưa điểm danh); attendance by week and by weekday; unmarked sessions by class; "Các lớp".
+- **Tình hình tổ chuyên môn**: tiles (Vắng không phép · Thầy cô vắng hôm nay · Tiết chưa điểm danh…); "Tiết dạy mỗi tuần" load; attendance over 4 weeks or, when some are owed, sessions not yet marked per teacher; "Thầy cô trong tổ".
+- **Tình hình lớp chủ nhiệm**: a class picker when the teacher has more than one; tiles (Sĩ số · Vắng không phép · Đơn nghỉ chờ duyệt · Phụ huynh chưa có tài khoản); attendance over 4 weeks; students absent most in 30 days; the student list; subject teachers.
+- **Tiến độ bài tập rèn luyện**: MSMS AI (§9.5) opens with one sentence; a submission-rate ring with the change against last week and status blocks that filter the list; progress by group with tabs for the lens (campus, tổ, môn, lớp, giáo viên) and a breadcrumb trail for drilling down; then the assignment list with search. A tổ trưởng who is not a homeroom teacher gets the department view of §9.5.
+- **Thống kê hệ thống**: the tinted panel with accounts (total, active, pending password change, locked, never signed in — each opens Tài khoản) and the 7-day activity trend; "Quy mô trường" as four hue chips; **"Dữ liệu cần bổ sung"** — only items above zero, each a row that opens the screen where it is fixed; accounts by type; timetable publication per campus this semester.
+- Empty states are one short sentence in `text2`; loading is a skeleton, never a centred spinner.
 
 ### 9.5 Bài tập rèn luyện (LRN)
 
-Mô-đun này là ngoại lệ có chủ ý của §8: không dùng khung danh sách – bộ lọc – bảng của các màn quản trị. Mỗi màn có bố cục riêng theo việc người dùng đang làm, nhưng vẫn dùng chung token màu, bo góc, đổ bóng và font của hệ thống. Nhóm menu là **Bài tập rèn luyện**; mục con theo vai trò: giáo viên **Kho câu hỏi · Giao bài tập · Bài tập đã giao** (thêm **Tiến độ giao bài của tổ** cho tổ trưởng), học sinh **Bài tập được giao · Danh sách bài tập**, phụ huynh **Kết quả của con**. Toàn bộ nằm trong `features/lrn`, kiểu riêng ở `components/lrn.css` và `components/msms-ai.css`.
+Mô-đun này là ngoại lệ có chủ ý của §8: không dùng khung danh sách – bộ lọc – bảng của các màn quản trị. Mỗi màn có bố cục riêng theo việc người dùng đang làm, nhưng vẫn dùng chung token màu, bo góc, đổ bóng và font của hệ thống. Nhóm menu là **Bài tập rèn luyện**; mục con theo vai trò: giáo viên **Kho câu hỏi · Giao bài tập · Bài tập đã giao** (tổ trưởng theo dõi cả tổ ở **Bảng điều khiển › Tiến độ bài tập rèn luyện**), học sinh **Bài tập được giao · Danh sách bài tập**, phụ huynh **Kết quả của con**. Toàn bộ nằm trong `features/lrn`, kiểu riêng ở `components/lrn.css` và `components/msms-ai.css`.
 
 - **Nguyên tắc.** Không icon trang trí: chữ cái đầu của môn (`SubjectMark`) và con số lớn thay cho icon. Bộ lọc chỉ có khi thật cần (môn khi có từ hai môn; bức tường điểm; kho câu hỏi gồm tìm kiếm, môn, khối). Màu theo môn dùng cùng công thức góc vàng với lưới thời khóa biểu (`subjectVars`, ba sắc `--sj-bg`, `--sj-mid`, `--sj-fg`). Bo góc lớn (20–32px), con số điểm to, màu điểm theo mức: ≥ 8 xanh lá, ≥ 6,5 xanh dương, ≥ 5 hổ phách, dưới 5 san hô.
 - **MSMS AI (`MsmsAi`, `AiAvatar`, `AiBubble`, `TypedText`).** Avatar là `logo/chatbot.png` kèm bong bóng chat. Bốn trạng thái: `idle` (lơ lửng), `thinking` (lắc đầu, ba chấm), `happy` (nhún nhảy), `warn` (rung). Chuyển động chỉ bằng CSS, tắt khi người dùng chọn giảm chuyển động. Lời nói được gõ dần từng ký tự. Lời nhắn soạn sẵn ở `aiLines.ts`, chọn ngẫu nhiên theo nhóm, không lưu và không gọi AI. MSMS AI xuất hiện ở bốn nơi: quầy soạn câu hỏi, đồng hồ khi làm bài, khung phân tích và các trạng thái rỗng.
-- **Kho câu hỏi.** Hai cột: bên trái là **quầy soạn của MSMS AI** (môn, khối 6–9 dạng nút tròn, chủ đề (ô gõ tự do), bộ sách cố định "Kết nối tri thức với cuộc sống", số câu với nút cộng trừ, nút lớn "Nhờ MSMS AI soạn"; lúc đang soạn avatar lắc đầu và các bước đổi dần như "Đang mở sách giáo khoa…"), bên phải là danh sách với ba tab gạch chân **Kho chung · Của tôi · Nháp** và dòng tìm kiếm gọn. Mỗi câu là một dòng có vạch màu theo môn; bấm vào để mở đáp án và giải thích; nút Duyệt, Sửa, Ẩn, Xóa nháp hiện khi rê chuột. Nháp có viền nét đứt tím. "Xem thêm" thay cho phân trang. Soạn tay mở ngăn kéo với bốn lựa chọn, bấm chữ cái để đánh dấu đáp án đúng.
+- **Kho câu hỏi.** Hai cột: bên trái là **quầy soạn của MSMS AI** (môn, khối 6–9 dạng nút tròn, bài học chọn từ mục lục sách, nhóm theo chương, mỗi bài là tên bài kèm viên thuốc số trang ở bên phải, ô gợi ý thêm không bắt buộc, bộ sách cố định "Kết nối tri thức với cuộc sống", số câu với nút cộng trừ, nút lớn "Nhờ MSMS AI soạn"; lúc đang soạn avatar lắc đầu và các bước đổi dần như "Đang mở sách giáo khoa…"), bên phải là danh sách với ba tab gạch chân **Kho chung · Của tôi · Nháp** và dòng tìm kiếm gọn. Mỗi câu là một dòng có vạch màu theo môn; bấm vào để mở đáp án và giải thích, với câu AI soạn thì thêm dòng nguồn gồm tên bài, viên thuốc số trang ("trang 27" hoặc "trang 9–12") và tên sách, kèm nút "Xem trang sách" mở ảnh các trang của bài; nút Duyệt, Sửa, Ẩn, Xóa nháp hiện khi rê chuột. Nháp có viền nét đứt tím. "Xem thêm" thay cho phân trang. Soạn tay mở ngăn kéo với bốn lựa chọn, bấm chữ cái để đánh dấu đáp án đúng.
 - **Giao bài tập** là một trang dài ba bước nối nhau bằng đường kẻ dọc, bên phải là **tờ "Bài sẽ giao"** dính theo cuộn. Bước 1 chọn (lớp, môn) bằng nút theo từng môn; bước 2 nhặt câu hỏi Sẵn dùng của môn đó bằng cách bấm vào dòng; bước 3 chọn giờ mở, hạn nộp (có mốc gợi ý "Tối nay 21:00", "Ngày mai 21:00"…) và thời gian làm (Không giới hạn, 15, 30, 45, 60 phút hoặc tự nhập). Tờ bên phải có tên bài, lời dặn, danh sách câu đã chọn với nút lên xuống, số câu, những gì còn thiếu và nút **Giao bài**; bấm giao có hộp xác nhận nêu rõ bài không sửa được sau khi giao.
 - **Bài tập được giao (học sinh).** Dải đầu có lời của MSMS AI nói thẳng bài nào sắp hết hạn. Bên dưới là **dòng thời gian** theo ngày hết hạn (Hôm nay, Ngày mai, Thứ…); mỗi bài là một thẻ rộng có vạch màu theo môn, chữ cái môn, số câu, thời lượng, nhãn "Còn 4 giờ" và lối "Làm bài" hoặc "Làm tiếp". Bài chưa tới giờ mở thì mờ và ghi giờ mở.
 - **Làm bài** (`AttemptPage`) là chế độ **toàn màn hình**, phủ lên cả khung ứng dụng, mỗi lần một câu: thanh trên có Thoát (bài giữ lại), tên bài, thanh tiến độ, trạng thái tự lưu và nút **Nộp bài**; giữa màn hình là thẻ câu hỏi lớn, các lựa chọn dạng nút to (chọn một dùng ô tròn, chọn nhiều dùng ô vuông), phím A–D hoặc 1–4 để chọn và mũi tên để đổi câu; dưới thẻ là dải số câu. Bài có thời lượng có màn **Bắt đầu** trước. Góc phải dưới là **MSMS AI**: bong bóng chứa đồng hồ đếm ngược (đổi sang đỏ và nảy ở phút cuối, không báo sớm hơn) và các lời nhắn; bấm vào avatar để thu nhỏ. Bấm Nộp bài mở hộp **xem lại** với lưới số câu (ô nét đứt là câu chưa làm). Hết giờ thì tự nộp.
 - **Kết quả** (`ResultView`): thẻ đầu có vòng điểm lớn, tên bài, số câu đúng và lời của MSMS AI theo mức điểm; dải số câu tròn xanh/đỏ dính ở đầu, bấm để nhảy tới câu và có nút "Chỉ câu sai"; mỗi câu là một thẻ có vạch xanh hoặc đỏ, đáp án đúng, lựa chọn của học sinh và giải thích; **khung phân tích AI ở cuối trang** gồm nhận xét chung, điểm mạnh, cần cải thiện, các câu sai kèm lý do (bấm để nhảy tới câu) và những gì nên ôn. Đang phân tích thì avatar lắc đầu và trang tự hỏi lại vài giây một lần; phân tích lỗi thì khung biến mất, không có nút thử lại. Học sinh, phụ huynh và giáo viên cùng dùng giao diện này.
 - **Danh sách bài tập (học sinh) và Kết quả của con (phụ huynh)** là **bức tường điểm**: số điểm trung bình thật lớn, mỗi bài là một ô pastel theo màu môn với con số điểm khổng lồ, tên bài và dải ô nhỏ cho từng câu (xanh đúng, san hô sai). Bài không nộp là ô viền nét đứt. Phụ huynh có nhiều con chọn con ở dải thẻ tròn phía trên.
 - **Bài tập đã giao (giáo viên)** chia hai cột: bên trái là danh sách nhóm **Đang mở** và **Đã đóng**, mỗi bài có vòng tròn nhỏ cho số bài đã nộp; bên phải là chi tiết bài đang chọn (mã bài nằm trên đường dẫn `?id=`): ba ô số (đã nộp, điểm trung bình, trạng thái), hai tab **Học sinh** và **Đề bài**. Danh sách học sinh có thanh điểm màu theo mức, sắp theo tên hoặc điểm thấp trước; bấm một em đã nộp mở ngăn kéo kết quả đầy đủ kèm phân tích AI.
-- **Tiến độ giao bài của tổ (tổ trưởng)**: Bên trái là số bài mỗi giáo viên trong tổ đã giao, dòng riêng bên dưới tên có tên phân hiệu chính của giáo viên, mỗi phân hiệu một màu chữ; bấm một giáo viên để chỉ xem bài của người đó, bấm lần nữa để bỏ lọc. Bên phải là danh sách bài của mọi lớp, bài đang mở xếp theo hạn gần nhất rồi tới bài đã đóng, có ô tìm theo tên bài, lớp hoặc giáo viên và nút Tất cả / Đang mở / Đã đóng; thanh nộp chuyển màu cam với bài đã đóng mà dưới một nửa lớp nộp. Bấm một bài mở ngăn kéo chi tiết chỉ đọc. Có dải nút lọc theo môn khi tổ có từ hai môn. Người không phải tổ trưởng thấy lời giải thích thay cho màn hình.
+- **Tiến độ bài tập rèn luyện của tổ (tổ trưởng; `/dashboard/progress`; người vừa chủ nhiệm vừa là tổ trưởng chọn giữa chế độ tổ và chế độ lớp)**: Bên trái là số bài mỗi giáo viên trong tổ đã giao, dòng riêng bên dưới tên có tên phân hiệu chính của giáo viên, mỗi phân hiệu một màu chữ; bấm một giáo viên để chỉ xem bài của người đó, bấm lần nữa để bỏ lọc. Bên phải là danh sách bài của mọi lớp, bài đang mở xếp theo hạn gần nhất rồi tới bài đã đóng, có ô tìm theo tên bài, lớp hoặc giáo viên và nút Tất cả / Đang mở / Đã đóng; thanh nộp chuyển màu cam với bài đã đóng mà dưới một nửa lớp nộp. Bấm một bài mở ngăn kéo chi tiết chỉ đọc. Có dải nút lọc theo môn khi tổ có từ hai môn. Người không phải tổ trưởng thấy lời giải thích thay cho màn hình.
 
 ---
 
@@ -564,7 +570,7 @@ MSMS web is a workstation UI. **Do not build a mobile layout.** Minimum breakpoi
 | Complex animation | Only short transitions: 150ms hover, 180ms tile lift, 200–240ms floating bar and page enter, 280ms sliding sider pill, the slow pulse of the current-period dot; all off under `prefers-reduced-motion` |
 | Illustration | Empty states are one short sentence; no stock or hand-drawn illustration |
 
-Only two additional libraries are permitted: `lucide-react` (icons) and `recharts` (Dashboard charts). Fonts come from `@fontsource` packages (Be Vietnam Pro, Montserrat for the wordmark).
+Only one additional library is permitted: `lucide-react` (icons). Charts are drawn with the `bd-` kit (§9.4), no charting library. Fonts come from `@fontsource` packages (Be Vietnam Pro, Montserrat for the wordmark).
 
 ---
 
@@ -575,14 +581,19 @@ Check here before writing any UI. Everything below already exists; use it as-is.
 | Need | Use | Location |
 | --- | --- | --- |
 | Page title block + actions | `PageHeader` | `shared/components/` |
-| Trang chủ greeting (inside the tinted tile) | `HeroBanner` | `shared/components/` |
 | KPI tile in a bento grid | `StatCard` (`variant="accent"` once per screen) | `shared/components/` |
 | Filter toolbar above a table | `FilterBar` (fixed control widths; `Segmented` quick filter first) | `shared/components/` |
 | Table | `DataTable` (skeleton, empty state, pagination with total) inside `Card className="table-card"` | `shared/components/` |
 | Person row | `PersonCell` | `shared/components/` |
 | Status | `StatusBadge` | `shared/components/` |
 | Row action icons | `RowActions` | `shared/components/` |
+| Stat tiles on a catalog screen | `StatStrip` + `StatCard` | `shared/components/` |
 | Create / edit form | `FormModal` (`variant="drawer"` for long forms) | `shared/components/` |
+| Address (tỉnh / phường / số nhà) | `AddressInput` | `shared/components/` |
+| Avatar (photo or initials) | `PersonAvatar` | `shared/components/` |
+| Wordmark | `BrandLogo` | `shared/components/` |
+| Width guard below 1280px | `MinWidthGuard` | `shared/components/` |
+| Bảng điều khiển charts, tiles, panels | `BoardKit` (`Tile`, `Trend`, `Ring`, `Donut`, `HBars`, `Seg`…) | `features/adm/components/` |
 | In-page alert | `InlineAlert` | `shared/components/` |
 | File picker, import errors | `FileButton`, `ImportErrorPanel` | `shared/components/` |
 | Pre-login screen | `AuthLayout` | `app/` |

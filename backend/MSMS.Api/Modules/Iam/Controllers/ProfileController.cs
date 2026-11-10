@@ -48,7 +48,7 @@ public class ProfileController(ProfileService profile) : ControllerBase
         var avatar = await profile.FindAvatarAsync(personId);
         if (avatar is null) return NotFound();
         Response.Headers.CacheControl = "private, max-age=86400";
-        return PhysicalFile(avatar.Value.Path, avatar.Value.ContentType);
+        return File(avatar.Content, avatar.ContentType);
     }
 }
 

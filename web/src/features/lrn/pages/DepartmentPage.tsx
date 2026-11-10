@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Drawer, Skeleton } from 'antd';
 import { BookOpenCheck, ChevronRight, Search, Users, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { Compare } from '@/features/adm/components/BoardKit';
+import { weekCompare } from '@/features/adm/progress/progressModel';
 import { PersonAvatar } from '@/shared/components/PersonAvatar';
 import { formatDateTime } from '@/shared/lib/format';
 import { deptLine } from '../aiLines';
@@ -110,7 +112,7 @@ export function DepartmentPage() {
       <header className="dept__hero">
         <div className="dept__heroText">
           <h1>Nhịp giao bài của tổ</h1>
-          <p>Xem thầy cô nào đã giao gì, lớp nào đang nộp tới đâu.</p>
+          <p>{d.subjects.map((s) => s.name).join(', ')}</p>
           {d.subjects.length > 1 && (
             <div className="pillset pillset--wrap" role="tablist" aria-label="Lọc theo môn">
               <button type="button" role="tab" aria-selected={subjectId === undefined} className={subjectId === undefined ? 'is-on' : ''} onClick={() => setSubjectId(undefined)}>Cả tổ</button>
@@ -132,6 +134,7 @@ export function DepartmentPage() {
           <div>
             <strong>Tỷ lệ nộp bài</strong>
             <span>{stats.rate == null ? 'Chưa có bài nào hết hạn để tính.' : 'trung bình các bài đã đóng'}</span>
+            {stats.rate != null && <Compare delta={weekCompare(d.items, nowMs).delta} />}
           </div>
         </div>
         <div className="dept__stats" role="tablist" aria-label="Lọc theo tình trạng">

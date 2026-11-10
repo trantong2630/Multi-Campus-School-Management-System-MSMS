@@ -47,7 +47,7 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
                         || (s.Student.NationalId != null && s.Student.NationalId.Contains(q)))
             .OrderBy(s => s.Student.FullName)
             .Take(limit)
-            .Select(s => new StudentCandidateDto(s.StudentId, s.Student.PersonCode, s.Student.FullName, s.Student.DateOfBirth))
+            .Select(s => new StudentCandidateDto(s.StudentId, s.Student.PersonCode, s.Student.FullName, s.Student.DateOfBirth, s.Student.Gender))
             .ToListAsync();
     }
 
@@ -167,6 +167,7 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
 
         await using var tx = await db.Database.BeginTransactionAsync();
         var lockedAccountId = await CloseCoreAsync(e, r.Reason, clock.Today);
+        AuditLocks(lockedAccountId is int locked ? [locked] : [], r.Reason, [enrollmentId]);
         await db.SaveChangesAsync();
         await tx.CommitAsync();
         if (lockedAccountId is int id) await sessions.RevokeAllAsync(id);
@@ -187,16 +188,23 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
         await using var tx = await db.Database.BeginTransactionAsync();
         foreach (var e in items)
             if (await CloseCoreAsync(e, r.Reason, today) is int accountId) locked.Add(accountId);
+        AuditLocks(locked, r.Reason, r.EnrollmentIds);
         await db.SaveChangesAsync();
         await tx.CommitAsync();
         foreach (var id in locked) await sessions.RevokeAllAsync(id);
     }
 
-    /// <summary>Đặt ngày kết thúc cho một ghi danh (và khóa tài khoản nếu em rời trường); chưa lưu. Trả về tài khoản vừa khóa để hủy phiên sau khi lưu.</summary>
+    /// <summary>Ghi nhật ký khóa tài khoản: thao tác hàng loạt chỉ ghi MỘT bản ghi kèm danh sách ID (BR-28). Không có tài khoản nào bị khóa thì không ghi.</summary>
+    private void AuditLocks(IReadOnlyCollection<int> accountIds, string reason, IEnumerable<int> enrollmentIds)
+    {
+        if (accountIds.Count == 0) return;
+        audit.Add(AuditCategories.Account, accountIds.Count == 1 ? "LockAccount" : "BulkLockAccounts", accountIds, new { reason, enrollmentIds });
+    }
+
+    /// <summary>Đặt ngày kết thúc cho một ghi danh (và khóa tài khoản nếu em rời trường); chưa lưu. Trả về tài khoản vừa khóa để bên gọi ghi nhật ký và hủy phiên sau khi lưu.</summary>
     private async Task<int?> CloseCoreAsync(Enrollment e, string reason, DateOnly today)
     {
         var leaving = reason != EnrollmentCloseReasons.ClassTransfer;
-        var enrollmentId = e.EnrollmentId;
 
         DateOnly leftDate;
         if (leaving && e.StartDate > today)
@@ -224,7 +232,6 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
             {
                 account.Status = AccountStatuses.Locked;
                 lockedAccountId = account.AccountId;
-                audit.Add(AuditCategories.Account, "LockAccount", [account.AccountId], new { reason, enrollmentId });
             }
         }
         return lockedAccountId;
@@ -265,9 +272,9 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
             {
                 account.Status = AccountStatuses.Locked;
                 lockedIds.Add(account.AccountId);
-                audit.Add(AuditCategories.Account, "LockAccount", [account.AccountId], new { reason = EnrollmentCloseReasons.Graduated, enrollmentId = e.EnrollmentId });
             }
         }
+        AuditLocks(lockedIds, EnrollmentCloseReasons.Graduated, enrollments.Select(e => e.EnrollmentId));
         await db.SaveChangesAsync();
         await tx.CommitAsync();
         foreach (var id in lockedIds) await sessions.RevokeAllAsync(id);
@@ -330,7 +337,7 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
                 return;
             case AccountTypes.Teacher:
                 var today = clock.Today;
-                if (await db.HomeroomAssignment.Where(EffectivePeriod.EffectiveAt<HomeroomAssignment>(today))
+                if (await db.HomeroomAssignment.Where(EffectivePeriod.CurrentResponsibility<HomeroomAssignment>(today))
                         .AnyAsync(h => h.ClassId == cls.ClassId && h.StaffId == user.PersonId))
                     return;
                 break;

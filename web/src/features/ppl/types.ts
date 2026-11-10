@@ -49,6 +49,7 @@ export interface Guardian {
   address: string | null;
   childCount: number;
   childrenSummary: string | null;
+  gender: string | null;
   accountId: number | null;
   accountStatus: string | null;
 }
@@ -83,6 +84,21 @@ export interface StaffImportResult {
   totalErrors: number;
 }
 
+export interface GuardianImportResult {
+  accepted: boolean;
+  created: number;
+  skipped: SkippedRow[];
+  errors: ImportError[];
+  totalErrors: number;
+}
+
+export interface StudentImportWarning {
+  row: number;
+  fullName: string;
+  message: string;
+  personCode: string | null;
+}
+
 export interface StudentImportResult {
   accepted: boolean;
   students: number;
@@ -91,6 +107,8 @@ export interface StudentImportResult {
   skipped: SkippedRow[];
   errors: ImportError[];
   totalErrors: number;
+  /** Cảnh báo không chặn: dòng vẫn được nhập nhưng nên kiểm tra lại. */
+  warnings?: StudentImportWarning[];
 }
 
 export type ResponsibilityKind = 'campus' | 'department' | 'homeroom';
@@ -107,6 +125,15 @@ export interface ResponsibilityRow {
   /** Người đã được xếp nhưng chưa tới ngày hiệu lực. */
   nextStaffName: string | null;
   nextStartDate: string | null;
+  staffCode: string | null;
+  endDate: string | null;
+  /** Người giữ gần nhất đã kết thúc, khi đích không còn ai đảm nhiệm. */
+  endedStaffName: string | null;
+  endedDate: string | null;
+  /** Giờ người đang giữ nhận trách nhiệm (thời điểm tạo bản ghi). */
+  startedAt?: string | null;
+  targetCode: string | null;
+  nextStaffId: number | null;
 }
 
 export interface ResponsibilityHistoryRow {
@@ -116,4 +143,8 @@ export interface ResponsibilityHistoryRow {
   startDate: string;
   endDate: string | null;
   isEffective: boolean;
+  /** Thời điểm bản ghi được tạo (giờ nhận trách nhiệm khi nhận ngay). */
+  assignedAt: string;
+  /** Giờ mất quyền, khi thay người hoặc kết thúc có hiệu lực ngay. */
+  endedAt: string | null;
 }

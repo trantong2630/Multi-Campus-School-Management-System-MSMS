@@ -97,6 +97,7 @@ public sealed class QuestionService(MsmsDbContext db, CurrentUser user, IClock c
         var q = await db.Question.Include(x => x.QuestionOption).FirstOrDefaultAsync(x => x.QuestionId == id)
             ?? throw ApiException.NotFound("Không tìm thấy câu hỏi.");
         EnsureOwner(q, "sửa");
+        EnsureSourceFieldsUnchanged(q, input.SubjectId, input.GradeLevel);
         await LockQuestionsAsync([id]);
         if (await IsLockedAsync(id))
             throw ApiException.BadRequest("Câu hỏi đã nằm trong một bài tập nên không sửa được. Chỉ còn ẩn khỏi ngân hàng, hoặc soạn câu mới.");
@@ -116,6 +117,16 @@ public sealed class QuestionService(MsmsDbContext db, CurrentUser user, IClock c
         await db.SaveChangesAsync();
         await tx.CommitAsync();
         return await ToDetailAsync(await LoadVisibleAsync(id));
+    }
+
+    /// <summary>
+    /// Câu do AI soạn từ một bài trong sách giữ môn và khối của bài đó: đổi sang môn hoặc khối khác thì câu không còn khớp nguồn
+    /// (4.6.6 chỉ cho sửa nội dung, lựa chọn và đáp án). Muốn môn hoặc khối khác thì soạn câu mới.
+    /// </summary>
+    internal static void EnsureSourceFieldsUnchanged(Question q, int subjectId, byte gradeLevel)
+    {
+        if (q.LessonId is not null && (q.SubjectId != subjectId || q.GradeLevel != gradeLevel))
+            throw ApiException.BadRequest("Môn và khối của câu AI soạn từ sách không đổi được vì câu bám theo bài trong sách. Muốn môn hoặc khối khác thì soạn câu mới.");
     }
 
     /// <summary>Ẩn khỏi ngân hàng (4.6.4): không ảnh hưởng bài cũ, không đưa vào bài mới được nữa.</summary>
@@ -195,6 +206,7 @@ public sealed class QuestionService(MsmsDbContext db, CurrentUser user, IClock c
     {
         var q = await db.Question.AsNoTracking()
             .Include(x => x.Subject).Include(x => x.CreatedByPerson).Include(x => x.QuestionOption)
+            .Include(x => x.Lesson).ThenInclude(l => l!.Book)
             .FirstOrDefaultAsync(x => x.QuestionId == id);
         var visible = q is not null && (q.CreatedByPersonId == user.PersonId || (q.Status == QuestionStatuses.Ready && !q.IsHidden));
         return visible ? q! : throw ApiException.NotFound("Không tìm thấy câu hỏi.");
@@ -206,7 +218,8 @@ public sealed class QuestionService(MsmsDbContext db, CurrentUser user, IClock c
     internal static QuestionDetailDto ToDetail(Question q, int me, bool locked) => new(
         q.QuestionId, q.SubjectId, q.Subject.Name, q.GradeLevel, q.Topic, q.Content, q.Explanation, q.Status, q.IsAiGenerated, q.IsHidden,
         q.QuestionOption.Count(o => o.IsCorrect) > 1, q.CreatedByPersonId, q.CreatedByPerson.FullName, q.CreatedByPersonId == me, locked, q.CreatedAt,
-        q.QuestionOption.OrderBy(o => o.OptionLabel).Select(o => new OptionDto(o.OptionId, o.OptionLabel, o.Content, o.IsCorrect)).ToList());
+        q.QuestionOption.OrderBy(o => o.OptionLabel).Select(o => new OptionDto(o.OptionId, o.OptionLabel, o.Content, o.IsCorrect)).ToList(),
+        q.LessonId, q.Lesson?.Book.Title, q.Lesson?.Title, q.Lesson?.StartPage, q.Lesson?.EndPage);
 
     private sealed record Valid(int SubjectId, byte GradeLevel, string Topic, string Content, string? Explanation, List<OptionInput> Options);
 

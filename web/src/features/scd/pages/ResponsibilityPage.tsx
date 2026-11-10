@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { Select } from 'antd';
-import { useState } from 'react';
+import { Input, Select } from 'antd';
+import { useMemo, useState } from 'react';
 import { DataTable } from '@/shared/components/DataTable';
 import { FilterBar } from '@/shared/components/FilterBar';
 import { InlineAlert } from '@/shared/components/InlineAlert';
@@ -11,10 +11,13 @@ import type { ResponsibilityItem, ResponsibilityTeacher } from '../types';
 import { useScdCampus } from '../useScdCampus';
 import '../components/scd.css';
 
+const fold = (v: string) => v.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase();
+
 /** SCD-04: phụ trách chuyên môn tính từ thời khóa biểu đã phát hành, chỉ đọc. Muốn đổi thì sửa thời khóa biểu rồi Phát hành lại (BR-14). */
 export function ResponsibilityPage() {
   const { campuses, effective: effectiveCampus, select: campusSelect, head: campusHead } = useScdCampus();
   const [subjectId, setSubjectId] = useState<number | undefined>();
+  const [search, setSearch] = useState('');
 
   const subjects = useQuery({
     queryKey: ['scd', 'draft-options', effectiveCampus],
@@ -27,13 +30,17 @@ export function ResponsibilityPage() {
     enabled: campuses.isSuccess,
   });
 
+  /** Tìm theo tên giáo viên, môn hoặc lớp đang phụ trách. */
+  const teachers = useMemo(() => {
+    const key = fold(search.trim());
+    if (!key) return list.data?.teachers;
+    return list.data?.teachers.filter((t) => fold(`${t.teacherName} ${t.items.map((i) => `${i.subjectName} ${i.className}`).join(' ')}`).includes(key));
+  }, [list.data, search]);
+
   return (
     <>
       <PageHeader
         title="Phụ trách chuyên môn"
-        description={list.data?.semesterName
-          ? `Tính từ thời khóa biểu đã phát hành của ${list.data.semesterName}. Muốn đổi, sửa thời khóa biểu rồi Phát hành lại.`
-          : 'Tính từ thời khóa biểu đã phát hành. Muốn đổi, sửa thời khóa biểu rồi Phát hành lại.'}
       />
       {campusHead}
       {campuses.isSuccess && campuses.data.length === 0 && (
@@ -41,6 +48,7 @@ export function ResponsibilityPage() {
       )}
       <FilterBar>
         {campusSelect}
+        <Input allowClear placeholder="Tìm giáo viên, môn hoặc lớp" value={search} onChange={(e) => setSearch(e.target.value)} style={{ width: 260 }} />
         <Select
           allowClear showSearch optionFilterProp="label" placeholder="Môn" value={subjectId} onChange={setSubjectId}
           style={{ minWidth: 180 }}
@@ -48,12 +56,12 @@ export function ResponsibilityPage() {
         />
       </FilterBar>
       <DataTable<ResponsibilityTeacher>
-        rowKey="teacherId" loading={list.isLoading} dataSource={list.data?.teachers} pagination={false}
+        rowKey="teacherId" loading={list.isLoading} dataSource={teachers} pagination={false}
         emptyText="Chưa có thời khóa biểu nào được phát hành, hoặc không có giáo viên khớp bộ lọc."
         columns={[
           { title: 'Giáo viên', dataIndex: 'teacherName', width: 220 },
           { title: 'Phụ trách', key: 'items', render: (_: unknown, t) => <ItemBoxes items={t.items} /> },
-          { title: 'Tổng tiết', dataIndex: 'totalPeriods', width: 110, align: 'right', className: 'tabular' },
+          { title: 'Tổng tiết/tuần', dataIndex: 'totalPeriods', width: 140, align: 'right', className: 'tabular' },
         ]}
       />
     </>

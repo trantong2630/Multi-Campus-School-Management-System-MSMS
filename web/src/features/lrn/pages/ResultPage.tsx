@@ -37,7 +37,7 @@ export function ResultPage() {
           <AiBubble tail="none" tone="warn">{getErrorMessage(q.error)}</AiBubble>
         </div>
       ) : (
-        <ResultView data={q.data!} viewer={isParent ? 'parent' : 'student'} />
+        <ResultView data={q.data!} viewer={isParent ? 'parent' : 'student'} studentId={studentId} />
       )}
     </div>
   );

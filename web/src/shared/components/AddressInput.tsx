@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Input, Select } from 'antd';
+import { ConfigProvider, Input, Select } from 'antd';
 import { composeAddress, fetchProvinces, fetchWards, matchesSearch, parseAddress } from '@/shared/lib/vnAddress';
 import type { Province, Ward } from '@/shared/lib/vnAddress';
 import './shared.css';
@@ -15,7 +15,10 @@ interface Props {
  * Ô địa chỉ dùng chung: chọn tỉnh/thành, phường/xã từ danh mục hành chính rồi gõ số nhà, đường.
  * Giá trị vẫn là một chuỗi nên dùng như Input thường trong Form.Item. Không tải được danh mục thì vẫn gõ tay được ở ô số nhà, đường.
  */
-export function AddressInput({ value, onChange, disabled }: Props) {
+export function AddressInput({ value, onChange, disabled: disabledProp }: Props) {
+  // Form disabled không tự xuống component tự viết; đọc từ ngữ cảnh để màn chỉ xem khóa cả ba ô.
+  const { componentDisabled } = ConfigProvider.useConfig();
+  const disabled = disabledProp ?? componentDisabled;
   const text = value ?? '';
   const provinces = useQuery({ queryKey: ['vn-address', 'provinces'], queryFn: fetchProvinces, staleTime: Infinity, retry: 1 });
   const provinceCode = parseAddress(text, provinces.data).province?.code;

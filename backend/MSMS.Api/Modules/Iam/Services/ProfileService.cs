@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
 using MSMS.Api.Common.Rules;
+using MSMS.Api.Common.Storage;
 using MSMS.Api.Common.Text;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
@@ -13,14 +14,12 @@ namespace MSMS.Api.Modules.Iam.Services;
 /// <summary>
 /// IAM-04: hồ sơ cá nhân của chính người đăng nhập — xem (4.1.27, 4.1.30), sửa trường cá nhân được phép (4.1.28),
 /// tải/đổi ảnh đại diện (4.1.29). Mọi thao tác chỉ chạm tới hồ sơ của tài khoản trong token, không nhận id từ client.
-/// Ảnh lưu cùng cách với ảnh bảng tin và logo trường: App_Data/uploads, DB chỉ giữ tên file (BR-27).
+/// Ảnh lưu qua IImageStorage cùng với ảnh bảng tin và logo trường, DB chỉ giữ tên file (BR-27).
 /// </summary>
-public sealed class ProfileService(MsmsDbContext db, CurrentUser user, IClock clock, IWebHostEnvironment env)
+public sealed class ProfileService(MsmsDbContext db, CurrentUser user, IClock clock, IImageStorage storage)
 {
     private const long MaxAvatarBytes = 2 * 1024 * 1024;   // cùng giới hạn với ảnh bảng tin và logo trường (BR-27)
     private const string ParentType = "Parent";
-
-    private string AvatarDirectory => Path.Combine(env.ContentRootPath, "App_Data", "uploads", "avatars");
 
     /// <summary>4.1.27, 4.1.30: hồ sơ, trách nhiệm đang giữ và trạng thái tài khoản của chính mình.</summary>
     public async Task<OwnProfileDto> GetAsync()
@@ -66,20 +65,16 @@ public sealed class ProfileService(MsmsDbContext db, CurrentUser user, IClock cl
         if (file.Length > MaxAvatarBytes) throw ApiException.BadRequest("Ảnh đại diện tối đa 2 MB. Chọn ảnh nhỏ hơn.");
 
         await using var input = file.OpenReadStream();
-        var header = new byte[8];
-        var read = await input.ReadAtLeastAsync(header, header.Length, throwOnEndOfStream: false);
-        var extension = DetectImageExtension(header.AsSpan(0, read))
+        using var ms = new MemoryStream((int)file.Length);
+        await input.CopyToAsync(ms);
+        var bytes = ms.ToArray();
+        var extension = DetectImageExtension(bytes)
             ?? throw ApiException.BadRequest("Ảnh đại diện chỉ nhận JPG hoặc PNG. Chọn lại ảnh đúng định dạng.");
-        input.Position = 0;
 
         var account = await LoadTrackedAsync();
         var person = account.Person;
 
-        Directory.CreateDirectory(AvatarDirectory);
-        var fileName = $"avatar-{Guid.NewGuid():N}{extension}";
-        var fullPath = Path.Combine(AvatarDirectory, fileName);
-        await using (var output = File.Create(fullPath))
-            await input.CopyToAsync(output);
+        var fileName = await storage.SaveAsync(ImageFolders.Avatars, "avatar", bytes, extension);
 
         var oldFile = person.AvatarPath;
         person.AvatarPath = fileName;
@@ -90,10 +85,10 @@ public sealed class ProfileService(MsmsDbContext db, CurrentUser user, IClock cl
         }
         catch
         {
-            DeleteAvatarFile(fileName);   // DB không lưu được thì không để lại file mồ côi
+            await DeleteAvatarFileAsync(fileName);   // DB không lưu được thì không để lại file mồ côi
             throw;
         }
-        DeleteAvatarFile(oldFile);
+        await DeleteAvatarFileAsync(oldFile);
         return await ToDtoAsync(account);
     }
 
@@ -108,22 +103,19 @@ public sealed class ProfileService(MsmsDbContext db, CurrentUser user, IClock cl
             person.AvatarPath = null;
             person.UpdatedAt = clock.Now;
             await db.SaveChangesAsync();
-            DeleteAvatarFile(oldFile);
+            await DeleteAvatarFileAsync(oldFile);
         }
         return await ToDtoAsync(account);
     }
 
-    /// <summary>Đường dẫn file ảnh đại diện và Content-Type; null nếu người đó chưa có ảnh hoặc file đã mất.</summary>
-    public async Task<(string Path, string ContentType)?> FindAvatarAsync(int personId)
+    /// <summary>Ảnh đại diện; null nếu người đó chưa có ảnh hoặc ảnh đã mất.</summary>
+    public async Task<StoredImage?> FindAvatarAsync(int personId)
     {
         var name = await db.Person.AsNoTracking()
             .Where(p => p.PersonId == personId)
             .Select(p => p.AvatarPath)
             .FirstOrDefaultAsync();
-        if (name is null) return null;
-        var path = Path.Combine(AvatarDirectory, Path.GetFileName(name));   // GetFileName chặn đường dẫn thoát khỏi thư mục
-        if (!File.Exists(path)) return null;
-        return (path, path.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ? "image/png" : "image/jpeg");
+        return name is null ? null : await storage.OpenAsync(ImageFolders.Avatars, name);
     }
 
     private Task<Account> LoadTrackedAsync() =>
@@ -186,12 +178,7 @@ public sealed class ProfileService(MsmsDbContext db, CurrentUser user, IClock cl
 
     private static string Iso(DateOnly d) => d.ToString("yyyy-MM-dd");
 
-    private void DeleteAvatarFile(string? fileName)
-    {
-        if (string.IsNullOrEmpty(fileName)) return;
-        try { File.Delete(Path.Combine(AvatarDirectory, Path.GetFileName(fileName))); }
-        catch (IOException) { /* file mồ côi không ảnh hưởng nghiệp vụ */ }
-    }
+    private Task DeleteAvatarFileAsync(string? fileName) => storage.DeleteAsync(ImageFolders.Avatars, fileName);
 
     private static string? DetectImageExtension(ReadOnlySpan<byte> b)
     {

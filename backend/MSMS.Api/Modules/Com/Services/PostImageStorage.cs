@@ -1,16 +1,15 @@
 using MSMS.Api.Common.Errors;
+using MSMS.Api.Common.Storage;
 
 namespace MSMS.Api.Modules.Com.Services;
 
 /// <summary>
 /// Lưu file ảnh bài đăng (BR-27): JPG hoặc PNG, mỗi ảnh tối đa 2 MB, kiểm theo nội dung file chứ không tin đuôi file.
-/// Cùng cách lưu với logo trường: thư mục App_Data/uploads, DB chỉ giữ tên file.
+/// Nơi lưu thật (thư mục máy hay Cloudinary) do IImageStorage quyết định; DB chỉ giữ tên file.
 /// </summary>
-public sealed class PostImageStorage(IWebHostEnvironment env)
+public sealed class PostImageStorage(IImageStorage storage)
 {
     public const long MaxBytes = 2 * 1024 * 1024;
-
-    private string Directory_ => Path.Combine(env.ContentRootPath, "App_Data", "uploads", "posts");
 
     /// <summary>Đọc và kiểm một ảnh; trả về nội dung và đuôi file chuẩn.</summary>
     public async Task<(byte[] Bytes, string Extension)> ReadAsync(IFormFile file)
@@ -26,27 +25,17 @@ public sealed class PostImageStorage(IWebHostEnvironment env)
         return (bytes, ext);
     }
 
-    public async Task<string> SaveAsync(byte[] bytes, string extension)
+    public Task<string> SaveAsync(byte[] bytes, string extension) =>
+        storage.SaveAsync(ImageFolders.Posts, "post", bytes, extension);
+
+    public Task DeleteAsync(string? fileName) => storage.DeleteAsync(ImageFolders.Posts, fileName);
+
+    public async Task DeleteAllAsync(IEnumerable<string> fileNames)
     {
-        System.IO.Directory.CreateDirectory(Directory_);
-        var name = $"post-{Guid.NewGuid():N}{extension}";
-        await File.WriteAllBytesAsync(Path.Combine(Directory_, name), bytes);
-        return name;
+        foreach (var f in fileNames) await DeleteAsync(f);
     }
 
-    public void Delete(string? fileName)
-    {
-        if (string.IsNullOrEmpty(fileName)) return;
-        try { File.Delete(Path.Combine(Directory_, Path.GetFileName(fileName))); }
-        catch (IOException) { /* file mồ côi không ảnh hưởng nghiệp vụ */ }
-    }
-
-    public (string Path, string ContentType)? Find(string fileName)
-    {
-        var path = Path.Combine(Directory_, Path.GetFileName(fileName));   // GetFileName chặn đường dẫn thoát khỏi thư mục
-        if (!File.Exists(path)) return null;
-        return (path, path.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ? "image/png" : "image/jpeg");
-    }
+    public Task<StoredImage?> OpenAsync(string fileName) => storage.OpenAsync(ImageFolders.Posts, fileName);
 
     private static string? DetectExtension(ReadOnlySpan<byte> b)
     {

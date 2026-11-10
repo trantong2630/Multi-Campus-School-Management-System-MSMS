@@ -20,7 +20,9 @@ Tài liệu kỹ thuật đi kèm Business Specification V3. Chốt bốn thứ:
 | Excel | ClosedXML |
 | Realtime | ASP.NET Core SignalR, một hub cho thông báo và chat. Server → client: `NotificationCreated`, `MessageReceived`, `MessageRead`, `Typing`, `PresenceChanged`; client → server chỉ `Typing` và `JoinConversation`, gửi tin vẫn qua REST. Web dùng `@microsoft/signalr`, mobile dùng `signalr_netcore` (chỉ khi app mở, có polling dự phòng). Token truyền qua query `access_token`, hub đi qua cùng kiểm tài khoản và phiên như REST. Đẩy sau `SaveChanges`. Đang nhập và online chỉ ở bộ nhớ, không thêm bảng; không backplane khi chạy một instance |
 | Email OTP | Gmail SMTP (`smtp.gmail.com:587`, STARTTLS) bằng App Password của hộp thư chung của trường; tài khoản và mật khẩu ứng dụng đặt trong cấu hình môi trường, không commit (spec mục 3.2) |
-| Gọi AI | HttpClient + REST của nhà cung cấp (Gemini); khóa và model đặt ở mục `Ai` trong `appsettings.json` (`Ai:ApiKey`, `Ai:Model`) |
+| Gọi AI | HttpClient + REST của nhà cung cấp (Gemini); khóa và model đặt ở mục `Ai` trong `appsettings.json` (`Ai:ApiKey`, `Ai:Model`). Yêu cầu có thể kèm ảnh (`IAiClient`, `AiImage`) |
+| Sách giáo khoa | Ảnh từng trang nằm trên Cloudinary qua `IImageStorage`, thư mục `msms/textbooks`, tên `<mã sách>-p-<trang PDF>.jpg`; API lấy ảnh rồi trả lại qua endpoint có kiểm quyền, ảnh không đi thẳng từ Cloudinary tới người dùng. Mục lục (bài, trang in bắt đầu và kết thúc, độ lệch số trang của cuốn) nằm trong mã nguồn ở `backend/MSMS.Api/Data/Textbooks/<mã sách>.json` và `TextbookSeeder` nạp vào CSDL mỗi lần API khởi động, ở mọi môi trường. Nạp một cuốn mới bằng `python -I tools/textbook-import/import_textbook.py` (cần thư viện `pymupdf`; khóa Gemini và Cloudinary lấy từ biến môi trường hoặc user-secrets); chữ do Gemini đọc từ mục lục phải được người rà lại trước khi commit file JSON |
+| Lưu ảnh | Cloudinary (gói Free) qua `CloudinaryDotNet`, cho ảnh đại diện, logo trường và ảnh bài đăng (BR-27). Code chỉ làm việc với `IImageStorage` (`Common/Storage`). CSDL chỉ giữ tên file; ảnh nằm ở thư mục `msms/avatars`, `msms/school`, `msms/posts` và vẫn đi qua API có kiểm quyền, API lấy từ Cloudinary rồi trả lại trình duyệt. Khóa `Cloudinary:CloudName`, `Cloudinary:ApiKey`, `Cloudinary:ApiSecret` đặt trong user-secrets hoặc biến môi trường, không commit; thiếu khóa thì API không khởi động |
 | Log | Serilog, ghi ra file |
 | Test | xUnit |
 
@@ -41,6 +43,8 @@ Chỉ các màn hình thuộc phạm vi mobile (spec mục 8.1).
 ### Môi trường
 
 Giai đoạn này **chạy local**: `dotnet run` hoặc IIS Express, SQL Server cài trên máy, web `npm run dev`, mobile chạy emulator Android.
+
+Ảnh lưu trên Cloudinary nên mỗi máy phải đặt khóa một lần: trong `backend/MSMS.Api` chạy `dotnet user-secrets set "Cloudinary:CloudName" "..."`, tương tự cho `Cloudinary:ApiKey` và `Cloudinary:ApiSecret`. Test dùng bản lưu vào thư mục tạm, không gọi Cloudinary.
 
 Triển khai thật (VPS Windows + IIS, Docker, CI/CD) **có thể làm sau**, chưa đụng tới ở giai đoạn coding.
 
@@ -209,14 +213,14 @@ Chốt chữ nào hiện trên màn hình. Mọi màn hình, mọi file xuất E
 
 | Module | Menu hiển thị |
 | --- | --- |
-| SCH | Thiết lập |
+| SCH | Cơ cấu nhà trường |
 | PPL | Hồ sơ |
 | SCD | Thời khóa biểu · Lịch dạy |
 | ATT | Điểm danh |
 | LRN | Bài tập rèn luyện |
 | PAR | Phụ huynh |
 | COM | Thông báo · Bảng tin |
-| ADM | Dashboard · Quản trị (Tài khoản · Nhật ký · Xuất dữ liệu) |
+| ADM | Bảng điều khiển · Quản trị (Tài khoản · Nhật ký · Xuất dữ liệu) |
 | IAM | Tài khoản (góc phải) |
 
 ### 4.2. Tên thực thể
@@ -240,6 +244,8 @@ Chốt chữ nào hiện trên màn hình. Mọi màn hình, mọi file xuất E
 | Attendance | Điểm danh |
 | LeaveRequest | Đơn xin nghỉ |
 | Question | Câu hỏi |
+| TextbookBook | Sách giáo khoa đã nạp |
+| TextbookLesson | Bài trong mục lục sách |
 | AssignmentQuestion | Câu hỏi của bài tập |
 | Assignment | Bài tập |
 | Submission | Lượt làm bài |
@@ -313,9 +319,8 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Cấp 1 | Cấp 2 |
 | --- | --- |
 | Trang chủ | — |
-| Tiến độ giao bài của tổ | — |
-| Dashboard | — |
-| Thiết lập | Thông tin trường · Phân hiệu · Tổ chuyên môn & Môn học · Năm học & Học kỳ · Ngày nghỉ · Khung giờ tiết · Lớp & Ghi danh · Kết chuyển năm học |
+| Bảng điều khiển | Tình hình toàn trường · Tình hình phân hiệu · Tình hình tổ chuyên môn · Tình hình lớp chủ nhiệm · Tiến độ bài tập rèn luyện · Thống kê hệ thống |
+| Cơ cấu nhà trường | Thông tin trường · Phân hiệu · Tổ chuyên môn & Môn học · Năm học & Học kỳ · Ngày nghỉ · Khung giờ tiết · Lớp & Ghi danh · Kết chuyển năm học |
 | Hồ sơ | Cán bộ · Học sinh · Phụ huynh · Trách nhiệm |
 | Thời khóa biểu | Thời khóa biểu · Phụ trách chuyên môn · Lịch dạy · Giáo viên vắng |
 | Điểm danh | — |
@@ -324,22 +329,26 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Bảng tin | — |
 | Quản trị | Tài khoản · Nhật ký · Xuất dữ liệu |
 
-- Nhóm chỉ có một màn hình thì không có cấp 2. Áp dụng cả sau khi lọc theo quyền: nhóm chỉ còn một mục con hiển thị cho loại tài khoản đó thì hiện thẳng thành mục cấp 1 (ví dụ giáo viên chỉ thấy **Lịch dạy**; chủ nhiệm chỉ có quyền xuất điểm danh thì nhóm Quản trị hiện thẳng thành **Xuất dữ liệu**). School Admin không thấy Dashboard, Thời khóa biểu và Xuất dữ liệu; nhóm Quản trị của School Admin gồm **Tài khoản** và **Nhật ký**.
-- **Trang chủ** là mục cấp 1 đầu tiên, mọi loại tài khoản đều thấy; ngay dưới là **Tiến độ giao bài của tổ** (mục cấp 1 riêng, cùng cụm Tổng quan) cho giáo viên. Trang chủ chỉ chào và hiện thông tin chung (hôm nay, năm học, liên hệ trường — Business Spec §5.1); không đặt số liệu, lối tắt hay bảng tin ở Trang chủ (số liệu ở **Dashboard**, chỉ Principal và Vice Principal).
+- Nhóm chỉ có một màn hình thì không có cấp 2. Áp dụng cả sau khi lọc theo quyền: nhóm chỉ còn một mục con hiển thị cho loại tài khoản đó thì hiện thẳng thành mục cấp 1 (ví dụ giáo viên chỉ thấy **Lịch dạy**; chủ nhiệm chỉ có quyền xuất điểm danh thì nhóm Quản trị hiện thẳng thành **Xuất dữ liệu**). School Admin không thấy Thời khóa biểu và Xuất dữ liệu; nhóm Quản trị của School Admin gồm **Tài khoản** và **Nhật ký**. **Bảng điều khiển** là ngoại lệ có chủ ý: luôn giữ nhóm cha dù chỉ còn một mục con (School Admin chỉ có **Thống kê hệ thống**), cờ `keepGroup` trong `app/menu.tsx`.
+- **Trang chủ** là mục cấp 1 đầu tiên, mọi loại tài khoản đều thấy; ngay dưới là **Bảng điều khiển** (cùng cụm Tổng quan) cho mọi cán bộ có việc theo dõi. Giáo viên không giữ trách nhiệm nào thì không có Bảng điều khiển; lịch dạy hôm nay đã nằm ở Trang chủ. Trang chủ chỉ chào và hiện thông tin chung (hôm nay, năm học, liên hệ trường, lịch dạy của giáo viên — Business Spec §5.1); không đặt số liệu thống kê, lối tắt hay bảng tin ở Trang chủ (số liệu ở **Bảng điều khiển**). `/dashboard` không phải màn hình, chuyển tới mục đầu tiên người dùng được mở.
 - Mục cha **không điều hướng**, chỉ xổ ra; vào trang con thì cha tự xổ và sáng lên.
 - Icon chỉ ở cấp 1; mục con thụt vào, không icon, không chấm đầu dòng.
 - **Ẩn hẳn mục không có quyền**, không hiện rồi khóa.
 - Thông báo, hồ sơ cá nhân, đổi mật khẩu, đăng xuất nằm ở **góc phải header**, không vào sidebar.
 
-**Ai thấy mục nào.** Một mục chỉ hiện cho loại tài khoản **có việc làm trên màn hình đó**. Quyền đọc dữ liệu (cột Đọc của Business Spec §5) không tự sinh ra màn hình: Hiệu phó và giáo viên đọc môn học, khung giờ tiết, lớp, ngày nghỉ ngay trong lưới thời khóa biểu, lịch dạy và trang chủ, nên không có màn hình Thiết lập. Gõ thẳng đường dẫn của mục không được thấy thì hiện trang 403. Nguồn duy nhất ở web là `app/menu.tsx`.
+**Ai thấy mục nào.** Một mục chỉ hiện cho loại tài khoản **có việc làm trên màn hình đó**. Quyền đọc dữ liệu (cột Đọc của Business Spec §5) không tự sinh ra màn hình: Hiệu phó và giáo viên đọc môn học, khung giờ tiết, lớp, ngày nghỉ ngay trong lưới thời khóa biểu, lịch dạy và trang chủ, nên không có màn hình Cơ cấu nhà trường; Hiệu trưởng xem các màn này ở chế độ chỉ đọc, mọi thao tác sửa thuộc School Admin. Gõ thẳng đường dẫn của mục không được thấy thì hiện trang 403. Nguồn duy nhất ở web là `app/menu.tsx`.
 
 | Mục | Ai thấy |
 | --- | --- |
 | Trang chủ · Bảng tin | Mọi loại |
-| Tiến độ giao bài của tổ | GV (chỉ tổ trưởng) |
-| Dashboard | HT, HP |
-| Thiết lập › Thông tin trường | SA, HT |
-| Thiết lập › mọi mục còn lại | SA |
+| Bảng điều khiển › Tình hình toàn trường | HT |
+| Bảng điều khiển › Tình hình phân hiệu | HP |
+| Bảng điều khiển › Tình hình tổ chuyên môn | GV (chỉ tổ trưởng) |
+| Bảng điều khiển › Tình hình lớp chủ nhiệm | GV (chỉ chủ nhiệm) |
+| Bảng điều khiển › Tiến độ bài tập rèn luyện | HT, HP, GV (chủ nhiệm hoặc tổ trưởng) |
+| Bảng điều khiển › Thống kê hệ thống | SA |
+| Cơ cấu nhà trường › Thông tin trường · Phân hiệu · Tổ chuyên môn & Môn học · Năm học & Học kỳ · Lớp & Ghi danh | SA (sửa), HT (chỉ xem) |
+| Cơ cấu nhà trường › Ngày nghỉ · Khung giờ tiết · Kết chuyển năm học | SA |
 | Hồ sơ › Cán bộ · Học sinh · Phụ huynh | SA, HT, HP |
 | Hồ sơ › Trách nhiệm | SA, HT |
 | Thời khóa biểu › Thời khóa biểu · Phụ trách chuyên môn · Giáo viên vắng | HP |
@@ -348,10 +357,10 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Bài tập rèn luyện › Kho câu hỏi · Giao bài tập · Bài tập đã giao | GV |
 | Bài tập rèn luyện › Bài tập được giao · Danh sách bài tập | HS |
 | Bài tập rèn luyện › Kết quả của con | PH |
-| Phụ huynh › Đơn xin nghỉ | HP, GV, PH |
+| Phụ huynh › Đơn xin nghỉ | GV (chỉ chủ nhiệm), PH |
 | Phụ huynh › Sổ liên lạc | GV, HS, PH |
 | Phụ huynh › Hộp thư | GV, PH |
 | Quản trị › Tài khoản · Nhật ký | SA |
 | Quản trị › Xuất dữ liệu | HP, GV |
 
-Ký hiệu như Business Spec §5. Kết quả với các màn đã có: **SA** Trang chủ · Thiết lập · Hồ sơ (Cán bộ, Trách nhiệm) · Tài khoản — **HT** Trang chủ · Dashboard · Thông tin trường · Hồ sơ (Cán bộ, Trách nhiệm) · Lịch dạy — **HP** Trang chủ · Dashboard · Cán bộ · Thời khóa biểu (Thời khóa biểu, Lịch dạy) — **GV** Trang chủ · Lịch dạy — **HS, PH** Trang chủ.
+Ký hiệu như Business Spec §5. Kết quả với các màn đã có: **SA** Trang chủ · Bảng điều khiển (Thống kê hệ thống) · Cơ cấu nhà trường (đủ 8 mục) · Hồ sơ (Cán bộ, Trách nhiệm) · Tài khoản — **HT** Trang chủ · Bảng điều khiển (Tình hình toàn trường, Tiến độ bài tập rèn luyện) · Cơ cấu nhà trường (5 mục chỉ xem) · Hồ sơ (Cán bộ, Trách nhiệm) · Lịch dạy — **HP** Trang chủ · Bảng điều khiển (Tình hình phân hiệu, Tiến độ bài tập rèn luyện) · Cán bộ · Thời khóa biểu (Thời khóa biểu, Lịch dạy) — **GV** Trang chủ · Lịch dạy (chủ nhiệm hoặc tổ trưởng thêm Bảng điều khiển) — **HS, PH** Trang chủ.

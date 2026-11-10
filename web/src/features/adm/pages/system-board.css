@@ -1,0 +1,62 @@
+/* Thống kê hệ thống (School Admin): dải xanh đầu trang gom tài khoản, hoạt động và quy mô; số vừa phải, màu chỉ cho thứ cần chú ý. */
+
+.sb-eyebrow { margin: 0 0 12px; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--c-text2); }
+.sb-eyebrow b { font-weight: 700; color: var(--c-ink); }
+
+/* Dải xanh đầu trang */
+.sb-hero { padding: 26px 30px 28px; }
+.sb-hero__main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 20px 48px; align-items: start; padding-bottom: 24px; }
+@media (max-width: 1100px) { .sb-hero__main { grid-template-columns: minmax(0, 1fr); } }
+
+.sb-acc__total { display: flex; align-items: baseline; gap: 12px; }
+.sb-acc__total b { font-size: 48px; line-height: 52px; font-weight: 600; color: var(--c-ink); }
+.sb-acc__total span { font-size: 15px; color: var(--c-text2); }
+.sb-acc__bar { display: flex; height: 10px; margin: 14px 0 16px; border-radius: 999px; overflow: hidden; background: rgba(255, 255, 255, .7); }
+.sb-acc__bar i { display: block; height: 100%; }
+.sb-acc__bar .is-ok { background: var(--c-green600); }
+.sb-acc__bar .is-wait { background: var(--c-amber); }
+.sb-acc__bar .is-lock { background: var(--c-coralFg); }
+
+/* Chip trạng thái: có số mới có màu */
+.sb-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.sb-chips button, .sb-chips span { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border: 1px solid transparent; border-radius: 999px; background: rgba(255, 255, 255, .75); font: inherit; font-size: 14px; color: var(--c-text1); }
+.sb-chips button { cursor: pointer; transition: background .15s, border-color .15s; }
+.sb-chips button:hover { background: #fff; border-color: var(--c-borderMint); }
+.sb-chips button:focus-visible { outline: 2px solid var(--c-green600); outline-offset: 1px; }
+.sb-chips em { width: 8px; height: 8px; border-radius: 50%; background: var(--c-disabled); }
+.sb-chips .is-wait em { background: var(--c-amber); }
+.sb-chips .is-lock em { background: var(--c-coralFg); }
+.sb-chips .is-zero { color: var(--c-text2); }
+
+.sb-hero__trend .bd-trend { margin: 0; }
+.sb-hero__trend .bd-trend__bar { fill: var(--c-green600); opacity: .55; }
+.sb-hero__trend .bd-legend { display: none; }
+
+/* Quy mô: bốn thẻ màu dịu, nhãn ở trên, số ở dưới, vòng mờ trang trí ở góc */
+.sb-scale { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 0; padding: 0; list-style: none; }
+@media (max-width: 1000px) { .sb-scale { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.sb-scale button, .sb-scale > li > div { --tint: #e3f4e8; position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 18px; width: 100%; min-height: 124px; padding: 16px 18px; border: 0; border-radius: 22px; background: var(--tint); font: inherit; text-align: left; color: inherit; overflow: hidden; }
+.sb-scale .sb-scale__sky { --tint: #e2effa; }
+.sb-scale .sb-scale__sun { --tint: #fdf0d2; }
+.sb-scale .sb-scale__lilac { --tint: #eee6f9; }
+.sb-scale button::before, .sb-scale > li > div::before { content: ''; position: absolute; right: -28px; top: -28px; width: 104px; height: 104px; border-radius: 50%; border: 18px solid rgba(255, 255, 255, .6); }
+.sb-scale button { cursor: pointer; transition: transform .15s, box-shadow .15s; }
+.sb-scale button:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(16, 42, 48, .1); }
+.sb-scale button:focus-visible { outline: 2px solid var(--c-green600); outline-offset: 2px; }
+.sb-scale span { position: relative; font-size: 15px; font-weight: 600; color: var(--c-text1); }
+.sb-scale b { position: relative; font-size: 40px; line-height: 44px; font-weight: 600; color: var(--c-ink); }
+
+/* Dữ liệu cần bổ sung: hai cột */
+.sb-gap__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.sb-gap__head .sb-eyebrow { margin: 0; }
+.sb-pill { display: inline-flex; align-items: baseline; gap: 5px; padding: 4px 14px; border-radius: 999px; background: var(--c-amber); font-size: 13px; font-weight: 600; color: var(--c-ink); }
+.sb-pill b { font-size: 15px; font-weight: 700; }
+.sb-gap { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 14px 0 0; padding: 0; list-style: none; }
+@media (max-width: 900px) { .sb-gap { grid-template-columns: minmax(0, 1fr); } }
+.sb-gap button, .sb-gap > li > div { display: grid; grid-template-columns: 44px minmax(0, 1fr) 32px; align-items: center; gap: 14px; width: 100%; padding: 12px 14px; border: 1px solid var(--c-border); border-radius: 18px; background: var(--c-surface); font: inherit; font-size: 15px; line-height: 21px; text-align: left; color: var(--c-text1); }
+.sb-gap button { cursor: pointer; transition: border-color .15s, transform .15s, box-shadow .15s; }
+.sb-gap button:hover { border-color: var(--c-green600); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(16, 42, 48, .08); }
+.sb-gap button:focus-visible { outline: 2px solid var(--c-green600); outline-offset: 2px; }
+.sb-gap__n { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--c-amber); font-size: 17px; font-weight: 700; color: var(--c-ink); background: var(--c-surface); }
+.sb-gap__go { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: var(--c-green50); font-size: 15px; color: var(--c-green800); transition: background .15s, color .15s; }
+.sb-gap button:hover .sb-gap__go { background: var(--c-green600); color: #fff; }

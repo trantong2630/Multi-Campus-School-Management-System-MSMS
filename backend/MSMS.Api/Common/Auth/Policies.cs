@@ -11,7 +11,7 @@ public static class Policies
     public const string TimetableManager = nameof(TimetableManager);   // ghi thời khóa biểu: VicePrincipal (SchoolAdmin không làm thời khóa biểu)
     public const string TimetableReader = nameof(TimetableReader);     // đọc thời khóa biểu và lịch dạy theo phân hiệu: Principal, VicePrincipal
     public const string ResponsibilityManager = nameof(ResponsibilityManager);   // gán trách nhiệm: SchoolAdmin, Principal
-    public const string SchoolProfileManager = nameof(SchoolProfileManager);   // sửa thông tin trường: SchoolAdmin, Principal
+    public const string SchoolStructureReader = nameof(SchoolStructureReader);   // xem cơ cấu nhà trường (thống kê phân hiệu, tổ, lớp): SchoolAdmin, Principal
     public const string DashboardReader = nameof(DashboardReader);     // Dashboard: Principal (toàn trường hoặc lọc phân hiệu), VicePrincipal (phân hiệu mình)
     public const string CampusReader = nameof(CampusReader);           // đọc dữ liệu phân hiệu: SchoolAdmin, Principal, VicePrincipal
     public const string Teacher = nameof(Teacher);
@@ -19,7 +19,11 @@ public static class Policies
     public const string Student = nameof(Student);
     public const string Parent = nameof(Parent);
     public const string StudentOrParent = nameof(StudentOrParent);   // xem điểm và phân tích đã công bố (LRN-03, LRN-04)
+    public const string ReportViewer = nameof(ReportViewer);   // sổ liên lạc: Teacher (service giới hạn ở chủ nhiệm), Student, Parent; SchoolAdmin không xem
     public const string ConversationParticipant = nameof(ConversationParticipant); // hộp thư chỉ dành cho Teacher và Parent
+    public const string AssignmentOversight = nameof(AssignmentOversight);   // theo dõi tiến độ bài tập: Principal, VicePrincipal, Teacher (service giới hạn ở chủ nhiệm)
+    public const string AttendanceWriter = nameof(AttendanceWriter);   // ghi điểm danh: Teacher (tiết mình, trong ngày), SchoolAdmin (nhập bù, sửa) — BR-17
+    public const string DataExporter = nameof(DataExporter);   // xuất Excel (ADM-03): VicePrincipal, Teacher; service giới hạn ở phân hiệu phụ trách và lớp chủ nhiệm
 
 
     public static void Register(AuthorizationOptions o)
@@ -39,7 +43,7 @@ public static class Policies
             AccountTypes.Principal, AccountTypes.VicePrincipal));
         o.AddPolicy(ResponsibilityManager, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim,
             AccountTypes.SchoolAdmin, AccountTypes.Principal));
-        o.AddPolicy(SchoolProfileManager, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim,
+        o.AddPolicy(SchoolStructureReader, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim,
             AccountTypes.SchoolAdmin, AccountTypes.Principal));
         o.AddPolicy(CampusReader, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim,
             AccountTypes.SchoolAdmin, AccountTypes.Principal, AccountTypes.VicePrincipal));
@@ -53,6 +57,12 @@ public static class Policies
         o.AddPolicy(Student, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.Student));
         o.AddPolicy(Parent, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.Parent));
         o.AddPolicy(StudentOrParent, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.Student, AccountTypes.Parent));
+        o.AddPolicy(ReportViewer, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim,
+            AccountTypes.Teacher, AccountTypes.Student, AccountTypes.Parent));
         o.AddPolicy(ConversationParticipant, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.Teacher, AccountTypes.Parent));
+        o.AddPolicy(AssignmentOversight, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim,
+            AccountTypes.Principal, AccountTypes.VicePrincipal, AccountTypes.Teacher));
+        o.AddPolicy(AttendanceWriter, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.Teacher, AccountTypes.SchoolAdmin));
+        o.AddPolicy(DataExporter, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.VicePrincipal, AccountTypes.Teacher));
     }
 }

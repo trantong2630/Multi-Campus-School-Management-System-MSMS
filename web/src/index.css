@@ -95,3 +95,10 @@ body {
   transform: none;
   opacity: 1;
 }
+
+/* Dòng phụ của ô bảng (giờ của tiết, ngày tháng): rõ hơn dòng phụ của lưới TKB */
+.cell-sub { display: block; font-size: 13px; line-height: 18px; color: var(--c-text2); }
+.cell-sub--date { font-size: 12px; line-height: 17px; }
+
+/* Công tắc nhỏ trong thanh lọc: nhãn bên phải công tắc */
+.filter-switch { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--c-text2); cursor: pointer; }

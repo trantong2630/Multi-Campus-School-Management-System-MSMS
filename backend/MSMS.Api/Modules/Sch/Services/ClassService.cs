@@ -37,7 +37,7 @@ public sealed class ClassService(MsmsDbContext db, IClock clock)
                 c.Name, c.GradeLevel, c.IsActive,
                 c.Enrollment.AsQueryable().Count(EnrollmentRules.ActiveAsOf(today)),
                 c.HomeroomAssignment
-                    .Where(h => h.StartDate <= today && (h.EndDate == null || h.EndDate >= today))
+                    .Where(h => h.StartDate <= today && (h.EndDate == null || h.EndDate > today))   // kết thúc hôm nay là hết chủ nhiệm (BR-09)
                     .Select(h => h.Staff.Staff.FullName).FirstOrDefault()))
             .ToListAsync();
     }

@@ -13,6 +13,9 @@ public partial class Question
 
     public string? Topic { get; set; }
 
+    /// <summary>Bài trong sách giáo khoa mà AI đã dựa vào để soạn câu này; trống với câu soạn tay.</summary>
+    public int? LessonId { get; set; }
+
     public string Content { get; set; } = null!;
 
     public string? Explanation { get; set; }
@@ -36,4 +39,6 @@ public partial class Question
     public virtual ICollection<QuestionOption> QuestionOption { get; set; } = new List<QuestionOption>();
 
     public virtual Subject Subject { get; set; } = null!;
+
+    public virtual TextbookLesson? Lesson { get; set; }
 }

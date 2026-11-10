@@ -114,7 +114,6 @@ export function StaffPage() {
     <>
       <PageHeader
         title="Cán bộ"
-        description="Danh bạ cán bộ gồm cả Hiệu trưởng và Hiệu phó. Viết tắt GV chỉ điền cho giáo viên, duy nhất toàn trường."
         extra={canWrite && (
           <>
             <Button icon={<FileDown size={16} />} onClick={template}>Tải file mẫu</Button>
@@ -159,6 +158,7 @@ export function StaffPage() {
             },
             { title: 'Họ và tên', dataIndex: 'fullName', width: 210, render: (v: string, s: Staff) => <PersonCell name={v} muted={!s.isActive} /> },
             { title: 'Ngày sinh', dataIndex: 'dateOfBirth', width: 104, className: 'tabular', render: (v: string | null) => formatDate(v) },
+            { title: 'Giới tính', dataIndex: 'gender', width: 90, render: (v: string | null) => GENDERS.find((g) => g.value === v)?.label ?? '—' },
             { title: 'Số định danh', dataIndex: 'nationalId', width: 120, className: 'tabular', render: (v: string | null) => v ?? <span className="muted">—</span> },
             { title: 'Phân hiệu chính', dataIndex: 'primaryCampusName', width: 120, render: (v: string | null) => v ?? <span className="muted">—</span> },
             { title: 'Tổ chuyên môn', dataIndex: 'departmentName', width: 130, render: (v: string | null) => v ?? <span className="muted">—</span> },
@@ -217,10 +217,13 @@ export function StaffPage() {
             <Input maxLength={150} />
           </Form.Item>
           <Form.Item label="Ngày sinh" name="dateOfBirth" rules={[{ required: true, message: 'Chọn ngày sinh.' }]}>
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(dayjs())} />
+            <DatePicker
+              format="DD/MM/YYYY" style={{ width: '100%' }} defaultPickerValue={dayjs().subtract(30, 'year')}
+              // Cán bộ từ 18 đến 75 tuổi tính đến hôm nay (server kiểm lại).
+              disabledDate={(d) => d.isAfter(dayjs().subtract(18, 'year'), 'day') || !d.isAfter(dayjs().subtract(76, 'year'), 'day')}
+            />
           </Form.Item>
           <Form.Item label="Số định danh cá nhân" name="nationalId"
-            extra={editing === 'new' ? 'Đủ 12 chữ số, duy nhất toàn trường, không sửa được sau khi tạo.' : 'Không sửa được sau khi tạo.'}
             rules={editing === 'new' ? [{ required: true, message: 'Nhập số định danh cá nhân.' }, { pattern: /^\d{12}$/, message: 'Số định danh gồm đúng 12 chữ số.' }] : []}>
             <Input maxLength={12} inputMode="numeric" disabled={editing !== 'new'} />
           </Form.Item>
@@ -228,16 +231,15 @@ export function StaffPage() {
             <Select options={campuses.data?.filter((c) => c.isActive).map((c) => ({ value: c.campusId, label: c.name }))} />
           </Form.Item>
           <Form.Item label="Tổ chuyên môn" name="departmentId">
-            <Select allowClear options={departments.data?.filter((d) => d.isActive).map((d) => ({ value: d.departmentId, label: d.name }))} />
+            <Select allowClear options={departments.data?.filter((d) => d.isActive || (editing !== 'new' && editing?.departmentId === d.departmentId)).map((d) => ({ value: d.departmentId, label: d.isActive ? d.name : ` (đã ngừng)` }))} />
           </Form.Item>
           <Form.Item label="Giới tính" name="gender"><Select allowClear options={GENDERS} /></Form.Item>
-          <Form.Item label="Số điện thoại" name="phoneNumber"><Input maxLength={20} /></Form.Item>
+          <Form.Item label="Số điện thoại" name="phoneNumber" rules={[{ pattern: /^0[35789]\d{8}$/, message: 'Số điện thoại di động phải gồm đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09.' }]}><Input maxLength={10} inputMode="tel" /></Form.Item>
           <Form.Item label="Email nhận mã OTP" name="email" rules={[{ type: 'email', message: 'Email chưa đúng định dạng.' }]}>
             <Input maxLength={150} />
           </Form.Item>
           <Form.Item
             label="Viết tắt GV" name="teacherAbbr"
-            extra="Chỉ gồm chữ và số, duy nhất toàn trường. Không có viết tắt thì không xuất hiện được trong file thời khóa biểu."
             rules={[{ pattern: /^[A-Za-z0-9]*$/, message: 'Viết tắt chỉ gồm chữ và số, không dấu cách, không dấu gạch.' }]}
           >
             <Input maxLength={10} />

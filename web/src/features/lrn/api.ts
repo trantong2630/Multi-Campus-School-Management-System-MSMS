@@ -2,7 +2,7 @@ import { apiClient } from '@/app/apiClient';
 import type {
   AnswerInput, AssignmentDetail, AssignmentItem, Attempt, Child, ChildResultItem, ClassResult, ClassSubjectOption,
   CreateAssignmentInput, DepartmentOverview, GenerateQuestionsInput, GenerateQuestionsResult, MyAssignmentItem, PagedResult,
-  PracticeResult, QuestionDetail, QuestionItem, QuestionQuery, SaveQuestionInput,
+  PracticeResult, QuestionDetail, QuestionItem, QuestionQuery, SaveQuestionInput, TextbookLesson,
 } from './types';
 
 const get = <T>(url: string, params?: object) => apiClient.get<T>(url, { params }).then((r) => r.data);
@@ -24,6 +24,12 @@ export const lrnApi = {
     /** AI gọi lâu hơn các API khác nên đặt thời gian chờ riêng. */
     generate: (b: GenerateQuestionsInput) => apiClient.post<GenerateQuestionsResult>('/lrn/questions/ai-drafts', b, { timeout: 150_000 }).then((r) => r.data),
   },
+  textbooks: {
+    lessons: (subjectId: number, gradeLevel: number) => get<TextbookLesson[]>('/lrn/textbooks/lessons', { subjectId, gradeLevel }),
+    /** Ảnh một trang sách; cần gửi kèm đăng nhập nên lấy dạng blob rồi tạo địa chỉ tạm. */
+    page: (lessonId: number, page: number) =>
+      apiClient.get<Blob>(`/lrn/textbooks/lessons/${lessonId}/pages/${page}`, { responseType: 'blob' }).then((r) => URL.createObjectURL(r.data)),
+  },
   assignments: {
     list: () => get<AssignmentItem[]>('/lrn/assignments'),
     classSubjects: () => get<ClassSubjectOption[]>('/lrn/assignments/class-subjects'),
@@ -40,6 +46,9 @@ export const lrnApi = {
     submit: (id: number, answers: AnswerInput[]) => post<{ submittedAt: string }>(`/lrn/my-assignments/${id}/submit`, { answers }),
   },
   results: {
+    /** Ảnh một trang sách trong mục "Xem lại trong sách" của học sinh hoặc phụ huynh (của con thì kèm studentId). */
+    page: (assignmentId: number, lessonId: number, page: number, studentId?: number) =>
+      apiClient.get<Blob>(`/lrn/results/${assignmentId}/pages/${lessonId}/${page}`, { params: { studentId }, responseType: 'blob' }).then((r) => URL.createObjectURL(r.data)),
     children: () => get<Child[]>('/lrn/results/children'),
     childList: (studentId: number) => get<ChildResultItem[]>(`/lrn/results/children/${studentId}`),
     detail: (assignmentId: number, studentId?: number) => get<PracticeResult>(`/lrn/results/${assignmentId}`, { studentId }),

@@ -19,7 +19,6 @@ public sealed class HomeroomOverviewService(MsmsDbContext db, CurrentUser user, 
     public async Task<HomeroomOverviewDto> GetAsync(int? classId)
     {
         var today = clock.Today;
-        var now = clock.Now;
         var scope = await new AccountScopeResolver(db, clock).ResolveAsync(user.PersonId, user.AccountType);
         if (scope.HomeroomClassIds.Count == 0)
             throw ApiException.Forbidden("Chỉ giáo viên đang chủ nhiệm mới xem được màn hình này.");
@@ -47,6 +46,8 @@ public sealed class HomeroomOverviewService(MsmsDbContext db, CurrentUser user, 
         var leaves = await db.LeaveRequest.AsNoTracking().Where(l => l.ClassId == id)
             .Select(l => new { l.StudentId, l.Status, l.FromDate }).ToListAsync();
 
+        var absences = await AttendanceSupport.AbsencesByStudentAsync(db, id, leaveFrom.AddDays(1), today);
+
         var parents = (await db.ParentStudentLink.AsNoTracking().Where(p => studentIds.Contains(p.StudentId))
                 .Select(p => new { p.StudentId, p.IsPrimary, p.Parent.FullName, p.Parent.PhoneNumber, HasAccount = p.Parent.Account != null })
                 .ToListAsync())
@@ -60,13 +61,21 @@ public sealed class HomeroomOverviewService(MsmsDbContext db, CurrentUser user, 
                 var sl = leaves.Where(l => l.StudentId == s.StudentId).ToList();
                 return new HomeroomStudentRow(s.StudentId, s.PersonCode, s.FullName, s.Gender, s.DateOfBirth,
                     sl.Count(l => l.Status is "Approved" or "Pending" && l.FromDate >= leaveFrom), sl.Count(l => l.Status == "Pending"),
-                    ps.Count, main?.FullName, main?.PhoneNumber, ps.Any(p => p.HasAccount));
+                    ps.Count, main?.FullName, main?.PhoneNumber, ps.Any(p => p.HasAccount),
+                    absences.GetValueOrDefault(s.StudentId).Excused, absences.GetValueOrDefault(s.StudentId).Unexcused);
             })
             .OrderBy(s => LastName(s.FullName), StringComparer.Create(new System.Globalization.CultureInfo("vi-VN"), true))
             .ThenBy(s => s.FullName, StringComparer.Create(new System.Globalization.CultureInfo("vi-VN"), true))
             .ToList();
 
-        var facts = await DashboardSupport.FactsAsync(db.Assignment.Where(a => a.ClassId == id));
+
+        var trendFrom = DashboardSupport.WeekStart(today).AddDays(-49);
+        var days = await AttendanceSupport.DaysAsync(db, [id], trendFrom, today);
+        var recent = days.Where(d => d.Date > today.AddDays(-28)).ToList();
+        var unmarked = (await AttendanceSupport.UnmarkedByClassAsync(db, [id], today.AddDays(-27), today)).Values.Sum();
+        var todayMarked = await db.TeachingSession.AsNoTracking()
+            .Where(s => s.ClassId == id && s.Status == AttendanceRules.SessionScheduled && s.SessionDate == today)
+            .Select(s => s.AttendanceRecord.Any()).ToListAsync();
 
         var term = await DashboardSupport.CurrentTermAsync(db, today);
         var teachers = term.SemesterId is int semId
@@ -81,7 +90,8 @@ public sealed class HomeroomOverviewService(MsmsDbContext db, CurrentUser user, 
             leaves.Count(l => l.Status == "Pending"),
             leaves.Count(l => l.Status is "Approved" or "Pending" && l.FromDate >= leaveFrom),
             rows.Count(r => r.ParentCount == 0), rows.Count(r => r.ParentCount > 0 && !r.ParentHasAccount),
-            DashboardSupport.Rate(facts, now), DashboardSupport.BySubject(facts, now), teachers, rows);
+            teachers, rows,
+            AttendanceSupport.Summary(recent, unmarked, todayMarked.Count, todayMarked.Count(m => m)), AttendanceSupport.Weeks(days, today));
     }
 
     /// <summary>Tên gọi (từ cuối) để xếp theo kiểu danh sách lớp Việt Nam.</summary>

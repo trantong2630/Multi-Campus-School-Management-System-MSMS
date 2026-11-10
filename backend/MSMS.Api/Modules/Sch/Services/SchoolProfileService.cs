@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
+using MSMS.Api.Common.Storage;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
 using MSMS.Api.Data.Entities;
@@ -12,12 +13,10 @@ namespace MSMS.Api.Modules.Sch.Services;
 /// SCH-07: thông tin nhận diện của trường (tên, địa chỉ, liên hệ, logo). Đúng một dòng; chưa lưu lần nào thì
 /// các trường trả về null và giao diện dùng tên mặc định. Hiệu trưởng và School Admin sửa được.
 /// </summary>
-public sealed class SchoolProfileService(MsmsDbContext db, CurrentUser user, IClock clock, IWebHostEnvironment env)
+public sealed class SchoolProfileService(MsmsDbContext db, CurrentUser user, IClock clock, IImageStorage storage)
 {
     private const int ProfileId = 1;
     private const long MaxLogoBytes = 2 * 1024 * 1024;   // cùng giới hạn ảnh với bảng tin (BR-27)
-
-    private string LogoDirectory => Path.Combine(env.ContentRootPath, "App_Data", "uploads", "school");
 
     public async Task<SchoolProfileDto> GetAsync()
     {
@@ -42,7 +41,7 @@ public sealed class SchoolProfileService(MsmsDbContext db, CurrentUser user, ICl
         }
         p.Name = name;
         p.Address = Guard.Optional(r.Address, "Địa chỉ", 255);
-        p.PhoneNumber = Guard.Optional(r.PhoneNumber, "Số điện thoại", 20);
+        p.PhoneNumber = Guard.MobilePhone(r.PhoneNumber);
         p.Email = email;
         p.Website = website;
         Stamp(p);
@@ -60,22 +59,27 @@ public sealed class SchoolProfileService(MsmsDbContext db, CurrentUser user, ICl
             ?? throw ApiException.BadRequest("Nhập tên trường và lưu trước, sau đó mới tải logo.");
 
         await using var input = file.OpenReadStream();
-        var header = new byte[8];
-        var read = await input.ReadAsync(header);
-        var extension = DetectImageExtension(header.AsSpan(0, read))
+        using var ms = new MemoryStream((int)file.Length);
+        await input.CopyToAsync(ms);
+        var bytes = ms.ToArray();
+        var extension = DetectImageExtension(bytes)
             ?? throw ApiException.BadRequest("Logo chỉ nhận ảnh JPG hoặc PNG. Chọn lại ảnh đúng định dạng.");
-        input.Position = 0;
 
-        Directory.CreateDirectory(LogoDirectory);
-        var fileName = $"logo-{Guid.NewGuid():N}{extension}";
-        await using (var output = File.Create(Path.Combine(LogoDirectory, fileName)))
-            await input.CopyToAsync(output);
+        var fileName = await storage.SaveAsync(ImageFolders.School, "logo", bytes, extension);
 
         var oldFile = p.LogoPath;
         p.LogoPath = fileName;
         Stamp(p);
-        await db.SaveChangesAsync();
-        DeleteLogoFile(oldFile);
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch
+        {
+            await DeleteLogoFileAsync(fileName);   // DB không lưu được thì không để lại file mồ côi
+            throw;
+        }
+        await DeleteLogoFileAsync(oldFile);
         return ToDto(p);
     }
 
@@ -87,18 +91,15 @@ public sealed class SchoolProfileService(MsmsDbContext db, CurrentUser user, ICl
         p.LogoPath = null;
         Stamp(p);
         await db.SaveChangesAsync();
-        DeleteLogoFile(oldFile);
+        await DeleteLogoFileAsync(oldFile);
         return ToDto(p);
     }
 
-    /// <summary>Đường dẫn file logo và loại nội dung; null nếu trường chưa có logo.</summary>
-    public async Task<(string Path, string ContentType)?> FindLogoAsync()
+    /// <summary>Logo của trường; null nếu trường chưa có logo hoặc ảnh đã mất.</summary>
+    public async Task<StoredImage?> FindLogoAsync()
     {
         var name = await db.SchoolProfile.AsNoTracking().Where(x => x.SchoolProfileId == ProfileId).Select(x => x.LogoPath).FirstOrDefaultAsync();
-        if (name is null) return null;
-        var path = Path.Combine(LogoDirectory, Path.GetFileName(name));   // GetFileName chặn đường dẫn thoát khỏi thư mục
-        if (!File.Exists(path)) return null;
-        return (path, path.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ? "image/png" : "image/jpeg");
+        return name is null ? null : await storage.OpenAsync(ImageFolders.School, name);
     }
 
     private void Stamp(SchoolProfile p)
@@ -107,12 +108,7 @@ public sealed class SchoolProfileService(MsmsDbContext db, CurrentUser user, ICl
         p.UpdatedAt = clock.Now;
     }
 
-    private void DeleteLogoFile(string? fileName)
-    {
-        if (string.IsNullOrEmpty(fileName)) return;
-        try { File.Delete(Path.Combine(LogoDirectory, Path.GetFileName(fileName))); }
-        catch (IOException) { /* file mồ côi không ảnh hưởng nghiệp vụ */ }
-    }
+    private Task DeleteLogoFileAsync(string? fileName) => storage.DeleteAsync(ImageFolders.School, fileName);
 
     private static string? DetectImageExtension(ReadOnlySpan<byte> b)
     {

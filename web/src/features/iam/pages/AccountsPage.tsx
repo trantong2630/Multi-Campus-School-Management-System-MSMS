@@ -86,7 +86,6 @@ export function AccountsPage() {
     <>
       <PageHeader
         title="Tài khoản"
-        description="Quản lý tài khoản cán bộ, học sinh và phụ huynh. Mỗi hồ sơ có đúng một tài khoản."
         extra={<Space><Button onClick={() => setCreateMode('bulk')}>Tạo hàng loạt</Button><Button type="primary" onClick={() => setCreateMode('single')}>Tạo tài khoản</Button></Space>}
       />
       <FilterBar>

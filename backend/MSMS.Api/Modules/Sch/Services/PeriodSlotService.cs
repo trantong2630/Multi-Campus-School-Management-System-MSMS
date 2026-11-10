@@ -27,7 +27,7 @@ public sealed class PeriodSlotService(MsmsDbContext db)
     {
         if (r.SessionOfDay != SessionOfDay.Morning && r.SessionOfDay != SessionOfDay.Afternoon)
             throw ApiException.BadRequest("Buổi chỉ có Sáng hoặc Chiều.");
-        if (r.PeriodNo < 1) throw ApiException.BadRequest("Số tiết phải từ 1 trở lên.");
+        if (r.PeriodNo < 1 || r.PeriodNo > 20) throw ApiException.BadRequest("Số tiết phải từ 1 đến 20.");
         EnsureTimes(r.StartTime, r.EndTime);
         if (await db.PeriodSlot.AnyAsync(p => p.SessionOfDay == r.SessionOfDay && p.PeriodNo == r.PeriodNo))
             throw ApiException.BadRequest($"Khung {SessionOfDay.Label(r.SessionOfDay)} tiết {r.PeriodNo} đã có. Sửa giờ của khung đó hoặc chọn tiết khác.");

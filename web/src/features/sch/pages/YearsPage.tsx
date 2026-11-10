@@ -3,7 +3,7 @@ import { Button, Card, DatePicker, Form, Input } from 'antd';
 import { message } from '@/shared/lib/antdStatic';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import { CalendarDays, CalendarOff, CalendarRange, Hourglass, Pencil, Plus, Star, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/app/AuthProvider';
@@ -28,6 +28,12 @@ interface SemesterValues { start1: Dayjs; end1: Dayjs; start2: Dayjs; end2: Dayj
 
 const DATE_FORMAT = 'DD/MM/YYYY';
 const semesterText = (s?: Semester) => (s ? `${formatDate(s.startDate)} – ${formatDate(s.endDate)}` : null);
+
+/** Phần trăm năm học đã trôi qua tính tới hôm nay. */
+function yearElapsed(start: string, end: string, today: dayjs.Dayjs): number {
+  const total = dayjs(end).diff(dayjs(start), 'day') + 1;
+  return Math.min(100, Math.max(0, ((today.diff(dayjs(start), 'day') + 1) / Math.max(1, total)) * 100));
+}
 
 export function YearsPage() {
   const { user } = useAuth();
@@ -125,19 +131,20 @@ export function YearsPage() {
     <>
       <PageHeader
         title="Năm học & Học kỳ"
-        description="Đúng một năm học hiện hành. Mỗi năm có hai học kỳ nằm trong năm học, không chồng nhau."
         extra={canWrite && <Button type="primary" icon={<Plus size={16} />} onClick={() => setEditing('new')}>Thêm năm học</Button>}
       />
       {!isLoading && (
         <StatStrip>
-          <StatCard icon={CalendarRange} tone="green" label="Năm học hiện hành" value={current?.name ?? '—'}
+          <StatCard label="Năm học hiện hành" value={current?.name ?? '—'}
+            meter={current ? yearElapsed(current.startDate, current.endDate, today) : null}
             hint={current ? `${formatDate(current.startDate)} – ${formatDate(current.endDate)}` : 'Chưa đặt năm học hiện hành'} />
-          <StatCard icon={CalendarDays} tone="sky" label="Học kỳ hiện tại" value={semester?.name ?? 'Ngoài học kỳ'}
+          <StatCard label="Học kỳ hiện tại" value={semester?.name ?? 'Ngoài học kỳ'}
+            meter={progress ? (progress.week / progress.total) * 100 : null}
             hint={progress ? `Tuần ${progress.week} / ${progress.total}`
               : upcomingSemester ? `${upcomingSemester.name} bắt đầu ${formatDate(upcomingSemester.startDate)}` : undefined} />
-          <StatCard icon={Hourglass} tone="violet" label="Còn lại của học kỳ" value={progress ? `${progress.total - progress.week} tuần` : '—'}
+          <StatCard label="Còn lại của học kỳ" value={progress ? `${progress.total - progress.week} tuần` : '—'}
             hint={semester ? `Kết thúc ${formatDate(semester.endDate)}` : undefined} />
-          <StatCard icon={CalendarOff} tone="amber" label="Ngày nghỉ còn lại trong năm" value={current ? upcoming.length : '—'}
+          <StatCard label="Ngày nghỉ còn lại trong năm" value={current ? upcoming.length : '—'}
             hint={nextHoliday ? `Gần nhất ${formatDate(nextHoliday.holidayDate)}${nextHoliday.reason ? ` · ${nextHoliday.reason}` : ''}` : undefined}
             onClick={canOpenHolidays ? () => navigate('/sch/holidays') : undefined} />
         </StatStrip>
@@ -176,16 +183,19 @@ export function YearsPage() {
       </Card>
 
       <FormModal<YearValues>
+        variant="drawer" width={640}
         open={editing !== null} title={editing === 'new' ? 'Thêm năm học' : 'Sửa năm học'}
         form={yearForm} onClose={() => setEditing(null)} onSubmit={saveYear}
         initialValues={editing && editing !== 'new' ? { name: editing.name, range: range(editing.startDate, editing.endDate) } : undefined}
       >
-        <Form.Item label="Tên năm học" name="name" rules={[{ required: true, whitespace: true, message: 'Nhập tên năm học, ví dụ 2026-2027.' }]}>
-          <Input maxLength={20} placeholder="2026-2027" />
-        </Form.Item>
-        <Form.Item label="Từ ngày – đến ngày" name="range" rules={[{ required: true, message: 'Chọn ngày bắt đầu và ngày kết thúc năm học.' }]}>
-          <DatePicker.RangePicker format={DATE_FORMAT} style={{ width: '100%' }} />
-        </Form.Item>
+        <div className="form-grid">
+          <Form.Item label="Tên năm học" name="name" rules={[{ required: true, whitespace: true, message: 'Nhập tên năm học, ví dụ 2026-2027.' }]}>
+            <Input maxLength={20} placeholder="2026-2027" />
+          </Form.Item>
+          <Form.Item label="Từ ngày – đến ngày" name="range" style={{ gridColumn: '1 / -1' }} rules={[{ required: true, message: 'Chọn ngày bắt đầu và ngày kết thúc năm học.' }, { validator: (_, v: [Dayjs, Dayjs] | undefined) => (!v || !v[0] || !v[1] || !v[1].isAfter(v[0].add(13, 'month'), 'day') ? Promise.resolve() : Promise.reject(new Error('Năm học dài tối đa 13 tháng. Kiểm tra lại ngày bắt đầu và ngày kết thúc.'))) }]}>
+            <DatePicker.RangePicker format={DATE_FORMAT} style={{ width: '100%' }} />
+          </Form.Item>
+        </div>
       </FormModal>
 
       <FormModal<SemesterValues>
@@ -219,7 +229,6 @@ export function YearsPage() {
             </Form.Item>
             <Form.Item
               label={`Học kỳ ${no} — ngày kết thúc`} name={`end${no}`} dependencies={[`start${no}`]}
-              extra={<>Muộn nhất: <b className="tabular">{latestOf(no)?.format(DATE_FORMAT)}</b></>}
               rules={[
                 { required: true, message: `Chọn ngày kết thúc học kỳ ${no}.` },
                 ({ getFieldValue }: { getFieldValue: (name: string) => Dayjs | undefined }) => ({

@@ -118,7 +118,6 @@ export function StudentsPage() {
     <>
       <PageHeader
         title="Học sinh"
-        description="Danh bạ học sinh toàn trường. Lớp hiển thị là lớp đang học tại năm được chọn (mặc định: ghi danh đang mở hôm nay)."
         extra={canWrite && (
           <>
             <Button icon={<FileDown size={16} />} onClick={template}>Tải file mẫu</Button>
@@ -156,6 +155,7 @@ export function StudentsPage() {
             { title: 'Mã hồ sơ', dataIndex: 'personCode', width: 110, className: 'tabular' },
             { title: 'Họ và tên', dataIndex: 'fullName', width: 210, render: (v: string, s: Student) => <PersonCell name={v} muted={s.status !== 'Studying'} /> },
             { title: 'Ngày sinh', dataIndex: 'dateOfBirth', width: 104, className: 'tabular', render: (v: string | null) => formatDate(v) },
+            { title: 'Giới tính', dataIndex: 'gender', width: 90, render: (v: string | null) => GENDERS.find((g) => g.value === v)?.label ?? '—' },
             { title: 'Số định danh', dataIndex: 'nationalId', width: 120, className: 'tabular' },
             { title: 'Lớp', dataIndex: 'className', width: 90, render: (v: string | null) => v ?? dash },
             { title: 'Phân hiệu', dataIndex: 'campusName', width: 120, render: (v: string | null) => v ?? dash },
@@ -204,15 +204,18 @@ export function StudentsPage() {
             <Input maxLength={150} />
           </Form.Item>
           <Form.Item label="Ngày sinh" name="dateOfBirth" rules={[{ required: true, message: 'Chọn ngày sinh.' }]}>
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(dayjs())} />
+            <DatePicker
+              format="DD/MM/YYYY" style={{ width: '100%' }} defaultPickerValue={dayjs().subtract(12, 'year')}
+              // Học sinh từ 5 đến 25 tuổi tính đến hôm nay (server kiểm lại).
+              disabledDate={(d) => d.isAfter(dayjs().subtract(5, 'year'), 'day') || !d.isAfter(dayjs().subtract(26, 'year'), 'day')}
+            />
           </Form.Item>
           <Form.Item label="Số định danh cá nhân" name="nationalId"
-            extra={editing === 'new' ? 'Đủ 12 chữ số, duy nhất toàn trường, không sửa được sau khi tạo.' : 'Không sửa được sau khi tạo.'}
             rules={editing === 'new' ? [{ required: true, message: 'Nhập số định danh cá nhân.' }, { pattern: /^\d{12}$/, message: 'Số định danh gồm đúng 12 chữ số.' }] : []}>
             <Input maxLength={12} inputMode="numeric" disabled={editing !== 'new'} />
           </Form.Item>
           <Form.Item label="Giới tính" name="gender"><Select allowClear options={GENDERS} /></Form.Item>
-          <Form.Item label="Số điện thoại" name="phoneNumber"><Input maxLength={20} /></Form.Item>
+          <Form.Item label="Số điện thoại" name="phoneNumber" rules={[{ pattern: /^0[35789]\d{8}$/, message: 'Số điện thoại di động phải gồm đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09.' }]}><Input maxLength={10} inputMode="tel" /></Form.Item>
           <Form.Item label="Địa chỉ" name="address"><Input maxLength={255} /></Form.Item>
           <Form.Item label="Ghi chú" name="note"><Input.TextArea rows={3} maxLength={500} /></Form.Item>
         </div>

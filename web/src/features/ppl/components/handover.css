@@ -1,0 +1,78 @@
+/* "Xem lịch bàn giao": popover hai bước (người hiện tại -> người tiếp nhận). Màu và chữ theo token chung. */
+.handover {
+  width: 288px;
+}
+
+.handover__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  color: var(--c-text1);
+}
+
+.handover__step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  column-gap: 12px;
+  padding-bottom: 14px;
+}
+
+.handover__step--line::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 20px;
+  bottom: 2px;
+  width: 2px;
+  background: var(--c-border);
+}
+
+.handover__dot {
+  width: 12px;
+  height: 12px;
+  margin-top: 4px;
+  border-radius: 50%;
+  border: 2px solid var(--c-borderStrong);
+  background: var(--c-surface);
+  box-sizing: border-box;
+}
+
+.handover__step--next .handover__dot {
+  border-color: var(--c-green600);
+  background: var(--c-green600);
+}
+
+.handover__label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--c-text3);
+}
+
+.handover__name {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--c-text1);
+}
+
+.handover__sub {
+  display: block;
+  font-size: 13px;
+  color: var(--c-text2);
+}
+
+.handover__footer {
+  margin-top: 2px;
+  padding-top: 6px;
+  border-top: 1px solid var(--c-border);
+  text-align: center;
+}
+
+.handover__footer .ant-btn {
+  font-weight: 600;
+}
