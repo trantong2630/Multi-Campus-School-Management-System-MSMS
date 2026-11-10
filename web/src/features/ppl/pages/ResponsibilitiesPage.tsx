@@ -91,7 +91,6 @@ export function ResponsibilitiesPage() {
     <>
       <PageHeader
         title="Trách nhiệm"
-        description="Mỗi đích có tối đa một người đang đảm nhiệm. Thay người có hiệu lực ngay hôm nay, bản cũ kết thúc vào ngày liền trước."
       />
       <Tabs
         activeKey={kind}
@@ -309,7 +308,6 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
           <Form.Item
             label={`Cán bộ (tài khoản loại ${meta.accountLabel})`} name="staffId"
             rules={[{ required: true, message: `Chọn cán bộ có tài khoản loại ${meta.accountLabel}.` }]}
-            extra={staff.data?.items.length === 0 ? `Chưa có cán bộ nào có tài khoản loại ${meta.accountLabel}. Tạo tài khoản ở Hồ sơ → Cán bộ trước.` : undefined}
           >
             <Select
               showSearch optionFilterProp="label" placeholder="Chọn cán bộ"
@@ -324,7 +322,7 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
             />
           </Form.Item>
           <Form.Item
-            label="Ngày hiệu lực" name="startDate" extra={target?.staffId ? 'Thay người có hiệu lực ngay hôm nay.' : 'Từ hôm nay trở đi: không sửa lùi lịch sử trách nhiệm.'}
+            label="Ngày hiệu lực" name="startDate"
             rules={[{ required: true, message: 'Chọn ngày bắt đầu hiệu lực.' }]}
           >
             <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabledDate={(d) => d.isBefore(dayjs(), 'day') || (!!target?.staffId && d.isAfter(dayjs(), 'day'))} />

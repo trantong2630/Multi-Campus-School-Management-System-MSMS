@@ -5,6 +5,7 @@ import { visibleMenu } from '@/app/menu';
 import { AuditLogPage } from './pages/AuditLogPage';
 import { CampusBoardPage } from './pages/CampusBoardPage';
 import { DepartmentBoardPage } from './pages/DepartmentBoardPage';
+import { ExportsPage } from './pages/ExportsPage';
 import { HomePage } from './pages/HomePage';
 import { HomeroomPage } from './pages/HomeroomPage';
 import { PrincipalBoardPage } from './pages/PrincipalBoardPage';
@@ -28,4 +29,5 @@ export const admRoutes: RouteObject[] = [
   { path: 'dashboard/progress', element: <ProgressPage /> },
   { path: 'dashboard/system', element: <SystemBoardPage /> },
   { path: 'adm/audit-log', element: <AuditLogPage /> },
+  { path: 'adm/exports', element: <ExportsPage /> },
 ];

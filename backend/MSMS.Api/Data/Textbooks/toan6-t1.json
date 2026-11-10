@@ -1,0 +1,277 @@
+{
+  "code": "toan6-t1",
+  "subject": "Toán",
+  "grade": 6,
+  "volume": 1,
+  "title": "Toán 6 – tập một",
+  "pageOffset": 1,
+  "pdfPageCount": 126,
+  "lessons": [
+    {
+      "chapter": "CHƯƠNG I. TẬP HỢP CÁC SỐ TỰ NHIÊN",
+      "order": 1,
+      "title": "Bài 1. Tập hợp",
+      "startPage": 5,
+      "endPage": 8
+    },
+    {
+      "chapter": "CHƯƠNG I. TẬP HỢP CÁC SỐ TỰ NHIÊN",
+      "order": 2,
+      "title": "Bài 2. Cách ghi số tự nhiên",
+      "startPage": 9,
+      "endPage": 12
+    },
+    {
+      "chapter": "CHƯƠNG I. TẬP HỢP CÁC SỐ TỰ NHIÊN",
+      "order": 3,
+      "title": "Bài 3. Thứ tự trong tập hợp các số tự nhiên",
+      "startPage": 13,
+      "endPage": 14
+    },
+    {
+      "chapter": "CHƯƠNG I. TẬP HỢP CÁC SỐ TỰ NHIÊN",
+      "order": 4,
+      "title": "Bài 4. Phép cộng và phép trừ số tự nhiên",
+      "startPage": 15,
+      "endPage": 16
+    },
+    {
+      "chapter": "CHƯƠNG I. TẬP HỢP CÁC SỐ TỰ NHIÊN",
+      "order": 5,
+      "title": "Bài 5. Phép nhân và phép chia số tự nhiên",
+      "startPage": 17,
+      "endPage": 19
+    },
+    {
+      "chapter": "CHƯƠNG I. TẬP HỢP CÁC SỐ TỰ NHIÊN",
+      "order": 6,
+      "title": "Luyện tập chung",
+      "startPage": 20,
+      "endPage": 21
+    },
+    {
+      "chapter": "CHƯƠNG I. TẬP HỢP CÁC SỐ TỰ NHIÊN",
+      "order": 7,
+      "title": "Bài 6. Luỹ thừa với số mũ tự nhiên",
+      "startPage": 22,
+      "endPage": 24
+    },
+    {
+      "chapter": "CHƯƠNG I. TẬP HỢP CÁC SỐ TỰ NHIÊN",
+      "order": 8,
+      "title": "Bài 7. Thứ tự thực hiện các phép tính",
+      "startPage": 25,
+      "endPage": 26
+    },
+    {
+      "chapter": "CHƯƠNG I. TẬP HỢP CÁC SỐ TỰ NHIÊN",
+      "order": 9,
+      "title": "Luyện tập chung",
+      "startPage": 27,
+      "endPage": 27
+    },
+    {
+      "chapter": "CHƯƠNG I. TẬP HỢP CÁC SỐ TỰ NHIÊN",
+      "order": 10,
+      "title": "Bài tập cuối chương I",
+      "startPage": 28,
+      "endPage": 28
+    },
+    {
+      "chapter": "CHƯƠNG II. TÍNH CHIA HẾT TRONG TẬP HỢP CÁC SỐ TỰ NHIÊN",
+      "order": 11,
+      "title": "Bài 8. Quan hệ chia hết và tính chất",
+      "startPage": 29,
+      "endPage": 33
+    },
+    {
+      "chapter": "CHƯƠNG II. TÍNH CHIA HẾT TRONG TẬP HỢP CÁC SỐ TỰ NHIÊN",
+      "order": 12,
+      "title": "Bài 9. Dấu hiệu chia hết",
+      "startPage": 34,
+      "endPage": 37
+    },
+    {
+      "chapter": "CHƯƠNG II. TÍNH CHIA HẾT TRONG TẬP HỢP CÁC SỐ TỰ NHIÊN",
+      "order": 13,
+      "title": "Bài 10. Số nguyên tố",
+      "startPage": 38,
+      "endPage": 42
+    },
+    {
+      "chapter": "CHƯƠNG II. TÍNH CHIA HẾT TRONG TẬP HỢP CÁC SỐ TỰ NHIÊN",
+      "order": 14,
+      "title": "Luyện tập chung",
+      "startPage": 43,
+      "endPage": 43
+    },
+    {
+      "chapter": "CHƯƠNG II. TÍNH CHIA HẾT TRONG TẬP HỢP CÁC SỐ TỰ NHIÊN",
+      "order": 15,
+      "title": "Bài 11. Ước chung. Ước chung lớn nhất",
+      "startPage": 44,
+      "endPage": 48
+    },
+    {
+      "chapter": "CHƯƠNG II. TÍNH CHIA HẾT TRONG TẬP HỢP CÁC SỐ TỰ NHIÊN",
+      "order": 16,
+      "title": "Bài 12. Bội chung. Bội chung nhỏ nhất",
+      "startPage": 49,
+      "endPage": 53
+    },
+    {
+      "chapter": "CHƯƠNG II. TÍNH CHIA HẾT TRONG TẬP HỢP CÁC SỐ TỰ NHIÊN",
+      "order": 17,
+      "title": "Luyện tập chung",
+      "startPage": 54,
+      "endPage": 55
+    },
+    {
+      "chapter": "CHƯƠNG II. TÍNH CHIA HẾT TRONG TẬP HỢP CÁC SỐ TỰ NHIÊN",
+      "order": 18,
+      "title": "Bài tập cuối chương II",
+      "startPage": 56,
+      "endPage": 56
+    },
+    {
+      "chapter": "CHƯƠNG III. SỐ NGUYÊN",
+      "order": 19,
+      "title": "Bài 13. Tập hợp các số nguyên",
+      "startPage": 57,
+      "endPage": 61
+    },
+    {
+      "chapter": "CHƯƠNG III. SỐ NGUYÊN",
+      "order": 20,
+      "title": "Bài 14. Phép cộng và phép trừ số nguyên",
+      "startPage": 62,
+      "endPage": 66
+    },
+    {
+      "chapter": "CHƯƠNG III. SỐ NGUYÊN",
+      "order": 21,
+      "title": "Bài 15. Quy tắc dấu ngoặc",
+      "startPage": 67,
+      "endPage": 68
+    },
+    {
+      "chapter": "CHƯƠNG III. SỐ NGUYÊN",
+      "order": 22,
+      "title": "Luyện tập chung",
+      "startPage": 69,
+      "endPage": 69
+    },
+    {
+      "chapter": "CHƯƠNG III. SỐ NGUYÊN",
+      "order": 23,
+      "title": "Bài 16. Phép nhân số nguyên",
+      "startPage": 70,
+      "endPage": 72
+    },
+    {
+      "chapter": "CHƯƠNG III. SỐ NGUYÊN",
+      "order": 24,
+      "title": "Bài 17. Phép chia hết. Ước và bội của một số nguyên",
+      "startPage": 73,
+      "endPage": 74
+    },
+    {
+      "chapter": "CHƯƠNG III. SỐ NGUYÊN",
+      "order": 25,
+      "title": "Luyện tập chung",
+      "startPage": 75,
+      "endPage": 75
+    },
+    {
+      "chapter": "CHƯƠNG III. SỐ NGUYÊN",
+      "order": 26,
+      "title": "Bài tập cuối chương III",
+      "startPage": 76,
+      "endPage": 76
+    },
+    {
+      "chapter": "CHƯƠNG IV. MỘT SỐ HÌNH PHẲNG TRONG THỰC TIỄN",
+      "order": 27,
+      "title": "Bài 18. Hình tam giác đều. Hình vuông. Hình lục giác đều",
+      "startPage": 77,
+      "endPage": 82
+    },
+    {
+      "chapter": "CHƯƠNG IV. MỘT SỐ HÌNH PHẲNG TRONG THỰC TIỄN",
+      "order": 28,
+      "title": "Bài 19. Hình chữ nhật. Hình thoi. Hình bình hành. Hình thang cân",
+      "startPage": 83,
+      "endPage": 89
+    },
+    {
+      "chapter": "CHƯƠNG IV. MỘT SỐ HÌNH PHẲNG TRONG THỰC TIỄN",
+      "order": 29,
+      "title": "Bài 20. Chu vi và diện tích của một số tứ giác đã học",
+      "startPage": 90,
+      "endPage": 94
+    },
+    {
+      "chapter": "CHƯƠNG IV. MỘT SỐ HÌNH PHẲNG TRONG THỰC TIỄN",
+      "order": 30,
+      "title": "Luyện tập chung",
+      "startPage": 95,
+      "endPage": 96
+    },
+    {
+      "chapter": "CHƯƠNG IV. MỘT SỐ HÌNH PHẲNG TRONG THỰC TIỄN",
+      "order": 31,
+      "title": "Bài tập cuối chương IV",
+      "startPage": 97,
+      "endPage": 97
+    },
+    {
+      "chapter": "CHƯƠNG V. TÍNH ĐỐI XỨNG CỦA HÌNH PHẲNG TRONG TỰ NHIÊN",
+      "order": 32,
+      "title": "Bài 21. Hình có trục đối xứng",
+      "startPage": 98,
+      "endPage": 102
+    },
+    {
+      "chapter": "CHƯƠNG V. TÍNH ĐỐI XỨNG CỦA HÌNH PHẲNG TRONG TỰ NHIÊN",
+      "order": 33,
+      "title": "Bài 22. Hình có tâm đối xứng",
+      "startPage": 103,
+      "endPage": 107
+    },
+    {
+      "chapter": "CHƯƠNG V. TÍNH ĐỐI XỨNG CỦA HÌNH PHẲNG TRONG TỰ NHIÊN",
+      "order": 34,
+      "title": "Luyện tập chung",
+      "startPage": 108,
+      "endPage": 109
+    },
+    {
+      "chapter": "CHƯƠNG V. TÍNH ĐỐI XỨNG CỦA HÌNH PHẲNG TRONG TỰ NHIÊN",
+      "order": 35,
+      "title": "Bài tập cuối chương V",
+      "startPage": 110,
+      "endPage": 110
+    },
+    {
+      "chapter": "HOẠT ĐỘNG THỰC HÀNH TRẢI NGHIỆM",
+      "order": 36,
+      "title": "Tấm thiệp và phòng học của em",
+      "startPage": 111,
+      "endPage": 112
+    },
+    {
+      "chapter": "HOẠT ĐỘNG THỰC HÀNH TRẢI NGHIỆM",
+      "order": 37,
+      "title": "Vẽ hình đơn giản với phần mềm GeoGebra",
+      "startPage": 113,
+      "endPage": 118
+    },
+    {
+      "chapter": "HOẠT ĐỘNG THỰC HÀNH TRẢI NGHIỆM",
+      "order": 38,
+      "title": "Sử dụng máy tính cầm tay",
+      "startPage": 119,
+      "endPage": 121
+    }
+  ]
+}

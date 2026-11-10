@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MSMS.Api.Common.Auth;
-using MSMS.Api.Common.Errors;
 using MSMS.Api.Common.Rules;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
@@ -18,12 +17,6 @@ public class WeeklyReportsController(
     IClock clock,
     CurrentUser user) : ControllerBase
 {
-    private void EnsureNotSchoolAdmin()
-    {
-        if (user.AccountType == AccountTypes.SchoolAdmin)
-            throw ApiException.Forbidden("SchoolAdmin không có quyền xem sổ liên lạc.");
-    }
-
     private async Task<bool> CanViewStudentReportAsync(int studentId)
     {
         // Check nếu người dùng chính là học sinh
@@ -65,11 +58,9 @@ public class WeeklyReportsController(
     }
 
     /// <summary>Danh sách tuần (Thứ 2 - CN) hợp lệ để xem sổ của học sinh.</summary>
-    [HttpGet("weeks")]
+    [HttpGet("weeks"), Authorize(Policy = Policies.ReportViewer)]
     public async Task<IActionResult> GetWeeks([FromQuery] int studentId)
     {
-        EnsureNotSchoolAdmin();
-
         if (!await CanViewStudentReportAsync(studentId))
             return Forbid();
 
@@ -78,11 +69,9 @@ public class WeeklyReportsController(
     }
 
     /// <summary>Sổ liên lạc của học sinh cho một tuần (mặc định tuần chứa hôm nay).</summary>
-    [HttpGet("student/{studentId:int}")]
+    [HttpGet("student/{studentId:int}"), Authorize(Policy = Policies.ReportViewer)]
     public async Task<IActionResult> GetReport(int studentId, [FromQuery] DateOnly? weekStart)
     {
-        EnsureNotSchoolAdmin();
-
         if (!await CanViewStudentReportAsync(studentId))
             return Forbid();
 

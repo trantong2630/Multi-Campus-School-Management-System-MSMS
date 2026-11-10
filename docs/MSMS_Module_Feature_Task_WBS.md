@@ -157,7 +157,7 @@ School Admin là người duy nhất ghi dữ liệu của module (riêng Thông
 
 **4.2.1 — Xem danh sách phân hiệu / View Campus List**  
 `BE + Web` · 0.5 MD · dep: 4.1.4  
-Xem các phân hiệu cùng mã, tên, địa chỉ, số điện thoại và tình trạng hoạt động, kèm số lớp, học sinh, cán bộ và hiệu phó phụ trách (tính tại hôm nay, năm học hiện hành). Vice Principal chỉ thấy các phân hiệu mình phụ trách. Thông tin nhận diện của trường làm ở SCH-07.
+Xem các phân hiệu cùng mã, tên, địa chỉ, số điện thoại và tình trạng hoạt động, kèm số lớp, học sinh, cán bộ và hiệu phó phụ trách (tính tại hôm nay, năm học hiện hành). Màn hình này dành cho School Admin (sửa) và Hiệu trưởng (chỉ xem, toàn trường). Thông tin nhận diện của trường làm ở SCH-07.
 
 **4.2.2 — Tạo phân hiệu / Create Campus**  
 `BE + Web` · 1 MD · dep: 4.2.1  
@@ -325,7 +325,7 @@ Xem tên, địa chỉ, điện thoại, email, website và logo của trường
 
 **4.2.40 — Cập nhật thông tin trường / Update School Profile**
 `BE + Web` · 1.5 MD · dep: 4.2.39
-Hiệu trưởng và School Admin cùng sửa. Tên trường bắt buộc; email và website kiểm định dạng. Đúng một bản, lưu người sửa và thời điểm sửa ngay trên bản ghi; không ghi Audit vì không thuộc ba nhóm của BR-28.
+Chỉ School Admin sửa; Hiệu trưởng xem ở chế độ chỉ đọc. Tên trường bắt buộc; email và website kiểm định dạng. Đúng một bản, lưu người sửa và thời điểm sửa ngay trên bản ghi; không ghi Audit vì không thuộc ba nhóm của BR-28.
 
 **4.2.41 — Tải và gỡ logo trường / Upload and Remove School Logo**
 `BE + Web` · 2 MD · dep: 4.2.40
@@ -333,11 +333,11 @@ Một ảnh JPG hoặc PNG, tối đa 2 MB, kiểm theo nội dung file chứ kh
 
 **4.2.42 — Hiển thị tên và logo trường / Show School Identity**
 `BE + Web` · 1 MD · dep: 4.2.39
-Tên trường hiện ở thanh đường dẫn đầu trang và tiêu đề tab trình duyệt; logo trường hiện ở Trang chủ, học sinh và phụ huynh còn thấy thẻ thông tin trường (tên, địa chỉ, điện thoại, email, website). Sau đăng nhập, tiêu đề tab là `Tên trang · Tên trường` (Trang chủ chỉ có tên trường); các màn chưa đăng nhập để tiêu đề `MSMS`. Biểu tượng tab là logo MSMS, không đổi theo trường. Màn hình đăng nhập và thanh bên chỉ dùng logo chữ MSMS. Không lấy được thì dùng biểu tượng và tên mặc định, không báo lỗi.
+Tên trường hiện ở thanh đường dẫn đầu trang và tiêu đề tab trình duyệt; logo trường hiện ở Trang chủ. Sau đăng nhập, tiêu đề tab là `Tên trang · Tên trường` (Trang chủ chỉ có tên trường); các màn chưa đăng nhập để tiêu đề `MSMS`. Biểu tượng tab là logo MSMS, không đổi theo trường. Màn hình đăng nhập và thanh bên chỉ dùng logo chữ MSMS. Không lấy được thì dùng biểu tượng và tên mặc định, không báo lỗi.
 
 **4.2.43 — Kiểm thử thông tin trường / School Profile Tests**
 `QA` · 1.5 MD · dep: 4.2.41
-Chỉ Hiệu trưởng và School Admin sửa được; file không phải ảnh hoặc quá 2 MB bị từ chối; đổi logo xóa file cũ; chưa có tên thì không tải được logo; người chưa đăng nhập đọc được tên và logo nhưng không sửa được.
+Chỉ School Admin sửa được; file không phải ảnh hoặc quá 2 MB bị từ chối; đổi logo xóa file cũ; chưa có tên thì không tải được logo; người chưa đăng nhập đọc được tên và logo nhưng không sửa được.
 
 ---
 
@@ -371,7 +371,7 @@ Gán viết tắt duy nhất toàn trường, chỉ gồm chữ và số. Không
 
 **4.3.7 — Ngừng hoạt động hồ sơ cán bộ / Deactivate Staff Profile**  
 `BE + Web` · 1 MD · dep: 4.3.4  
-Bị chặn nếu người đó còn giữ trách nhiệm (phụ trách phân hiệu, tổ trưởng, chủ nhiệm) hoặc còn tiết Đã xếp lịch từ hôm nay chưa chuyển giao.
+Bị chặn nếu người đó còn giữ trách nhiệm (phụ trách phân hiệu, tổ trưởng, chủ nhiệm) hoặc còn tiết Đã xếp lịch chưa kết thúc chưa chuyển giao.
 
 **4.3.8 — Tải file mẫu import cán bộ / Download Staff Import Template**  
 `BE + Web` · 0.5 MD  
@@ -599,7 +599,7 @@ Không thao tác được trên tiết bị khóa; tiết bù trùng khung giờ
 
 **4.4.25 — Khai báo giáo viên vắng / Declare Teacher Absence**  
 `BE + Web` · 2 MD  
-Vice Principal khai giáo viên có tiết ở phân hiệu mình theo một trong hai cách: theo ngày (từ ngày – đến ngày, vắng cả ngày) hoặc theo tiết (một ngày, chọn các tiết vắng, liền hay rời đều được), kèm lý do (tùy chọn). Chỉ khai từ hôm nay trở đi, một khai báo tối đa 90 ngày, và giáo viên phải có tiết ở phân hiệu của người khai trong phạm vi đó. Đây KHÔNG phải đơn xin nghỉ của cán bộ — MSMS chỉ ghi nhận hệ quả lên lịch dạy (BR-16).
+Vice Principal khai giáo viên có tiết ở phân hiệu mình theo một trong hai cách: theo ngày (từ ngày – đến ngày, vắng cả ngày) hoặc theo tiết (một ngày, chọn các tiết vắng, liền hay rời đều được), kèm lý do (tùy chọn). Chỉ khai cho tiết chưa kết thúc (từ hôm nay trở đi, tiết hôm nay đã quá giờ kết thúc thì bỏ qua), một khai báo tối đa 90 ngày, và giáo viên phải có tiết ở phân hiệu của người khai trong phạm vi đó. Đây KHÔNG phải đơn xin nghỉ của cán bộ — MSMS chỉ ghi nhận hệ quả lên lịch dạy (BR-16).
 
 **4.4.26 — Đưa tiết bị ảnh hưởng về Chờ xử lý / Move Affected Lessons to Pending**  
 `BE` · 1.5 MD · dep: 4.4.25  
@@ -607,11 +607,11 @@ Khai báo không tự đổi lịch và chỉ tác động tiết ở phân hi�
 
 **4.4.27 — Xem danh sách tiết Chờ xử lý / View Pending Lessons**  
 `BE + Web` · 1.5 MD · dep: 4.4.26  
-Danh sách tiết Chờ xử lý theo phân hiệu từ hôm nay trở đi (tối đa 500 tiết), lọc theo khoảng ngày và lớp, mỗi dòng ghi nguyên nhân (giáo viên vắng nào) và mở được màn hình quyết định từng tiết. Màn hình Giáo viên vắng có hai tab: Tiết chờ xử lý và Khai báo vắng.
+Danh sách tiết Chờ xử lý chưa kết thúc theo phân hiệu (tối đa 500 tiết), lọc theo khoảng ngày và lớp, mỗi dòng ghi nguyên nhân (giáo viên vắng nào) và mở được màn hình quyết định từng tiết. Màn hình Giáo viên vắng có hai tab: Tiết chờ xử lý và Khai báo vắng. Tab Khai báo vắng ghi trạng thái mỗi khai báo: Đang hiệu lực (còn tiết chưa kết thúc) hoặc Đã qua (mọi tiết đã kết thúc, chỉ để tra cứu, không xóa được); mặc định chỉ hiện khai báo đang hiệu lực, có công tắc hiện cả khai báo đã qua. "Còn chờ xử lý" chỉ đếm tiết chưa kết thúc, tiết Chờ xử lý đã kết thúc mà không ai xử lý đếm ở cột "Bỏ lỡ".
 
 **4.4.28 — Xem gợi ý giáo viên rảnh / View Free Teacher Suggestions**  
 `BE + Web` · 2 MD · dep: 4.4.27  
-Teacher đủ điều kiện dạy, không có tiết Đã xếp lịch tại (ngày, khung giờ) đó ở bất kỳ phân hiệu nào và không có khai báo vắng phủ ngày và tiết đó. Danh sách sắp theo tên, tối đa 10 người, KHÔNG xếp hạng ưu tiên — Vice Principal tự chọn (BR-06, BR-13, BR-16).
+Teacher đủ điều kiện dạy, cùng tổ chuyên môn với môn của tiết, không có tiết Đã xếp lịch tại (ngày, khung giờ) đó ở bất kỳ phân hiệu nào và không có khai báo vắng phủ ngày và tiết đó. Danh sách sắp theo tên, tối đa 10 người, KHÔNG xếp hạng ưu tiên — Vice Principal tự chọn (BR-06, BR-13, BR-16).
 
 **4.4.29 — Xử lý tiết chờ bằng cách chọn giáo viên dạy thay / Resolve by Substitute Teacher**  
 `BE + Web` · 1.5 MD · dep: 4.4.28  
@@ -621,13 +621,13 @@ Lựa chọn 1: gán giáo viên được chọn, tiết quay lại Đã xếp l
 `BE + Web` · 0.5 MD · dep: 4.4.27  
 Lựa chọn 2: tiết chuyển sang Đã hủy.
 
-**4.4.31 — Khóa tiết chờ đã qua ngày / Lock Past Pending Lesson**  
+**4.4.31 — Khóa tiết chờ đã kết thúc / Lock Ended Pending Lesson**  
 `BE + Web` · 0.5 MD · dep: 4.4.27, 4.4.29  
-Tiết Chờ xử lý đã qua ngày bị khóa (mục 6.2): không còn trong danh sách ở 4.4.27, không dạy thay, không hủy được nữa (BR-16).
+Tiết Chờ xử lý đã kết thúc bị khóa (mục 6.2): không còn trong danh sách ở 4.4.27, không dạy thay, không hủy được nữa (BR-16).
 
 **4.4.32 — Xóa khai báo giáo viên vắng / Delete Teacher Absence**  
 `BE + Web` · 1.5 MD · dep: 4.4.26  
-Xóa khai báo theo kiểu tất cả hoặc không: chỉ xóa được khi chưa có tiết nào của khai báo bị xử lý (dạy thay, hủy), giáo viên vẫn đủ điều kiện dạy (tài khoản Teacher không bị khóa, BR-06) và không trùng lịch ở tiết nào (BR-13). Khi đó mọi tiết của khai báo từ hôm nay trở đi trở về giáo viên, trạng thái Đã xếp lịch, tiết đã qua ngày giữ nguyên; không đạt thì báo lỗi nêu nguyên nhân và không xóa gì. Tiết trống do khóa hoặc đổi loại tài khoản không tự khôi phục. Ghi Audit, thông báo giáo viên và học sinh của lớp (BR-06, BR-13, BR-16, BR-26, BR-28).
+Xóa khai báo theo kiểu tất cả hoặc không: không xóa được khai báo đã qua; chỉ xóa được khi chưa có tiết nào của khai báo bị xử lý (dạy thay, hủy), giáo viên vẫn đủ điều kiện dạy (tài khoản Teacher không bị khóa, BR-06) và không trùng lịch ở tiết nào (BR-13). Khi đó mọi tiết của khai báo từ hôm nay trở đi trở về giáo viên, trạng thái Đã xếp lịch, tiết đã qua ngày giữ nguyên; không đạt thì báo lỗi nêu nguyên nhân và không xóa gì. Tiết trống do khóa hoặc đổi loại tài khoản không tự khôi phục. Ghi Audit, thông báo giáo viên và học sinh của lớp (BR-06, BR-13, BR-16, BR-26, BR-28).
 
 **4.4.33 — Chọn giáo viên toàn trường kèm trạng thái rảnh hoặc bận / Pick School-wide Teacher with Availability**  
 `BE + Web` · 1.5 MD · dep: 4.4.14  
@@ -737,11 +737,11 @@ Người tạo ẩn câu Sẵn dùng khỏi ngân hàng chung; ẩn không ảnh
 
 **4.6.5 — Yêu cầu MSMS AI sinh nháp câu hỏi / Request AI Question Drafts**  
 `BE + Web` · 2.5 MD · dep: 4.6.2  
-Giáo viên chọn môn thuộc tổ chuyên môn của mình, khối, chủ đề và số câu (1 đến 10 câu mỗi lần); bộ sách cố định là Kết nối tri thức với cuộc sống (bộ dùng thống nhất toàn quốc), không phải đầu vào của yêu cầu mà nằm trong chỉ dẫn hệ thống để AI bám đúng chương trình, không lưu trên câu hỏi. AI trả về các câu ở trạng thái Nháp gắn cờ AI; Backend loại câu không đủ 4 lựa chọn hoặc không có đáp án đúng. AI hỏng thì giáo viên soạn thủ công, không ảnh hưởng luồng nào khác (mục 3.1, BR-20).
+Giáo viên chọn môn thuộc tổ chuyên môn của mình, khối, **bài trong sách giáo khoa** và số câu (1 đến 10 câu mỗi lần), có thể ghi thêm một gợi ý ngắn để thu hẹp trong bài. Bộ sách cố định là Kết nối tri thức với cuộc sống (bộ dùng thống nhất toàn quốc) nên không phải lựa chọn; danh sách bài lấy từ mục lục sách đã nạp theo môn và khối. Backend gửi AI ảnh các trang của bài (tối đa 10 trang mỗi lần; bài dài hơn thì soạn thủ công) cùng yêu cầu, để AI chỉ soạn từ nội dung trang sách. AI trả về các câu ở trạng thái Nháp gắn cờ AI, câu lưu bài nguồn (chủ đề của câu là tên bài); Backend loại câu không đủ 4 lựa chọn hoặc không có đáp án đúng. Sách được nạp trước bằng công cụ `tools/textbook-import` từ file PDF: tải ảnh từng trang lên kho ảnh, dò độ lệch giữa số trang PDF và số in của từng cuốn, đọc trang mục lục để lập bảng bài với trang bắt đầu và kết thúc (theo số in) rồi ghi thành file JSON trong mã nguồn; khi API khởi động, mục lục được nạp vào CSDL (bảng TextbookBook, TextbookLesson). Trang hiển thị theo số in trên sách ("trang 27" khi bài một trang, "trang 9–12" khi nhiều trang). AI hỏng thì giáo viên soạn thủ công, không ảnh hưởng luồng nào khác (mục 3.1, BR-20).
 
 **4.6.6 — Xem và sửa nháp AI / Review and Edit AI Drafts**  
 `BE + Web` · 1.5 MD · dep: 4.6.5  
-Giáo viên sửa nội dung, lựa chọn và đáp án của câu nháp trước khi xác nhận.
+Giáo viên sửa nội dung, lựa chọn, đáp án, giải thích và chủ đề của câu nháp trước khi xác nhận. Câu nháp do AI soạn từ sách hiện dòng nguồn (sách, bài, trang) và nút xem ảnh các trang của bài để đối chiếu; môn và khối của câu này theo bài trong sách nên không đổi được (Backend từ chối, giao diện khóa hai ô), muốn môn hoặc khối khác thì soạn câu mới.
 
 **4.6.7 — Xác nhận nháp AI thành câu Sẵn dùng / Confirm AI Draft**  
 `BE + Web` · 1 MD · dep: 4.6.6  
@@ -803,7 +803,7 @@ Mỗi bài nộp (kể cả bị tự nộp) được gửi AI MỘT LẦN, tự
 
 **4.6.20 — Xem phân tích bài làm / View Analysis**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.6.19  
-Khung phân tích AI nằm dưới kết quả từng bài, hiện cho Student, Parent và Teacher đang phụ trách chuyên môn. Đang phân tích hiện avatar MSMS AI chờ; Lỗi để trống. Phân tích kẹt ở trạng thái đang chạy quá 5 phút (tiến trình dừng giữa chừng) được coi là Lỗi.
+Khung phân tích AI nằm dưới kết quả từng bài, hiện cho Student, Parent và Teacher đang phụ trách chuyên môn. Khi phân tích xong, Backend ghép thêm mục "Xem lại trong sách" từ bài nguồn của các câu sai (tên bài, trang theo số in, số thứ tự các câu sai), không do AI sinh và không gửi thêm gì cho AI; câu không có bài nguồn (soạn tay) thì không có dòng nào. Mỗi dòng có nút xem ảnh các trang của bài: giáo viên xem qua đường của giáo viên, Student và Parent (của con được liên kết) chỉ xem được trang của bài là nguồn của các câu trong bài mình đã nộp; chưa nộp hoặc bài không thuộc bài đã nộp thì báo không tìm thấy, để không duyệt được cả cuốn sách. Kiểm thử: học sinh chưa nộp, học sinh khác, bài ngoài bài đã nộp đều bị từ chối. Đang phân tích hiện avatar MSMS AI chờ; Lỗi để trống. Phân tích kẹt ở trạng thái đang chạy quá 5 phút (tiến trình dừng giữa chừng) được coi là Lỗi.
 
 **4.6.21 — Giao diện MSMS AI / MSMS AI Presence**  
 `Web + Mobile` · 2 MD · dep: 4.6.5, 4.6.12, 4.6.20  

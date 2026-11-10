@@ -80,9 +80,6 @@ export function SubjectsPage() {
     <>
       <PageHeader
         title="Tổ chuyên môn & Môn học"
-        description={canWrite
-          ? 'Viết tắt môn chỉ gồm chữ và số, duy nhất toàn trường — dùng trong ô MÔN-GV của file thời khóa biểu.'
-          : 'Tổ chuyên môn, môn học và số giáo viên toàn trường. Phân công dạy theo thời khóa biểu đã phát hành.'}
         extra={addButton}
       />
       <StatStrip>
@@ -223,7 +220,6 @@ export function SubjectsPage() {
           </Form.Item>
           <Form.Item
             label="Viết tắt môn" name="abbreviation"
-            extra="Chỉ gồm chữ và số, không dấu cách, không dấu gạch. Ví dụ: TOAN, VAN, TA."
             rules={[
               { required: true, whitespace: true, message: 'Nhập viết tắt môn.' },
               { pattern: /^[A-Za-z0-9]+$/, message: 'Viết tắt chỉ gồm chữ và số, không dấu cách, không dấu gạch.' },

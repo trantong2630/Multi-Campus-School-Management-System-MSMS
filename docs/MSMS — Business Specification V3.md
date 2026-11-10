@@ -112,13 +112,13 @@ Cả hai đều là **tiện ích, không phải điều kiện vận hành**: h
 |  |  |
 | --- | --- |
 | Dùng ở đâu | Sinh nháp câu hỏi trắc nghiệm (LRN-01); phân tích từng bài làm của học sinh (LRN-04) |
-| Nhận vào | Nội dung câu hỏi, các lựa chọn, đáp án đúng, lựa chọn của học sinh ở từng câu và điểm — **không kèm danh tính** |
+| Nhận vào | Sinh nháp: môn, khối, tên bài, ghi chú tùy chọn của giáo viên và ảnh các trang sách giáo khoa của bài. Phân tích bài làm: nội dung câu hỏi, các lựa chọn, đáp án đúng, lựa chọn của học sinh ở từng câu và điểm — **không kèm danh tính** |
 | Không bao giờ nhận | Tên, mã học sinh, ngày sinh, tên lớp, tên trường |
 | Không bao giờ làm | Chấm điểm; quyết định đúng/sai; ghi trực tiếp vào dữ liệu nghiệp vụ ngoài phân tích của chính bài làm |
 
 Trợ lý AI của hệ thống tên là **MSMS AI**. Câu hỏi do AI sinh là **nháp** cho tới khi giáo viên xác nhận. Phân tích bài làm do AI sinh **tự động khi học sinh nộp bài**, không qua giáo viên duyệt. **AI hỏng hoặc thiếu dữ liệu:** chấm, nộp bài, xem điểm vẫn chạy; phần phân tích để trống, không thử lại; giáo viên soạn câu hỏi thủ công.
 
-**Cần rà soát trước khi vận hành thật:** sự đồng ý của phụ huynh về việc gửi dữ liệu học tập cho nhà cung cấp AI, điều khoản không dùng dữ liệu để huấn luyện, quy định bảo vệ dữ liệu cá nhân.
+**Cần rà soát trước khi vận hành thật:** sự đồng ý của phụ huynh về việc gửi dữ liệu học tập cho nhà cung cấp AI, điều khoản không dùng dữ liệu để huấn luyện, quy định bảo vệ dữ liệu cá nhân; quyền sử dụng ảnh trang sách giáo khoa (bản quyền thuộc nhà xuất bản) khi lưu trên kho ảnh, gửi cho nhà cung cấp AI để soạn câu hỏi và hiển thị cho học sinh, phụ huynh ở mục xem lại trong sách.
 
 ### 3.2. Gmail SMTP
 
@@ -203,7 +203,7 @@ Cột Đọc là quyền đọc **dữ liệu**, không phải quyền có **mà
 | IAM-03 | Mật khẩu | Buộc đổi lần đầu, đổi khi đang dùng, quên mật khẩu bằng OTP, School Admin reset | chính chủ 📱, SA | — | BR-04 |
 | IAM-04 | Hồ sơ cá nhân | Xem hồ sơ, trách nhiệm đang giữ và trạng thái tài khoản; tự sửa số điện thoại, email nhận OTP, địa chỉ (phụ huynh không tự sửa số điện thoại) và ảnh đại diện; đổi mật khẩu | chính chủ 📱 | chính chủ 📱 | BR-04 |
 
-### SCH — School Setup (7) — chỉ SA ghi (riêng SCH-07: SA và HT cùng ghi), chỉ web
+### SCH — School Setup (7) — chỉ SA ghi, chỉ web
 
 SA là người duy nhất ghi (riêng Thông tin trường: SA và HT). HT và HP có các màn hình xem Phân hiệu, Tổ chuyên môn & Môn học, Năm học & Học kỳ, Lớp & Ghi danh kèm thống kê cấu trúc (HP chỉ thấy phân hiệu mình phụ trách); HT có thêm Thông tin trường. Ngày nghỉ, Khung giờ tiết và Kết chuyển năm học chỉ có cho SA. GV không có màn hình nào của SCH — cột Đọc thêm là dữ liệu họ dùng ở màn hình khác.
 
@@ -215,7 +215,7 @@ SA là người duy nhất ghi (riêng Thông tin trường: SA và HT). HT và 
 | SCH-04 | Khung giờ tiết | Khung giờ dùng chung toàn trường, khóa là cặp (Buổi, Tiết) | HT, HP, GV, HS, PH | BR-07 |
 | SCH-05 | Lớp & Ghi danh | Lớp theo phân hiệu và năm học; ghi danh có hiệu lực (một hoặc nhiều học sinh một lượt); chuyển lớp giữa năm; kết thúc ghi danh | HT, HP, CN | BR-07, 09 |
 | SCH-06 | Kết chuyển năm học | Sao chép danh sách lớp sang năm mới (gợi ý tên và khối tăng 1, sửa được trước khi tạo); chuyển nguyên lớp hoặc từng học sinh sang lớp đích do người dùng chọn; cho học sinh khối 9 tốt nghiệp. Không tự xét lên lớp hay lưu ban, không sao chép thời khóa biểu hay trách nhiệm | — | BR-09 |
-| SCH-07 | Thông tin trường | Tên trường, địa chỉ, điện thoại, email, website và logo. Đúng một bản; tên trường hiện ở thanh đường dẫn đầu trang và tiêu đề tab trình duyệt, logo hiện ở Trang chủ (học sinh và phụ huynh còn thấy thẻ thông tin trường); ai cũng đọc được, kể cả chưa đăng nhập. **HT và SA cùng ghi** | HP, GV | BR-27 |
+| SCH-07 | Thông tin trường | Tên trường, địa chỉ, điện thoại, email, website và logo. Đúng một bản; tên trường hiện ở thanh đường dẫn đầu trang và tiêu đề tab trình duyệt, logo hiện ở Trang chủ; ai cũng đọc được, kể cả chưa đăng nhập. **Chỉ SA ghi**; HT xem trên màn Cơ cấu nhà trường | HP, GV | BR-27 |
 
 ### PPL — People & Responsibility (4)
 
@@ -348,7 +348,7 @@ Lược đồ CSDL thiết kế sau, từ tài liệu này. Mục này chốt **
 | Trạng thái | Điều kiện |
 | --- | --- |
 | Tiết **đã diễn ra** | Đã xếp lịch **và** (đã có ít nhất một bản ghi điểm danh **hoặc** ngày của tiết < hôm nay) |
-| Tiết **bị khóa** | Đã diễn ra, hoặc ngày của tiết < hôm nay. Tiết bị khóa không đổi giáo viên, không hủy |
+| Tiết **bị khóa** | Đã diễn ra, hoặc **đã kết thúc**: ngày của tiết < hôm nay, hoặc là hôm nay và đã quá giờ kết thúc của khung giờ. Tiết đang diễn ra chưa bị khóa. Tiết bị khóa không đổi giáo viên, không hủy |
 | Điểm danh **có phép** | Vắng **và** có đơn Đã duyệt của học sinh phủ ngày của tiết, cùng buổi hoặc cả ngày |
 | Điểm danh **không phép** | Vắng và không có đơn như trên |
 | Bài **đã đóng** | Thời điểm hiện tại > hạn nộp |
@@ -472,11 +472,11 @@ Khai báo **không tự đổi lịch** và **chỉ tác động tiết ở phâ
 1. **Chọn giáo viên dạy thay** → Đã xếp lịch với giáo viên được chọn, lấy từ danh sách gợi ý bên dưới.
 2. **Hủy** → Đã hủy. Muốn dạy lại thì thêm tiết bù (BR-15).
 
-Tiết Chờ xử lý **không điểm danh được**. Tiết Chờ xử lý cũng bị khóa khi qua ngày (mục 6.2): không còn trong danh sách của SCD-03, không dạy thay, không hủy được nữa.
+Tiết Chờ xử lý **không điểm danh được**. Tiết Chờ xử lý cũng bị khóa khi đã kết thúc (mục 6.2): không còn trong danh sách của SCD-03, không dạy thay, không hủy được nữa.
 
-**Xóa khai báo vắng** theo kiểu tất cả hoặc không: chỉ xóa được khi **chưa có tiết nào** của khai báo bị xử lý (dạy thay, hủy), giáo viên **vẫn đủ điều kiện dạy** (BR-06) và **không trùng lịch** ở tiết nào (BR-13). Khi đó mọi tiết của khai báo từ hôm nay trở đi trở về giáo viên, trạng thái Đã xếp lịch; tiết đã qua ngày bị khóa nên giữ nguyên. Không đạt thì báo lỗi nêu rõ nguyên nhân và không xóa gì; Vice Principal xử lý các tiết còn lại rồi xóa lại. Tiết trống do khóa hoặc đổi loại tài khoản không thuộc khai báo nào nên không tự khôi phục.
+**Xóa khai báo vắng** theo kiểu tất cả hoặc không: chỉ xóa được khi **chưa có tiết nào** của khai báo bị xử lý (dạy thay, hủy), giáo viên **vẫn đủ điều kiện dạy** (BR-06) và **không trùng lịch** ở tiết nào (BR-13). Khi đó mọi tiết của khai báo chưa kết thúc trở về giáo viên, trạng thái Đã xếp lịch; tiết đã kết thúc bị khóa nên giữ nguyên. Không đạt thì báo lỗi nêu rõ nguyên nhân và không xóa gì; Vice Principal xử lý các tiết còn lại rồi xóa lại. Tiết trống do khóa hoặc đổi loại tài khoản không thuộc khai báo nào nên không tự khôi phục.
 
-**Gợi ý giáo viên rảnh:** Teacher đủ điều kiện dạy (BR-06), không có tiết Đã xếp lịch tại (ngày, khung giờ) đó ở bất kỳ phân hiệu nào (BR-13), không có khai báo vắng phủ ngày và tiết đó. Trả danh sách sắp theo tên, tối đa 10 người; **không xếp hạng ưu tiên** — Vice Principal tự chọn.
+**Gợi ý giáo viên rảnh:** Teacher đủ điều kiện dạy (BR-06), cùng tổ chuyên môn với môn của tiết, không có tiết Đã xếp lịch tại (ngày, khung giờ) đó ở bất kỳ phân hiệu nào (BR-13), không có khai báo vắng phủ ngày và tiết đó. Trả danh sách sắp theo tên, tối đa 10 người; **không xếp hạng ưu tiên** — Vice Principal tự chọn.
 
 ### 7.5. Điểm danh và đơn xin nghỉ
 
@@ -494,7 +494,7 @@ Parent rút được khi còn Chờ duyệt. Khi gửi, đơn ghi lại **lớp 
 
 ### 7.6. Bài tập và phân tích
 
-**BR-20 — Câu hỏi.** Câu hỏi thuộc một môn, có khối (6–9) và chủ đề (bắt buộc), gồm 4 lựa chọn (A–D) với **từ 1 đến 3 đáp án đúng**; giải thích tùy chọn. Giáo viên chỉ soạn câu (kể cả nhờ AI) cho các môn thuộc **tổ chuyên môn của mình**. Soạn thủ công **hoặc từ nháp AI**: giáo viên chọn môn, khối, chủ đề, số câu (1 đến 10 mỗi lần) → MSMS AI trả về các câu Nháp gắn cờ AI → giáo viên sửa và xác nhận thành **Sẵn dùng**. AI bám Chương trình giáo dục phổ thông 2018 và bộ sách giáo khoa Kết nối tri thức với cuộc sống (bộ dùng thống nhất toàn quốc theo Quyết định 3588/QĐ-BGDĐT); bộ sách không phải lựa chọn của người dùng và không lưu trên câu hỏi. Chỉ câu Sẵn dùng mới đưa vào bài tập được.
+**BR-20 — Câu hỏi.** Câu hỏi thuộc một môn, có khối (6–9) và chủ đề (bắt buộc), gồm 4 lựa chọn (A–D) với **từ 1 đến 3 đáp án đúng**; giải thích tùy chọn. Giáo viên chỉ soạn câu (kể cả nhờ AI) cho các môn thuộc **tổ chuyên môn của mình**. Soạn thủ công **hoặc từ nháp AI**: giáo viên chọn môn, khối, bài trong sách giáo khoa và số câu (1 đến 10 mỗi lần) → MSMS AI đọc các trang của bài và trả về các câu Nháp gắn cờ AI → giáo viên đối chiếu với trang sách, sửa và xác nhận thành **Sẵn dùng**. AI chỉ soạn từ các trang của bài đã chọn trong bộ sách giáo khoa Kết nối tri thức với cuộc sống (bộ dùng thống nhất toàn quốc theo Quyết định 3588/QĐ-BGDĐT); bộ sách không phải lựa chọn của người dùng. Câu do AI soạn lưu bài nguồn, chủ đề của câu là tên bài. Chỉ câu Sẵn dùng mới đưa vào bài tập được.
 
 Ngân hàng câu hỏi **dùng chung toàn trường**: mọi Teacher xem và dùng câu Sẵn dùng của mọi môn; câu Nháp và câu đã ẩn chỉ người tạo thấy; **chỉ người tạo sửa** được. Câu hỏi đã nằm trong một bài tập thì không sửa được nữa — chỉ còn **ẩn khỏi ngân hàng**; ẩn không ảnh hưởng bài cũ và người tạo bỏ ẩn được để đưa câu trở lại ngân hàng chung; muốn phiên bản khác thì soạn câu mới. Câu Nháp không ẩn mà xóa.
 

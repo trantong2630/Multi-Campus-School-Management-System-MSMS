@@ -9,5 +9,12 @@ public sealed class AiException(string message, Exception? inner = null) : Excep
 /// </summary>
 public interface IAiClient
 {
-    Task<string> GenerateJsonAsync(string systemInstruction, string prompt, CancellationToken ct = default);
+    Task<string> GenerateJsonAsync(string systemInstruction, string prompt, CancellationToken ct = default) =>
+        GenerateJsonAsync(systemInstruction, prompt, [], ct);
+
+    /// <summary>Như trên, kèm ảnh để AI đọc (ví dụ các trang sách giáo khoa) ngay trong yêu cầu; ảnh không được lưu lại ở phía AI.</summary>
+    Task<string> GenerateJsonAsync(string systemInstruction, string prompt, IReadOnlyList<AiImage> images, CancellationToken ct = default);
 }
+
+/// <summary>Một ảnh gửi kèm yêu cầu AI.</summary>
+public sealed record AiImage(string MimeType, byte[] Data);

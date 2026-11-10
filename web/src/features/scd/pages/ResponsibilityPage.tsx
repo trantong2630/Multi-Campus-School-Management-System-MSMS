@@ -41,9 +41,6 @@ export function ResponsibilityPage() {
     <>
       <PageHeader
         title="Phụ trách chuyên môn"
-        description={list.data?.semesterName
-          ? `Tính từ thời khóa biểu đã phát hành của ${list.data.semesterName}. Muốn đổi, sửa thời khóa biểu rồi Phát hành lại.`
-          : 'Tính từ thời khóa biểu đã phát hành. Muốn đổi, sửa thời khóa biểu rồi Phát hành lại.'}
       />
       {campusHead}
       {campuses.isSuccess && campuses.data.length === 0 && (

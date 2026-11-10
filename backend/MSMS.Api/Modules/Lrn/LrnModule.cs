@@ -13,6 +13,7 @@ public static class LrnModule
         return s.AddSingleton<AnalysisJob>()
             .AddScoped<LrnAccess>()
             .AddScoped<QuestionService>()
+            .AddScoped<TextbookService>()
             .AddScoped<QuestionDraftService>()
             .AddScoped<AssignmentService>()
             .AddScoped<AttemptGrader>()

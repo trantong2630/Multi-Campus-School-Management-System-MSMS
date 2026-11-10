@@ -221,7 +221,7 @@ function SessionActionModal({ session: s, week, slotText, onClose, onChangeTeach
           {s.status === 'Scheduled' && s.locked && (
             <InlineAlert
               type="info" title="Tiết bị khóa"
-              description="Tiết đã qua ngày hoặc đã có điểm danh nên không đổi giáo viên, không hủy. School Admin sửa điểm danh của tiết đã qua."
+              description="Tiết đã kết thúc hoặc đã có điểm danh nên không đổi giáo viên, không hủy. School Admin sửa điểm danh của tiết đã qua."
             />
           )}
           {s.status === 'Cancelled' && <InlineAlert type="info" title="Tiết đã hủy" description="Muốn dạy lại thì thêm tiết bù vào một ô trống." />}

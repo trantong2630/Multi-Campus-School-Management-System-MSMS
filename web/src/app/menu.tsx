@@ -67,16 +67,16 @@ export const menu: MenuGroup[] = [
     ],
   },
   {
-    key: 'sch', label: 'Thiết lập', icon: Settings2, section: 'manage',
+    key: 'sch', label: 'Cơ cấu nhà trường', icon: Settings2, section: 'manage',
     children: [
       { key: 'sch-school', label: 'Thông tin trường', path: '/sch/school', roles: ['SchoolAdmin', 'Principal'], ready: true },
-      // Màn cấu trúc kèm thống kê: School Admin sửa; Hiệu trưởng, Hiệu phó chỉ xem (Hiệu phó theo phân hiệu đang phụ trách).
-      { key: 'sch-campus', label: 'Phân hiệu', path: '/sch/campuses', roles: MGMT, requires: { VicePrincipal: 'campus' }, ready: true },
-      { key: 'sch-subject', label: 'Tổ chuyên môn & Môn học', path: '/sch/subjects', roles: MGMT, requires: { VicePrincipal: 'campus' }, ready: true },
-      { key: 'sch-year', label: 'Năm học & Học kỳ', path: '/sch/years', roles: MGMT, requires: { VicePrincipal: 'campus' }, ready: true },
+      // Màn cấu trúc kèm thống kê: School Admin sửa, Hiệu trưởng chỉ xem.
+      { key: 'sch-campus', label: 'Phân hiệu', path: '/sch/campuses', roles: ['SchoolAdmin', 'Principal'], ready: true },
+      { key: 'sch-subject', label: 'Tổ chuyên môn & Môn học', path: '/sch/subjects', roles: ['SchoolAdmin', 'Principal'], ready: true },
+      { key: 'sch-year', label: 'Năm học & Học kỳ', path: '/sch/years', roles: ['SchoolAdmin', 'Principal'], ready: true },
       { key: 'sch-holiday', label: 'Ngày nghỉ', path: '/sch/holidays', roles: ['SchoolAdmin'], ready: true },
       { key: 'sch-slot', label: 'Khung giờ tiết', path: '/sch/period-slots', roles: ['SchoolAdmin'], ready: true },
-      { key: 'sch-class', label: 'Lớp & Ghi danh', path: '/sch/classes', roles: MGMT, requires: { VicePrincipal: 'campus' }, ready: true },
+      { key: 'sch-class', label: 'Lớp & Ghi danh', path: '/sch/classes', roles: ['SchoolAdmin', 'Principal'], ready: true },
       { key: 'sch-rollover', label: 'Kết chuyển năm học', path: '/sch/rollover', roles: ['SchoolAdmin'], ready: true },
     ],
   },
@@ -124,7 +124,7 @@ export const menu: MenuGroup[] = [
     children: [
       { key: 'adm-account', label: 'Tài khoản', path: '/adm/accounts', roles: ['SchoolAdmin'], ready: true },
       { key: 'adm-audit', label: 'Nhật ký', path: '/adm/audit-log', roles: ['SchoolAdmin'], ready: true },
-      { key: 'adm-export', label: 'Xuất dữ liệu', path: '/adm/exports', roles: ['VicePrincipal', 'Teacher'], requires: { Teacher: 'homeroom', VicePrincipal: 'campus' }, ready: false },
+      { key: 'adm-export', label: 'Xuất dữ liệu', path: '/adm/exports', roles: ['VicePrincipal', 'Teacher'], requires: { Teacher: 'homeroom', VicePrincipal: 'campus' }, ready: true },
     ],
   },
 ];

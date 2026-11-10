@@ -67,6 +67,10 @@ public partial class MsmsDbContext : DbContext
 
     public virtual DbSet<Question> Question { get; set; }
 
+    public virtual DbSet<TextbookBook> TextbookBook { get; set; }
+
+    public virtual DbSet<TextbookLesson> TextbookLesson { get; set; }
+
     public virtual DbSet<QuestionOption> QuestionOption { get; set; }
 
     public virtual DbSet<SchoolProfile> SchoolProfile { get; set; }
@@ -714,6 +718,41 @@ public partial class MsmsDbContext : DbContext
                 .HasForeignKey(d => d.SubjectId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Question__Subjec__5BAD9CC8");
+
+            entity.HasOne(d => d.Lesson).WithMany(p => p.Question)
+                .HasForeignKey(d => d.LessonId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Question_TextbookLesson");
+        });
+
+        modelBuilder.Entity<TextbookBook>(entity =>
+        {
+            entity.HasKey(e => e.BookId);
+
+            entity.HasIndex(e => e.Code, "UQ_TextbookBook_Code").IsUnique();
+
+            entity.Property(e => e.Code).HasMaxLength(40);
+            entity.Property(e => e.Title).HasMaxLength(200);
+
+            entity.HasOne(d => d.Subject).WithMany(p => p.TextbookBook)
+                .HasForeignKey(d => d.SubjectId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TextbookBook_Subject");
+        });
+
+        modelBuilder.Entity<TextbookLesson>(entity =>
+        {
+            entity.HasKey(e => e.LessonId);
+
+            entity.HasIndex(e => new { e.BookId, e.SortOrder }, "UQ_TextbookLesson_Order").IsUnique();
+
+            entity.Property(e => e.Chapter).HasMaxLength(200);
+            entity.Property(e => e.Title).HasMaxLength(200);
+
+            entity.HasOne(d => d.Book).WithMany(p => p.TextbookLesson)
+                .HasForeignKey(d => d.BookId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TextbookLesson_Book");
         });
 
         modelBuilder.Entity<QuestionOption>(entity =>

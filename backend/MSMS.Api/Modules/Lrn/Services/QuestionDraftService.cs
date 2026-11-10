@@ -13,22 +13,26 @@ using MSMS.Api.Modules.Lrn.Dtos;
 namespace MSMS.Api.Modules.Lrn.Services;
 
 /// <summary>
-/// LRN-01 (4.6.5): AI sinh nháp câu hỏi. AI chỉ nhận môn, khối, chủ đề và số câu (bộ sách cố định trong chỉ dẫn hệ thống); kết quả là câu Nháp gắn cờ AI
+/// LRN-01 (4.6.5): AI sinh nháp câu hỏi từ các trang của bài đã chọn trong sách giáo khoa (ảnh trang gửi kèm yêu cầu); kết quả là câu Nháp gắn cờ AI
 /// của giáo viên đang gọi. Backend loại câu không đủ 4 lựa chọn hoặc ngoài 1–3 đáp án đúng. AI hỏng thì giáo viên soạn thủ công,
 /// không ảnh hưởng luồng nào khác (mục 3.1, BR-20).
 /// </summary>
-public sealed class QuestionDraftService(MsmsDbContext db, IAiClient ai, QuestionService questions, CurrentUser user, IClock clock, ILogger<QuestionDraftService> logger)
+public sealed class QuestionDraftService(MsmsDbContext db, IAiClient ai, QuestionService questions, TextbookService textbooks, CurrentUser user, IClock clock, ILogger<QuestionDraftService> logger)
 {
     public const int MaxCount = 10;
 
     private const string SystemInstruction =
         "Bạn là giáo viên Việt Nam giàu kinh nghiệm, soạn câu hỏi trắc nghiệm cho học sinh phổ thông. " +
         "Chỉ trả về JSON hợp lệ đúng cấu trúc yêu cầu, không thêm lời dẫn, không dùng markdown. " +
-        "Viết bằng tiếng Việt, đúng kiến thức, bám sát Chương trình giáo dục phổ thông 2018 và sách giáo khoa \"Kết nối tri thức với cuộc sống\" " +
-        "(Nhà xuất bản Giáo dục Việt Nam), bộ sách được sử dụng thống nhất toàn quốc theo Quyết định 3588/QĐ-BGDĐT ngày 26/12/2025, áp dụng từ năm học 2026–2027: " +
-        "dùng đúng thuật ngữ, kí hiệu, cách diễn đạt và mức độ kiến thức của bộ sách đó ở đúng khối. " +
-        "Chỉ hỏi những gì chắc chắn thuộc chủ đề và khối được nêu, không đưa kiến thức của khối khác vào, không bịa dữ kiện hay số liệu; " +
-        "không chắc chủ đề có trong sách ở khối đó thì ra câu cơ bản, đừng đoán.";
+        "Viết bằng tiếng Việt. Các ảnh đính kèm là những trang của sách giáo khoa \"Kết nối tri thức với cuộc sống\" (Nhà xuất bản Giáo dục Việt Nam), " +
+        "bộ sách được sử dụng thống nhất toàn quốc theo Quyết định 3588/QĐ-BGDĐT ngày 26/12/2025, áp dụng từ năm học 2026–2027. " +
+        "Chỉ soạn câu hỏi từ nội dung có trong các trang đó: dùng đúng thuật ngữ, kí hiệu, cách diễn đạt và mức độ kiến thức của sách; " +
+        "không đưa kiến thức ngoài các trang, không bịa dữ kiện hay số liệu, không hỏi về hình vẽ hay trang trí mà chữ không mô tả được. " +
+        "Mỗi câu hỏi phải tự đứng được: học sinh chỉ thấy câu hỏi và các lựa chọn, không có sách trước mặt. " +
+        "Không nhắc đến sách, trang, hình, bảng, phần \"Hoạt động\", \"Thực hành\", \"Luyện tập\" hay số thứ tự bước trong sách (ví dụ không viết \"theo sách giáo khoa\", \"ở Hình 1.2\", \"trong Thực hành 1\"); " +
+        "nếu cần dữ kiện thì chép dữ kiện đó thẳng vào câu hỏi. " +
+        "Viết toán bằng chữ thường, không dùng LaTeX hay ký hiệu $ và dấu gạch chéo ngược: viết \"hình chữ nhật ABCD\", \"AB = 5 cm\", \"6 cm²\", \"x²\", \"3/4\", \"√9\"; " +
+        "dùng các ký hiệu Unicode như ², ³, ×, ÷, ≠, ≤, ≥, ∈, ∉, ⊥, ∥, ∠, √ khi cần.";
 
     public async Task<GenerateQuestionsResultDto> GenerateAsync(GenerateQuestionsDto dto, CancellationToken ct)
     {
@@ -36,12 +40,15 @@ public sealed class QuestionDraftService(MsmsDbContext db, IAiClient ai, Questio
             ?? throw ApiException.BadRequest("Môn học không tồn tại hoặc đã ngừng hoạt động. Chọn môn khác.");
         await questions.EnsureOwnSubjectAsync(subject.SubjectId);
         if (dto.GradeLevel is < QuizRules.MinGrade or > QuizRules.MaxGrade) throw ApiException.BadRequest("Khối phải từ 6 đến 9. Chọn lại khối.");
-        var topic = Guard.Required(dto.Topic, "Chủ đề", 150);
+        var note = Guard.Optional(dto.Note, "Ghi chú", 150);
         if (dto.Count < 1 || dto.Count > MaxCount) throw ApiException.BadRequest($"Số câu mỗi lần sinh từ 1 đến {MaxCount}.");
+        var lesson = await textbooks.GetLessonAsync(dto.LessonId, subject.SubjectId, dto.GradeLevel);
+        var images = await textbooks.LoadLessonImagesAsync(lesson, ct);
 
         var prompt =
-            $"Soạn {dto.Count} câu hỏi trắc nghiệm.\n" +
-            $"- Môn: {subject.Name}\n- Khối: {dto.GradeLevel}\n- Chủ đề: {topic}\n" +
+            $"Soạn {dto.Count} câu hỏi trắc nghiệm từ {images.Count} trang sách đính kèm (từ trang {lesson.StartPage} đến trang {lesson.EndPage}).\n" +
+            $"- Môn: {subject.Name}\n- Khối: {dto.GradeLevel}\n- Bài: {lesson.Title} ({lesson.Chapter})\n" +
+            (note is null ? "" : $"- Gợi ý thu hẹp trong bài: {note}\n") +
             "Mỗi câu có đúng 4 lựa chọn A, B, C, D và từ 1 đến 3 đáp án đúng; không ghi gợi ý số đáp án như \"(Chọn 1 hoặc 2 đáp án)\" vào nội dung câu hỏi vì giao diện tự báo. " +
             "Các lựa chọn sai phải hợp lý, không trùng nhau. Giải thích ngắn gọn vì sao đáp án đúng là đúng.\n" +
             "Trả về JSON dạng: {\"questions\":[{\"content\":\"...\",\"explanation\":\"...\",\"options\":[" +
@@ -49,10 +56,10 @@ public sealed class QuestionDraftService(MsmsDbContext db, IAiClient ai, Questio
             "{\"label\":\"C\",\"content\":\"...\",\"isCorrect\":false},{\"label\":\"D\",\"content\":\"...\",\"isCorrect\":false}]}]}";
 
         string raw;
-        try { raw = await ai.GenerateJsonAsync(SystemInstruction, prompt, ct); }
+        try { raw = await ai.GenerateJsonAsync(SystemInstruction, prompt, images, ct); }
         catch (AiException ex) { throw ApiException.BadRequest($"{ex.Message} Soạn câu hỏi thủ công trong lúc chờ."); }
 
-        var (valid, discarded) = Parse(raw);
+        var (valid, discarded) = Parse(raw, logger);
         if (valid.Count == 0)
             throw ApiException.BadRequest("AI không trả về câu hỏi hợp lệ. Thử lại, hoặc soạn câu hỏi thủ công.");
         if (valid.Count > dto.Count) { discarded += valid.Count - dto.Count; valid = valid.Take(dto.Count).ToList(); }
@@ -63,7 +70,7 @@ public sealed class QuestionDraftService(MsmsDbContext db, IAiClient ai, Questio
         {
             var q = new Question
             {
-                SubjectId = subject.SubjectId, GradeLevel = dto.GradeLevel, Topic = topic, Content = v.Content, Explanation = v.Explanation,
+                SubjectId = subject.SubjectId, GradeLevel = dto.GradeLevel, Topic = Truncate(lesson.Title, 150), LessonId = lesson.LessonId, Content = v.Content, Explanation = v.Explanation,
                 Status = QuestionStatuses.Draft, IsAiGenerated = true, IsHidden = false, CreatedByPersonId = user.PersonId, CreatedAt = now,
             };
             foreach (var o in v.Options) q.QuestionOption.Add(new QuestionOption { OptionLabel = o.Label, Content = o.Content, IsCorrect = o.IsCorrect });
@@ -75,21 +82,28 @@ public sealed class QuestionDraftService(MsmsDbContext db, IAiClient ai, Questio
         var ids = created.Select(c => c.QuestionId).ToList();
         var saved = await db.Question.AsNoTracking()
             .Include(x => x.Subject).Include(x => x.CreatedByPerson).Include(x => x.QuestionOption)
+            .Include(x => x.Lesson).ThenInclude(l => l!.Book)
             .Where(x => ids.Contains(x.QuestionId)).OrderBy(x => x.QuestionId).ToListAsync();
         return new GenerateQuestionsResultDto(saved.Select(q => QuestionService.ToDetail(q, user.PersonId, false)).ToList(), discarded);
     }
 
-    private sealed record Candidate(string Content, string? Explanation, List<OptionInput> Options);
+    private static string Truncate(string s, int max) => s.Length <= max ? s : s[..max];
+
+    internal sealed record Candidate(string Content, string? Explanation, List<OptionInput> Options);
 
     /// <summary>Đọc kết quả AI, giữ lại câu hợp lệ theo BR-20 và đếm số câu bị loại.</summary>
-    private (List<Candidate> Valid, int Discarded) Parse(string raw)
+    internal static (List<Candidate> Valid, int Discarded) Parse(string raw, ILogger logger)
     {
         var valid = new List<Candidate>();
         var discarded = 0;
         try
         {
             using var doc = JsonDocument.Parse(raw);
-            if (!doc.RootElement.TryGetProperty("questions", out var arr) || arr.ValueKind != JsonValueKind.Array) return (valid, 0);
+            // AI có lúc trả thẳng một mảng thay vì {"questions":[...]}; cả hai đều đọc được, dạng khác thì coi như không có câu nào.
+            var root = doc.RootElement;
+            var arr = root.ValueKind == JsonValueKind.Array ? root
+                : root.ValueKind == JsonValueKind.Object && root.TryGetProperty("questions", out var q) ? q : default;
+            if (arr.ValueKind != JsonValueKind.Array) return (valid, 0);
             foreach (var item in arr.EnumerateArray())
             {
                 var candidate = ToCandidate(item);

@@ -25,3 +25,6 @@ doc2/
 
 # Test folder for PAR
 backend/MSMS.Tests/ParTests/
+
+# SGK source PDFs for RAG experiments (copyrighted, not committed)
+sgk-source/

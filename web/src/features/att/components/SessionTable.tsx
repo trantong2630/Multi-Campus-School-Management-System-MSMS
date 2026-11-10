@@ -5,7 +5,7 @@ import { DataTable } from '@/shared/components/DataTable';
 import { RowActions } from '@/shared/components/RowActions';
 import { StatusBadge } from '@/shared/components/StatusBadge';
 import type { AttendanceSession } from '../types';
-import { dayText, slotText } from '../attFormat';
+import { dayParts, slotParts } from '../attFormat';
 import { MarkedCell } from './AttendanceParts';
 
 /** Tình trạng điểm danh của tiết: tiết không Đã xếp lịch hiện trạng thái tiết; tiết chưa có bản ghi hiện "Chưa điểm danh". */
@@ -31,8 +31,8 @@ export function SessionTable({ sessions, loading, emptyText, showDate, showClass
         rowKey="sessionId" loading={loading} dataSource={sessions} emptyText={emptyText}
         onRow={(s) => ({ onClick: () => open(s), style: { cursor: 'pointer' } })}
         columns={[
-          ...(showDate ? [{ title: 'Ngày', key: 'date', width: 150, className: 'tabular', render: (_: unknown, s: AttendanceSession) => dayText(s.date) }] : []),
-          { title: 'Tiết', key: 'slot', width: 220, className: 'tabular', render: (_: unknown, s: AttendanceSession) => slotText(s) },
+          ...(showDate ? [{ title: 'Ngày', key: 'date', width: 150, className: 'tabular', render: (_: unknown, s: AttendanceSession) => <DayCell date={s.date} /> }] : []),
+          { title: 'Tiết', key: 'slot', width: 220, className: 'tabular', render: (_: unknown, s: AttendanceSession) => <SlotCell s={s} /> },
           ...(showClass ? [{ title: 'Lớp', dataIndex: 'className', width: 100 }] : []),
           { title: 'Môn', dataIndex: 'subjectName', width: 170 },
           { title: 'Giáo viên', key: 'teacher', width: 190, render: (_: unknown, s: AttendanceSession) => s.teacherName ?? <span className="muted">Chưa có</span> },
@@ -53,4 +53,16 @@ export function SessionTable({ sessions, loading, emptyText, showDate, showClass
       />
     </Card>
   );
+}
+
+/** Hai dòng: Thứ ở trên, ngày tháng năm nhỏ ở dưới. */
+function DayCell({ date }: { date: string }) {
+  const [weekday, dmy] = dayParts(date);
+  return <>{weekday}<span className="cell-sub cell-sub--date">{dmy}</span></>;
+}
+
+/** Hai dòng: "Sáng · Tiết 3" ở trên, giờ ở dưới. */
+function SlotCell({ s }: { s: AttendanceSession }) {
+  const [title, time] = slotParts(s);
+  return <>{title}<span className="cell-sub">{time}</span></>;
 }

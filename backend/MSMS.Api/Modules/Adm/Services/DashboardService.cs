@@ -55,6 +55,7 @@ public sealed class DashboardService(MsmsDbContext db, CurrentUser user, ScopeRe
 
         var leaders = (await db.CampusLeadership.AsNoTracking()
                 .Where(EffectivePeriod.CurrentResponsibility<CampusLeadership>(today))
+                .Where(l => l.Staff.Staff.Account != null && l.Staff.Staff.Account.AccountType == AccountTypes.VicePrincipal)
                 .Where(l => campusIds.Contains(l.CampusId))
                 .Select(l => new { l.CampusId, l.Staff.Staff.FullName }).ToListAsync())
             .GroupBy(l => l.CampusId).ToDictionary(g => g.Key, g => g.Select(x => x.FullName).Order().ToList());
@@ -102,7 +103,8 @@ public sealed class DashboardService(MsmsDbContext db, CurrentUser user, ScopeRe
     private async Task<DashboardAttention> AttentionAsync(List<int> campusIds, List<int> classIds, DateOnly today, int classesWithoutHomeroom)
     {
         var pendingSessions = await db.TeachingSession.AsNoTracking()
-            .CountAsync(s => s.Status == "Pending" && s.SessionDate >= today && classIds.Contains(s.ClassId));
+            .Where(SessionLockRules.NotEnded(clock))
+            .CountAsync(s => s.Status == "Pending" && classIds.Contains(s.ClassId));
         var absences = await db.TeacherAbsence.AsNoTracking()
             .Where(a => a.FromDate <= today && a.ToDate >= today && campusIds.Contains(a.Teacher.PrimaryCampusId))
             .Select(a => a.TeacherId).Distinct().CountAsync();

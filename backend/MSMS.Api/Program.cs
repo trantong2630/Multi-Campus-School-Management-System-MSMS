@@ -122,4 +122,13 @@ if (app.Environment.IsDevelopment())
         scope.ServiceProvider.GetRequiredService<ILogger<Program>>());
 }
 
+// Mục lục sách giáo khoa cần có ở mọi môi trường (khác dữ liệu mẫu chỉ dành cho Development).
+using (var scope = app.Services.CreateScope())
+{
+    await TextbookSeeder.RunAsync(
+        scope.ServiceProvider.GetRequiredService<MsmsDbContext>(),
+        app.Environment.ContentRootPath,
+        scope.ServiceProvider.GetRequiredService<ILogger<Program>>());
+}
+
 app.Run();

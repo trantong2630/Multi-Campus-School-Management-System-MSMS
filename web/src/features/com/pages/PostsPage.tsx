@@ -81,9 +81,6 @@ export function PostsPage() {
     <>
       <PageHeader
         title="Đăng tin"
-        description={isStaff
-          ? 'Bài Nội bộ chỉ cán bộ đọc được; bài Toàn trường mọi người đọc được, gồm học sinh và phụ huynh.'
-          : 'Các bài đăng của nhà trường.'}
         extra={isStaff && <Button type="primary" icon={<Plus size={16} />} onClick={() => setComposing(true)}>Đăng bài</Button>}
       />
       {isStaff && (

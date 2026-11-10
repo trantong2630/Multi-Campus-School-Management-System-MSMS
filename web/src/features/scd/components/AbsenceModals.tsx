@@ -15,6 +15,28 @@ import type { ResolveAction } from '../types';
 import { TeacherSelect } from './TeacherSelect';
 import './scd.css';
 
+/** Hai thẻ chọn cách xử lý tiết Chờ xử lý; dùng được trực tiếp trong Form.Item. */
+function ResolveChoice({ value, onChange }: { value?: ResolveAction; onChange?: (v: ResolveAction) => void }) {
+  const opts: { value: ResolveAction; title: string; hint: string; danger?: boolean }[] = [
+    { value: 'Substitute', title: 'Chọn giáo viên dạy thay', hint: 'Tiết vẫn diễn ra với giáo viên khác' },
+    { value: 'Cancel', title: 'Hủy tiết', hint: 'Lớp nghỉ tiết này, không điểm danh', danger: true },
+  ];
+  return (
+    <div className="rs-choice" role="radiogroup">
+      {opts.map((o) => (
+        <button
+          key={o.value} type="button" role="radio" aria-checked={value === o.value}
+          className={`rs-choice__opt${o.danger ? ' rs-choice__opt--danger' : ''}${value === o.value ? ' rs-choice__opt--on' : ''}`}
+          onClick={() => onChange?.(o.value)}
+        >
+          <span className="rs-choice__title">{o.title}</span>
+          <span className="rs-choice__hint">{o.hint}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------- Khai báo giáo viên vắng
 type Scope = 'days' | 'slots';
 
@@ -155,13 +177,10 @@ export function ResolveModal({ target, onClose, onDone }: { target: ResolveTarge
     >
       {target && <p className="muted" style={{ marginTop: 0 }}>{target.summary}</p>}
       <Form.Item name="action" label="Cách xử lý" rules={[{ required: true }]}>
-        <Radio.Group>
-          <Radio value="Substitute" style={{ display: 'block', marginBottom: 6 }}>Chọn giáo viên dạy thay</Radio>
-          <Radio value="Cancel" style={{ display: 'block' }}>Hủy tiết</Radio>
-        </Radio.Group>
+        <ResolveChoice />
       </Form.Item>
       {action === 'Substitute' && target && (
-        <Form.Item name="teacherId" label="Giáo viên dạy thay (gợi ý giáo viên rảnh, tối đa 10, sắp theo tên)" rules={[{ required: true, message: 'Chọn giáo viên' }]}>
+        <Form.Item name="teacherId" label="Giáo viên dạy thay (gợi ý giáo viên rảnh trong tổ, tối đa 10, sắp theo tên)" rules={[{ required: true, message: 'Chọn giáo viên' }]}>
           <TeacherSelect suggestForSessionId={target.sessionId} />
         </Form.Item>
       )}

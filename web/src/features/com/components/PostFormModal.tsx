@@ -80,7 +80,7 @@ export function PostFormModal({ open, post, onClose, onSaved }: Props) {
       <Form.Item label="Nội dung" name="content" rules={[{ required: true, whitespace: true, message: 'Nhập nội dung bài đăng.' }]}>
         <Input.TextArea rows={8} maxLength={5000} showCount />
       </Form.Item>
-      <Form.Item label={`Ảnh đính kèm (${total}/${MAX_POST_IMAGES})`} extra="JPG hoặc PNG, mỗi ảnh tối đa 2 MB. Ảnh đầu tiên là ảnh bìa.">
+      <Form.Item label={`Ảnh đính kèm (${total}/${MAX_POST_IMAGES})`}>
         <div className="post-thumbs">
           {kept.map((img, i) => (
             <div className="post-thumb" key={img.postImageId}>

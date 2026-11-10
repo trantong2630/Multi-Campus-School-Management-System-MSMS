@@ -285,7 +285,7 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
             return null;
         }
         var year = (await db.AcademicYear.AsNoTracking().ToListAsync()).FirstOrDefault(y => string.Equals(y.Name, text, StringComparison.OrdinalIgnoreCase));
-        if (year is null) errors.Add(new ImportError("B3", "Năm học", text, $"Năm học \"{text}\" chưa khai trong hệ thống. Khai ở Thiết lập → Năm học hoặc sửa lại tên cho đúng."));
+        if (year is null) errors.Add(new ImportError("B3", "Năm học", text, $"Năm học \"{text}\" chưa khai trong hệ thống. Khai ở Cơ cấu nhà trường → Năm học hoặc sửa lại tên cho đúng."));
         return year;
     }
 

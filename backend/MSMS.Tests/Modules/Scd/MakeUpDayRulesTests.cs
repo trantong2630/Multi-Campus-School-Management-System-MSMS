@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using MSMS.Api.Common.Audit;
 using MSMS.Api.Common.Auth;
+using MSMS.Api.Common.Email;
 using MSMS.Api.Common.Errors;
 using MSMS.Api.Common.Notifications;
 using MSMS.Api.Common.Time;
@@ -60,6 +62,7 @@ public class MakeUpDayRulesTests
         var provider = new ServiceCollection()
             .AddSingleton(db).AddSingleton(user).AddSingleton(clock)
             .AddScoped<ScopeResolver>().AddScoped<AuditWriter>().AddScoped<NotificationSender>().AddScoped<ScheduleSupport>().AddScoped<SchoolDayService>()
+            .AddLogging().AddSingleton(Mock.Of<IEmailSender>()).AddScoped<AssignmentEmailNotifier>()
             .BuildServiceProvider();
         return (db, ActivatorUtilities.CreateInstance<ScheduleAdjustmentService>(provider));
     }

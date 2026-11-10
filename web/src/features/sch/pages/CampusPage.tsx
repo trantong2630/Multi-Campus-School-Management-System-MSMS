@@ -69,9 +69,6 @@ export function CampusPage() {
     <>
       <PageHeader
         title="Phân hiệu"
-        description={canWrite
-          ? 'Mã và tên phân hiệu là khóa tra cứu của các file import nên không được trùng.'
-          : 'Quy mô từng phân hiệu trong năm học hiện hành, tính tại hôm nay.'}
         extra={canWrite && (
           <Button type="primary" icon={<Plus size={16} />} onClick={() => setEditing('new')}>Thêm phân hiệu</Button>
         )}
@@ -154,7 +151,7 @@ export function CampusPage() {
           <Form.Item label="Địa chỉ" name="address" style={{ gridColumn: '1 / -1' }} rules={[{ max: 255, message: 'Địa chỉ tối đa 255 ký tự. Rút gọn số nhà, đường.' }]}>
             <AddressInput />
           </Form.Item>
-          <Form.Item label="Số điện thoại" name="phoneNumber" extra="Số di động 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09." rules={[{ pattern: /^0[35789]\d{8}$/, message: 'Số điện thoại di động phải gồm đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09.' }]}><Input maxLength={10} inputMode="tel" /></Form.Item>
+          <Form.Item label="Số điện thoại" name="phoneNumber" rules={[{ pattern: /^0[35789]\d{8}$/, message: 'Số điện thoại di động phải gồm đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09.' }]}><Input maxLength={10} inputMode="tel" /></Form.Item>
         </div>
       </FormModal>
     </>

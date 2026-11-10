@@ -154,7 +154,7 @@ public sealed class StaffImportService(MsmsDbContext db, IClock clock)
                         if (d.Active) deptId = d.Id;
                         else Err(6, $"Tổ chuyên môn \"{deptName}\" đã ngừng hoạt động. Chọn tổ còn hoạt động.");
                     }
-                    else Err(6, $"Tổ chuyên môn \"{deptName}\" chưa khai trong hệ thống. Khai ở Thiết lập hoặc sửa lại tên cho đúng.");
+                    else Err(6, $"Tổ chuyên môn \"{deptName}\" chưa khai trong hệ thống. Khai ở Cơ cấu nhà trường hoặc sửa lại tên cho đúng.");
                 }
 
                 var campusId = 0;

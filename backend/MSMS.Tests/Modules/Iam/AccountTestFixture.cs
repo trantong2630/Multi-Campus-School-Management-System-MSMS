@@ -41,7 +41,7 @@ internal sealed class AccountTestFixture : IDisposable
         Db.SubjectDepartment.Add(new SubjectDepartment { DepartmentId = 1, Name = "Toán", IsActive = true });
         Db.Subject.Add(new Subject { SubjectId = 1, DepartmentId = 1, Name = "Toán", Abbreviation = "TOAN", IsActive = true });
         Db.PeriodSlot.Add(new PeriodSlot { PeriodSlotId = 1, SessionOfDay = "Morning", PeriodNo = 1,
-            StartTime = new(7, 0), EndTime = new(7, 45), IsActive = true });
+            StartTime = new(15, 0), EndTime = new(15, 45), IsActive = true });
         Db.SaveChanges();
     }
 
