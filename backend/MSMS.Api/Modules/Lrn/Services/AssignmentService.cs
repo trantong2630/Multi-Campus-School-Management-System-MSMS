@@ -51,7 +51,8 @@ public sealed class AssignmentService(
         var row = (await ProjectItems(db.Assignment.AsNoTracking().Where(x => x.AssignmentId == id)).ToListAsync()).Single();
         var lines = await db.AssignmentQuestion.AsNoTracking().Include(x => x.Question).ThenInclude(q => q.QuestionOption)
             .Where(x => x.AssignmentId == id).OrderBy(x => x.OrderNo).ToListAsync();
-        return new AssignmentDetailDto(ToDto(row, clock.Now), a.Instruction, ToLines(lines));
+        var sections = ToSections(lines);
+        return new AssignmentDetailDto(ToDto(row, clock.Now), a.Instruction, ToLines(lines), sections, sections.Sum(s => s.Points));
     }
 
     /// <summary>
@@ -82,13 +83,19 @@ public sealed class AssignmentService(
         var ids = items.Select(i => i.QuestionId).ToList();
         await questions.LockQuestionsAsync(ids);
         var found = await db.Question.AsNoTracking().Where(q => ids.Contains(q.QuestionId))
-            .Select(q => new { q.QuestionId, q.SubjectId, q.Status, q.IsHidden }).ToListAsync();
+            .Select(q => new { q.QuestionId, q.SubjectId, q.Status, q.IsHidden, q.Difficulty }).ToListAsync();
         if (found.Count != ids.Count)
             throw ApiException.BadRequest("Có câu hỏi không còn tồn tại. Tải lại ngân hàng câu hỏi rồi chọn lại.");
         if (found.Any(q => q.SubjectId != subject.SubjectId))
             throw ApiException.BadRequest($"Bài tập môn {subject.Name} chỉ gồm câu hỏi cùng môn. Bỏ các câu thuộc môn khác.");
         if (found.Any(q => q.Status != QuestionStatuses.Ready || q.IsHidden))
             throw ApiException.BadRequest("Có câu hỏi chưa Sẵn dùng hoặc đã bị ẩn khỏi ngân hàng. Bỏ các câu đó rồi giao lại.");
+
+        // Mỗi độ khó là một phần của bài; điểm đặt cho từng phần rồi chia cho các câu trong phần, chốt lúc giao (BR-21).
+        if (found.Any(q => q.Difficulty is null))
+            throw ApiException.BadRequest("Có câu hỏi chưa phân loại độ khó. Chọn độ khó cho các câu đó (hoặc bỏ chúng) rồi giao lại.");
+        var pointsOf = QuizRules.AssignPoints(items.Select(i => i.QuestionId).ToList(), found.ToDictionary(q => q.QuestionId, q => q.Difficulty!),
+            (dto.Sections ?? []).Select(s => (s.Difficulty, s.Points)).ToList());
 
         var a = new Assignment
         {
@@ -97,7 +104,7 @@ public sealed class AssignmentService(
         };
         var order = (short)0;
         foreach (var item in items)
-            a.AssignmentQuestion.Add(new AssignmentQuestion { QuestionId = item.QuestionId, OrderNo = ++order });
+            a.AssignmentQuestion.Add(new AssignmentQuestion { QuestionId = item.QuestionId, OrderNo = ++order, Points = pointsOf[item.QuestionId] });
         foreach (var studentId in roster)
             a.AssignmentRecipient.Add(new AssignmentRecipient { StudentId = studentId });
         db.Assignment.Add(a);
@@ -116,13 +123,19 @@ public sealed class AssignmentService(
     public static IReadOnlyList<AssignmentQuestionDto> ToLines(IEnumerable<AssignmentQuestion> lines) => lines.OrderBy(l => l.OrderNo)
         .Select(l => new AssignmentQuestionDto(l.AssignmentQuestionId, l.QuestionId, l.OrderNo, l.Question.Content, l.Question.Explanation,
             l.Question.QuestionOption.Count(o => o.IsCorrect) > 1,
-            l.Question.QuestionOption.OrderBy(o => o.OptionLabel).Select(o => new OptionDto(o.OptionId, o.OptionLabel, o.Content, o.IsCorrect)).ToList()))
+            l.Question.QuestionOption.OrderBy(o => o.OptionLabel).Select(o => new OptionDto(o.OptionId, o.OptionLabel, o.Content, o.IsCorrect)).ToList(),
+            l.Question.Difficulty, l.Points))
         .ToList();
+
+    /// <summary>Các phần của bài theo độ khó từ dễ đến khó, điểm mỗi phần là tổng điểm các câu trong phần.</summary>
+    public static IReadOnlyList<AssignmentSectionDto> ToSections(IEnumerable<AssignmentQuestion> lines) => lines
+        .GroupBy(l => l.Question.Difficulty).OrderBy(g => Difficulties.Rank(g.Key))
+        .Select(g => new AssignmentSectionDto(g.Key, g.Count(), g.Sum(l => l.Points))).ToList();
 
     public static IReadOnlyList<QuizQuestionDto> ToQuiz(IEnumerable<AssignmentQuestion> lines) => lines.OrderBy(l => l.OrderNo)
         .Select(l => new QuizQuestionDto(l.AssignmentQuestionId, l.OrderNo, l.Question.Content,
             l.Question.QuestionOption.Count(o => o.IsCorrect) > 1, l.Question.QuestionOption.Count(o => o.IsCorrect),
-            l.Question.QuestionOption.OrderBy(o => o.OptionLabel).Select(o => new QuizOptionDto(o.OptionId, o.OptionLabel, o.Content)).ToList()))
+            l.Question.QuestionOption.OrderBy(o => o.OptionLabel).Select(o => new QuizOptionDto(o.OptionId, o.OptionLabel, o.Content)).ToList(), l.Points))
         .ToList();
 
     internal sealed record Row(

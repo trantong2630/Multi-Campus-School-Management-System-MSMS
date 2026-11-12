@@ -104,7 +104,7 @@ export const menu: MenuGroup[] = [
     key: 'lrn', label: 'Bài tập rèn luyện', icon: BookOpen, section: 'manage',
     children: [
       { key: 'lrn-bank', label: 'Kho câu hỏi', path: '/lrn/questions', roles: ['Teacher'], ready: true },
-      { key: 'lrn-assign', label: 'Giao bài tập', path: '/lrn/assign', roles: ['Teacher'], requires: { Teacher: 'subject' }, ready: true },
+      { key: 'lrn-assign', label: 'Soạn đề', path: '/lrn/assign', roles: ['Teacher'], requires: { Teacher: 'subject' }, ready: true },
       { key: 'lrn-assigned', label: 'Bài tập đã giao', path: '/lrn/assigned', roles: ['Teacher'], ready: true },
       { key: 'lrn-todo', label: 'Bài tập được giao', path: '/lrn/todo', roles: ['Student'], ready: true },
       { key: 'lrn-done', label: 'Danh sách bài tập', path: '/lrn/done', roles: ['Student'], ready: true },

@@ -5,7 +5,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { getErrorMessage } from '@/app/apiClient';
 import { composeSteps } from '../aiLines';
 import { lrnApi } from '../api';
-import { GRADES, TEXTBOOK, pagesText } from '../labels';
+import { DIFFICULTIES, GRADES, TEXTBOOK, pagesText } from '../labels';
+import type { Difficulty } from '../types';
+import { DifficultyTag } from './DifficultyTag';
 import { AiAvatar, AiBubble, AiDots, TypedText } from './MsmsAi';
 import type { AiMood, AiTone } from './MsmsAi';
 import './lrn.css';
@@ -20,6 +22,8 @@ interface Props {
 /** Một bài trong ô chọn: label là chữ thuần cho ô tìm kiếm, title và pages để vẽ dòng bài. */
 interface LessonOption { value: number; label: string; title: string; pages: string }
 
+const MAX_COUNT = 10;
+
 type Phase = { kind: 'idle' } | { kind: 'working' } | { kind: 'done'; text: string } | { kind: 'error'; text: string };
 
 /** Quầy soạn câu hỏi của MSMS AI (4.6.5): chọn bài trong sách, AI đọc các trang của bài rồi trả về câu Nháp để giáo viên kiểm tra rồi mới dùng. */
@@ -30,7 +34,9 @@ export function AiComposer({ subjects, defaultSubjectId, onDone }: Props) {
   const [grade, setGrade] = useState<number>(6);
   const [lessonId, setLessonId] = useState<number | undefined>();
   const [note, setNote] = useState('');
-  const [count, setCount] = useState(5);
+  // Số câu ở từng độ khó; tổng tối đa 10 câu mỗi lần.
+  const [levels, setLevels] = useState<Record<Difficulty, number>>({ Recognize: 2, Understand: 2, Apply: 1, HighApply: 0 });
+  const count = Object.values(levels).reduce((a, b) => a + b, 0);
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' });
   const [step, setStep] = useState(0);
 
@@ -59,7 +65,8 @@ export function AiComposer({ subjects, defaultSubjectId, onDone }: Props) {
   const lesson = lessons.data?.find((l) => l.lessonId === lessonId);
   const noBook = lessons.isSuccess && lessons.data.length === 0;
 
-  const ready = subjectId !== undefined && lessonId !== undefined;
+  const ready = subjectId !== undefined && lessonId !== undefined && count >= 1 && count <= MAX_COUNT;
+  const bump = (d: Difficulty, by: 1 | -1) => setLevels((cur) => ({ ...cur, [d]: Math.max(0, cur[d] + by) }));
   const working = phase.kind === 'working';
 
   const pickSubject = (id: number) => { setSubjectId(id); setLessonId(undefined); };
@@ -70,7 +77,9 @@ export function AiComposer({ subjects, defaultSubjectId, onDone }: Props) {
     setStep(0);
     setPhase({ kind: 'working' });
     try {
-      const r = await lrnApi.questions.generate({ subjectId: subjectId!, gradeLevel: grade, lessonId: lessonId!, note: note.trim() || undefined, count });
+      const r = await lrnApi.questions.generate({ subjectId: subjectId!, gradeLevel: grade, lessonId: lessonId!, note: note.trim() || undefined,
+        levels: DIFFICULTIES.filter((d) => levels[d.value] > 0).map((d) => ({ difficulty: d.value, count: levels[d.value] })),
+      });
       await qc.invalidateQueries({ queryKey: ['lrn', 'questions'] });
       setPhase({
         kind: 'done',
@@ -130,13 +139,19 @@ export function AiComposer({ subjects, defaultSubjectId, onDone }: Props) {
           <span>Bộ sách</span>
           <strong className="composer__book">{TEXTBOOK}</strong>
         </div>
-        <div className="composer__field">
-          <span>Số câu</span>
-          <div className="stepper">
-            <button type="button" aria-label="Bớt một câu" disabled={working || count <= 1} onClick={() => setCount(count - 1)}><Minus size={16} /></button>
-            <strong className="tabular">{count}</strong>
-            <button type="button" aria-label="Thêm một câu" disabled={working || count >= 10} onClick={() => setCount(count + 1)}><Plus size={16} /></button>
-          </div>
+        <div className="composer__field levels">
+          <span>Số câu theo độ khó</span>
+          {DIFFICULTIES.map((d) => (
+            <div key={d.value} className="levels__row">
+              <DifficultyTag value={d.value} />
+              <div className="stepper">
+                <button type="button" aria-label={`Bớt một câu ${d.label}`} disabled={working || levels[d.value] <= 0} onClick={() => bump(d.value, -1)}><Minus size={16} /></button>
+                <strong className="tabular">{levels[d.value]}</strong>
+                <button type="button" aria-label={`Thêm một câu ${d.label}`} disabled={working || count >= MAX_COUNT} onClick={() => bump(d.value, 1)}><Plus size={16} /></button>
+              </div>
+            </div>
+          ))}
+          <p className={`levels__sum${count >= MAX_COUNT ? ' is-full' : count === 0 ? ' is-empty' : ''}`}>{count === 0 ? 'Chọn ít nhất 1 câu' : `Tổng ${count}/${MAX_COUNT} câu`}</p>
         </div>
       </div>
 

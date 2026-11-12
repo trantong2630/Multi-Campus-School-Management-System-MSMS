@@ -22,6 +22,9 @@ public static class QuestionStatuses
 /// </summary>
 public sealed class QuestionService(MsmsDbContext db, CurrentUser user, IClock clock)
 {
+    /// <summary>Giá trị bộ lọc độ khó để chỉ xem câu chưa phân loại.</summary>
+    public const string UnclassifiedFilter = "None";
+
     /// <summary>Môn thuộc tổ chuyên môn của giáo viên: chỉ những môn này được soạn câu hỏi (kể cả nhờ AI soạn).</summary>
     public async Task<IReadOnlyList<SubjectOptionDto>> MySubjectsAsync()
     {
@@ -38,7 +41,8 @@ public sealed class QuestionService(MsmsDbContext db, CurrentUser user, IClock c
     }
 
     public async Task<PagedResult<QuestionItemDto>> ListAsync(
-        int? subjectId, byte? gradeLevel, string? topic, string? creator, string? status, bool mine, bool includeHidden, string? search, int page, int pageSize)
+        int? subjectId, byte? gradeLevel, string? topic, string? creator, string? status, bool mine, bool includeHidden, string? search, int page, int pageSize,
+        string? difficulty = null)
     {
         var me = user.PersonId;
         // Câu bị ẩn chỉ người tạo thấy và chỉ khi chọn xem câu đã ẩn (khi đó chỉ trả câu đã ẩn); câu Nháp chỉ người tạo thấy.
@@ -51,6 +55,8 @@ public sealed class QuestionService(MsmsDbContext db, CurrentUser user, IClock c
         if (gradeLevel is not null) q = q.Where(x => x.GradeLevel == gradeLevel);
         if (mine) q = q.Where(x => x.CreatedByPersonId == me);
         if (status is QuestionStatuses.Draft or QuestionStatuses.Ready) q = q.Where(x => x.Status == status);
+        if (difficulty == UnclassifiedFilter) q = q.Where(x => x.Difficulty == null);
+        else if (Difficulties.IsValid(difficulty)) q = q.Where(x => x.Difficulty == difficulty);
         var topicText = TextNormalizer.Normalize(topic);
         if (topicText.Length > 0) q = q.Where(x => x.Topic != null && x.Topic.Contains(topicText));
         var creatorText = TextNormalizer.Normalize(creator);
@@ -58,15 +64,15 @@ public sealed class QuestionService(MsmsDbContext db, CurrentUser user, IClock c
         var searchText = TextNormalizer.Normalize(search);
         if (searchText.Length > 0) q = q.Where(x => x.Content.Contains(searchText));
 
-        return await q
-            .OrderByDescending(x => x.CreatedAt).ThenByDescending(x => x.QuestionId)
-            .Select(x => new QuestionItemDto(
-                x.QuestionId, x.SubjectId, x.Subject.Name, x.GradeLevel, x.Topic, x.Content, x.Status, x.IsAiGenerated, x.IsHidden,
-                x.QuestionOption.Count(o => o.IsCorrect) > 1,
-                x.CreatedByPersonId, x.CreatedByPerson.FullName, x.CreatedByPersonId == me,
-                x.AssignmentQuestion.Any(), x.CreatedAt))
-            .ToPagedAsync(page, pageSize);
+        return await ProjectItems(q.OrderByDescending(x => x.CreatedAt).ThenByDescending(x => x.QuestionId), me).ToPagedAsync(page, pageSize);
     }
+
+    /// <summary>Dòng của danh sách câu hỏi; giữ thứ tự của <paramref name="q"/>.</summary>
+    internal static IQueryable<QuestionItemDto> ProjectItems(IQueryable<Question> q, int me) => q.Select(x => new QuestionItemDto(
+        x.QuestionId, x.SubjectId, x.Subject.Name, x.GradeLevel, x.Topic, x.Content, x.Status, x.IsAiGenerated, x.IsHidden,
+        x.QuestionOption.Count(o => o.IsCorrect) > 1,
+        x.CreatedByPersonId, x.CreatedByPerson.FullName, x.CreatedByPersonId == me,
+        x.AssignmentQuestion.Any(), x.CreatedAt, x.Difficulty));
 
     public async Task<QuestionDetailDto> GetAsync(int id)
     {
@@ -80,7 +86,7 @@ public sealed class QuestionService(MsmsDbContext db, CurrentUser user, IClock c
         var q = new Question
         {
             SubjectId = input.SubjectId, GradeLevel = input.GradeLevel, Topic = input.Topic, Content = input.Content,
-            Explanation = input.Explanation, Status = QuestionStatuses.Ready, IsAiGenerated = false, IsHidden = false,
+            Explanation = input.Explanation, Difficulty = input.Difficulty, Status = QuestionStatuses.Ready, IsAiGenerated = false, IsHidden = false,
             CreatedByPersonId = user.PersonId, CreatedAt = clock.Now,
         };
         foreach (var o in input.Options) q.QuestionOption.Add(new QuestionOption { OptionLabel = o.Label, Content = o.Content, IsCorrect = o.IsCorrect });
@@ -107,6 +113,7 @@ public sealed class QuestionService(MsmsDbContext db, CurrentUser user, IClock c
         q.Topic = input.Topic;
         q.Content = input.Content;
         q.Explanation = input.Explanation;
+        q.Difficulty = input.Difficulty;
         q.UpdatedAt = clock.Now;
         foreach (var o in input.Options)
         {
@@ -127,6 +134,23 @@ public sealed class QuestionService(MsmsDbContext db, CurrentUser user, IClock c
     {
         if (q.LessonId is not null && (q.SubjectId != subjectId || q.GradeLevel != gradeLevel))
             throw ApiException.BadRequest("Môn và khối của câu AI soạn từ sách không đổi được vì câu bám theo bài trong sách. Muốn môn hoặc khối khác thì soạn câu mới.");
+    }
+
+    /// <summary>
+    /// Phân loại độ khó cho câu cũ chưa có độ khó. Chỉ người tạo, và chỉ khi câu chưa có độ khó: câu đã nằm trong bài đã giao
+    /// vẫn phân loại được vì điểm của bài đã chốt theo từng câu, nhưng không đổi độ khó đã có để bài cũ không đổi phần.
+    /// </summary>
+    public async Task<QuestionDetailDto> SetDifficultyAsync(int id, SetDifficultyDto dto)
+    {
+        if (!Difficulties.IsValid(dto.Difficulty)) throw ApiException.BadRequest("Chọn độ khó: Nhận biết, Thông hiểu, Vận dụng hoặc Vận dụng cao.");
+        var q = await db.Question.AsNoTracking().FirstOrDefaultAsync(x => x.QuestionId == id) ?? throw ApiException.NotFound("Không tìm thấy câu hỏi.");
+        EnsureOwner(q, "phân loại");
+        if (q.Difficulty is not null)
+            throw ApiException.BadRequest("Câu hỏi đã có độ khó. Chỉ đổi được khi sửa câu chưa nằm trong bài tập nào.");
+        var rows = await db.Question.Where(x => x.QuestionId == id && x.Difficulty == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.Difficulty, dto.Difficulty).SetProperty(x => x.UpdatedAt, clock.Now));
+        if (rows == 0) throw ApiException.Conflict("Câu hỏi vừa được thay đổi. Tải lại danh sách rồi thử lại.");
+        return await ToDetailAsync(await LoadVisibleAsync(id));
     }
 
     /// <summary>Ẩn khỏi ngân hàng (4.6.4): không ảnh hưởng bài cũ, không đưa vào bài mới được nữa.</summary>
@@ -160,12 +184,47 @@ public sealed class QuestionService(MsmsDbContext db, CurrentUser user, IClock c
             ?? throw ApiException.NotFound("Không tìm thấy câu hỏi.");
         EnsureOwner(q, "xác nhận");
         if (q.Status != QuestionStatuses.Draft) throw ApiException.BadRequest("Câu hỏi đã ở trạng thái Sẵn dùng.");
+        if (q.Difficulty is null) throw ApiException.BadRequest("Câu nháp chưa có độ khó. Chọn độ khó rồi xác nhận lại.");
         var error = QuizRules.CheckOptions(q.QuestionOption.OrderBy(o => o.OptionLabel)
             .Select(o => new OptionInput(o.OptionLabel, o.Content, o.IsCorrect)).ToList());
         if (error is not null) throw ApiException.BadRequest($"{error} Sửa nháp rồi xác nhận lại.");
         var rows = await db.Question.Where(x => x.QuestionId == id && x.Status == QuestionStatuses.Draft)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.Status, QuestionStatuses.Ready).SetProperty(x => x.UpdatedAt, clock.Now));
         if (rows == 0) throw ApiException.Conflict("Câu hỏi vừa được thay đổi. Tải lại danh sách rồi thử lại.");
+    }
+
+    /// <summary>
+    /// Duyệt nhiều nháp một lượt (4.6.7). Mỗi câu đi qua đúng các kiểm tra của duyệt từng câu (của mình, còn Nháp, đủ 4 lựa chọn, có độ khó);
+    /// câu nào không đạt thì ghi lý do và bỏ qua, không chặn các câu còn lại. <paramref name="ids"/> trống là mọi nháp của người gọi.
+    /// </summary>
+    public async Task<ConfirmDraftsResultDto> ConfirmManyAsync(IReadOnlyCollection<int>? ids)
+    {
+        const int Max = 200;
+        var targets = ids is { Count: > 0 }
+            ? ids.Distinct().ToList()
+            : await db.Question.AsNoTracking().Where(q => q.CreatedByPersonId == user.PersonId && q.Status == QuestionStatuses.Draft)
+                .OrderBy(q => q.QuestionId).Select(q => q.QuestionId).ToListAsync();
+        if (targets.Count > Max) throw ApiException.BadRequest($"Mỗi lần duyệt tối đa {Max} câu. Chọn ít câu hơn.");
+
+        var confirmed = 0;
+        var failed = new List<ConfirmFailureDto>();
+        foreach (var id in targets)
+        {
+            try
+            {
+                await ConfirmAsync(id);
+                confirmed++;
+            }
+            catch (ApiException ex)
+            {
+                failed.Add(new ConfirmFailureDto(id, ex.Message));
+            }
+            finally
+            {
+                db.ChangeTracker.Clear();
+            }
+        }
+        return new ConfirmDraftsResultDto(confirmed, failed);
     }
 
     /// <summary>Xóa nháp (4.6.8). Chỉ xóa câu Nháp của mình; câu Sẵn dùng chỉ ẩn được.</summary>
@@ -219,9 +278,9 @@ public sealed class QuestionService(MsmsDbContext db, CurrentUser user, IClock c
         q.QuestionId, q.SubjectId, q.Subject.Name, q.GradeLevel, q.Topic, q.Content, q.Explanation, q.Status, q.IsAiGenerated, q.IsHidden,
         q.QuestionOption.Count(o => o.IsCorrect) > 1, q.CreatedByPersonId, q.CreatedByPerson.FullName, q.CreatedByPersonId == me, locked, q.CreatedAt,
         q.QuestionOption.OrderBy(o => o.OptionLabel).Select(o => new OptionDto(o.OptionId, o.OptionLabel, o.Content, o.IsCorrect)).ToList(),
-        q.LessonId, q.Lesson?.Book.Title, q.Lesson?.Title, q.Lesson?.StartPage, q.Lesson?.EndPage);
+        q.LessonId, q.Lesson?.Book.Title, q.Lesson?.Title, q.Lesson?.StartPage, q.Lesson?.EndPage, q.Difficulty);
 
-    private sealed record Valid(int SubjectId, byte GradeLevel, string Topic, string Content, string? Explanation, List<OptionInput> Options);
+    private sealed record Valid(int SubjectId, byte GradeLevel, string Topic, string Content, string? Explanation, List<OptionInput> Options, string Difficulty);
 
     private async Task<Valid> ValidateAsync(SaveQuestionDto dto)
     {
@@ -230,11 +289,12 @@ public sealed class QuestionService(MsmsDbContext db, CurrentUser user, IClock c
         await EnsureOwnSubjectAsync(dto.SubjectId);
         if (dto.GradeLevel is < QuizRules.MinGrade or > QuizRules.MaxGrade) throw ApiException.BadRequest("Khối phải từ 6 đến 9. Chọn lại khối.");
         var topic = Guard.Required(dto.Topic, "Chủ đề", 150);
+        if (!Difficulties.IsValid(dto.Difficulty)) throw ApiException.BadRequest("Chọn độ khó: Nhận biết, Thông hiểu, Vận dụng hoặc Vận dụng cao.");
         var content = Guard.Required(dto.Content, "Nội dung câu hỏi", QuizRules.ContentMaxLength);
         var explanation = Guard.Optional(dto.Explanation, "Giải thích", QuizRules.ContentMaxLength);
         var options = (dto.Options ?? []).Select(o => new OptionInput(o.Label, TextNormalizer.Normalize(o.Content), o.IsCorrect)).ToList();
         var error = QuizRules.CheckOptions(options);
         if (error is not null) throw ApiException.BadRequest(error);
-        return new Valid(dto.SubjectId, dto.GradeLevel, topic, content, explanation, options);
+        return new Valid(dto.SubjectId, dto.GradeLevel, topic, content, explanation, options, dto.Difficulty!);
     }
 }

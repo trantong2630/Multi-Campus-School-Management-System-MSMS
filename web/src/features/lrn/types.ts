@@ -1,6 +1,8 @@
 // Kiểu dữ liệu khớp DTO của Modules/Lrn/Dtos. Trạng thái là giá trị lưu trong DB; nhãn tiếng Việt do từng màn hình tự đặt.
 
 export type QuestionStatus = 'Draft' | 'Ready';
+/** Bốn mức độ nhận thức của câu hỏi; null là chưa phân loại (câu có từ trước khi có độ khó). */
+export type Difficulty = 'Recognize' | 'Understand' | 'Apply' | 'HighApply';
 /** Trạng thái bài với học sinh: NotSubmitted là quá hạn mà chưa nộp ("Không nộp"). */
 export type AttemptState = 'NotOpen' | 'Open' | 'InProgress' | 'Submitted' | 'NotSubmitted';
 export type AnalysisStatus = 'Pending' | 'Done' | 'Failed';
@@ -26,6 +28,7 @@ export interface QuestionItem {
   isMine: boolean;
   isLocked: boolean;
   createdAt: string;
+  difficulty: Difficulty | null;
 }
 
 export interface QuestionDetail extends QuestionItem {
@@ -50,6 +53,7 @@ export interface SaveQuestionInput {
   content: string;
   explanation?: string;
   options: OptionInput[];
+  difficulty: Difficulty;
 }
 
 export interface GenerateQuestionsInput {
@@ -58,8 +62,10 @@ export interface GenerateQuestionsInput {
   lessonId: number;
   /** Gợi ý thu hẹp trong bài, không bắt buộc. */
   note?: string;
-  count: number;
+  /** Số câu ở từng độ khó; tổng 1 đến 10. */
+  levels: { difficulty: Difficulty; count: number }[];
 }
+export interface ConfirmDraftsResult { confirmed: number; failed: { questionId: number; reason: string }[] }
 export interface GenerateQuestionsResult { drafts: QuestionDetail[]; discarded: number }
 
 export interface QuestionQuery {
@@ -68,6 +74,8 @@ export interface QuestionQuery {
   status?: QuestionStatus;
   mine?: boolean;
   includeHidden?: boolean;
+  /** Một độ khó, hoặc 'None' để chỉ xem câu chưa phân loại. */
+  difficulty?: Difficulty | 'None';
   search?: string;
   /** Tìm theo chủ đề của câu hỏi (không tìm trong nội dung câu). */
   topic?: string;
@@ -81,6 +89,9 @@ export interface ClassSubjectOption { classId: number; className: string; gradeL
 
 export interface AssignmentLine { questionId: number }
 
+/** Tổng điểm của một phần (độ khó) trong bài; các phần cộng lại đúng 10. */
+export interface SectionPoints { difficulty: Difficulty; points: number }
+
 export interface CreateAssignmentInput {
   subjectId: number;
   classId: number;
@@ -90,7 +101,21 @@ export interface CreateAssignmentInput {
   dueAt: string;
   durationMinutes?: number;
   items: AssignmentLine[];
+  sections: SectionPoints[];
 }
+
+/** Đề đang soạn để tạo bản in, chưa giao. */
+export interface ExportPaperInput {
+  subjectId: number;
+  title: string;
+  instruction?: string;
+  durationMinutes?: number;
+  items: AssignmentLine[];
+  sections: SectionPoints[];
+  format: PaperFormat;
+  withAnswers: boolean;
+}
+export type PaperFormat = 'pdf' | 'docx';
 
 export interface AssignmentItem {
   assignmentId: number;
@@ -118,13 +143,28 @@ export interface AssignmentQuestion {
   explanation: string | null;
   isMultiple: boolean;
   options: QuestionOption[];
+  difficulty: Difficulty | null;
+  points: number;
 }
+
+/** Một phần của bài theo độ khó (null chỉ có ở bài giao trước khi có độ khó). */
+export interface AssignmentSection { difficulty: Difficulty | null; questionCount: number; points: number }
 
 export interface AssignmentDetail {
   assignment: AssignmentItem;
   instruction: string | null;
   questions: AssignmentQuestion[];
+  sections: AssignmentSection[];
+  totalPoints: number;
 }
+
+// ---- Ma trận đề (bài × độ khó) ----
+
+/** Số câu Sẵn dùng trong ngân hàng của một chủ đề ở từng độ khó. */
+export interface MatrixRow { topic: string; recognize: number; understand: number; apply: number; highApply: number }
+export interface MatrixCell { topic: string; difficulty: Difficulty; count: number }
+export interface PickShortage { topic: string; difficulty: Difficulty; wanted: number; available: number }
+export interface PickResult { questions: QuestionItem[]; shortages: PickShortage[] }
 
 // ---- Làm bài ----
 
@@ -137,6 +177,7 @@ export interface QuizQuestion {
   /** Số đáp án đúng: học sinh biết phải chọn mấy đáp án. */
   correctCount: number;
   options: QuizOption[];
+  points: number;
 }
 
 export interface AnswerInput { assignmentQuestionId: number; optionIds: number[] }
@@ -223,6 +264,8 @@ export interface ResultQuestion {
   isMultiple: boolean;
   isCorrect: boolean | null;
   options: ResultOption[];
+  points: number;
+  difficulty: Difficulty | null;
 }
 
 export interface AnalysisMistake { questionNo: number; why: string }

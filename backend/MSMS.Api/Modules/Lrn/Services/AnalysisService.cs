@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using MSMS.Api.Common.Ai;
+using MSMS.Api.Common.Rules;
 using MSMS.Api.Common.Text;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
@@ -136,7 +137,7 @@ public sealed class AnalysisService(MsmsDbContext db, IAiClient ai, IClock clock
             var isCorrect = ans?.IsCorrect == true;
             if (!isCorrect) wrong.Add(line.OrderNo);
             var options = line.Question.QuestionOption.OrderBy(o => o.OptionLabel).ToList();
-            sb.AppendLine($"Câu {line.OrderNo} ({(isCorrect ? "đúng" : "sai")}): {line.Question.Content}");
+            sb.AppendLine($"Câu {line.OrderNo} ({(isCorrect ? "đúng" : "sai")}{(line.Question.Difficulty is null ? "" : ", mức " + Difficulties.Label(line.Question.Difficulty))}): {line.Question.Content}");
             foreach (var o in options) sb.AppendLine($"  {o.OptionLabel}. {o.Content}");
             sb.AppendLine($"  Đáp án đúng: {string.Join(", ", options.Where(o => o.IsCorrect).Select(o => o.OptionLabel))}.");
             var chosen = options.Where(o => selected.Contains(o.OptionId)).Select(o => o.OptionLabel).ToList();

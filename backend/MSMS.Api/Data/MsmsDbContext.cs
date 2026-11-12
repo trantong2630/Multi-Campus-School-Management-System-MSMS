@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using MSMS.Api.Data.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -214,6 +214,10 @@ public partial class MsmsDbContext : DbContext
             entity.HasKey(e => e.AssignmentQuestionId);
 
             entity.HasIndex(e => new { e.AssignmentId, e.QuestionId }, "UQ_AssignmentQuestion").IsUnique();
+
+            entity.Property(e => e.Points)
+                .HasPrecision(5, 2)
+                .HasDefaultValue(1m);
 
             entity.HasOne(d => d.Assignment).WithMany(p => p.AssignmentQuestion)
                 .HasForeignKey(d => d.AssignmentId)
@@ -708,6 +712,7 @@ public partial class MsmsDbContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasPrecision(0)
                 .HasDefaultValueSql("(CONVERT([datetime2](0),(sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time')))");
+            entity.Property(e => e.Difficulty).HasMaxLength(12);
             entity.Property(e => e.Explanation).HasMaxLength(2000);
             entity.Property(e => e.Status)
                 .HasMaxLength(10)
