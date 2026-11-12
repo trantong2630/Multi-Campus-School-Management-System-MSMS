@@ -270,6 +270,12 @@ namespace MSMS.Api.Migrations
                     b.Property<short>("OrderNo")
                         .HasColumnType("smallint");
 
+                    b.Property<decimal>("Points")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)")
+                        .HasDefaultValue(1m);
+
                     b.Property<int>("QuestionId")
                         .HasColumnType("int");
 
@@ -1253,6 +1259,10 @@ namespace MSMS.Api.Migrations
 
                     b.Property<int>("CreatedByPersonId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Difficulty")
+                        .HasMaxLength(12)
+                        .HasColumnType("nvarchar(12)");
 
                     b.Property<string>("Explanation")
                         .HasMaxLength(2000)

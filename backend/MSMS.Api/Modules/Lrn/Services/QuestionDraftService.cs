@@ -41,17 +41,24 @@ public sealed class QuestionDraftService(MsmsDbContext db, IAiClient ai, Questio
         await questions.EnsureOwnSubjectAsync(subject.SubjectId);
         if (dto.GradeLevel is < QuizRules.MinGrade or > QuizRules.MaxGrade) throw ApiException.BadRequest("Khối phải từ 6 đến 9. Chọn lại khối.");
         var note = Guard.Optional(dto.Note, "Ghi chú", 150);
-        if (dto.Count < 1 || dto.Count > MaxCount) throw ApiException.BadRequest($"Số câu mỗi lần sinh từ 1 đến {MaxCount}.");
+        var levels = ValidateLevels(dto.Levels);
+        var total = levels.Sum(l => l.Count);
         var lesson = await textbooks.GetLessonAsync(dto.LessonId, subject.SubjectId, dto.GradeLevel);
         var images = await textbooks.LoadLessonImagesAsync(lesson, ct);
 
         var prompt =
-            $"Soạn {dto.Count} câu hỏi trắc nghiệm từ {images.Count} trang sách đính kèm (từ trang {lesson.StartPage} đến trang {lesson.EndPage}).\n" +
+            $"Soạn {total} câu hỏi trắc nghiệm từ {images.Count} trang sách đính kèm (từ trang {lesson.StartPage} đến trang {lesson.EndPage}).\n" +
             $"- Môn: {subject.Name}\n- Khối: {dto.GradeLevel}\n- Bài: {lesson.Title} ({lesson.Chapter})\n" +
             (note is null ? "" : $"- Gợi ý thu hẹp trong bài: {note}\n") +
+            $"- Số câu theo mức độ nhận thức: {string.Join("; ", levels.Select(l => $"{l.Count} câu {Difficulties.Label(l.Difficulty)}"))}\n" +
+            "Mức độ: Nhận biết là nhớ lại, nhận ra kiến thức đã học; Thông hiểu là giải thích, so sánh, diễn đạt lại bằng lời của mình; " +
+            "Vận dụng là dùng kiến thức vào tình huống hoặc bài toán quen thuộc; Vận dụng cao là tình huống mới, nhiều bước hoặc phải kết hợp nhiều kiến thức. " +
+            "Ghi mức đúng với thực tế của từng câu, không nâng mức cho đủ số lượng: nếu bài không có nội dung đủ khó cho mức nào thì soạn ít câu ở mức đó hơn và vẫn ghi đúng mức của câu. " +
+            "Mỗi câu ghi đúng một trong các giá trị difficulty: \"Recognize\" (Nhận biết), \"Understand\" (Thông hiểu), \"Apply\" (Vận dụng), \"HighApply\" (Vận dụng cao), " +
+            "đúng số câu đã yêu cầu cho từng mức.\n" +
             "Mỗi câu có đúng 4 lựa chọn A, B, C, D và từ 1 đến 3 đáp án đúng; không ghi gợi ý số đáp án như \"(Chọn 1 hoặc 2 đáp án)\" vào nội dung câu hỏi vì giao diện tự báo. " +
             "Các lựa chọn sai phải hợp lý, không trùng nhau. Giải thích ngắn gọn vì sao đáp án đúng là đúng.\n" +
-            "Trả về JSON dạng: {\"questions\":[{\"content\":\"...\",\"explanation\":\"...\",\"options\":[" +
+            "Trả về JSON dạng: {\"questions\":[{\"content\":\"...\",\"difficulty\":\"Understand\",\"explanation\":\"...\",\"options\":[" +
             "{\"label\":\"A\",\"content\":\"...\",\"isCorrect\":false},{\"label\":\"B\",\"content\":\"...\",\"isCorrect\":true}," +
             "{\"label\":\"C\",\"content\":\"...\",\"isCorrect\":false},{\"label\":\"D\",\"content\":\"...\",\"isCorrect\":false}]}]}";
 
@@ -62,15 +69,17 @@ public sealed class QuestionDraftService(MsmsDbContext db, IAiClient ai, Questio
         var (valid, discarded) = Parse(raw, logger);
         if (valid.Count == 0)
             throw ApiException.BadRequest("AI không trả về câu hỏi hợp lệ. Thử lại, hoặc soạn câu hỏi thủ công.");
-        if (valid.Count > dto.Count) { discarded += valid.Count - dto.Count; valid = valid.Take(dto.Count).ToList(); }
+        if (valid.Count > total) { discarded += valid.Count - total; valid = valid.Take(total).ToList(); }
+        var difficulties = AssignDifficulties(valid, levels);
 
         var now = clock.Now;
         var created = new List<Question>();
-        foreach (var v in valid)
+        for (var i = 0; i < valid.Count; i++)
         {
+            var v = valid[i];
             var q = new Question
             {
-                SubjectId = subject.SubjectId, GradeLevel = dto.GradeLevel, Topic = Truncate(lesson.Title, 150), LessonId = lesson.LessonId, Content = v.Content, Explanation = v.Explanation,
+                SubjectId = subject.SubjectId, GradeLevel = dto.GradeLevel, Topic = Truncate(lesson.Title, 150), LessonId = lesson.LessonId, Content = v.Content, Explanation = v.Explanation, Difficulty = difficulties[i],
                 Status = QuestionStatuses.Draft, IsAiGenerated = true, IsHidden = false, CreatedByPersonId = user.PersonId, CreatedAt = now,
             };
             foreach (var o in v.Options) q.QuestionOption.Add(new QuestionOption { OptionLabel = o.Label, Content = o.Content, IsCorrect = o.IsCorrect });
@@ -89,7 +98,45 @@ public sealed class QuestionDraftService(MsmsDbContext db, IAiClient ai, Questio
 
     private static string Truncate(string s, int max) => s.Length <= max ? s : s[..max];
 
-    internal sealed record Candidate(string Content, string? Explanation, List<OptionInput> Options);
+    private static List<DifficultyCountDto> ValidateLevels(List<DifficultyCountDto>? levels)
+    {
+        var list = (levels ?? []).Where(l => l.Count != 0).ToList();
+        if (list.Any(l => !Difficulties.IsValid(l.Difficulty) || l.Count < 0))
+            throw ApiException.BadRequest("Số câu theo mức độ không hợp lệ. Nhập lại số câu cho từng mức.");
+        if (list.Select(l => l.Difficulty).Distinct().Count() != list.Count)
+            throw ApiException.BadRequest("Mỗi mức độ chỉ ghi số câu một lần.");
+        var total = list.Sum(l => l.Count);
+        if (total < 1 || total > MaxCount) throw ApiException.BadRequest($"Số câu mỗi lần sinh từ 1 đến {MaxCount}. Chỉnh số câu theo mức độ.");
+        return list.OrderBy(l => Difficulties.Rank(l.Difficulty)).ToList();
+    }
+
+    /// <summary>
+    /// Độ khó của từng câu AI trả về. Mức AI ghi hợp lệ thì giữ nguyên, kể cả khi lệch số câu đã yêu cầu cho mức đó: nhãn phải đúng với câu,
+    /// không ép câu cơ bản thành Vận dụng cao chỉ để đủ số lượng (bài ít nội dung khó thì có thể ra ít câu khó hơn đã yêu cầu). Chỉ câu AI ghi
+    /// thiếu hoặc sai mới lấy mức còn thiếu trong số đã yêu cầu, để mọi nháp đều có độ khó. Giáo viên đổi được lúc duyệt nháp.
+    /// </summary>
+    internal static List<string> AssignDifficulties(IReadOnlyList<Candidate> candidates, IReadOnlyList<DifficultyCountDto> levels)
+    {
+        var remaining = levels.ToDictionary(l => l.Difficulty, l => l.Count);
+        var result = new string?[candidates.Count];
+        for (var i = 0; i < candidates.Count; i++)
+        {
+            var d = candidates[i].Difficulty;
+            if (d is null || !Difficulties.IsValid(d)) continue;
+            result[i] = d;
+            if (remaining.TryGetValue(d, out var left) && left > 0) remaining[d] = left - 1;
+        }
+        for (var i = 0; i < result.Length; i++)
+        {
+            if (result[i] is not null) continue;
+            var pick = remaining.Where(r => r.Value > 0).Select(r => r.Key).OrderBy(Difficulties.Rank).FirstOrDefault() ?? levels[0].Difficulty;
+            result[i] = pick;
+            if (remaining.TryGetValue(pick, out var left) && left > 0) remaining[pick] = left - 1;
+        }
+        return result.Select(r => r!).ToList();
+    }
+
+    internal sealed record Candidate(string Content, string? Explanation, List<OptionInput> Options, string? Difficulty = null);
 
     /// <summary>Đọc kết quả AI, giữ lại câu hợp lệ theo BR-20 và đếm số câu bị loại.</summary>
     internal static (List<Candidate> Valid, int Discarded) Parse(string raw, ILogger logger)
@@ -136,7 +183,8 @@ public sealed class QuestionDraftService(MsmsDbContext db, IAiClient ai, Questio
             options.Add(new OptionInput(QuizRules.OptionLabels[index++], TextNormalizer.Normalize(Str(o, "content")), isCorrect));
         }
         if (QuizRules.CheckOptions(options) is not null) return null;
-        return new Candidate(content, explanation.Length == 0 ? null : explanation, options);
+        var difficulty = Str(item, "difficulty");
+        return new Candidate(content, explanation.Length == 0 ? null : explanation, options, Difficulties.IsValid(difficulty) ? difficulty : null);
     }
 
     private static string? Str(JsonElement e, string name) =>

@@ -10,18 +10,32 @@ public record OptionDto(int OptionId, string Label, string Content, bool IsCorre
 public record QuestionItemDto(
     int QuestionId, int SubjectId, string SubjectName, byte? GradeLevel, string? Topic, string Content,
     string Status, bool IsAiGenerated, bool IsHidden, bool IsMultiple,
-    int CreatedByPersonId, string CreatedByName, bool IsMine, bool IsLocked, DateTime CreatedAt);
+    int CreatedByPersonId, string CreatedByName, bool IsMine, bool IsLocked, DateTime CreatedAt, string? Difficulty);
 
 public record QuestionDetailDto(
     int QuestionId, int SubjectId, string SubjectName, byte? GradeLevel, string? Topic, string Content, string? Explanation,
     string Status, bool IsAiGenerated, bool IsHidden, bool IsMultiple,
     int CreatedByPersonId, string CreatedByName, bool IsMine, bool IsLocked, DateTime CreatedAt,
-    IReadOnlyList<OptionDto> Options, int? LessonId, string? SourceBook, string? SourceLesson, int? SourceStartPage, int? SourceEndPage);
+    IReadOnlyList<OptionDto> Options, int? LessonId, string? SourceBook, string? SourceLesson, int? SourceStartPage, int? SourceEndPage,
+    string? Difficulty);
 
-public record SaveQuestionDto(int SubjectId, byte GradeLevel, string? Topic, string? Content, string? Explanation, List<OptionInputDto>? Options);
+public record SaveQuestionDto(int SubjectId, byte GradeLevel, string? Topic, string? Content, string? Explanation, List<OptionInputDto>? Options, string? Difficulty = null);
 
-/// <summary>Yêu cầu AI sinh nháp: chọn một bài trong sách; <c>Note</c> là gợi ý thêm để thu hẹp trong bài (không bắt buộc).</summary>
-public record GenerateQuestionsDto(int SubjectId, byte GradeLevel, int LessonId, string? Note, int Count);
+/// <summary>Duyệt nhiều nháp một lượt: <c>Ids</c> trống là duyệt hết nháp của người gọi (duyệt nhanh).</summary>
+public record ConfirmDraftsDto(List<int>? Ids);
+public record ConfirmFailureDto(int QuestionId, string Reason);
+public record ConfirmDraftsResultDto(int Confirmed, IReadOnlyList<ConfirmFailureDto> Failed);
+
+/// <summary>Chỉ phân loại độ khó, dùng cho câu cũ chưa có độ khó (kể cả câu đã nằm trong bài đã giao).</summary>
+public record SetDifficultyDto(string? Difficulty);
+
+/// <summary>Số câu cần soạn ở một độ khó.</summary>
+public record DifficultyCountDto(string Difficulty, int Count);
+
+/// <summary>
+/// Yêu cầu AI sinh nháp: chọn một bài trong sách và số câu ở từng độ khó (tổng 1 đến 10); <c>Note</c> là gợi ý thêm để thu hẹp trong bài (không bắt buộc).
+/// </summary>
+public record GenerateQuestionsDto(int SubjectId, byte GradeLevel, int LessonId, string? Note, List<DifficultyCountDto>? Levels);
 
 /// <summary>Một bài trong mục lục sách để giáo viên chọn khi nhờ AI soạn câu hỏi. Trang theo số in trên sách.</summary>
 public record TextbookLessonDto(int LessonId, string BookTitle, string Chapter, string Title, int StartPage, int EndPage);
@@ -33,9 +47,12 @@ public record ClassSubjectOptionDto(int ClassId, string ClassName, byte GradeLev
 
 public record AssignmentLineDto(int QuestionId);
 
+/// <summary>Tổng điểm của một phần (độ khó) trong bài. Các phần cộng lại đúng 10 điểm.</summary>
+public record SectionPointsDto(string Difficulty, decimal Points);
+
 public record CreateAssignmentDto(
     int SubjectId, int ClassId, string? Title, string? Instruction, DateTime? OpenAt, DateTime? DueAt, short? DurationMinutes,
-    List<AssignmentLineDto>? Items);
+    List<AssignmentLineDto>? Items, List<SectionPointsDto>? Sections);
 
 public record AssignmentItemDto(
     int AssignmentId, string Title, int ClassId, string ClassName, int SubjectId, string SubjectName,
@@ -44,16 +61,39 @@ public record AssignmentItemDto(
 
 public record AssignmentQuestionDto(
     int AssignmentQuestionId, int QuestionId, int OrderNo, string Content, string? Explanation,
-    bool IsMultiple, IReadOnlyList<OptionDto> Options);
+    bool IsMultiple, IReadOnlyList<OptionDto> Options, string? Difficulty, decimal Points);
+
+/// <summary>Một phần của bài (theo độ khó; null là câu chưa phân loại, chỉ có ở bài giao trước khi có độ khó).</summary>
+public record AssignmentSectionDto(string? Difficulty, int QuestionCount, decimal Points);
 
 public record AssignmentDetailDto(
-    AssignmentItemDto Assignment, string? Instruction, IReadOnlyList<AssignmentQuestionDto> Questions);
+    AssignmentItemDto Assignment, string? Instruction, IReadOnlyList<AssignmentQuestionDto> Questions,
+    IReadOnlyList<AssignmentSectionDto> Sections, decimal TotalPoints);
+
+/// <summary>Đề đang soạn để tạo bản in, chưa giao: <c>Format</c> là pdf hoặc docx.</summary>
+public record ExportPaperDto(
+    int SubjectId, string? Title, string? Instruction, short? DurationMinutes, List<AssignmentLineDto>? Items, List<SectionPointsDto>? Sections,
+    string? Format, bool WithAnswers);
+
+// ---- Dựng đề theo ma trận (bài × độ khó) ----
+
+/// <summary>Số câu Sẵn dùng trong ngân hàng của một chủ đề (bài) ở từng độ khó. Câu chưa phân loại không tính.</summary>
+public record MatrixRowDto(string Topic, int Recognize, int Understand, int Apply, int HighApply);
+
+public record MatrixCellDto(string Topic, string Difficulty, int Count);
+
+public record PickQuestionsDto(int SubjectId, byte GradeLevel, List<MatrixCellDto>? Cells);
+
+public record PickShortageDto(string Topic, string Difficulty, int Wanted, int Available);
+
+/// <summary>Các câu bốc được (đúng môn, khối, Sẵn dùng, không ẩn) và các ô ngân hàng không đủ câu.</summary>
+public record PickQuestionsResultDto(IReadOnlyList<QuestionItemDto> Questions, IReadOnlyList<PickShortageDto> Shortages);
 
 // ---- LRN-02: Làm bài (học sinh) ----
 
 /// <summary>Đề đúng như học sinh thấy: không có đáp án đúng, không có giải thích.</summary>
 public record QuizOptionDto(int OptionId, string Label, string Content);
-public record QuizQuestionDto(int AssignmentQuestionId, int OrderNo, string Content, bool IsMultiple, int CorrectCount, IReadOnlyList<QuizOptionDto> Options);
+public record QuizQuestionDto(int AssignmentQuestionId, int OrderNo, string Content, bool IsMultiple, int CorrectCount, IReadOnlyList<QuizOptionDto> Options, decimal Points);
 
 public record AnswerInputDto(int AssignmentQuestionId, List<int>? OptionIds);
 public record SaveAnswersDto(List<AnswerInputDto>? Answers);
@@ -89,7 +129,7 @@ public record ResultOptionDto(int OptionId, string Label, string Content, bool I
 
 public record ResultQuestionDto(
     int AssignmentQuestionId, int OrderNo, string Content, string? Explanation, bool IsMultiple,
-    bool? IsCorrect, IReadOnlyList<ResultOptionDto> Options);
+    bool? IsCorrect, IReadOnlyList<ResultOptionDto> Options, decimal Points, string? Difficulty);
 
 public record AnalysisMistakeDto(int QuestionNo, string Why);
 

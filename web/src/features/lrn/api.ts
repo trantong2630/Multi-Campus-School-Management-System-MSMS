@@ -1,8 +1,8 @@
 import { apiClient } from '@/app/apiClient';
 import type {
   AnswerInput, AssignmentDetail, AssignmentItem, Attempt, Child, ChildResultItem, ClassResult, ClassSubjectOption,
-  CreateAssignmentInput, DepartmentOverview, GenerateQuestionsInput, GenerateQuestionsResult, MyAssignmentItem, PagedResult,
-  PracticeResult, QuestionDetail, QuestionItem, QuestionQuery, SaveQuestionInput, TextbookLesson,
+  ConfirmDraftsResult, CreateAssignmentInput, DepartmentOverview, Difficulty, GenerateQuestionsInput, GenerateQuestionsResult, MatrixCell, MatrixRow, MyAssignmentItem, PagedResult,
+  PickResult, PracticeResult, QuestionDetail, QuestionItem, QuestionQuery, SaveQuestionInput, TextbookLesson,
 } from './types';
 
 const get = <T>(url: string, params?: object) => apiClient.get<T>(url, { params }).then((r) => r.data);
@@ -20,7 +20,14 @@ export const lrnApi = {
     hide: (id: number) => put(`/lrn/questions/${id}/hide`),
     unhide: (id: number) => put(`/lrn/questions/${id}/unhide`),
     confirm: (id: number) => put(`/lrn/questions/${id}/confirm`),
+    /** Duyệt nhiều nháp một lượt; bỏ trống `ids` là duyệt hết nháp của mình (duyệt nhanh). */
+    confirmMany: (ids?: number[]) => put<ConfirmDraftsResult>('/lrn/questions/confirm-drafts', { ids }),
     removeDraft: (id: number) => del(`/lrn/questions/${id}`),
+    /** Phân loại độ khó cho câu cũ chưa có độ khó. */
+    setDifficulty: (id: number, difficulty: Difficulty) => put<QuestionDetail>(`/lrn/questions/${id}/difficulty`, { difficulty }),
+    /** Số câu Sẵn dùng theo chủ đề × độ khó, để điền ma trận đề. */
+    matrix: (subjectId: number, gradeLevel: number) => get<MatrixRow[]>('/lrn/questions/matrix', { subjectId, gradeLevel }),
+    pick: (subjectId: number, gradeLevel: number, cells: MatrixCell[]) => post<PickResult>('/lrn/questions/pick', { subjectId, gradeLevel, cells }),
     /** AI gọi lâu hơn các API khác nên đặt thời gian chờ riêng. */
     generate: (b: GenerateQuestionsInput) => apiClient.post<GenerateQuestionsResult>('/lrn/questions/ai-drafts', b, { timeout: 150_000 }).then((r) => r.data),
   },

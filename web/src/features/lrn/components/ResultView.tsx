@@ -3,10 +3,12 @@ import { useState } from 'react';
 import { formatDateTime } from '@/shared/lib/format';
 import { resultLine } from '../aiLines';
 import { lrnApi } from '../api';
+import { fmtScore } from '../time';
 import { pagesText } from '../labels';
 import type { Analysis, PracticeResult, ResultQuestion, StudyRef } from '../types';
 import { AiAvatar, AiBubble, AiDots, MsmsAi, TypedText } from './MsmsAi';
 import { PageViewer } from './PageViewer';
+import { DifficultyTag } from './DifficultyTag';
 import { ScoreRing } from './parts';
 
 export type Viewer = 'student' | 'parent' | 'teacher';
@@ -23,7 +25,7 @@ function QuestionCard({ q, viewer }: { q: ResultQuestion; viewer: Viewer }) {
           {right ? <Check size={16} strokeWidth={3} /> : <X size={16} strokeWidth={3} />}
         </span>
         <div className="rv-q__text">
-          <span className="rv-q__label">Câu {q.orderNo}{q.isMultiple && <span className="rv-q__multi">Chọn nhiều đáp án: {q.options.filter((o) => o.isCorrect).length} đáp án đúng</span>}</span>
+          <span className="rv-q__label">Câu {q.orderNo}<DifficultyTag value={q.difficulty} short />{q.points > 0 && <span className="rv-q__pts">{right ? `+${fmtScore(q.points)}` : `0/${fmtScore(q.points)}`} điểm</span>}{q.isMultiple && <span className="rv-q__multi">Chọn nhiều đáp án: {q.options.filter((o) => o.isCorrect).length} đáp án đúng</span>}</span>
           <p>{q.content}</p>
         </div>
       </header>

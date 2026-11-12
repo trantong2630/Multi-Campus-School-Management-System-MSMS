@@ -721,11 +721,11 @@ Giáo viên không sửa được sau ngày của tiết; School Admin nhập b�
 
 **4.6.1 — Xem và lọc ngân hàng câu hỏi / View and Filter Question Bank**  
 `BE + Web` · 2 MD · dep: 4.2.9  
-Ngân hàng dùng chung toàn trường: mọi Teacher xem và dùng câu Sẵn dùng của mọi môn (BR-20). Thu hẹp theo môn, khối (6–9), chủ đề, người tạo, trạng thái Nháp hay Sẵn dùng, hoặc tìm theo nội dung câu; có thể chỉ xem câu của mình hoặc các câu mình đã ẩn. Câu Nháp và câu đã ẩn chỉ người tạo thấy.
+Ngân hàng dùng chung toàn trường: mọi Teacher xem và dùng câu Sẵn dùng của mọi môn (BR-20). Thu hẹp theo môn, khối (6–9), độ khó (kể cả Chưa phân loại), chủ đề, người tạo, trạng thái Nháp hay Sẵn dùng, hoặc tìm theo nội dung câu; có thể chỉ xem câu của mình hoặc các câu mình đã ẩn. Câu Nháp và câu đã ẩn chỉ người tạo thấy.
 
 **4.6.2 — Soạn câu hỏi trắc nghiệm / Create Question**  
-`BE + Web` · 2 MD · dep: 4.6.1  
-Câu hỏi thuộc một môn trong tổ chuyên môn của giáo viên (chỉ soạn được môn của tổ mình), có khối 6–9 và chủ đề (bắt buộc), 4 lựa chọn A–D, từ 1 đến 3 đáp án đúng, giải thích tùy chọn; câu soạn tay là Sẵn dùng ngay. Giao diện báo rõ câu có một hay nhiều đáp án đúng (BR-20).
+`BE + Web` · 2.5 MD · dep: 4.6.1  
+Câu hỏi thuộc một môn trong tổ chuyên môn của giáo viên (chỉ soạn được môn của tổ mình), có khối 6–9, chủ đề và độ khó (bắt buộc; bốn mức Nhận biết, Thông hiểu, Vận dụng, Vận dụng cao, chọn bằng bốn nút), 4 lựa chọn A–D, từ 1 đến 3 đáp án đúng, giải thích tùy chọn; câu soạn tay là Sẵn dùng ngay. Giao diện báo rõ câu có một hay nhiều đáp án đúng (BR-20).
 
 **4.6.3 — Cập nhật câu hỏi của mình / Update Own Question**  
 `BE + Web` · 1 MD · dep: 4.6.2  
@@ -736,16 +736,16 @@ Chỉ người tạo sửa được. Câu đã nằm trong một bài tập thì
 Người tạo ẩn câu Sẵn dùng khỏi ngân hàng chung; ẩn không ảnh hưởng bài cũ, giáo viên khác không đưa câu đã ẩn vào bài mới được. Người tạo xem lại các câu đã ẩn của mình ở tab Đã ẩn và bỏ ẩn để đưa câu trở lại ngân hàng chung. Muốn phiên bản khác thì soạn câu mới (BR-20).
 
 **4.6.5 — Yêu cầu MSMS AI sinh nháp câu hỏi / Request AI Question Drafts**  
-`BE + Web` · 2.5 MD · dep: 4.6.2  
-Giáo viên chọn môn thuộc tổ chuyên môn của mình, khối, **bài trong sách giáo khoa** và số câu (1 đến 10 câu mỗi lần), có thể ghi thêm một gợi ý ngắn để thu hẹp trong bài. Bộ sách cố định là Kết nối tri thức với cuộc sống (bộ dùng thống nhất toàn quốc) nên không phải lựa chọn; danh sách bài lấy từ mục lục sách đã nạp theo môn và khối. Backend gửi AI ảnh các trang của bài (tối đa 10 trang mỗi lần; bài dài hơn thì soạn thủ công) cùng yêu cầu, để AI chỉ soạn từ nội dung trang sách. AI trả về các câu ở trạng thái Nháp gắn cờ AI, câu lưu bài nguồn (chủ đề của câu là tên bài); Backend loại câu không đủ 4 lựa chọn hoặc không có đáp án đúng. Sách được nạp trước bằng công cụ `tools/textbook-import` từ file PDF: tải ảnh từng trang lên kho ảnh, dò độ lệch giữa số trang PDF và số in của từng cuốn, đọc trang mục lục để lập bảng bài với trang bắt đầu và kết thúc (theo số in) rồi ghi thành file JSON trong mã nguồn; khi API khởi động, mục lục được nạp vào CSDL (bảng TextbookBook, TextbookLesson). Trang hiển thị theo số in trên sách ("trang 27" khi bài một trang, "trang 9–12" khi nhiều trang). AI hỏng thì giáo viên soạn thủ công, không ảnh hưởng luồng nào khác (mục 3.1, BR-20).
+`BE + Web` · 3 MD · dep: 4.6.2  
+Giáo viên chọn môn thuộc tổ chuyên môn của mình, khối, **bài trong sách giáo khoa** và số câu ở từng độ khó (tổng 1 đến 10 câu mỗi lần, mỗi mức một ô cộng trừ), có thể ghi thêm một gợi ý ngắn để thu hẹp trong bài. Bộ sách cố định là Kết nối tri thức với cuộc sống (bộ dùng thống nhất toàn quốc) nên không phải lựa chọn; danh sách bài lấy từ mục lục sách đã nạp theo môn và khối. Backend gửi AI ảnh các trang của bài (tối đa 10 trang mỗi lần; bài dài hơn thì soạn thủ công) cùng yêu cầu, để AI chỉ soạn từ nội dung trang sách. AI trả về các câu ở trạng thái Nháp gắn cờ AI kèm độ khó từng câu (Backend giữ mức AI ghi nếu hợp lệ, kể cả khi lệch số câu đã yêu cầu cho mức đó, vì nhãn phải đúng với câu, không ép câu cơ bản thành Vận dụng cao cho đủ số lượng; chỉ câu AI ghi thiếu hoặc sai mới lấy mức còn thiếu trong số đã yêu cầu), câu lưu bài nguồn (chủ đề của câu là tên bài); Backend loại câu không đủ 4 lựa chọn hoặc không có đáp án đúng. Sách được nạp trước bằng công cụ `tools/textbook-import` từ file PDF: tải ảnh từng trang lên kho ảnh, dò độ lệch giữa số trang PDF và số in của từng cuốn, đọc trang mục lục để lập bảng bài với trang bắt đầu và kết thúc (theo số in) rồi ghi thành file JSON trong mã nguồn; khi API khởi động, mục lục được nạp vào CSDL (bảng TextbookBook, TextbookLesson). Trang hiển thị theo số in trên sách ("trang 27" khi bài một trang, "trang 9–12" khi nhiều trang). AI hỏng thì giáo viên soạn thủ công, không ảnh hưởng luồng nào khác (mục 3.1, BR-20).
 
 **4.6.6 — Xem và sửa nháp AI / Review and Edit AI Drafts**  
 `BE + Web` · 1.5 MD · dep: 4.6.5  
-Giáo viên sửa nội dung, lựa chọn, đáp án, giải thích và chủ đề của câu nháp trước khi xác nhận. Câu nháp do AI soạn từ sách hiện dòng nguồn (sách, bài, trang) và nút xem ảnh các trang của bài để đối chiếu; môn và khối của câu này theo bài trong sách nên không đổi được (Backend từ chối, giao diện khóa hai ô), muốn môn hoặc khối khác thì soạn câu mới.
+Giáo viên sửa nội dung, lựa chọn, đáp án, giải thích, chủ đề và độ khó của câu nháp trước khi xác nhận. Câu nháp do AI soạn từ sách hiện dòng nguồn (sách, bài, trang) và nút xem ảnh các trang của bài để đối chiếu; môn và khối của câu này theo bài trong sách nên không đổi được (Backend từ chối, giao diện khóa hai ô), muốn môn hoặc khối khác thì soạn câu mới.
 
 **4.6.7 — Xác nhận nháp AI thành câu Sẵn dùng / Confirm AI Draft**  
 `BE + Web` · 1 MD · dep: 4.6.6  
-Câu do AI sinh là nháp cho tới khi giáo viên xác nhận; chỉ câu Sẵn dùng mới đưa vào bài tập được (BR-20).
+Câu do AI sinh là nháp cho tới khi giáo viên xác nhận, từng câu hoặc nhiều câu một lượt (tick chọn, kể cả chọn tất cả, rồi duyệt; câu nào không đạt thì báo lý do và bỏ qua, không chặn các câu còn lại, mỗi lần tối đa 200 câu); câu nháp chưa có độ khó thì không xác nhận được; chỉ câu Sẵn dùng mới đưa vào bài tập được (BR-20).
 
 **4.6.8 — Xóa nháp AI / Delete AI Draft**  
 `BE + Web` · 0.5 MD · dep: 4.6.6  
@@ -754,8 +754,8 @@ Bỏ các câu nháp không dùng.
 ### LRN-02 Assignment & Attempt (Giao bài & Làm bài)
 
 **4.6.9 — Giao bài tập / Assign Practice**  
-`BE + Web` · 3 MD · dep: 4.6.2, 4.4.35  
-Teacher ĐANG PHỤ TRÁCH CHUYÊN MÔN ở (lớp, môn) đặt tên bài (bắt buộc, tối đa 200 ký tự) và lời dặn tùy chọn (tối đa 500 ký tự), chọn từ 1 đến 50 câu Sẵn dùng CÙNG MỘT MÔN từ ngân hàng, đặt thứ tự các câu (các câu cùng trọng số), thời điểm mở (mặc định ngay), hạn nộp lớn hơn hiện tại và sau thời điểm mở, và thời lượng làm bài tùy chọn (1 đến 600 phút). Lớp phải có học sinh đang học. Bài giao ngay, không có bước nháp; lưu danh sách học sinh có ghi danh hiệu lực ở lớp lúc đó làm DANH SÁCH ĐƯỢC GIAO, không đổi khi học sinh chuyển lớp về sau; tạo thông báo cho học sinh của lớp. Bài đã giao không sửa, không xóa, không gia hạn (BR-21, BR-26, mục 7.8).
+`BE + Web` · 4 MD · dep: 4.6.2, 4.4.35  
+Teacher ĐANG PHỤ TRÁCH CHUYÊN MÔN ở (lớp, môn) đặt tên bài (bắt buộc, tối đa 200 ký tự) và lời dặn tùy chọn (tối đa 500 ký tự), chọn từ 1 đến 50 câu Sẵn dùng CÙNG MỘT MÔN và đã có độ khó từ ngân hàng (chọn tay, lọc được theo độ khó, hoặc dựng theo ma trận đề, 4.6.26), đặt thứ tự các câu và **thang điểm theo phần**: mỗi độ khó trong bài là một phần, giáo viên đặt tổng điểm cho từng phần (có sẵn gợi ý theo độ khó hoặc chia đều theo số câu), các phần cộng lại đúng 10 điểm, Backend chia đều tổng điểm của phần cho các câu trong phần theo đơn vị 0,01 (phần dư chia mỗi câu thêm 0,01 từ câu đầu) và lưu điểm từng câu lúc giao; màn Soạn đề dựng đề một lần qua bốn bước (thông tin, chọn câu, điểm và xem đề, hoàn tất), lớp, giờ mở và hạn nộp chỉ hỏi ở bước cuối khi giao, chọn được nhiều lớp cùng môn một lần (mỗi lớp là một bài giao riêng); thời điểm mở (mặc định ngay), hạn nộp lớn hơn hiện tại và sau thời điểm mở, và thời lượng làm bài tùy chọn (1 đến 600 phút). Lớp phải có học sinh đang học. Bài giao ngay, không có bước nháp; lưu danh sách học sinh có ghi danh hiệu lực ở lớp lúc đó làm DANH SÁCH ĐƯỢC GIAO, không đổi khi học sinh chuyển lớp về sau; tạo thông báo cho học sinh của lớp. Bài đã giao không sửa, không xóa, không gia hạn (BR-21, BR-26, mục 7.8).
 
 **4.6.10 — Xem danh sách bài đã giao theo lớp / View Assignments by Class**  
 `BE + Web` · 1.5 MD · dep: 4.6.9  
@@ -767,7 +767,7 @@ Học sinh xem bài được giao kèm hạn nộp và thời lượng ở mục
 
 **4.6.12 — Bắt đầu và làm bài / Start and Take Practice**  
 `BE + Web + Mobile` · 2.5 MD · dep: 4.6.11  
-Học sinh trong danh sách được giao (4.6.9) mở bài từ thời điểm mở tới hạn nộp. Bài có thời lượng: học sinh bấm Bắt đầu, đồng hồ tính từ lúc đó theo giờ Backend và vẫn chạy khi thoát ra rồi vào lại; hạn thực tế là mốc sớm hơn giữa hạn nộp và (giờ bắt đầu + thời lượng). Câu có nhiều đáp án đúng cho chọn nhiều lựa chọn (BR-21).
+Học sinh trong danh sách được giao (4.6.9) mở bài từ thời điểm mở tới hạn nộp. Bài có thời lượng: học sinh bấm Bắt đầu, đồng hồ tính từ lúc đó theo giờ Backend và vẫn chạy khi thoát ra rồi vào lại; hạn thực tế là mốc sớm hơn giữa hạn nộp và (giờ bắt đầu + thời lượng). Câu có nhiều đáp án đúng cho chọn nhiều lựa chọn (BR-21). Mỗi câu hiện điểm của câu.
 
 **4.6.13 — Tự lưu nháp bài làm / Autosave Attempt**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.6.12  
@@ -781,11 +781,11 @@ Tối đa MỘT lần nộp. Backend từ chối nộp sau hạn thực tế (c�
 
 **4.6.15 — Chấm tự động khi nộp / Auto-grade on Submission**  
 `BE` · 2 MD · dep: 4.6.14  
-Backend chấm ngay khi nộp. Một câu chỉ được điểm khi học sinh chọn ĐÚNG VÀ ĐỦ các đáp án đúng, không chọn thừa. Các câu cùng trọng số: điểm = số câu đúng / số câu của bài × 10, làm tròn 2 chữ số thập phân. Chưa nộp KHÔNG phải 0 điểm — hiển thị Không nộp, chỉ áp dụng cho học sinh trong danh sách được giao; mẫu số tỉ lệ nộp là số học sinh của danh sách đó (BR-21).
+Backend chấm ngay khi nộp. Một câu chỉ được điểm khi học sinh chọn ĐÚNG VÀ ĐỦ các đáp án đúng, không chọn thừa. Điểm = tổng điểm các câu đúng / tổng điểm tối đa của bài × 10 (tổng tối đa luôn là 10), làm tròn 2 chữ số thập phân; bài giao trước khi có thang điểm theo phần được chia đều 10 điểm cho các câu nên cách chấm cũ không đổi. Chưa nộp KHÔNG phải 0 điểm — hiển thị Không nộp, chỉ áp dụng cho học sinh trong danh sách được giao; mẫu số tỉ lệ nộp là số học sinh của danh sách đó (BR-21).
 
 **4.6.16 — Xem kết quả bài làm (học sinh và phụ huynh) / View Practice Result**  
 `BE + Web + Mobile` · 2 MD · dep: 4.6.15  
-Ngay khi nộp, học sinh thấy điểm, lựa chọn của mình, đáp án đúng và giải thích của từng câu, kèm khung phân tích AI (4.6.20). Phụ huynh xem cùng nội dung của từng con được liên kết. Không có bước công bố. Học sinh chưa nộp hiện Không nộp chứ không phải 0, không xem được đáp án (BR-22).
+Ngay khi nộp, học sinh thấy điểm, lựa chọn của mình, đáp án đúng, giải thích, độ khó và điểm của từng câu, kèm khung phân tích AI (4.6.20). Phụ huynh xem cùng nội dung của từng con được liên kết. Không có bước công bố. Học sinh chưa nộp hiện Không nộp chứ không phải 0, không xem được đáp án (BR-22).
 
 **4.6.17 — Xem kết quả bài theo lớp / View Class Results**  
 `BE + Web` · 1.5 MD · dep: 4.6.15  
@@ -795,7 +795,7 @@ Teacher đang phụ trách chuyên môn xem điểm và kết quả từng học
 
 **4.6.18 — Dựng dữ liệu gửi AI không kèm danh tính / Build Anonymous Analysis Input**  
 `BE` · 1.5 MD · dep: 4.6.15  
-Backend dựng dữ liệu của một bài nộp: nội dung câu hỏi, các lựa chọn, đáp án đúng, lựa chọn của học sinh ở từng câu và điểm. KHÔNG BAO GIỜ gửi tên, mã học sinh, ngày sinh, tên lớp, tên trường (mục 3.1, BR-23).
+Backend dựng dữ liệu của một bài nộp: nội dung câu hỏi, độ khó, các lựa chọn, đáp án đúng, lựa chọn của học sinh ở từng câu và điểm. KHÔNG BAO GIỜ gửi tên, mã học sinh, ngày sinh, tên lớp, tên trường (mục 3.1, BR-23).
 
 **4.6.19 — Gọi AI phân tích khi nộp bài / Analyze on Submission**  
 `BE` · 2.5 MD · dep: 4.6.18  
@@ -822,6 +822,24 @@ Tổ trưởng xem tiến độ bài tập của MỌI LỚP thuộc các môn t
 **4.6.24 — Xem chi tiết một bài ở chế độ chỉ đọc / View Assignment Detail Read-only**  
 `BE + Web` · 2 MD · dep: 4.6.23, 4.6.17  
 Mở chi tiết một bài để xem kết quả tổng hợp, không có đường nào ghi. Backend chặn mọi API ghi khi người gọi chỉ có trách nhiệm tổ trưởng: không giao bài cho lớp mình không phụ trách.
+
+### LRN-06 Exam Building & Print (Dựng đề và bản in đề)
+
+**4.6.25 — Phân loại độ khó cho câu cũ / Classify Existing Questions**
+`BE + Web` · 1 MD · dep: 4.6.2
+Câu có từ trước khi có độ khó ở trạng thái Chưa phân loại và chưa đưa vào bài mới được. Người tạo chọn độ khó ngay ở dòng câu trong Kho câu hỏi, kể cả câu đã nằm trong bài đã giao (điểm các bài đó đã chốt theo từng câu nên không đổi); câu đã có độ khó chỉ đổi được khi sửa câu chưa nằm trong bài tập nào. Người khác không phân loại được câu của mình.
+
+**4.6.26 — Dựng đề theo ma trận bài × độ khó / Build Practice from Matrix**
+`BE + Web` · 3 MD · dep: 4.6.9, 4.6.25
+Ở bước chọn câu của màn Giao bài, giáo viên chuyển sang Theo ma trận đề: bảng có hàng là chủ đề (bài) của môn và khối đang chọn, cột là bốn độ khó, mỗi ô là số câu cần lấy kèm số câu Sẵn dùng đang có trong ngân hàng (câu chưa phân loại, câu Nháp và câu đã ẩn không tính); hàng cuối là cơ cấu đề theo từng độ khó (số câu và phần trăm). Bấm Chọn câu ngẫu nhiên thì Backend bốc ngẫu nhiên đúng số câu ở từng ô, không trùng câu, đưa vào phiếu Bài sẽ giao để giáo viên đổi câu; ô ngân hàng không đủ câu thì lấy hết số có và báo thiếu bao nhiêu. Chỉ đọc ngân hàng, không lưu ma trận; không tách nhỏ hơn chủ đề trong một bài.
+
+**4.6.27 — Tạo bản in đề / Create Printable Paper**
+`BE + Web` · 5 MD · dep: 4.6.10
+Từ đề đang soạn ở bước Hoàn tất của màn Soạn đề (chưa giao, không cần lớp hay hạn nộp; môn phải là môn giáo viên đang phụ trách ở ít nhất một lớp, đề theo cùng quy tắc với giao bài) hoặc từ một bài đã giao (giáo viên đang phụ trách chuyên môn hoặc tổ trưởng của môn), tạo file PDF khổ A4 hoặc Word (.docx) và tải về để tự in hoặc chỉnh sửa (hệ thống không điều khiển máy in): tên bài, môn, lớp, số câu, tổng điểm, thời gian làm, lời dặn, chỗ ghi họ tên, các câu theo thứ tự kèm điểm từng câu và bốn lựa chọn. Hộp tick Kèm đáp án thêm trang riêng cuối file gồm đáp án đúng và giải thích của từng câu để tách ra khi phát đề. Bản PDF lấy phông tiếng Việt từ hệ điều hành, thiếu phông thì báo lỗi thay vì in chữ sai; bản Word chỉ ghi tên phông nên hiển thị theo máy giáo viên.
+
+**4.6.28 — Kiểm thử độ khó, thang điểm, ma trận và bản in đề / Difficulty, Scoring and Print Tests**
+`QA` · 2 MD · dep: 4.6.26, 4.6.27, 4.6.15
+Tổng điểm các phần đúng 10 và chia câu không dư thiếu; phần có câu mà không có điểm, điểm cho phần không có câu, quá 2 chữ số thập phân, tổng khác 10 đều bị từ chối; câu chưa phân loại không vào được bài; chấm theo trọng số và câu nhiều đáp án vẫn đúng và đủ; bài cũ giữ cách chấm; AI ghi sai độ khó thì lấy mức còn thiếu; ma trận bốc đủ số câu, không trùng, báo thiếu đúng, chỉ lấy câu Sẵn dùng cùng môn và khối; bản in đề tạo được file PDF và Word có và không có đáp án, file Word hợp lệ theo lược đồ Open XML.
 
 ---
 
@@ -1061,4 +1079,4 @@ Mỗi mục chỉ xuất đúng phạm vi của người gọi; danh sách tài 
 
 ---
 
-**Tổng:** 234 task · 324 MD
+**Tổng:** 238 task · 337 MD

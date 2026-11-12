@@ -76,12 +76,13 @@ public sealed class AttemptGrader(MsmsDbContext db, IClock clock, AnalysisJob an
 
     /// <summary>
     /// Ghi kết quả từng câu cho mọi câu của bài (câu bỏ trống tính là sai) rồi tính điểm:
-    /// số câu đúng / số câu của bài × 10, làm tròn 2 chữ số thập phân (BR-21).
+    /// tổng điểm các câu đúng / tổng điểm tối đa của bài × 10, làm tròn 2 chữ số thập phân (BR-21).
     /// </summary>
     private async Task GradeAsync(long submissionId, List<AssignmentQuestion> lines)
     {
         var stored = await db.SubmissionAnswer.Include(x => x.SubmissionAnswerOption).Where(x => x.SubmissionId == submissionId).ToListAsync();
         short correctCount = 0;
+        var earned = 0m;
         foreach (var line in lines)
         {
             var correctIds = line.Question.QuestionOption.Where(o => o.IsCorrect).Select(o => o.OptionId).ToList();
@@ -94,9 +95,9 @@ public sealed class AttemptGrader(MsmsDbContext db, IClock clock, AnalysisJob an
             var selected = answer.SubmissionAnswerOption.Select(o => o.OptionId).ToList();
             var isCorrect = QuizRules.IsAnswerCorrect(selected, correctIds);
             answer.IsCorrect = isCorrect;
-            if (isCorrect) correctCount++;
+            if (isCorrect) { correctCount++; earned += line.Points; }
         }
-        var score = QuizRules.ScoreOutOfTen(correctCount, lines.Count);
+        var score = QuizRules.ScoreOutOfTen(earned, lines.Sum(l => l.Points));
         await db.SaveChangesAsync();
         await db.Submission.Where(s => s.SubmissionId == submissionId)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.Score, score).SetProperty(x => x.CorrectCount, correctCount));

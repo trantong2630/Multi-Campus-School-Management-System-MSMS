@@ -164,7 +164,8 @@ public sealed class ResultService(
             return new ResultQuestionDto(l.AssignmentQuestionId, l.OrderNo, l.Question.Content, l.Question.Explanation,
                 l.Question.QuestionOption.Count(o => o.IsCorrect) > 1, ans?.IsCorrect ?? false,
                 l.Question.QuestionOption.OrderBy(o => o.OptionLabel)
-                    .Select(o => new ResultOptionDto(o.OptionId, o.OptionLabel, o.Content, o.IsCorrect, selected.Contains(o.OptionId))).ToList());
+                    .Select(o => new ResultOptionDto(o.OptionId, o.OptionLabel, o.Content, o.IsCorrect, selected.Contains(o.OptionId))).ToList(),
+                l.Points, l.Question.Difficulty);
         }).ToList();
 
         var analysis = await ResolveAnalysisAsync(submission);

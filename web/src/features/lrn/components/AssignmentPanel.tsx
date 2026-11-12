@@ -1,12 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { Drawer, Skeleton } from 'antd';
-import { Clock3, ListChecks, Search, Sparkles, UserRound } from 'lucide-react';
+import { Clock3, FileDown, ListChecks, Search, Sparkles, UserRound } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { getErrorMessage } from '@/app/apiClient';
 import { PersonAvatar } from '@/shared/components/PersonAvatar';
 import { formatDateTime } from '@/shared/lib/format';
+import { downloadFile } from '@/shared/lib/download';
 import { lrnApi } from '../api';
+import { showDownloadError } from '../downloadError';
 import { durationText, fmtScore } from '../time';
+import { DifficultyTag } from './DifficultyTag';
 import { AiBubble } from './MsmsAi';
 import { bandColor, subjectVars } from './tone';
 import { ResultView } from './ResultView';
@@ -40,6 +43,8 @@ export function AssignmentPanel({ id }: { id: number }) {
   const [tab, setTab] = useState<Tab>('students');
   const [search, setSearch] = useState('');
   const [student, setStudent] = useState<number | null>(null);
+  const [withAnswers, setWithAnswers] = useState(true);
+  const [printing, setPrinting] = useState(false);
 
   const detail = useQuery({ queryKey: ['lrn', 'assignment', id], queryFn: () => lrnApi.assignments.get(id), retry: false });
   const results = useQuery({ queryKey: ['lrn', 'assignment-results', id], queryFn: () => lrnApi.assignments.results(id), retry: false });
@@ -49,6 +54,14 @@ export function AssignmentPanel({ id }: { id: number }) {
     const list = results.data?.rows ?? [];
     return key ? list.filter((s) => fold(`${s.studentName} ${s.studentCode}`).includes(key)) : list;
   }, [results.data, search]);
+
+  /** Tạo file PDF của đề rồi tải về để giáo viên tự in; hệ thống không điều khiển máy in. */
+  const downloadPaper = async (format: 'pdf' | 'docx') => {
+    setPrinting(true);
+    try {
+      await downloadFile(`/lrn/assignments/${id}/paper`, { answers: withAnswers, format });
+    } catch (e) { await showDownloadError(e); } finally { setPrinting(false); }
+  };
 
   if (detail.isLoading || results.isLoading) return <Skeleton active paragraph={{ rows: 8 }} />;
   if (detail.isError || !detail.data || !results.data) {
@@ -72,10 +85,15 @@ export function AssignmentPanel({ id }: { id: number }) {
         <h2>{a.title}</h2>
         <dl className="ap__meta">
           <div><dt><Clock3 size={14} />Hạn nộp</dt><dd>{formatDateTime(a.dueAt)}</dd></div>
-          <div><dt><ListChecks size={14} />Đề bài</dt><dd>{a.questionCount} câu · {durationText(a.durationMinutes)}</dd></div>
+          <div><dt><ListChecks size={14} />Đề bài</dt><dd>{a.questionCount} câu · {fmtScore(detail.data.totalPoints)} điểm · {durationText(a.durationMinutes)}</dd></div>
           <div><dt><UserRound size={14} />Giao bởi</dt><dd>{a.assignedByName}</dd></div>
         </dl>
         {detail.data.instruction && <p className="ap__note">{detail.data.instruction}</p>}
+        <div className="ap__print">
+          <button type="button" className="ap__printbtn" disabled={printing} onClick={() => void downloadPaper('pdf')}><FileDown size={17} />{printing ? 'Đang tạo…' : 'Tải PDF'}</button>
+          <button type="button" className="ap__printbtn" disabled={printing} onClick={() => void downloadPaper('docx')}><FileDown size={17} />Tải Word</button>
+          <label><input type="checkbox" checked={withAnswers} onChange={(e) => setWithAnswers(e.target.checked)} />Kèm đáp án (trang riêng cuối file)</label>
+        </div>
       </header>
 
       <div className="ap__figs">
@@ -116,15 +134,22 @@ export function AssignmentPanel({ id }: { id: number }) {
           ))}
         </ul>
       ) : (
+        <>
+        <div className="ap__paperbar">
+          {detail.data.sections.map((s) => (
+            <span key={s.difficulty ?? 'none'} className="tagtext"><DifficultyTag value={s.difficulty} short /> {s.questionCount} câu · {fmtScore(s.points)} điểm</span>
+          ))}
+        </div>
         <ol className="paper">
           {detail.data.questions.map((q) => (
             <li key={q.assignmentQuestionId}>
-              <header><b>Câu {q.orderNo}</b>{q.isMultiple && <span>Chọn nhiều</span>}</header>
+              <header><b>Câu {q.orderNo}</b><DifficultyTag value={q.difficulty} short /><span className="paper__pts">{fmtScore(q.points)} điểm</span>{q.isMultiple && <span>Chọn nhiều</span>}</header>
               <p>{q.content}</p>
               <ul>{q.options.map((o) => <li key={o.optionId} className={o.isCorrect ? 'is-correct' : ''}><b>{o.label}</b>{o.content}</li>)}</ul>
             </li>
           ))}
         </ol>
+        </>
       )}
 
       <StudentDrawer assignmentId={id} studentId={student} onClose={() => setStudent(null)} />

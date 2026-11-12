@@ -14,7 +14,7 @@ import type { AiMood, AiTone } from '../components/MsmsAi';
 import { subjectVars } from '../components/tone';
 import { useNow } from '../hooks';
 import type { AnswerInput, Attempt } from '../types';
-import { durationText, formatClock } from '../time';
+import { durationText, fmtScore, formatClock } from '../time';
 import { OPTION_LABELS } from '../labels';
 import '../components/lrn.css';
 
@@ -272,6 +272,7 @@ export function AttemptPage() {
             <article className="qcard" key={q.assignmentQuestionId} style={subjectVars(data.subjectId)}>
               <div className="qcard__meta">
                 <span className="qcard__no">Câu {q.orderNo}<small>/{total}</small></span>
+                <span className="qcard__tag">{fmtScore(q.points)} điểm</span>
                 {q.isMultiple
                   ? <span className="qcard__tag qcard__tag--multi">Chọn nhiều đáp án: chọn đúng {q.correctCount} đáp án</span>
                   : <span className="qcard__tag">Chọn một đáp án</span>}

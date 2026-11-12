@@ -3,17 +3,18 @@ import { ConfigProvider, Input, Select } from 'antd';
 import { FILTER_THEME } from '@/shared/components/FilterBar';
 import { Check, ChevronDown, Eye, EyeOff, ListChecks, Lock, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { message } from '@/shared/lib/antdStatic';
+import { message, modal } from '@/shared/lib/antdStatic';
 import { confirmAction, showError } from '@/shared/lib/feedback';
 import { lrnApi } from '../api';
 import { AiComposer } from '../components/AiComposer';
 import { AiEmpty } from '../components/parts';
 import { subjectVars } from '../components/tone';
+import { DifficultyTag } from '../components/DifficultyTag';
 import { QuestionEditor } from '../components/QuestionEditor';
 import { QuestionPreview } from '../components/QuestionPreview';
 import { useDebounced, useMySubjects, useSubjects } from '../hooks';
-import { GRADE_OPTIONS } from '../labels';
-import type { QuestionDetail, QuestionItem, QuestionQuery } from '../types';
+import { DIFFICULTIES, GRADE_OPTIONS } from '../labels';
+import type { Difficulty, QuestionDetail, QuestionItem, QuestionQuery } from '../types';
 import '../components/lrn.css';
 
 type Tab = 'all' | 'mine' | 'draft' | 'hidden';
@@ -30,13 +31,16 @@ export function QuestionBankPage() {
   const [tab, setTab] = useState<Tab>('all');
   const [subjectId, setSubjectId] = useState<number | undefined>();
   const [gradeLevel, setGradeLevel] = useState<number | undefined>();
+  const [difficulty, setDifficulty] = useState<Difficulty | 'None' | undefined>();
   const [search, setSearch] = useState('');
   const dSearch = useDebounced(search);
   const [open, setOpen] = useState<number | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<QuestionDetail | null>(null);
+  // Các nháp đang tick để duyệt một lượt.
+  const [selected, setSelected] = useState<number[]>([]);
 
-  const base: QuestionQuery = { subjectId, gradeLevel, topic: dSearch || undefined, mine: tab !== 'all', includeHidden: tab === 'hidden' || undefined, status: tab === 'draft' ? 'Draft' : tab === 'all' ? 'Ready' : undefined };
+  const base: QuestionQuery = { subjectId, gradeLevel, difficulty, topic: dSearch || undefined, mine: tab !== 'all', includeHidden: tab === 'hidden' || undefined, status: tab === 'draft' ? 'Draft' : tab === 'all' ? 'Ready' : undefined };
   const list = useInfiniteQuery({
     queryKey: ['lrn', 'questions', 'list', base],
     initialPageParam: 1,
@@ -58,6 +62,23 @@ export function QuestionBankPage() {
     onSuccess: () => { void refresh(); message.success('Đã duyệt: câu hỏi đã vào kho, dùng được cho bài tập.'); },
     onError: (e) => showError(e),
   });
+  const confirmMany = useMutation({
+    mutationFn: (ids?: number[]) => lrnApi.questions.confirmMany(ids),
+    onSuccess: (r) => {
+      setSelected([]);
+      void refresh();
+      if (r.failed.length === 0) { message.success(`Đã duyệt ${r.confirmed} câu: các câu đã vào kho, dùng được cho bài tập.`); return; }
+      modal.error({
+        title: `Đã duyệt ${r.confirmed} câu, ${r.failed.length} câu chưa duyệt được`, okText: 'Đóng', centered: true,
+        content: (
+          <ul style={{ margin: 0, paddingLeft: 18 }}>
+            {r.failed.map((f) => <li key={f.questionId}>{items.find((q) => q.questionId === f.questionId)?.content.slice(0, 60) ?? `Câu #${f.questionId}`}: {f.reason}</li>)}
+          </ul>
+        ),
+      });
+    },
+    onError: (e) => showError(e),
+  });
   const hide = useMutation({
     mutationFn: (id: number) => lrnApi.questions.hide(id),
     onSuccess: () => { void refresh(); message.success('Đã ẩn câu hỏi khỏi kho. Các bài tập cũ không bị ảnh hưởng.'); },
@@ -66,6 +87,11 @@ export function QuestionBankPage() {
   const unhide = useMutation({
     mutationFn: (id: number) => lrnApi.questions.unhide(id),
     onSuccess: () => { void refresh(); message.success('Đã bỏ ẩn: câu hỏi trở lại kho chung.'); },
+    onError: (e) => showError(e),
+  });
+  const classify = useMutation({
+    mutationFn: (v: { id: number; difficulty: Difficulty }) => lrnApi.questions.setDifficulty(v.id, v.difficulty),
+    onSuccess: () => { void refresh(); message.success('Đã phân loại độ khó. Câu này dùng được cho bài tập.'); },
     onError: (e) => showError(e),
   });
   const removeDraft = useMutation({
@@ -104,8 +130,22 @@ export function QuestionBankPage() {
             <Select allowClear placeholder="Môn" value={subjectId} onChange={setSubjectId} style={{ width: 130 }} showSearch optionFilterProp="label"
               options={subjects.active.map((s) => ({ value: s.subjectId, label: s.name }))} />
             <Select allowClear placeholder="Khối" value={gradeLevel} onChange={setGradeLevel} style={{ width: 92 }} options={GRADE_OPTIONS} />
+            <Select allowClear placeholder="Độ khó" value={difficulty} onChange={setDifficulty} style={{ width: 130 }}
+              options={[...DIFFICULTIES.map((d) => ({ value: d.value, label: d.label })), { value: 'None' as const, label: 'Chưa phân loại' }]} />
           </span></ConfigProvider>
         </div>
+
+        {tab === 'draft' && items.length > 0 && (
+          <div className="bulk">
+            <label className="bulk__all">
+              <input type="checkbox" checked={items.length > 0 && selected.length === items.length} onChange={(e) => setSelected(e.target.checked ? items.map((q) => q.questionId) : [])} />
+              {selected.length > 0 ? `Đã chọn ${selected.length} câu` : 'Chọn tất cả'}
+            </label>
+            <button type="button" className="bulk__ok" disabled={selected.length === 0 || confirmMany.isPending} onClick={() => confirmMany.mutate(selected)}>
+              <Check size={16} />Duyệt {selected.length > 0 ? `${selected.length} câu đã chọn` : 'các câu đã chọn'}
+            </button>
+          </div>
+        )}
 
         {list.isLoading ? <div className="bank__empty">Đang tải…</div> : items.length === 0 ? (
           <AiEmpty
@@ -119,6 +159,10 @@ export function QuestionBankPage() {
               return (
                 <li key={q.questionId} className={`qrow${expanded ? ' is-open' : ''}${q.status === 'Draft' ? ' is-draft' : ''}`} style={subjectVars(q.subjectId)}>
                   <span className="qrow__ear">
+                    {q.status === 'Draft' && q.isMine && (
+                      <input type="checkbox" className="qrow__pick" aria-label="Chọn để duyệt cùng lúc" checked={selected.includes(q.questionId)}
+                        onChange={(e) => setSelected((cur) => (e.target.checked ? [...cur, q.questionId] : cur.filter((x) => x !== q.questionId)))} />
+                    )}
                     <b className="qrow__subject">{q.subjectName}</b>
                     {q.gradeLevel && <span className="qrow__grade">Khối {q.gradeLevel}</span>}
                     {q.topic && <span className="qrow__topic" title={q.topic}>{q.topic}</span>}
@@ -127,6 +171,7 @@ export function QuestionBankPage() {
                   <button type="button" className="qrow__main" onClick={() => setOpen(expanded ? null : q.questionId)} aria-expanded={expanded}>
                     <span className="qrow__text">{q.content}</span>
                     <span className="qrow__chips">
+                      <DifficultyTag value={q.difficulty} short />
                       {!q.isMine && <span className="qrow__by">{q.createdByName}</span>}
                       {q.isMultiple && <span className="chip chip--warn"><ListChecks size={12} />Chọn nhiều</span>}
                       {q.isAiGenerated && <span className="chip chip--ai"><Sparkles size={12} />AI soạn</span>}
@@ -136,6 +181,12 @@ export function QuestionBankPage() {
                   </button>
                   {q.isMine && (
                     <span className="qrow__acts">
+                      {q.difficulty === null && (
+                        <ConfigProvider theme={FILTER_THEME}>
+                          <Select size="small" placeholder="Chọn độ khó" style={{ width: 118 }} aria-label="Phân loại độ khó" loading={classify.isPending}
+                            options={DIFFICULTIES.map((d) => ({ value: d.value, label: d.label }))} onChange={(v: Difficulty) => classify.mutate({ id: q.questionId, difficulty: v })} />
+                        </ConfigProvider>
+                      )}
                       {q.status === 'Draft' && (
                         <button type="button" className="act act--ok" onClick={() => confirmDraft.mutate(q.questionId)}><Check size={15} />Duyệt</button>
                       )}

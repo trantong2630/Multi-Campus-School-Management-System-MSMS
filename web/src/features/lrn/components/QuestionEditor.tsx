@@ -5,13 +5,15 @@ import { FormModal } from '@/shared/components/FormModal';
 import { message } from '@/shared/lib/antdStatic';
 import { lrnApi } from '../api';
 import { GRADES, OPTION_LABELS } from '../labels';
-import type { OptionInput, QuestionDetail, SaveQuestionInput } from '../types';
+import type { Difficulty, OptionInput, QuestionDetail, SaveQuestionInput } from '../types';
+import { DifficultyPicker } from './DifficultyTag';
 import './lrn.css';
 
 interface Values {
   subjectId: number;
   gradeLevel: number;
   topic: string;
+  difficulty: Difficulty;
   content: string;
   options: OptionInput[];
   explanation?: string;
@@ -59,7 +61,7 @@ export function QuestionEditor({ open, editing, subjects, defaultSubjectId, onCl
 
   const save = async (v: Values) => {
     const body: SaveQuestionInput = {
-      subjectId: v.subjectId, gradeLevel: v.gradeLevel, topic: v.topic, content: v.content, explanation: v.explanation, options: v.options,
+      subjectId: v.subjectId, gradeLevel: v.gradeLevel, topic: v.topic, content: v.content, explanation: v.explanation, options: v.options, difficulty: v.difficulty,
     };
     if (editing) await lrnApi.questions.update(editing.questionId, body);
     else await lrnApi.questions.create(body);
@@ -72,7 +74,7 @@ export function QuestionEditor({ open, editing, subjects, defaultSubjectId, onCl
 
   const initial: Partial<Values> = editing
     ? {
-      subjectId: editing.subjectId, gradeLevel: editing.gradeLevel ?? undefined, topic: editing.topic ?? '', content: editing.content,
+      subjectId: editing.subjectId, gradeLevel: editing.gradeLevel ?? undefined, topic: editing.topic ?? '', difficulty: editing.difficulty ?? undefined, content: editing.content,
       explanation: editing.explanation ?? undefined,
       options: OPTION_LABELS.map((label) => {
         const o = editing.options.find((x) => x.label === label);
@@ -96,6 +98,9 @@ export function QuestionEditor({ open, editing, subjects, defaultSubjectId, onCl
       </Form.Item>
       <Form.Item name="topic" label="Chủ đề" rules={[{ required: true, whitespace: true, message: 'Nhập chủ đề để dễ tìm lại câu hỏi.' }]}>
         <Input maxLength={150} placeholder="Ví dụ: Phân số, Quang hợp, Thì hiện tại đơn" />
+      </Form.Item>
+      <Form.Item name="difficulty" label="Độ khó" rules={[{ required: true, message: 'Chọn độ khó của câu hỏi.' }]}>
+        <DifficultyPicker />
       </Form.Item>
       <Form.Item name="content" label="Nội dung câu hỏi" rules={[{ required: true, whitespace: true, message: 'Nhập nội dung câu hỏi.' }]}>
         <Input.TextArea rows={4} maxLength={2000} showCount placeholder="Câu có nhiều đáp án đúng nên nêu rõ trong nội dung, ví dụ: “Chọn các số chẵn”." />

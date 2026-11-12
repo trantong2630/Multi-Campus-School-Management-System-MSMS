@@ -65,7 +65,7 @@ export function AssignedPage() {
           <h1>Bài tập đã giao</h1>
         </header>
         {list.isLoading ? <Skeleton active paragraph={{ rows: 6 }} /> : items.length === 0 ? (
-          <AiEmpty title="Chưa giao bài nào" hint="Giao bài đầu tiên ở mục Giao bài tập." />
+          <AiEmpty title="Chưa giao bài nào" hint="Soạn đề và giao bài đầu tiên ở mục Soạn đề." />
         ) : (
           <>
             <ul>{[...open, ...closed].map(card)}</ul>

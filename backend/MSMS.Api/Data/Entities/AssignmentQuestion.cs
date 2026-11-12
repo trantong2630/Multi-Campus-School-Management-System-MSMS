@@ -14,6 +14,9 @@ public partial class AssignmentQuestion
 
     public short OrderNo { get; set; }
 
+    /// <summary>Điểm của câu trong bài này, chụp lúc giao bài. Điểm bài = tổng điểm câu đúng / tổng điểm tối đa × 10.</summary>
+    public decimal Points { get; set; }
+
     public virtual Assignment Assignment { get; set; } = null!;
 
     public virtual Question Question { get; set; } = null!;

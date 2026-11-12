@@ -16,6 +16,9 @@ public partial class Question
     /// <summary>Bài trong sách giáo khoa mà AI đã dựa vào để soạn câu này; trống với câu soạn tay.</summary>
     public int? LessonId { get; set; }
 
+    /// <summary>Độ khó: Recognize, Understand, Apply, HighApply. Null là chưa phân loại (câu có từ trước khi có độ khó).</summary>
+    public string? Difficulty { get; set; }
+
     public string Content { get; set; } = null!;
 
     public string? Explanation { get; set; }
