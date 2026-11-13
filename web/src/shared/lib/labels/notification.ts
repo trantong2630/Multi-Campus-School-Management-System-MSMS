@@ -3,8 +3,6 @@ export const notificationTypeLabel: Record<string, string> = {
   TimetablePublished: 'Thời khóa biểu',
   SessionPending: 'Tiết chờ xử lý',
   ScheduleChanged: 'Thay đổi lịch',
-  LeaveRequestSubmitted: 'Đơn xin nghỉ',
-  LeaveRequestDecided: 'Kết quả đơn nghỉ',
   AssignmentAssigned: 'Bài tập mới',
   MessageReceived: 'Tin nhắn',
 };

@@ -13,15 +13,12 @@ public static class NotificationTypes
     public const string SessionPending = "SessionPending";
     /// <summary>Đổi giáo viên, hủy, thêm bù, dạy thay, trả lại giáo viên khi xóa khai báo vắng.</summary>
     public const string ScheduleChanged = "ScheduleChanged";
-    public const string LeaveRequestSubmitted = "LeaveRequestSubmitted";
-    public const string LeaveRequestDecided = "LeaveRequestDecided";
     public const string AssignmentAssigned = "AssignmentAssigned";
     public const string MessageReceived = "MessageReceived";
 
     public static readonly IReadOnlySet<string> All = new HashSet<string>
     {
-        TimetablePublished, SessionPending, ScheduleChanged, LeaveRequestSubmitted,
-        LeaveRequestDecided, AssignmentAssigned, MessageReceived,
+        TimetablePublished, SessionPending, ScheduleChanged, AssignmentAssigned, MessageReceived,
     };
 }
 

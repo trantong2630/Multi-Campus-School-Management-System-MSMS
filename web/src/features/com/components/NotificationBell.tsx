@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Badge, Button, Empty, Popover, Spin } from 'antd';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Bell, BookOpen, CalendarClock, CalendarDays, CheckCheck, FileText, Hourglass, MessageSquare } from 'lucide-react';
+import { Bell, BookOpen, CalendarClock, CalendarDays, CheckCheck, Hourglass, MessageSquare } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatDateTime } from '@/shared/lib/format';
@@ -23,8 +23,6 @@ const typeIcon: Record<string, ReactNode> = {
   TimetablePublished: <CalendarDays size={18} />,
   SessionPending: <Hourglass size={18} />,
   ScheduleChanged: <CalendarClock size={18} />,
-  LeaveRequestSubmitted: <FileText size={18} />,
-  LeaveRequestDecided: <FileText size={18} />,
   AssignmentAssigned: <BookOpen size={18} />,
   MessageReceived: <MessageSquare size={18} />,
 };

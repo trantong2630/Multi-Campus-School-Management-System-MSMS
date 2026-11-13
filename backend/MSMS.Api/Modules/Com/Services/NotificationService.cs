@@ -176,21 +176,6 @@ public sealed class NotificationService(MsmsDbContext db, CurrentUser user, IClo
                     ? (true, $"/par/inbox?conversationId={c}", null) : (false, null, Denied);
             }
 
-            case NotificationTypes.LeaveRequestSubmitted or NotificationTypes.LeaveRequestDecided when n.RefEntityId is { } lid:
-            {
-                var l = (int)lid;
-                var r = await db.LeaveRequest.AsNoTracking().Where(x => x.LeaveRequestId == l)
-                    .Select(x => new { x.ParentId, x.ClassId, x.Class.CampusId }).FirstOrDefaultAsync();
-                if (r is null) return (false, null, Gone);
-                if (isParent)
-                    return r.ParentId == me ? (true, "/par/leave-requests", null) : (false, null, Denied);
-                var ok = (isTeacher && await db.HomeroomAssignment.AnyAsync(h => h.ClassId == r.ClassId && h.StaffId == me
-                                                                                  && h.StartDate <= today && (h.EndDate == null || h.EndDate > today)))
-                         || (isVice && await db.CampusLeadership.AnyAsync(x => x.CampusId == r.CampusId && x.StaffId == me
-                                                                               && x.StartDate <= today && (x.EndDate == null || x.EndDate > today)));
-                return ok ? (true, "/par/leave-requests", null) : (false, null, Denied);
-            }
-
             default:
                 return (false, null, Gone);
         }
