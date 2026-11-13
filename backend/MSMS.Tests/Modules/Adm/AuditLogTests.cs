@@ -14,7 +14,7 @@ using static MSMS.Tests.Modules.Sch.SchTestSupport;
 
 namespace MSMS.Tests.Modules.Adm;
 
-/// <summary>ADM-02: tra cứu, lọc, xem chi tiết nhật ký và tính chỉ ghi thêm (task 4.9.6–4.9.9, BR-28).</summary>
+/// <summary>ADM-02: tra cứu, lọc, xem chi tiết nhật ký và tính chỉ ghi thêm (task 4.9.8–4.9.11, BR-28).</summary>
 public class AuditLogTests
 {
     private const int Admin = 1, Vice = 2, Teacher = 3;
@@ -176,7 +176,7 @@ public class AuditLogTests
         await Assert.ThrowsAsync<ApiException>(() => svc.GetAsync(1));
     }
 
-    // ---------------------------------------------------------------- 4.9.9: chỉ ghi thêm
+    // ---------------------------------------------------------------- 4.9.11: chỉ ghi thêm
 
     [Fact]
     public void Api_IsSchoolAdminOnly_AndOnlyHasGet()
@@ -223,6 +223,7 @@ public class AuditLogTests
             .Where(t => t.GetConstructors().Any(c => c.GetParameters().Any(p => p.ParameterType == typeof(AuditWriter))))
             .Select(t => t.Name).Order();
 
-        Assert.Equal(["AccountService", "EnrollmentService", "ScheduleAdjustmentService", "TeacherAbsenceService", "TimetablePublishService"], writers);
+        // CalendarService: khai ngày nghỉ hủy các tiết chưa khóa trong ngày, thuộc nhóm Điều chỉnh lịch.
+        Assert.Equal(["AccountService", "CalendarService", "EnrollmentService", "ScheduleAdjustmentService", "TeacherAbsenceService", "TimetablePublishService"], writers);
     }
 }

@@ -1,5 +1,5 @@
 import { apiClient } from '@/app/apiClient';
-import type { AcademicYear, Campus, CampusStat, CatalogStats, ClassStats, Department, Holiday, PeriodSlot, Roster, RolloverCreateResult, RolloverMoveResult, RolloverRow, RolloverStudent, SchoolClass, SchoolProfile, StudentCandidate, Subject } from './types';
+import type { AcademicYear, Campus, CampusStat, CatalogStats, ClassStats, Department, Holiday, HolidayImpact, PeriodSlot, Roster, RolloverCreateResult, RolloverMoveResult, RolloverRow, RolloverStudent, SchoolClass, SchoolProfile, StudentCandidate, Subject } from './types';
 
 /** Đường dẫn ảnh logo; tham số v đổi theo lần cập nhật để trình duyệt không giữ logo cũ. */
 export const schoolLogoUrl = (version: number | null) => `/api/school/logo?v=${version ?? 0}`;
@@ -47,6 +47,7 @@ export const schApi = {
   },
   holidays: {
     list: (params: { yearId?: number; campusId?: number }) => get<Holiday[]>('/sch/holidays', params),
+    impact: (params: { campusId?: number; date: string }) => get<HolidayImpact>('/sch/holidays/impact', params),
     create: (b: object) => post<Holiday>('/sch/holidays', b),
     remove: (id: number) => apiClient.delete(`/sch/holidays/${id}`),
   },

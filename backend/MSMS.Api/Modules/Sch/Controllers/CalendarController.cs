@@ -30,6 +30,9 @@ public class CalendarController(CalendarService service) : ControllerBase
     [HttpGet("holidays"), Authorize(Policy = Policies.StaffOrFamily)]
     public Task<List<HolidayDto>> ListHolidays([FromQuery] int? yearId, [FromQuery] int? campusId) => service.ListHolidaysAsync(yearId, campusId);
 
+    [HttpGet("holidays/impact"), Authorize(Policy = Policies.SchoolAdmin)]
+    public Task<HolidayImpactDto> HolidayImpact([FromQuery] int? campusId, [FromQuery] DateOnly date) => service.HolidayImpactAsync(campusId, date);
+
     [HttpPost("holidays"), Authorize(Policy = Policies.SchoolAdmin)]
     public Task<HolidayDto> CreateHoliday(HolidayRequest r) => service.CreateHolidayAsync(r);
 

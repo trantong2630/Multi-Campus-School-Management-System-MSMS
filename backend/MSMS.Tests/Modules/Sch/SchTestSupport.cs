@@ -2,10 +2,13 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using MSMS.Api.Common.Audit;
 using MSMS.Api.Common.Auth;
+using MSMS.Api.Common.Notifications;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
 using MSMS.Api.Data.Entities;
+using MSMS.Api.Modules.Sch.Services;
 
 namespace MSMS.Tests.Modules.Sch;
 
@@ -27,6 +30,14 @@ internal static class SchTestSupport
     }
 
     public static IClock ClockAt(DateOnly? today = null) => new FixedClock(today ?? Today);
+
+    /// <summary>CalendarService của School Admin, đồng hồ cố định ở 08:00 ngày <paramref name="today"/>.</summary>
+    public static CalendarService NewService(MsmsDbContext db, DateOnly? today = null)
+    {
+        var user = UserOf(AccountTypes.SchoolAdmin);
+        var clock = ClockAt(today);
+        return new CalendarService(db, user, clock, new AuditWriter(db, user, clock), new NotificationSender(db, clock));
+    }
 
     public static MsmsDbContext NewDb() => new(new DbContextOptionsBuilder<MsmsDbContext>()
         .UseInMemoryDatabase(Guid.NewGuid().ToString())
