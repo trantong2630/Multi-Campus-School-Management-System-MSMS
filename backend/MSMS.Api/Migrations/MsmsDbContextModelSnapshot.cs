@@ -701,9 +701,6 @@ namespace MSMS.Api.Migrations
                     b.Property<DateOnly>("HolidayDate")
                         .HasColumnType("date");
 
-                    b.Property<bool>("IsAdHoc")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Reason")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");

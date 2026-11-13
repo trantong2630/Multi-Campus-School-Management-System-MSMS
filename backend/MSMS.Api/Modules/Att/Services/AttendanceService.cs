@@ -246,10 +246,10 @@ public sealed class AttendanceService(MsmsDbContext db, CurrentUser user, ScopeR
         return new ClassAttendanceDto(classId, className, from, to, sessions, students);
     }
 
-    // ---------------------------------------------------------------- 4.9.10 Dữ liệu xuất điểm danh (ADM-03)
+    // ---------------------------------------------------------------- 4.9.12 Dữ liệu xuất điểm danh (ADM-03)
 
     /// <summary>
-    /// 4.9.10: bản ghi điểm danh của lớp trong khoảng ngày, kèm nhãn cuối suy ra (BR-18, spec 5.2).
+    /// 4.9.12: bản ghi điểm danh của lớp trong khoảng ngày, kèm nhãn cuối suy ra (BR-18, spec 5.2).
     /// Chỉ chủ nhiệm (lớp đang chủ nhiệm) và Hiệu phó (lớp thuộc phân hiệu phụ trách); School Admin và Hiệu trưởng không xuất.
     /// Gồm tiết Đã xếp lịch tới hôm nay; tiết đã qua mà học sinh chưa có bản ghi thì hiện Chưa điểm danh.
     /// </summary>

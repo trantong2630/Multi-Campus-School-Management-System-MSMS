@@ -9,6 +9,7 @@ import { useAuth } from '@/app/AuthProvider';
 import { DataTable } from '@/shared/components/DataTable';
 import { FilterBar } from '@/shared/components/FilterBar';
 import { FormModal } from '@/shared/components/FormModal';
+import { InlineAlert } from '@/shared/components/InlineAlert';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { RowActions } from '@/shared/components/RowActions';
 import { confirmAction, showError } from '@/shared/lib/feedback';
@@ -35,6 +36,8 @@ export function HolidaysPage() {
   const [monthPick, setMonthPick] = useState<Dayjs | null>(null);
   const [adding, setAdding] = useState<{ date?: Dayjs } | null>(null);
   const [form] = Form.useForm<FormValues>();
+  const pickedDate = Form.useWatch('date', form);
+  const pickedScope = Form.useWatch('scope', form);
 
   const effectiveYear = yearId ?? current?.academicYearId;
   const holidays = useQuery({
@@ -50,13 +53,22 @@ export function HolidaysPage() {
     onError: (e) => showError(e),
   });
 
+  // Khai ngày nghỉ hủy luôn các tiết chưa khóa trong ngày đó, nên báo số tiết trước khi lưu (BR-08).
+  const impact = useQuery({
+    queryKey: ['sch', 'holidays', 'impact', pickedDate ? toDateString(pickedDate) : null, pickedScope],
+    queryFn: () => schApi.holidays.impact({ campusId: pickedScope ? pickedScope : undefined, date: toDateString(pickedDate!) }),
+    enabled: adding !== null && !!pickedDate && pickedScope !== undefined,
+  });
+
   const save = async (v: FormValues) => {
-    await schApi.holidays.create({
+    const created = await schApi.holidays.create({
       academicYearId: effectiveYear, campusId: v.scope === WHOLE_SCHOOL ? null : v.scope,
       holidayDate: toDateString(v.date), reason: v.reason,
     });
     await refresh();
-    message.success('Đã khai báo ngày nghỉ.');
+    message.success(created.cancelledSessions > 0
+      ? `Đã khai báo ngày nghỉ và hủy ${created.cancelledSessions} tiết trong ngày.`
+      : 'Đã khai báo ngày nghỉ.');
   };
 
   const yearRange = years.data?.find((y) => y.academicYearId === effectiveYear);
@@ -132,6 +144,12 @@ export function HolidaysPage() {
         open={adding !== null} title="Thêm ngày nghỉ" form={form} onClose={() => setAdding(null)} onSubmit={save}
         initialValues={{ scope: campusId ?? WHOLE_SCHOOL, date: adding?.date }}
       >
+        {!!impact.data?.sessions && (
+          <InlineAlert
+            type="warning" title={`Ngày này còn ${impact.data.sessions} tiết chưa kết thúc`}
+            description="Khai ngày nghỉ sẽ hủy các tiết đó và thông báo cho giáo viên, học sinh của lớp. Tiết đã kết thúc hoặc đã điểm danh giữ nguyên."
+          />
+        )}
         <div className="form-grid">
           <Form.Item
             label="Ngày nghỉ" name="date" rules={[{ required: true, message: 'Chọn ngày nghỉ.' }]}

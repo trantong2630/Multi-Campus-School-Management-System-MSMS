@@ -15,8 +15,6 @@ public partial class Holiday
 
     public string? Reason { get; set; }
 
-    public bool IsAdHoc { get; set; }
-
     public int? CreatedByPersonId { get; set; }
 
     public DateTime CreatedAt { get; set; }

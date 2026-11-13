@@ -13,7 +13,7 @@ using MSMS.Tests.Modules.Iam;
 
 namespace MSMS.Tests.Modules.Adm;
 
-/// <summary>ADM-03 (4.9.10, 4.9.11, 4.9.13): mỗi mục xuất chỉ đúng phạm vi người gọi; điểm danh kèm nhãn suy ra, thời khóa biểu đọc từ lịch dạy.</summary>
+/// <summary>ADM-03 (4.9.12, 4.9.13, 4.9.15): mỗi mục xuất chỉ đúng phạm vi người gọi; điểm danh kèm nhãn suy ra, thời khóa biểu đọc từ lịch dạy.</summary>
 public class ExportTests
 {
     private static AttendanceService Attendance(AccountTestFixture f, string role, int personId)

@@ -19,7 +19,8 @@ public record AcademicYearDto(int AcademicYearId, string Name, DateOnly StartDat
 public record AcademicYearRequest(string Name, DateOnly StartDate, DateOnly EndDate);
 public record SemesterRange(DateOnly StartDate, DateOnly EndDate);
 public record SemestersRequest(SemesterRange Semester1, SemesterRange Semester2);
-public record HolidayDto(int HolidayId, int AcademicYearId, int? CampusId, string? CampusName, DateOnly HolidayDate, string? Reason, bool IsAdHoc);
+public record HolidayDto(int HolidayId, int AcademicYearId, int? CampusId, string? CampusName, DateOnly HolidayDate, string? Reason, int CancelledSessions);
+public record HolidayImpactDto(int Sessions);
 public record HolidayRequest(int AcademicYearId, int? CampusId, DateOnly HolidayDate, string? Reason);
 
 // SCH-04 Khung giờ tiết

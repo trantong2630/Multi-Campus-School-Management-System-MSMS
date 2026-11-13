@@ -62,7 +62,13 @@ export interface Holiday {
   campusName: string | null;
   holidayDate: string;
   reason: string | null;
-  isAdHoc: boolean;
+  /** Chỉ có khi vừa khai: số tiết chưa khóa đã bị hủy theo ngày nghỉ này. */
+  cancelledSessions: number;
+}
+
+/** Số tiết sẽ bị hủy nếu khai ngày nghỉ (xem trước khi lưu). */
+export interface HolidayImpact {
+  sessions: number;
 }
 
 export interface PeriodSlot {

@@ -1,8 +1,10 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using MSMS.Api.Common.Audit;
 using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
+using MSMS.Api.Common.Notifications;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
 using MSMS.Api.Data.Entities;
@@ -36,7 +38,8 @@ public class AcademicYearTests
             new Claim(CurrentUser.TypeClaim, AccountTypes.SchoolAdmin),
         ], "Test");
         var user = new CurrentUser(new FakeAccessor(new DefaultHttpContext { User = new ClaimsPrincipal(identity) }));
-        return (db, new CalendarService(db, user, new FakeClock()));
+        var clock = new FakeClock();
+        return (db, new CalendarService(db, user, clock, new AuditWriter(db, user, clock), new NotificationSender(db, clock)));
     }
 
     private static AcademicYearRequest Year(string name, string start, string end) =>

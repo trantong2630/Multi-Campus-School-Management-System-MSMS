@@ -12,12 +12,12 @@ namespace MSMS.Api.Modules.Adm.Controllers;
 [ApiController, Route("api/adm/exports"), Authorize(Policy = Policies.DataExporter)]
 public class ExportController(ExportService exports) : ControllerBase
 {
-    /// <summary>4.9.10: chủ nhiệm xuất lớp mình, Hiệu phó xuất lớp thuộc phân hiệu mình.</summary>
+    /// <summary>4.9.12: chủ nhiệm xuất lớp mình, Hiệu phó xuất lớp thuộc phân hiệu mình.</summary>
     [HttpGet("attendance")]
     public Task<FileContentResult> Attendance([FromQuery] int classId, [FromQuery] DateOnly from, [FromQuery] DateOnly to) =>
         exports.AttendanceAsync(classId, from, to);
 
-    /// <summary>4.9.11: Hiệu phó xuất phân hiệu mình.</summary>
+    /// <summary>4.9.13: Hiệu phó xuất phân hiệu mình.</summary>
     [HttpGet("timetable")]
     public Task<FileContentResult> Timetable([FromQuery] int campusId, [FromQuery] DateOnly from, [FromQuery] DateOnly to) =>
         exports.TimetableAsync(campusId, from, to);

@@ -9,7 +9,7 @@ using MSMS.Tests.Modules.Iam;
 namespace MSMS.Tests.Modules.Adm;
 
 /// <summary>
-/// 4.9.9: CSDL chặn UPDATE và DELETE trên nhật ký (BR-28). Trigger chỉ có khi chạy migration nên test dùng Migrate, không dùng EnsureCreated.
+/// 4.9.11: CSDL chặn UPDATE và DELETE trên nhật ký (BR-28). Trigger chỉ có khi chạy migration nên test dùng Migrate, không dùng EnsureCreated.
 /// Chỉ chạy khi có MSMS_IAM_SQLSERVER; mỗi test tạo và xóa một DB ngẫu nhiên riêng.
 /// </summary>
 public class AuditLogSqlServerTests

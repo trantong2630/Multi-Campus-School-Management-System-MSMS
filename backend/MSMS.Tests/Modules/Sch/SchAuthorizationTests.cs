@@ -111,7 +111,7 @@ public class SchAuthorizationTests
         foreach (var m in Endpoints().Where(IsRead).Where(m => m.GetCustomAttribute<AllowAnonymousAttribute>() is null))
         {
             var policy = m.GetCustomAttribute<AuthorizeAttribute>()?.Policy;
-            var allowed = m.Name is "Candidates" or "Overview" or "Students" ? Policies.SchoolAdmin   // danh sách học sinh để ghi danh và tổng quan kết chuyển chỉ School Admin dùng
+            var allowed = m.Name is "Candidates" or "Overview" or "Students" or "HolidayImpact" ? Policies.SchoolAdmin   // danh sách học sinh để ghi danh, tổng quan kết chuyển và số tiết bị hủy khi khai ngày nghỉ chỉ School Admin dùng
                 : m.DeclaringType!.Name == "CampusesController" ? Policies.CampusReader   // phân hiệu: School Admin, Hiệu trưởng, Hiệu phó (SCH-01)
                 : m.DeclaringType!.Name == "PeriodSlotsController" || m.Name is "ListYears" or "ListHolidays" ? Policies.StaffOrFamily   // khung giờ tiết, năm học, ngày nghỉ: học sinh/phụ huynh cần cho Trang chủ và TKB
                 : m.DeclaringType!.Name == "StructureStatsController" ? Policies.SchoolStructureReader   // thống kê trên màn Cơ cấu nhà trường: SA sửa, HT chỉ xem

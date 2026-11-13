@@ -7,7 +7,7 @@ using MSMS.Tests.Modules.Iam;
 
 namespace MSMS.Tests.Modules.Adm;
 
-/// <summary>ADM-01 mở rộng (4.9.4): mỗi dashboard chỉ tổng hợp dữ liệu trong phạm vi và quyền đọc của vai trò.</summary>
+/// <summary>ADM-01 mở rộng (4.9.6): mỗi dashboard chỉ tổng hợp dữ liệu trong phạm vi và quyền đọc của vai trò.</summary>
 public class DashboardScopeTests
 {
     private static DashboardService Leadership(AccountTestFixture f, string role, int personId)

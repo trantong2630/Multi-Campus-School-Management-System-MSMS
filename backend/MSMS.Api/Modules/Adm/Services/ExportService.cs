@@ -17,7 +17,7 @@ public sealed class ExportService(AttendanceService attendance, ScheduleQuerySer
 {
     private const int HeaderRow = 2;
 
-    /// <summary>4.9.10: điểm danh của một lớp trong khoảng ngày, kèm nhãn cuối suy ra (BR-18).</summary>
+    /// <summary>4.9.12: điểm danh của một lớp trong khoảng ngày, kèm nhãn cuối suy ra (BR-18).</summary>
     public async Task<FileContentResult> AttendanceAsync(int classId, DateOnly from, DateOnly to)
     {
         var data = await attendance.ExportAsync(classId, from, to);
@@ -45,7 +45,7 @@ public sealed class ExportService(AttendanceService attendance, ScheduleQuerySer
         return wb.ToFile(FileName("Diem_danh", data.ClassName, from, to));
     }
 
-    /// <summary>4.9.11: thời khóa biểu hiện hành của phân hiệu, đọc từ lịch dạy (BR-14).</summary>
+    /// <summary>4.9.13: thời khóa biểu hiện hành của phân hiệu, đọc từ lịch dạy (BR-14).</summary>
     public async Task<FileContentResult> TimetableAsync(int campusId, DateOnly from, DateOnly to)
     {
         var (campusName, sessions) = await schedule.GetCampusSessionsForExportAsync(campusId, from, to);

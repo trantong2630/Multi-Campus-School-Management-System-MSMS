@@ -7,7 +7,7 @@ namespace MSMS.Api.Modules.Sch.Services;
 
 /// <summary>
 /// SCH-03 (4.2.20): trả lời "ngày D có phải ngày dạy của phân hiệu P không". Chỉ đọc dữ liệu học kỳ và ngày nghỉ rồi giao cho
-/// <see cref="SchoolCalendarRules"/>. Module khác (SCD sinh tiết, thêm tiết bù, khai ngày nghỉ đột xuất) gọi service này,
+/// <see cref="SchoolCalendarRules"/>. Module khác (SCD sinh tiết, thêm tiết bù, khai ngày nghỉ) gọi service này,
 /// không tự query học kỳ hay ngày nghỉ.
 /// </summary>
 public sealed class SchoolDayService(MsmsDbContext db)

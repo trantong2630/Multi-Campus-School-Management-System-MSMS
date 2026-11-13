@@ -19,7 +19,7 @@ internal sealed class SchEnv : IDisposable
 
     public CampusService Campuses => new(Db, Clock);
     public CatalogService Catalog => new(Db, Clock);
-    public CalendarService Calendar => new(Db, Admin, Clock);
+    public CalendarService Calendar => new(Db, Admin, Clock, new MSMS.Api.Common.Audit.AuditWriter(Db, Admin, Clock), new MSMS.Api.Common.Notifications.NotificationSender(Db, Clock));
     public ClassService Classes => new(Db, Clock);
     public PeriodSlotService Slots => new(Db);
 

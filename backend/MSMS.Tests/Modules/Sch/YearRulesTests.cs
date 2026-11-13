@@ -14,7 +14,7 @@ public class YearRulesTests
     {
         var db = NewDb();
         AddCampus(db, 1, "Phân hiệu 1");
-        return new CalendarService(db, UserOf(AccountTypes.SchoolAdmin), ClockAt());
+        return NewService(db);
     }
 
     private static AcademicYearRequest Year(string start, string end) => new("2026-2027", DateOnly.Parse(start), DateOnly.Parse(end));

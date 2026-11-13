@@ -86,7 +86,7 @@ public record ClassAttendanceDto(
     IReadOnlyList<AttendanceSessionDto> Sessions,
     IReadOnlyList<ClassAttendanceStudentDto> Students);
 
-/// <summary>Dữ liệu cho file xuất điểm danh của lớp (ADM-03, 4.9.10): mỗi dòng một học sinh ở một tiết.</summary>
+/// <summary>Dữ liệu cho file xuất điểm danh của lớp (ADM-03, 4.9.12): mỗi dòng một học sinh ở một tiết.</summary>
 public record AttendanceExportDto(
     string ClassName,
     string CampusName,

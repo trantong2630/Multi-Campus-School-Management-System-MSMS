@@ -184,7 +184,7 @@ public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, Sco
     }
 
     /// <summary>
-    /// 4.9.11: lịch dạy của cả phân hiệu trong khoảng ngày để xuất Excel (ADM-03). Nguồn là lịch dạy chứ không phải phiên bản,
+    /// 4.9.13: lịch dạy của cả phân hiệu trong khoảng ngày để xuất Excel (ADM-03). Nguồn là lịch dạy chứ không phải phiên bản,
     /// nên có cả tiết đổi tay, tiết bù, tiết Đã hủy và Chờ xử lý (BR-14, spec 5.2). Chỉ Hiệu phó đang phụ trách phân hiệu.
     /// </summary>
     public async Task<(string CampusName, List<ViewSessionDto> Sessions)> GetCampusSessionsForExportAsync(int campusId, DateOnly from, DateOnly to)

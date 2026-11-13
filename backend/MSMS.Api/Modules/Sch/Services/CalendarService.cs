@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using MSMS.Api.Common.Audit;
 using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
+using MSMS.Api.Common.Notifications;
 using MSMS.Api.Common.Rules;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
@@ -9,8 +11,8 @@ using MSMS.Api.Modules.Sch.Dtos;
 
 namespace MSMS.Api.Modules.Sch.Services;
 
-/// <summary>SCH-03: năm học, hai học kỳ, ngày nghỉ theo kế hoạch.</summary>
-public sealed class CalendarService(MsmsDbContext db, CurrentUser user, IClock clock)
+/// <summary>SCH-03: năm học, hai học kỳ, ngày nghỉ.</summary>
+public sealed class CalendarService(MsmsDbContext db, CurrentUser user, IClock clock, AuditWriter audit, NotificationSender notifier)
 {
     // ---- Năm học ----
     public async Task<List<AcademicYearDto>> ListYearsAsync()
@@ -161,7 +163,7 @@ public sealed class CalendarService(MsmsDbContext db, CurrentUser user, IClock c
                         && (campusId == null || h.CampusId == campusId || h.CampusId == null))
             .OrderBy(h => h.HolidayDate)
             .Select(h => new HolidayDto(h.HolidayId, h.AcademicYearId, h.CampusId, h.Campus == null ? null : h.Campus.Name,
-                h.HolidayDate, h.Reason, h.IsAdHoc))
+                h.HolidayDate, h.Reason, 0))
             .ToListAsync();
 
     public async Task<HolidayDto> CreateHolidayAsync(HolidayRequest r)
@@ -181,12 +183,64 @@ public sealed class CalendarService(MsmsDbContext db, CurrentUser user, IClock c
         var holiday = new Holiday
         {
             AcademicYearId = r.AcademicYearId, CampusId = r.CampusId, HolidayDate = r.HolidayDate,
-            Reason = Guard.Optional(r.Reason, "Lý do", 255), IsAdHoc = false,
+            Reason = Guard.Optional(r.Reason, "Lý do", 255),
             CreatedByPersonId = user.PersonId, CreatedAt = clock.Now,
         };
         db.Holiday.Add(holiday);
+        // Khai ngày nghỉ hủy luôn các tiết chưa khóa trong ngày đó, cùng một lần lưu với ngày nghỉ (BR-08).
+        var cancelled = await CancelSessionsOnAsync(holiday);
         await db.SaveChangesAsync();
-        return new HolidayDto(holiday.HolidayId, holiday.AcademicYearId, holiday.CampusId, campusName, holiday.HolidayDate, holiday.Reason, false);
+        return new HolidayDto(holiday.HolidayId, holiday.AcademicYearId, holiday.CampusId, campusName, holiday.HolidayDate, holiday.Reason, cancelled);
+    }
+
+    /// <summary>Số tiết sẽ bị hủy nếu khai ngày nghỉ này, để màn hình cảnh báo trước khi lưu.</summary>
+    public async Task<HolidayImpactDto> HolidayImpactAsync(int? campusId, DateOnly date) =>
+        new(await UnlockedSessionsOn(campusId, date).CountAsync());
+
+    /// <summary>Tiết Đã xếp lịch hoặc Chờ xử lý của ngày, chưa bị khóa (mục 6.2: chưa kết thúc, chưa có điểm danh), thuộc cả trường hoặc một phân hiệu.</summary>
+    private IQueryable<TeachingSession> UnlockedSessionsOn(int? campusId, DateOnly date) =>
+        db.TeachingSession
+            .Where(s => s.SessionDate == date && (campusId == null || s.Class.CampusId == campusId))
+            .Where(s => s.Status == "Scheduled" || s.Status == "Pending")
+            .Where(SessionLockRules.NotEnded(clock))
+            .Where(s => !s.AttendanceRecord.Any());
+
+    /// <summary>
+    /// Hủy các tiết chưa khóa rơi vào ngày nghỉ (nguồn Chỉnh tay), thông báo giáo viên và học sinh của lớp, ghi một bản Audit.
+    /// Chỉ thêm vào context, người gọi lưu cùng ngày nghỉ. Tiết đã khóa không bị đụng tới.
+    /// </summary>
+    private async Task<int> CancelSessionsOnAsync(Holiday holiday)
+    {
+        var date = holiday.HolidayDate;
+        var sessions = await UnlockedSessionsOn(holiday.CampusId, date).ToListAsync();
+        if (sessions.Count == 0) return 0;
+
+        var why = string.IsNullOrWhiteSpace(holiday.Reason) ? "Ngày nghỉ" : $"Ngày nghỉ: {holiday.Reason}";
+        foreach (var s in sessions)
+        {
+            s.Status = "Cancelled";
+            s.Source = "Manual";
+            s.UpdatedByPersonId = user.PersonId;
+            s.UpdatedAt = clock.Now;
+            s.ChangeNote = why.Length > 255 ? why[..255] : why;
+        }
+
+        var title = "Tiết đã hủy vì ngày nghỉ";
+        string Body(int n) => $"{date:dd/MM/yyyy} là ngày nghỉ{(string.IsNullOrWhiteSpace(holiday.Reason) ? "" : $" ({holiday.Reason})")}; {n} tiết trong ngày đã hủy.";
+        foreach (var byClass in sessions.GroupBy(s => s.ClassId))
+        {
+            var studentIds = await db.Enrollment.AsNoTracking()
+                .Where(e => e.ClassId == byClass.Key && e.StartDate <= date && (e.EndDate == null || e.EndDate >= date))
+                .Select(e => e.StudentId).ToListAsync();
+            notifier.Add(studentIds, NotificationTypes.ScheduleChanged, title, Body(byClass.Count()), "TeachingSession", byClass.First().SessionId);
+        }
+        foreach (var byTeacher in sessions.Where(s => s.TeacherId != null).GroupBy(s => s.TeacherId!.Value))
+            notifier.Add([byTeacher.Key], NotificationTypes.ScheduleChanged, title, Body(byTeacher.Count()), "TeachingSession", byTeacher.First().SessionId);
+
+        var detail = new Dictionary<string, object?> { ["date"] = date, ["cancelled"] = sessions.Count };
+        if (holiday.CampusId is { } campusId) detail["campusId"] = campusId;
+        audit.AddLong(AuditCategories.ScheduleAdjust, "CancelSessionsForHoliday", sessions.Select(s => s.SessionId), detail);
+        return sessions.Count;
     }
 
     /// <summary>Xóa ngày nghỉ KHÔNG khôi phục tiết đã bị hủy trước đó; muốn dạy lại thì thêm tiết bù (BR-15).</summary>

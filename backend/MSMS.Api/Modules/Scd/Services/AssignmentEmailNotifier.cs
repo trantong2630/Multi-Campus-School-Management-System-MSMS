@@ -8,7 +8,7 @@ namespace MSMS.Api.Modules.Scd.Services;
 /// <summary>
 /// Email báo giáo viên được phân công dạy thay (đổi giáo viên, xử lý tiết Chờ xử lý) hoặc dạy tiết bù, và báo giáo viên mất tiết
 /// (giáo viên cũ khi đổi giáo viên, giáo viên của tiết bị hủy), gửi kèm thông báo trong ứng dụng.
-/// LỆCH SPEC BR-26 (spec chỉ cho phép email OTP): đã được người dùng đồng ý, chờ nhóm cập nhật spec.
+/// Spec mục 3.2 và BR-26 cho phép email này, ngoài email OTP; bốn trường hợp, không email nào khác cho thông báo lịch dạy.
 /// Thư được giữ lại trong request; người gọi chỉ gọi <see cref="Dispatch"/> sau khi SaveChanges/commit thành công.
 /// Gửi chạy nền nên request không chờ SMTP; gửi lỗi hoặc hồ sơ không có email thì bỏ qua, thao tác xếp lịch vẫn thành công.
 /// </summary>

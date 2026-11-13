@@ -8,7 +8,7 @@ using static MSMS.Tests.Modules.Sch.SchTestSupport;
 namespace MSMS.Tests.Modules.Sch;
 
 /// <summary>
-/// SCH-03 (4.2.12–4.2.19): năm học hiện hành, hai học kỳ, ngày nghỉ theo kế hoạch (BR-08, BR-15).
+/// SCH-03 (4.2.12–4.2.19): năm học hiện hành, hai học kỳ, ngày nghỉ (BR-08, BR-15).
 /// Quy tắc chồng năm học, mốc kết thúc muộn nhất và xóa năm học nằm ở AcademicYearTests.
 /// </summary>
 public class CalendarRulesTests
@@ -18,7 +18,7 @@ public class CalendarRulesTests
         var db = NewDb();
         AddCampus(db, 1, "Phân hiệu 1");
         AddCampus(db, 2, "Phân hiệu 2");
-        return (db, new CalendarService(db, UserOf(AccountTypes.SchoolAdmin), ClockAt()));
+        return (db, NewService(db));
     }
 
     private static AcademicYearRequest Year(string name, DateOnly start, DateOnly end) => new(name, start, end);
@@ -136,7 +136,7 @@ public class CalendarRulesTests
 
         Assert.Null(whole.CampusId);
         Assert.Equal("Phân hiệu 1", campus1.CampusName);
-        Assert.False(whole.IsAdHoc);
+        Assert.Equal(0, whole.CancelledSessions);
         await Assert.ThrowsAsync<ApiException>(() => svc.CreateHolidayAsync(new HolidayRequest(year.AcademicYearId, null, tet, null)));
         await Assert.ThrowsAsync<ApiException>(() => svc.CreateHolidayAsync(new HolidayRequest(year.AcademicYearId, 1, tet, null)));
     }

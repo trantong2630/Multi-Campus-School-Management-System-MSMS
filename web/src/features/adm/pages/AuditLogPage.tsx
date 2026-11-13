@@ -15,7 +15,7 @@ import type { AuditLogItem } from '../types';
 const PAGE_SIZE = 20;
 const API_DATE = 'YYYY-MM-DD';
 
-/** ADM-02 (task 4.9.6, 4.9.7): School Admin tra nhật ký, lọc theo nhóm, người thực hiện và thời gian (BR-28). */
+/** ADM-02 (task 4.9.8, 4.9.9): School Admin tra nhật ký, lọc theo nhóm, người thực hiện và thời gian (BR-28). */
 export function AuditLogPage() {
   const [category, setCategory] = useState<string | undefined>();
   const [actorPersonId, setActorPersonId] = useState<number | undefined>();

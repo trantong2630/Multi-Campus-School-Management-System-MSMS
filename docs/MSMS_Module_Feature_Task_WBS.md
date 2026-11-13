@@ -1,13 +1,13 @@
 # 4. Software Product Development — MSMS
 
-Cấu trúc phân rã: Module → Feature → Task. Mỗi Task là một hành động nghiệp vụ hoàn chỉnh của một actor. Các task thuộc cùng một Feature tô cùng màu ở cột Feature. Căn theo Business Specification V3.1 (Oct 20, 2026) — 9 Module / 33 Feature / 246 Task.
+Cấu trúc phân rã: Module → Feature → Task. Mỗi Task là một hành động nghiệp vụ hoàn chỉnh của một actor. Các task thuộc cùng một Feature tô cùng màu ở cột Feature. Căn theo Business Specification V3.1 (Oct 20, 2026) — 9 Module / 34 Feature / 240 Task.
 
 Cột Platform của mỗi Task: `BE` (không có giao diện), `BE + Web`, hoặc `BE + Web + Mobile`. Mọi Task có giao diện đều có trên web; chỉ một số có thêm trên mobile app (Business Specification V3 mục 8.1–8.2).
 
 ## Mục lục
 - 4.1 IAM — Identity & Access (Định danh & Truy cập)
 - 4.2 SCH — School Setup (Thiết lập trường)
-- 4.3 PPL — People & Assignment (Hồ sơ & Phụ trách)
+- 4.3 PPL — People & Responsibility (Hồ sơ & Trách nhiệm)
 - 4.4 SCD — Timetable & Teaching Schedule (Thời khóa biểu & Lịch dạy)
 - 4.5 ATT — Attendance (Điểm danh)
 - 4.6 LRN — Learning (Học tập)
@@ -151,7 +151,7 @@ Xem loại tài khoản, trạng thái và lần đăng nhập gần nhất củ
 
 ## 4.2 SCH — School Setup (Thiết lập trường)
 
-School Admin là người duy nhất ghi dữ liệu của module (riêng Thông tin trường: School Admin và Principal). Principal và Vice Principal có các màn hình xem Phân hiệu, Tổ chuyên môn & Môn học, Năm học & Học kỳ và Lớp & Ghi danh kèm thống kê cấu trúc (Vice Principal chỉ thấy phân hiệu mình phụ trách); Ngày nghỉ, Khung giờ tiết và Kết chuyển năm học chỉ có cho School Admin. Teacher không có màn hình nào của SCH — họ đọc dữ liệu SCH qua API ngay tại thời khóa biểu, lịch dạy và trang chủ (Dev_Conventions §4.7).
+School Admin là người duy nhất ghi dữ liệu của module. Principal có các màn hình xem Thông tin trường, Phân hiệu, Tổ chuyên môn & Môn học, Năm học & Học kỳ và Lớp & Ghi danh kèm thống kê cấu trúc; Ngày nghỉ, Khung giờ tiết và Kết chuyển năm học chỉ có màn hình cho School Admin. Vice Principal và Teacher không có màn hình nào của SCH — họ đọc dữ liệu SCH qua API ngay tại thời khóa biểu, lịch dạy và trang chủ (Vice Principal chỉ đọc dữ liệu của phân hiệu mình phụ trách; Dev_Conventions §4.7).
 
 ### SCH-01 Campus (Phân hiệu)
 
@@ -223,15 +223,15 @@ Mỗi năm có đúng hai học kỳ, nằm trong năm học, không chồng nha
 `BE + Web` · 0.5 MD · dep: 4.2.15  
 Sửa ngày bắt đầu và ngày kết thúc của hai học kỳ, cùng màn khai báo ở 4.2.15, trong giới hạn của năm học.
 
-**4.2.17 — Khai báo ngày nghỉ theo kế hoạch / Declare Planned Non-teaching Day**  
+**4.2.17 — Khai báo ngày nghỉ / Declare Non-teaching Day**  
 `BE + Web` · 1 MD · dep: 4.2.13  
-Khai ngày nghỉ gắn năm học, nằm trong khoảng năm học, cấp toàn trường hoặc cấp một phân hiệu, mỗi phạm vi một ngày chỉ khai một lần. Ngày nghỉ đột xuất khai ở Lịch dạy (SCD). Khai trước khi Phát hành thì Phát hành bỏ qua ngày đó; khai sau thì tiết đã sinh không tự đổi, Vice Principal hủy từng tiết (BR-08, BR-15).
+Khai ngày nghỉ gắn năm học, nằm trong khoảng năm học, cấp toàn trường hoặc cấp một phân hiệu, mỗi phạm vi một ngày chỉ khai một lần. Khai trước khi Phát hành thì Phát hành bỏ qua ngày đó. Khai sau khi tiết đã sinh thì cùng thao tác hủy mọi tiết Đã xếp lịch hoặc Chờ xử lý chưa bị khóa của ngày đó (toàn trường hoặc đúng phân hiệu của ngày nghỉ): nguồn Chỉnh tay, giữ giáo viên trên tiết để truy vết, thông báo giáo viên và học sinh của lớp, ghi một bản Audit kèm danh sách ID tiết; tiết đã bị khóa giữ nguyên. Hộp khai ngày nghỉ báo trước số tiết sẽ bị hủy và thông báo số tiết đã hủy sau khi lưu (BR-08, BR-15, BR-26, BR-28).
 
 **4.2.18 — Xem lịch ngày nghỉ theo phân hiệu / View Non-teaching Day Calendar**  
 `BE + Web` · 1 MD · dep: 4.2.17  
 Xem ngày nghỉ dạng lịch tháng, lọc theo phân hiệu và năm học.
 
-**4.2.19 — Xóa ngày nghỉ theo kế hoạch / Delete Planned Non-teaching Day**  
+**4.2.19 — Xóa ngày nghỉ / Delete Non-teaching Day**  
 `BE + Web` · 0.5 MD · dep: 4.2.17  
 Xóa ngày nghỉ chưa dùng tới. Xóa KHÔNG khôi phục tiết đã bị hủy trước đó; muốn dạy lại thì thêm tiết bù (BR-15).
 
@@ -261,7 +261,7 @@ Không bỏ được khung đang có tiết học hoặc thời khóa biểu tha
 
 **4.2.25 — Xem danh sách lớp theo năm và phân hiệu / View Class List**  
 `BE + Web` · 1 MD · dep: 4.2.2, 4.2.13  
-Xem các lớp của một năm học tại một phân hiệu cùng khối, sĩ số hiện tại và chủ nhiệm; Vice Principal chỉ thấy lớp của phân hiệu mình phụ trách. Màn hình kèm số lớp, học sinh theo khối và số lớp chưa có chủ nhiệm.
+Xem các lớp của một năm học tại một phân hiệu cùng khối, sĩ số hiện tại và chủ nhiệm. Màn hình dành cho School Admin (sửa) và Hiệu trưởng (chỉ xem); Vice Principal đọc dữ liệu lớp của phân hiệu mình phụ trách ở các màn hình nghiệp vụ. Màn hình kèm số lớp, học sinh theo khối và số lớp chưa có chủ nhiệm.
 
 **4.2.26 — Tạo lớp / Create Class**  
 `BE + Web` · 1 MD · dep: 4.2.25  
@@ -589,11 +589,11 @@ Tạo tiết mới ở một (ngày, khung giờ) trống của lớp, chọn m�
 
 **4.4.23 — Đặt nguồn tiết thành Chỉnh tay / Mark Lesson as Manually Adjusted**  
 `BE` · 0.5 MD · dep: 4.4.20, 4.4.21, 4.4.22  
-Mọi thao tác tay đổi nguồn tiết từ Sinh tự động sang Chỉnh tay, tạo thông báo cho giáo viên liên quan và học sinh của lớp, và ghi Audit (BR-15, BR-26, BR-28).
+Mọi thao tác tay đổi nguồn tiết từ Sinh tự động sang Chỉnh tay, tạo thông báo cho giáo viên liên quan và học sinh của lớp, và ghi Audit (BR-15, BR-26, BR-28). Ngoài thông báo trong ứng dụng, giáo viên còn nhận email ở bốn trường hợp: được phân công dạy thay (đổi giáo viên hoặc xử lý tiết Chờ xử lý, 4.4.29), được phân công dạy tiết bù, không còn dạy tiết (đổi giáo viên cho người khác) và có tiết bị hủy. Email gửi tới email trong hồ sơ giáo viên qua Gmail SMTP, nêu việc đã đổi, tiết (môn, lớp, ngày, khung giờ) và nhắc xem lịch dạy trên MSMS; chỉ gửi sau khi đã lưu thành công, gửi nền nên không chặn thao tác; hồ sơ không có email hoặc SMTP hỏng thì bỏ qua, không thử lại, thao tác xếp lịch vẫn thành công (mục 3.2). Hủy tiết do khai ngày nghỉ (4.2.17), khai báo vắng và xóa khai báo vắng không gửi email.
 
 **4.4.24 — Kiểm thử điều chỉnh lịch / Adjustment Tests**  
 `QA` · 2 MD · dep: 4.4.20, 4.4.21, 4.4.22  
-Không thao tác được trên tiết bị khóa; tiết bù trùng khung giờ bị chặn; mọi thao tác đều sinh Audit và thông báo.
+Không thao tác được trên tiết bị khóa; tiết bù trùng khung giờ bị chặn; mọi thao tác đều sinh Audit và thông báo; email chỉ tới đúng giáo viên của bốn trường hợp ở 4.4.23, hồ sơ không có email thì bỏ qua và Gmail SMTP hỏng không làm thao tác thất bại.
 
 ### SCD-03 Teacher Absence (Xử lý giáo viên vắng)
 
@@ -615,7 +615,7 @@ Teacher đủ điều kiện dạy, cùng tổ chuyên môn với môn của ti�
 
 **4.4.29 — Xử lý tiết chờ bằng cách chọn giáo viên dạy thay / Resolve by Substitute Teacher**  
 `BE + Web` · 1.5 MD · dep: 4.4.28  
-Lựa chọn 1: gán giáo viên được chọn, tiết quay lại Đã xếp lịch. Backend kiểm lại điều kiện dạy và xung đột lịch toàn trường lúc lưu (BR-06, BR-13, BR-16).
+Lựa chọn 1: gán giáo viên được chọn, tiết quay lại Đã xếp lịch. Backend kiểm lại điều kiện dạy và xung đột lịch toàn trường lúc lưu; giáo viên dạy thay nhận email phân công (4.4.23) (BR-06, BR-13, BR-16).
 
 **4.4.30 — Xử lý tiết chờ bằng cách hủy / Resolve by Cancelling**  
 `BE + Web` · 0.5 MD · dep: 4.4.27  
@@ -641,7 +641,7 @@ Tiết Chờ xử lý để trống giáo viên và không điểm danh được
 
 **4.4.35 — Tính phụ trách chuyên môn từ thời khóa biểu / Derive Subject Responsibility from Timetable**  
 `BE` · 2 MD · dep: 4.4.11  
-Không có bảng riêng, không nhập tay: tính mỗi khi cần. Với mỗi lớp, lấy phiên bản Đã phát hành mới nhất của lớp trong học kỳ hiện hành; lớp không có trong lần Phát hành sau vẫn theo phiên bản trước đó của nó. Giáo viên có tiết của một môn trong phiên bản ấy đang phụ trách chuyên môn môn đó ở lớp đó; số tiết mỗi tuần là số ô của (lớp, môn, giáo viên). Một (lớp, môn) có thể có nhiều giáo viên. Điều chỉnh lịch và dạy thay chỉ đổi lịch dạy nên không đổi kết quả. Là nguồn quyền cho giao bài, công bố điểm, phân tích bằng AI và hộp thư (BR-14, BR-21, BR-22, BR-23, BR-25).
+Không có bảng riêng, không nhập tay: tính mỗi khi cần. Với mỗi lớp, lấy phiên bản Đã phát hành mới nhất của lớp trong học kỳ hiện hành; lớp không có trong lần Phát hành sau vẫn theo phiên bản trước đó của nó. Giáo viên có tiết của một môn trong phiên bản ấy đang phụ trách chuyên môn môn đó ở lớp đó; số tiết mỗi tuần là số ô của (lớp, môn, giáo viên). Một (lớp, môn) có thể có nhiều giáo viên. Điều chỉnh lịch và dạy thay chỉ đổi lịch dạy nên không đổi kết quả. Là nguồn quyền cho giao bài, xem kết quả bài làm, phân tích bằng AI và hộp thư (BR-14, BR-21, BR-22, BR-23, BR-25).
 
 **4.4.36 — Xem phụ trách chuyên môn toàn trường / View Subject Responsibility**  
 `BE + Web` · 2.5 MD · dep: 4.4.35  
@@ -943,11 +943,11 @@ Phụ huynh không tạo được hội thoại với giáo viên không dạy c
 
 **4.8.1 — Phát thông báo theo danh sách sự kiện đóng / Dispatch Event Notifications**  
 `BE` · 2 MD · dep: 4.1.4  
-Chỉ trong ứng dụng, không gửi email. Danh sách sự kiện là DANH SÁCH ĐÓNG: phát hành thời khóa biểu, tiết bị đổi — hủy — thêm bù — có giáo viên dạy thay — trả lại giáo viên khi xóa khai báo vắng, tiết chuyển Chờ xử lý, bài mới được giao, tin nhắn mới (BR-26).
+Thông báo chỉ trong ứng dụng; email báo giáo viên khi lịch dạy của họ đổi là việc riêng ở 4.4.23, không thuộc danh sách này. Danh sách sự kiện là DANH SÁCH ĐÓNG: phát hành thời khóa biểu, tiết bị đổi — hủy — thêm bù — có giáo viên dạy thay — trả lại giáo viên khi xóa khai báo vắng, tiết chuyển Chờ xử lý, bài mới được giao, tin nhắn mới (BR-26).
 
 **4.8.2 — Xem trung tâm thông báo / View Notification Center**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.8.1  
-Danh sách thông báo của chính mình, mới nhất trước, phân biệt đã đọc và chưa đọc, kèm số chưa đọc trên chuông. Tin nhắn phụ huynh – giáo viên có hộp thư riêng nên không hiện ở chuông.
+Danh sách thông báo của chính mình, mới nhất trước, phân biệt đã đọc và chưa đọc, kèm số chưa đọc trên chuông. Tin nhắn phụ huynh – giáo viên vẫn tạo thông báo nhưng có hộp thư riêng nên không liệt kê ở chuông.
 
 **4.8.3 — Mở thông báo và kiểm quyền khi mở / Open Notification with Re-check**  
 `BE + Web + Mobile` · 1 MD · dep: 4.8.2  
@@ -1019,7 +1019,7 @@ Học sinh và phụ huynh không thấy bài Nội bộ; giáo viên đăng đ�
 
 **4.9.1 — Tính chỉ số theo phạm vi / Compute Board Metrics**
 `BE` · 2.5 MD · dep: —
-Chuyên cần 4 tuần (có mặt, muộn, vắng có phép, vắng không phép theo BR-18, dùng chung AttendanceRules với màn Điểm danh), tiết đã qua chưa điểm danh, bốn số quy mô (lớp đang hoạt động, học sinh đang học, cán bộ đang công tác, tiết dạy hôm nay), đường chuyên cần 8 tuần và bảng các lớp (hoặc phân hiệu) kèm chuyên cần. Không có số liệu bài tập (xem 4.9.3). Lọc được theo phân hiệu và khối. Danh sách Cần xử lý gồm tiết Chờ xử lý, giáo viên vắng hôm nay, đơn nghỉ chờ duyệt (chỉ Vice Principal, chỉ xem số, không mở được danh sách đơn) và lớp chưa có chủ nhiệm. Một tiết, đơn hay bài thuộc phân hiệu nào là theo PHÂN HIỆU CỦA LỚP liên quan (mục 5.1).
+Chuyên cần 4 tuần (có mặt, muộn, vắng có phép, vắng không phép theo BR-18, dùng chung AttendanceRules với màn Điểm danh), tiết đã qua chưa điểm danh, bốn số quy mô (lớp đang hoạt động, học sinh đang học, cán bộ đang công tác, tiết dạy hôm nay), đường chuyên cần 8 tuần và bảng các lớp (hoặc phân hiệu) kèm chuyên cần. Không có số liệu bài tập (xem 4.9.3). Lọc được theo phân hiệu và khối. Danh sách Cần chú ý gồm tiết Chờ xử lý, giáo viên vắng hôm nay, đơn nghỉ chờ duyệt (chỉ Vice Principal, chỉ xem số, không mở được danh sách đơn) và lớp chưa có chủ nhiệm. Một tiết, đơn hay bài thuộc phân hiệu nào là theo PHÂN HIỆU CỦA LỚP liên quan (mục 5.1).
 
 **4.9.2 — Tình hình toàn trường, phân hiệu, tổ và lớp / View Situation Boards**
 `BE + Web` · 3.5 MD · dep: 4.9.1
@@ -1029,54 +1029,58 @@ Principal xem toàn trường, lọc được theo phân hiệu, có bảng so s
 `BE + Web` · 3 MD · dep: 4.9.1
 Một màn cho Principal, Vice Principal và chủ nhiệm (tổ trưởng dùng màn LRN-05 trong cùng mục): tỷ lệ nộp kèm so với tuần trước, bài nộp thấp, tiến độ từng đơn vị theo phân hiệu, tổ, môn, lớp, giáo viên (mỗi vai trò chỉ có các cách xem thuộc phạm vi của mình: Hiệu phó không xem theo tổ, chủ nhiệm chỉ theo môn) và danh sách bài lọc được theo tình trạng và từ khóa. Chỉ số liệu tổng hợp theo bài, không có bài nộp hay điểm từng học sinh.
 
-**4.9.5 — Thống kê hệ thống / System Statistics**
+**4.9.4 — Thống kê hệ thống / System Statistics**
 `BE + Web` · 2 MD · dep: —
 School Admin xem quy mô trường, tài khoản theo loại, dữ liệu cần bổ sung (lớp chưa có chủ nhiệm, học sinh chưa ghi danh vào lớp, học sinh chưa liên kết phụ huynh, cán bộ chưa có tài khoản, giáo viên chưa thuộc tổ chuyên môn, tổ chuyên môn chưa có tổ trưởng, phân hiệu chưa có hiệu phó phụ trách; chỉ hiện mục lớn hơn 0 và mỗi dòng mở màn hình sửa), hoạt động nhật ký 7 ngày gần nhất và tiến độ phát hành thời khóa biểu theo phân hiệu.
 
-**4.9.4 — Kiểm thử phạm vi Bảng điều khiển / Board Scope Tests**
+**4.9.5 — Trang chủ / Home**
+`Web` · 2 MD · dep: 4.2.15, 4.2.17, 4.2.21, 4.2.42, 4.4.15
+Màn đầu tiên của mọi loại tài khoản, cùng một nội dung cho mọi loại; chỉ chào và hiện thông tin chung, không có số liệu thống kê, lối tắt hay bảng tin (mục 5.1). Lời chào theo buổi kèm logo trường và đồng hồ của ngày; **Hôm nay**: khung giờ tiết của trường, đánh dấu tiết đang diễn ra theo giờ thực, giáo viên thấy thêm lớp và môn mình dạy ở từng tiết, ngày nghỉ cấp trường hoặc Chủ nhật thì báo trường nghỉ; **Năm học**: học kỳ hiện tại và tuần thứ mấy; **Ngày nghỉ sắp tới**: ba ngày gần nhất, ngày đầu có đếm ngược và lịch tháng. Dùng lại dữ liệu đã có của SCH và lịch dạy của mình, không có API riêng.
+
+**4.9.6 — Kiểm thử phạm vi Bảng điều khiển / Board Scope Tests**
 `QA` · 1 MD · dep: 4.9.2, 4.9.3
 Vice Principal không xem được số liệu phân hiệu khác (gọi kèm phân hiệu khác bị từ chối); bộ lọc phân hiệu của Principal cho số khớp với từng hàng của bảng so sánh; chủ nhiệm chỉ thấy bài của lớp mình, giáo viên không chủ nhiệm bị từ chối; con số khớp với danh sách gốc mở ra.
 
 ### ADM-02 Audit Log (Nhật ký kiểm toán)
 
-**4.9.5 — Ghi nhật ký cho ba nhóm sự kiện / Record Audit Entry**  
+**4.9.7 — Ghi nhật ký cho ba nhóm sự kiện / Record Audit Entry**  
 `BE` · 2 MD · dep: 4.1.12, 4.4.11  
-Đúng ba nhóm: tài khoản (tạo đơn lẻ và hàng loạt, khóa, mở, đổi loại tài khoản, School Admin reset mật khẩu — không ghi mật khẩu); phát hành thời khóa biểu (phiên bản, số tiết xóa và tạo); điều chỉnh lịch (đổi giáo viên, hủy, tiết bù, khai báo, xóa khai báo và xử lý giáo viên vắng). Thao tác hàng loạt ghi MỘT bản ghi kèm danh sách ID (BR-28).
+Đúng ba nhóm: tài khoản (tạo đơn lẻ và hàng loạt, khóa, mở, đổi loại tài khoản, School Admin reset mật khẩu — không ghi mật khẩu); phát hành thời khóa biểu (phiên bản, số tiết xóa và tạo); điều chỉnh lịch (đổi giáo viên, hủy, tiết bù, khai báo, xóa khai báo, xử lý giáo viên vắng và hủy tiết do khai ngày nghỉ). Thao tác hàng loạt ghi MỘT bản ghi kèm danh sách ID (BR-28).
 
-**4.9.6 — Tra cứu nhật ký kiểm toán / Browse Audit Log**  
-`BE + Web` · 1.5 MD · dep: 4.9.5  
+**4.9.8 — Tra cứu nhật ký kiểm toán / Browse Audit Log**  
+`BE + Web` · 1.5 MD · dep: 4.9.7  
 School Admin xem nhật ký theo thứ tự thời gian.
 
-**4.9.7 — Lọc nhật ký theo nhóm, người và thời gian / Filter Audit Log**  
-`BE + Web` · 1 MD · dep: 4.9.6  
+**4.9.9 — Lọc nhật ký theo nhóm, người và thời gian / Filter Audit Log**  
+`BE + Web` · 1 MD · dep: 4.9.8  
 Lọc theo ba nhóm sự kiện, người thực hiện và khoảng thời gian (BR-28).
 
-**4.9.8 — Xem chi tiết một bản ghi nhật ký / View Audit Entry Detail**  
-`BE + Web` · 1 MD · dep: 4.9.6  
+**4.9.10 — Xem chi tiết một bản ghi nhật ký / View Audit Entry Detail**  
+`BE + Web` · 1 MD · dep: 4.9.8  
 Xem nội dung đầy đủ của một bản ghi, gồm danh sách ID của thao tác hàng loạt.
 
-**4.9.9 — Kiểm thử tính chỉ ghi thêm / Append-only Tests**  
-`QA` · 1 MD · dep: 4.9.5  
+**4.9.11 — Kiểm thử tính chỉ ghi thêm / Append-only Tests**  
+`QA` · 1 MD · dep: 4.9.7  
 Không có API sửa hay xóa nhật ký; quyền CSDL chặn UPDATE và DELETE; việc ngoài ba nhóm (đăng nhập, nộp bài, điểm danh, trách nhiệm, kết chuyển) không vào nhật ký.
 
 ### ADM-03 Data Export (Xuất dữ liệu)
 
-**4.9.10 — Xuất điểm danh theo lớp và khoảng ngày / Export Class Attendance**  
+**4.9.12 — Xuất điểm danh theo lớp và khoảng ngày / Export Class Attendance**  
 `BE + Web` · 1.5 MD · dep: 4.5.3  
 Nguồn là bản ghi điểm danh, kèm nhãn cuối suy ra. Chủ nhiệm xuất lớp mình, Vice Principal xuất phân hiệu mình (BR-18, mục 5.2).
 
-**4.9.11 — Xuất thời khóa biểu hiện hành / Export Current Timetable**  
+**4.9.13 — Xuất thời khóa biểu hiện hành / Export Current Timetable**  
 `BE + Web` · 1.5 MD · dep: 4.4.11  
 Nguồn là LỊCH DẠY chứ không phải phiên bản thời khóa biểu, để phản ánh cả các điều chỉnh tay. Vice Principal xuất phân hiệu mình (BR-14, mục 5.2).
 
-**4.9.12 — Xuất kết quả bài tập theo lớp / Export Class Assignment Results**  
+**4.9.14 — Xuất kết quả bài tập theo lớp / Export Class Assignment Results**  
 `BE + Web` · 1.5 MD · dep: 4.6.15  
 Nguồn là lượt làm bài. Chỉ Teacher đang phụ trách chuyên môn xuất được (mục 5.2).
 
-**4.9.13 — Kiểm thử phạm vi xuất dữ liệu / Export Scope Tests**  
-`QA` · 1 MD · dep: 4.9.10, 4.9.11, 4.9.12  
+**4.9.15 — Kiểm thử phạm vi xuất dữ liệu / Export Scope Tests**  
+`QA` · 1 MD · dep: 4.9.12, 4.9.13, 4.9.14  
 Mỗi mục chỉ xuất đúng phạm vi của người gọi; danh sách tài khoản kèm mật khẩu tạm KHÔNG phải một mục xuất và không xuất lại được (BR-04).
 
 ---
 
-**Tổng:** 238 task · 337 MD
+**Tổng:** 240 task · 344 MD
