@@ -22,7 +22,7 @@ function showValue(key: string, value: string) {
   return value;
 }
 
-/** ADM-02 (task 4.9.8): nội dung đầy đủ của một bản ghi, gồm danh sách ID của thao tác hàng loạt. */
+/** ADM-02 (task 4.9.10): nội dung đầy đủ của một bản ghi, gồm danh sách ID của thao tác hàng loạt. */
 export function AuditDetailDrawer({ auditId, onClose }: Props) {
   const q = useQuery({
     queryKey: ['adm', 'audit-log', 'entry', auditId],
