@@ -261,6 +261,7 @@ public sealed class AttendanceService(MsmsDbContext db, CurrentUser user, ScopeR
             ?? throw ApiException.NotFound("Không tìm thấy lớp.");
         var allowed = user.AccountType switch
         {
+            AccountTypes.Principal => true,
             AccountTypes.VicePrincipal => (await scope.LedCampusIdsAsync()).Contains(cls.CampusId),
             AccountTypes.Teacher => (await HomeroomClassIdsAsync()).Contains(classId),
             _ => false,

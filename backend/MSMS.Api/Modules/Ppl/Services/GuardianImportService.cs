@@ -34,7 +34,7 @@ public sealed class GuardianImportService(MsmsDbContext db, IClock clock)
         ws.WriteTitle("MSMS — MẪU IMPORT PHỤ HUYNH", last);
         ws.WriteNote(2,
             "Bắt buộc (ô tô cam): Họ và tên, Số điện thoại. Tùy chọn: Giới tính, Email, Địa chỉ. "
-            + "KHÔNG có cột mã hồ sơ — hệ thống tự sinh mã PH. Số điện thoại gồm 9 đến 15 chữ số, duy nhất giữa các phụ huynh, dùng để nhận diện người đã có "
+            + "KHÔNG có cột mã hồ sơ — hệ thống tự sinh mã PH. Số điện thoại là số di động gồm đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09, duy nhất giữa các phụ huynh, dùng để nhận diện người đã có "
             + "(nên định dạng cột là Text để giữ số 0 đầu). Số đã có thì bỏ qua cả dòng. Import chỉ tạo hồ sơ, không tạo tài khoản và không liên kết học sinh.",
             last, 40);
 

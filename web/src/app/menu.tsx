@@ -1,5 +1,5 @@
 import {
-  BookOpen, CalendarDays, ClipboardCheck, FileText, HeartHandshake, House, LayoutDashboard, Mail, Newspaper, Settings2, ShieldCheck, Users,
+  BookOpen, CalendarDays, ChartColumn, ClipboardCheck, FileText, HeartHandshake, House, LayoutDashboard, Mail, Newspaper, Settings2, ShieldCheck, Users,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { AccountType } from '@/shared/lib/labels';
@@ -66,6 +66,7 @@ export const menu: MenuGroup[] = [
       { key: 'com-feed', label: 'Bảng tin', path: '/com/feed', roles: ALL, ready: true },
     ],
   },
+  { key: 'report', label: 'Báo cáo toàn trường', icon: ChartColumn, section: 'overview', path: '/adm/report', roles: ['Principal'], ready: true },
   {
     key: 'sch', label: 'Cơ cấu nhà trường', icon: Settings2, section: 'manage',
     children: [
@@ -124,7 +125,7 @@ export const menu: MenuGroup[] = [
     children: [
       { key: 'adm-account', label: 'Tài khoản', path: '/adm/accounts', roles: ['SchoolAdmin'], ready: true },
       { key: 'adm-audit', label: 'Nhật ký', path: '/adm/audit-log', roles: ['SchoolAdmin'], ready: true },
-      { key: 'adm-export', label: 'Xuất dữ liệu', path: '/adm/exports', roles: ['VicePrincipal', 'Teacher'], requires: { Teacher: 'homeroom', VicePrincipal: 'campus' }, ready: true },
+      { key: 'adm-export', label: 'Xuất dữ liệu', path: '/adm/exports', roles: ['Principal', 'VicePrincipal', 'Teacher'], requires: { Teacher: 'homeroom', VicePrincipal: 'campus' }, ready: true },
     ],
   },
 ];

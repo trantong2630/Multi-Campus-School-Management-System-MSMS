@@ -10,6 +10,7 @@ import { HomePage } from './pages/HomePage';
 import { HomeroomPage } from './pages/HomeroomPage';
 import { PrincipalBoardPage } from './pages/PrincipalBoardPage';
 import { ProgressPage } from './pages/ProgressPage';
+import { SchoolReportPage } from './pages/SchoolReportPage';
 import { SystemBoardPage } from './pages/SystemBoardPage';
 
 /** `/dashboard` không phải màn hình: chuyển tới mục đầu tiên của Bảng điều khiển mà người dùng được mở. */
@@ -28,6 +29,7 @@ export const admRoutes: RouteObject[] = [
   { path: 'dashboard/homeroom', element: <HomeroomPage /> },
   { path: 'dashboard/progress', element: <ProgressPage /> },
   { path: 'dashboard/system', element: <SystemBoardPage /> },
+  { path: 'adm/report', element: <SchoolReportPage /> },
   { path: 'adm/audit-log', element: <AuditLogPage /> },
   { path: 'adm/exports', element: <ExportsPage /> },
 ];

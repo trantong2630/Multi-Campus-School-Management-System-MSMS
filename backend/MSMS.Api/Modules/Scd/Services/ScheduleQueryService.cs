@@ -192,8 +192,9 @@ public sealed class ScheduleQueryService(MsmsDbContext db, CurrentUser user, Sco
         Common.Rules.ExportRules.CheckRange(from, to);
         var campusName = await db.Campus.AsNoTracking().Where(c => c.CampusId == campusId).Select(c => c.Name).FirstOrDefaultAsync()
                          ?? throw ApiException.NotFound("Không tìm thấy phân hiệu.");
-        if (user.AccountType != AccountTypes.VicePrincipal || !(await scope.LedCampusIdsAsync()).Contains(campusId))
-            throw ApiException.Forbidden("Chỉ xuất được thời khóa biểu của phân hiệu đang phụ trách.");
+        var allowed = user.AccountType == AccountTypes.Principal
+            || (user.AccountType == AccountTypes.VicePrincipal && (await scope.LedCampusIdsAsync()).Contains(campusId));
+        if (!allowed) throw ApiException.Forbidden("Chỉ xuất được thời khóa biểu của phân hiệu đang phụ trách.");
         var sessions = await ProjectSessions(db.TeachingSession.AsNoTracking()
             .Where(s => s.Class.CampusId == campusId && s.SessionDate >= from && s.SessionDate <= to));
         return (campusName, sessions);

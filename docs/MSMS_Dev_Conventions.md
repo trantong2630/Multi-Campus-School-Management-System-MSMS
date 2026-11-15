@@ -93,29 +93,40 @@ MSMS.Api/
   Common/
     Auth/            CurrentUser, ScopeResolver, Policies
     Time/            IClock — "hôm nay" theo giờ VN
-    Rules/           SessionRules, AttendanceRules, AssignmentRules,
-                     EnrollmentRules, EffectivePeriod, ScheduleConflict
+    Rules/           SessionLockRules, AttendanceRules, AssignmentRules,
+                     EnrollmentRules, LeaveRequestRules, SchoolCalendarRules,
+                     SemesterRules, RolloverRules, QuizRules, ExportRules,
+                     EffectivePeriod, PublishedTimetable
     Audit/           AuditWriter
-    Excel/           ExcelReader, ExcelWriter, CellError
+    Excel/           ExcelHelpers (đọc và ghi file Excel)
     Notifications/   NotificationSender
-    Text/            chuẩn hóa chuỗi, bỏ dấu
-    Errors/          ApiException, ErrorCodes, ExceptionMiddleware
+    Text/            TextNormalizer (chuẩn hóa chuỗi, bỏ dấu), UsernameGenerator
+    Errors/          ApiException, ErrorCodes, ExceptionMiddleware, Guard,
+                     PagedResult
+    Storage/         IImageStorage, CloudinaryImageStorage
+    Ai/              IAiClient, GeminiClient
+    Email/           SmtpEmailSender
 
   Data/
     MsmsDbContext.cs
-    Entities/
-    Configurations/
+    Entities/        mỗi file một entity, tên số ít (Campus.cs, TeachingSession.cs)
+    DevSeeder.cs     dữ liệu mẫu cho môi trường dev
+    TextbookSeeder.cs, Textbooks/   mục lục sách giáo khoa (JSON)
+    PersonCodes.cs   sinh mã người
 
   Modules/
     Iam/  Sch/  Ppl/  Scd/  Att/  Lrn/  Par/  Com/  Adm/
       Controllers/
       Services/
       Dtos/
+      <Module>Module.cs   đăng ký DI của module (IamModule, SchModule…)
 
   Migrations/        EF Migrations (code-first); DB dựng bằng `dotnet ef database update`, không có file .sql
 ```
 
-Entities để chung ở `Data/`, không rải vào module — Class, Person, TeachingSession bị gần như mọi module dùng.
+Entities để chung ở `Data/`, không rải vào module — Class, Person, TeachingSession bị gần như mọi module dùng. Cấu hình EF viết trong `MsmsDbContext`, không tách thư mục `Configurations/`.
+
+Thứ chỉ một module dùng và gắn với một cơ chế riêng thì nằm cạnh `Controllers/Services/Dtos` của module đó, không đưa lên `Common`: `Com` giữ `CommunicationHub`, `PresenceTracker`, `NotificationPushInterceptor` (SignalR).
 
 ### Web
 
@@ -125,15 +136,20 @@ src/
   shared/     components, lib (labels, format, text)
   features/
     iam/  sch/  ppl/  scd/  att/  lrn/  par/  com/  adm/
-      api.ts
-      pages/
-      components/
-      hooks/
+      api.ts          gọi API, một đối tượng <module>Api (scdApi, schApi)
+      types.ts        kiểu dữ liệu trả về từ API
+      routes.tsx      route của feature
+      pages/          <Tên>Page.tsx
+      components/     component dùng trong feature, kèm file .css của feature
+      hooks/          useXxx.ts bọc TanStack Query (riêng lrn dùng một file hooks.ts)
+      labels.ts       nhãn chỉ dùng trong feature đó (nếu có)
 ```
 
-Tên feature trùng tên module backend. Gọi API chỉ qua `features/<module>/api.ts`.
+Tên feature trùng tên module backend. Gọi API chỉ qua `features/<module>/api.ts`. File phụ trợ riêng của feature (ví dụ `semester.ts`, `subjectColor.ts`) đặt ngay trong thư mục feature.
 
 ### Mobile
+
+Chưa có code mobile (`mobile/` mới chỉ có `.gitkeep`). Cấu trúc dự kiến:
 
 ```
 lib/
@@ -149,9 +165,9 @@ Không có `sch/`, `ppl/`, `adm/` — mobile không có màn hình nào thuộc 
 
 ```
 MSMS.Tests/
-  Rules/           test thuần hàm, không cần DB
-  Modules/
-  Authorization/   mỗi loại tài khoản và mỗi trách nhiệm; KHÔNG dùng School Admin (spec mục 2.5)
+  Rules/           test hàm thuần, không cần DB (AssignmentRulesTests, LeaveRequestRulesTests…)
+  Modules/<Module>/ test theo module, tên file <Chủ đề>Tests.cs
+  Authorization/   chính sách và phạm vi theo loại tài khoản (hiện mới có Iam); KHÔNG dùng School Admin (spec mục 2.5)
 ```
 
 ### Luật khi code
@@ -162,10 +178,33 @@ MSMS.Tests/
 4. Module cần dữ liệu module khác thì gọi service của nó, không query bảng của nó.
 5. Thao tác nhiều bước (Phát hành, import, thay người) bọc trong một transaction.
 
-### Đặt tên để map vào WBS
+### Đặt tên
 
-Task `SCD-02-BE-03` → `Modules/Scd/Services/ScheduleAdjustService.cs`
-Branch `feat/SCD-02-doi-giao-vien` · Commit mở đầu bằng Feature ID.
+**Backend (C#)**
+
+| Thứ | Quy tắc | Ví dụ |
+| --- | --- | --- |
+| Tên file | trùng tên kiểu chính trong file, PascalCase | `TimetablePublishService.cs` |
+| Entity | danh từ số ít, một file một entity | `TeachingSession.cs` |
+| Service | `<Việc>Service`, hàm async hậu tố `Async` | `ScheduleAdjustmentService.ChangeTeacherAsync` |
+| Controller | `<Việc>Controller`, route `api/<module>/<việc>` | `AdjustmentController` → `api/scd/adjust` |
+| DTO | `record`, hậu tố `Dto`; request hậu tố `Request`; kết quả thao tác hậu tố `Result`. Mỗi module gom vào một file `<Module>Dtos.cs` | `GridCellDto`, `ChangeSessionTeacherRequest`, `TimetableImportResult` |
+| Quy tắc nghiệp vụ | `Common/Rules/<Chủ đề>Rules.cs` | `SessionLockRules` |
+| Test | `<Chủ đề>Tests.cs` | `MakeUpDayRulesTests.cs` |
+| Migration | do EF sinh: `<yyyyMMddHHmmss>_<Việc>` | `20261022062221_AddAccountSession` |
+
+**Web (TypeScript)**
+
+| Thứ | Quy tắc | Ví dụ |
+| --- | --- | --- |
+| Trang | `<Tên>Page.tsx` trong `pages/` | `SchedulePage.tsx` |
+| Component | PascalCase, tên file = tên component | `TimetableGrid.tsx` |
+| Hook | `useXxx`, file cùng tên hoặc nhóm trong một file | `useCatalogs.ts` |
+| Đối tượng gọi API | `<module>Api` | `scdApi` |
+| File tiện ích | camelCase | `subjectColor.ts` |
+| CSS | một file `<module>.css` cho cả feature, đặt trong `components/` | `scd.css` |
+
+**Map vào WBS.** Task `SCD-02-BE-03` nằm ở `Modules/Scd/Services/ScheduleAdjustmentService.cs`. Mỗi module một branch `feat/<MODULE>` (`feat/SCD`, `feat/LRN`…), nhánh chính để merge là `dev`. Commit tiếng Anh, mở đầu bằng Feature ID, mỗi ID một commit: `LRN-01: <nội dung>`.
 
 ---
 
@@ -177,7 +216,7 @@ Branch `feat/SCD-02-doi-giao-vien` · Commit mở đầu bằng Feature ID.
 Bảng, cột, class, enum, biến giữ tiếng Anh. Chỉ nhãn người dùng nhìn thấy mới tiếng Việt.
 
 **2. Một file nhãn chung.**
-Thư mục `shared/lib/labels/` (mỗi module một file, `index.ts` chỉ re-export) và bản Flutter tương ứng, dịch enum một chỗ: `Present → "Có mặt"`, `Pending → "Chờ duyệt"`, `Scheduled → "Đã xếp lịch"`. Không để mỗi màn hình tự dịch.
+Thư mục `shared/lib/labels/` (nhãn dùng chung theo nhóm: `account`, `audit`, `auth`, `enrollment`, `notification`, `post`, `status`; `index.ts` chỉ re-export). Nhãn chỉ một feature dùng thì để ở `features/<module>/labels.ts` (hiện có `lrn`, `scd`) và bản Flutter tương ứng, dịch enum một chỗ: `Present → "Có mặt"`, `Pending → "Chờ duyệt"`, `Scheduled → "Đã xếp lịch"`. Không để mỗi màn hình tự dịch.
 
 **3. Backend trả message tiếng Việt kèm mã lỗi.**
 ```json
@@ -220,7 +259,7 @@ Chốt chữ nào hiện trên màn hình. Mọi màn hình, mọi file xuất E
 | LRN | Bài tập rèn luyện |
 | PAR | Phụ huynh |
 | COM | Thông báo · Bảng tin |
-| ADM | Bảng điều khiển · Quản trị (Tài khoản · Nhật ký · Xuất dữ liệu) |
+| ADM | Bảng điều khiển · Báo cáo toàn trường · Quản trị (Tài khoản · Nhật ký · Xuất dữ liệu) |
 | IAM | Tài khoản (góc phải) |
 
 ### 4.2. Tên thực thể
@@ -326,7 +365,8 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Điểm danh | — |
 | Bài tập rèn luyện | Kho câu hỏi · Giao bài tập · Bài tập đã giao · Bài tập được giao · Danh sách bài tập · Kết quả của con |
 | Phụ huynh | Đơn xin nghỉ · Sổ liên lạc · Hộp thư |
-| Bảng tin | — |
+| Bảng tin | Đăng tin · Bảng tin |
+| Báo cáo toàn trường | — |
 | Quản trị | Tài khoản · Nhật ký · Xuất dữ liệu |
 
 - Nhóm chỉ có một màn hình thì không có cấp 2. Áp dụng cả sau khi lọc theo quyền: nhóm chỉ còn một mục con hiển thị cho loại tài khoản đó thì hiện thẳng thành mục cấp 1 (ví dụ giáo viên chỉ thấy **Lịch dạy**; chủ nhiệm chỉ có quyền xuất điểm danh thì nhóm Quản trị hiện thẳng thành **Xuất dữ liệu**). School Admin không thấy Thời khóa biểu và Xuất dữ liệu; nhóm Quản trị của School Admin gồm **Tài khoản** và **Nhật ký**. **Bảng điều khiển** là ngoại lệ có chủ ý: luôn giữ nhóm cha dù chỉ còn một mục con (School Admin chỉ có **Thống kê hệ thống**), cờ `keepGroup` trong `app/menu.tsx`.
@@ -341,6 +381,7 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Mục | Ai thấy |
 | --- | --- |
 | Trang chủ · Bảng tin | Mọi loại |
+| Báo cáo toàn trường | HT |
 | Bảng điều khiển › Tình hình toàn trường | HT |
 | Bảng điều khiển › Tình hình phân hiệu | HP |
 | Bảng điều khiển › Tình hình tổ chuyên môn | GV (chỉ tổ trưởng) |
@@ -361,6 +402,6 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Phụ huynh › Sổ liên lạc | GV, HS, PH |
 | Phụ huynh › Hộp thư | GV, PH |
 | Quản trị › Tài khoản · Nhật ký | SA |
-| Quản trị › Xuất dữ liệu | HP, GV |
+| Quản trị › Xuất dữ liệu | HT, HP, GV |
 
-Ký hiệu như Business Spec §5. Kết quả với các màn đã có: **SA** Trang chủ · Bảng điều khiển (Thống kê hệ thống) · Cơ cấu nhà trường (đủ 8 mục) · Hồ sơ (Cán bộ, Trách nhiệm) · Tài khoản — **HT** Trang chủ · Bảng điều khiển (Tình hình toàn trường, Tiến độ bài tập rèn luyện) · Cơ cấu nhà trường (5 mục chỉ xem) · Hồ sơ (Cán bộ, Trách nhiệm) · Lịch dạy — **HP** Trang chủ · Bảng điều khiển (Tình hình phân hiệu, Tiến độ bài tập rèn luyện) · Cán bộ · Thời khóa biểu (Thời khóa biểu, Lịch dạy) — **GV** Trang chủ · Lịch dạy (chủ nhiệm hoặc tổ trưởng thêm Bảng điều khiển) — **HS, PH** Trang chủ.
+Ký hiệu như Business Spec §5. Kết quả với các màn đã có: **SA** Trang chủ · Bảng điều khiển (Thống kê hệ thống) · Cơ cấu nhà trường (đủ 8 mục) · Hồ sơ (Cán bộ, Trách nhiệm) · Tài khoản — **HT** Trang chủ · Bảng điều khiển (Tình hình toàn trường, Tiến độ bài tập rèn luyện) · Cơ cấu nhà trường (5 mục chỉ xem) · Hồ sơ (Cán bộ, Trách nhiệm) · Lịch dạy · Báo cáo toàn trường · Quản trị (Xuất dữ liệu) — **HP** Trang chủ · Bảng điều khiển (Tình hình phân hiệu, Tiến độ bài tập rèn luyện) · Cán bộ · Thời khóa biểu (Thời khóa biểu, Lịch dạy) — **GV** Trang chủ · Lịch dạy (chủ nhiệm hoặc tổ trưởng thêm Bảng điều khiển) — **HS, PH** Trang chủ.
