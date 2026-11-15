@@ -105,6 +105,18 @@ test('Data export opens for the Principal, homeroom teachers and campus-leading 
   for (const role of ['SchoolAdmin', 'Student', 'Parent']) assert.equal(isPathAllowed('/adm/exports', user(role, { ledCampusIds: [1], homeroomClassIds: [1] })), false, role);
 });
 
+test('School report is its own item right below Bảng tin and opens only for the Principal', () => {
+  assert.ok(paths(user('Principal')).includes('/adm/report'));
+  assert.equal(isPathAllowed('/adm/report', user('Principal')), true);
+  for (const role of ['SchoolAdmin', 'VicePrincipal', 'Teacher', 'Student', 'Parent']) {
+    assert.equal(isPathAllowed('/adm/report', user(role, { ledCampusIds: [1], homeroomClassIds: [1] })), false, role);
+  }
+  const groups = visibleMenu(user('Principal'));
+  const at = groups.findIndex((g) => g.key === 'report');
+  assert.equal(groups[at].path, '/adm/report');
+  assert.equal(groups[at - 1].key, 'com');
+});
+
 test('Student and Parent keep separate action menus', () => {
   const student = user('Student');
   const parent = user('Parent');

@@ -6,9 +6,9 @@ import { useAuth } from '@/app/AuthProvider';
 import { isPathAllowed } from '@/app/menu';
 import { scdApi } from '@/features/scd/api';
 import { admApi } from '../api';
-import { Columns, Count, Donut, Empty, Meter, Seg, Tile, Trend, toneOfRate } from '../components/BoardKit';
+import { Columns, Count, Donut, Empty, Seg, Tile, Trend } from '../components/BoardKit';
 import type { DonutSegment } from '../components/BoardKit';
-import { fmt, pct } from '../components/dashboardFormat';
+import { fmt } from '../components/dashboardFormat';
 import '../components/board.css';
 import './views.css';
 
@@ -16,8 +16,8 @@ const ALL = 0;
 const GRADE_TONES: DonutSegment['tone'][] = ['good', 'mint', 'warn', 'ink', 'soft', 'low'];
 
 /**
- * Tình hình toàn trường (Hiệu trưởng): bốn thẻ số, xu hướng chuyên cần và so sánh phân hiệu,
- * cơ cấu học sinh theo khối cạnh những việc cần chú ý, rồi bảng các phân hiệu.
+ * Tình hình toàn trường (Hiệu trưởng): bốn thẻ số, xu hướng chuyên cần và chuyên cần theo phân hiệu,
+ * cơ cấu học sinh theo khối cạnh những việc cần chú ý. So sánh chi tiết phân hiệu và lớp nằm ở Báo cáo toàn trường.
  */
 export function PrincipalBoardPage() {
   const { user } = useAuth();
@@ -41,7 +41,6 @@ export function PrincipalBoardPage() {
   const marked = a.present + a.late + a.absentExcused + a.absentUnexcused;
   const trend = d.weeks.map((w) => ({ weekStart: w.weekStart, count: 0, rate: w.rate }));
   const gradeSegments: DonutSegment[] = d.byGrade.map((g, i) => ({ key: String(g.gradeLevel), label: `Khối ${g.gradeLevel}`, value: g.studentCount, tone: GRADE_TONES[i % GRADE_TONES.length] }));
-  const maxStudents = Math.max(1, ...d.campuses.map((c) => c.studentCount));
   const todo = [
     { key: 'unmarked', n: a.unmarkedSessions, text: 'Tiết đã qua chưa điểm danh', to: go('/att') },
     { key: 'pending', n: att.pendingSessions, text: 'Tiết chờ xử lý do giáo viên vắng', to: go('/scd/absences') },
@@ -105,24 +104,6 @@ export function PrincipalBoardPage() {
           )}
         </section>
       </div>
-
-      <section className="bd-panel" aria-label="Các phân hiệu">
-        <div className="bd-panel__title"><h2>Các phân hiệu</h2></div>
-        <div className="v-trow v-trow--head" aria-hidden><span>Phân hiệu</span><span>Học sinh</span><span /><span>Chuyên cần</span><span>Lớp</span></div>
-        <ul className="v-table">
-          {d.campuses.map((c) => (
-            <li key={c.campusId}>
-              <button type="button" className="v-trow" onClick={() => setCampusId(c.campusId === campusId ? ALL : c.campusId)} aria-label={`Xem riêng ${c.name}`}>
-                <span className="v-trow__name"><strong>{c.name}</strong><span>{c.leaders.length ? c.leaders.join(', ') : 'Chưa có hiệu phó phụ trách'}</span></span>
-                <Meter value={(c.studentCount / maxStudents) * 100} tone="good" height={10} />
-                <b className="v-trow__num tabular">{fmt(c.studentCount)}</b>
-                <b className={`v-trow__rate tabular bd-text--${toneOfRate(c.attendanceRate)}`}>{pct(c.attendanceRate)}</b>
-                <span className="v-trow__num tabular">{c.classCount}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
     </div>
   );
 }

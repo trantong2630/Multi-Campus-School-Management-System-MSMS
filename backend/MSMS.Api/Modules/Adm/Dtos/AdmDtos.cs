@@ -40,6 +40,28 @@ public sealed record DashboardDto(
     List<GradeCount> ByGrade, List<DashboardCampusRow> Campuses, List<AttendanceWeek> Weeks,
     AttendanceSummary Attendance, List<DashboardClassRow> Classes, List<WeekdayRate> Weekdays, List<int> GradeOptions, int? GradeLevel = null);
 
+// ---------- Báo cáo toàn trường (Hiệu trưởng) ----------
+
+/// <summary>Một phân hiệu trong khoảng ngày báo cáo. Tỷ lệ null khi chưa có dữ liệu để tính.</summary>
+public sealed record ReportCampusRow(
+    int CampusId, string Name, int ClassCount, int StudentCount, double? AttendanceRate, int UnmarkedSessions, int CancelledSessions,
+    int AssignmentCount, double? SubmissionRate);
+
+public sealed record ReportClassRow(
+    int ClassId, string ClassName, int GradeLevel, int CampusId, string CampusName, string? Homeroom, int StudentCount,
+    double? AttendanceRate, int UnmarkedSessions, int AssignmentCount, double? SubmissionRate);
+
+/// <summary>Một cảnh báo của một lớp. Kind: LowAttendance, ManyUnmarked, LowSubmission. Value là số đo thực tế, Threshold là ngưỡng đã vượt.</summary>
+public sealed record ReportAlert(string Kind, int ClassId, string ClassName, int CampusId, string CampusName, double? Value, double? Threshold);
+
+public sealed record ReportThresholds(double LowAttendanceBelow, int UnmarkedSessionsFrom, double LowSubmissionBelow);
+
+/// <summary>Báo cáo so sánh phân hiệu và lớp trong khoảng ngày, kèm cảnh báo theo ngưỡng cố định (ReportThresholds).</summary>
+public sealed record SchoolReportDto(
+    string? AcademicYearName, string? SemesterName, DateOnly From, DateOnly To,
+    List<ReportCampusRow> Campuses, List<ReportClassRow> Classes, List<ReportAlert> Alerts, ReportThresholds Thresholds,
+    List<int> GradeOptions, int? CampusId, int? GradeLevel);
+
 // ---------- School Admin ----------
 
 public sealed record AccountTypeRow(string AccountType, int Total, int Active, int PendingPasswordChange, int Locked, int NeverLoggedIn);

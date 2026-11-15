@@ -24,6 +24,7 @@ public static class Policies
     public const string AssignmentOversight = nameof(AssignmentOversight);   // theo dõi tiến độ bài tập: Principal, VicePrincipal, Teacher (service giới hạn ở chủ nhiệm)
     public const string AttendanceWriter = nameof(AttendanceWriter);   // ghi điểm danh: Teacher (tiết mình, trong ngày), SchoolAdmin (nhập bù, sửa) — BR-17
     public const string DataExporter = nameof(DataExporter);   // xuất Excel (ADM-03): Principal, VicePrincipal, Teacher; service giới hạn ở phân hiệu phụ trách và lớp chủ nhiệm, Principal xuất toàn trường
+    public const string SchoolReport = nameof(SchoolReport);   // Báo cáo toàn trường (ADM-01): chỉ Principal
 
 
     public static void Register(AuthorizationOptions o)
@@ -65,5 +66,6 @@ public static class Policies
         o.AddPolicy(AttendanceWriter, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.Teacher, AccountTypes.SchoolAdmin));
         o.AddPolicy(DataExporter, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim,
             AccountTypes.Principal, AccountTypes.VicePrincipal, AccountTypes.Teacher));
+        o.AddPolicy(SchoolReport, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.Principal));
     }
 }
