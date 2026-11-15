@@ -1,8 +1,8 @@
 # 4. Software Product Development — MSMS
 
-Cấu trúc phân rã: Module → Feature → Task. Mỗi Task là một hành động nghiệp vụ hoàn chỉnh của một actor. Các task thuộc cùng một Feature tô cùng màu ở cột Feature. Căn theo Business Specification V3.1 (Oct 20, 2026) — 9 Module / 34 Feature / 240 Task.
+Cấu trúc phân rã: Module → Feature → Task. Mỗi Task là một hành động nghiệp vụ hoàn chỉnh của một actor. Các task thuộc cùng một Feature tô cùng màu ở cột Feature. Căn theo Business Specification V3.1 (Oct 20, 2026) — 9 Module / 34 Feature / 243 Task.
 
-Cột Platform của mỗi Task: `BE` (không có giao diện), `BE + Web`, hoặc `BE + Web + Mobile`. Mọi Task có giao diện đều có trên web; chỉ một số có thêm trên mobile app (Business Specification V3 mục 8.1–8.2).
+Cột Platform của mỗi Task: `BE` (không có giao diện), `BE + Web`, `BE + Web + Mobile` hoặc `QA` (kiểm thử). Task chỉ làm phần máy khách của một Task Backend đã có ghi `Web`, `Mobile` hoặc `Web + Mobile`. Mọi Task có giao diện đều có trên web; chỉ một số có thêm trên mobile app (Business Specification V3 mục 8.1–8.2).
 
 ## Mục lục
 - 4.1 IAM — Identity & Access (Định danh & Truy cập)
@@ -233,7 +233,7 @@ Xem ngày nghỉ dạng lịch tháng, lọc theo phân hiệu và năm học.
 
 **4.2.19 — Xóa ngày nghỉ / Delete Non-teaching Day**  
 `BE + Web` · 0.5 MD · dep: 4.2.17  
-Xóa ngày nghỉ chưa dùng tới. Xóa KHÔNG khôi phục tiết đã bị hủy trước đó; muốn dạy lại thì thêm tiết bù (BR-15).
+Xóa ngày nghỉ khai nhầm hoặc không còn nghỉ nữa. Xóa KHÔNG khôi phục tiết đã bị hủy trước đó, kể cả tiết đã bị hủy khi khai ngày nghỉ này; muốn dạy lại thì Vice Principal thêm tiết bù (BR-15).
 
 **4.2.20 — Xác định ngày học của phân hiệu / Resolve School Day**  
 `BE` · 1 MD · dep: 4.2.15, 4.2.17  
@@ -439,7 +439,7 @@ Xem hồ sơ phụ huynh cùng số điện thoại, email, địa chỉ và cá
 
 **4.3.23 — Tạo hồ sơ phụ huynh / Create Guardian Profile**  
 `BE + Web` · 1 MD · dep: 4.3.22  
-Khai hồ sơ phụ huynh trên giao diện. Số điện thoại bắt buộc, gồm 9 đến 15 chữ số và duy nhất vì đó là khóa nhận diện phụ huynh khi import; email và địa chỉ không bắt buộc (BR-10, BR-11).
+Khai hồ sơ phụ huynh trên giao diện. Số điện thoại bắt buộc, là số di động gồm đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09, và duy nhất vì đó là khóa nhận diện phụ huynh khi import; email và địa chỉ không bắt buộc (BR-10, BR-11).
 
 **4.3.24 — Cập nhật hồ sơ phụ huynh / Update Guardian Profile**  
 `BE + Web` · 1 MD · dep: 4.3.23  
@@ -452,6 +452,18 @@ Từ một phụ huynh xem danh sách con, lớp và phân hiệu của từng c
 **4.3.26 — Đổi phụ huynh đại diện của học sinh / Change Representative Guardian**  
 `BE + Web` · 1.5 MD · dep: 4.3.23  
 Chuyển liên kết của một học sinh sang phụ huynh khác, có sẵn hoặc tạo mới, kèm quan hệ với học sinh (bỏ trống thì giữ quan hệ cũ). Liên kết cũ bị gỡ, mỗi học sinh có đúng một phụ huynh đại diện; hội thoại của phụ huynh cũ trở thành chỉ đọc (BR-10, BR-25).
+
+**4.3.36 — Tải file mẫu import phụ huynh / Download Guardian Import Template**  
+`BE + Web` · 0.5 MD  
+Tải mẫu Excel cố định của danh bạ phụ huynh: Họ và tên, Số điện thoại (bắt buộc), Giới tính, Email, Địa chỉ. Không có cột mã hồ sơ; hệ thống tự sinh mã PH (BR-03, BR-11).
+
+**4.3.37 — Import phụ huynh từ file Excel / Import Guardians from Excel**  
+`BE + Web` · 1.5 MD · dep: 4.3.23, 4.3.36  
+Import một bước: validate TOÀN BỘ file rồi ghi trong một transaction, có một lỗi là không ghi gì. Số điện thoại là khóa nhận diện, là số di động đúng 10 chữ số, đầu số 03, 05, 07, 08 hoặc 09; hai dòng trùng số là lỗi; số đã có thì bỏ qua cả dòng, không cập nhật hồ sơ cũ. Chỉ tạo hồ sơ phụ huynh: không tạo tài khoản và không liên kết học sinh (BR-10, BR-11).
+
+**4.3.38 — Xem bảng lỗi và kết quả import phụ huynh / View Guardian Import Result**  
+`BE + Web` · 1 MD · dep: 4.3.37  
+Bảng lỗi kèm số dòng, cột và giá trị gốc; mục Đã có, bỏ qua kèm mã hồ sơ đã tồn tại; số hồ sơ đã tạo khi thành công (BR-11).
 
 ### PPL-04 Responsibility (Trách nhiệm)
 
@@ -473,7 +485,7 @@ Gán một Teacher làm chủ nhiệm của một lớp đang hoạt động, k�
 
 **4.3.31 — Thay người đảm nhiệm trách nhiệm / Replace Responsibility Holder**  
 `BE + Web` · 1.5 MD · dep: 4.3.28  
-Một thao tác, một transaction: ngày kết thúc của bản cũ là NGÀY LIỀN TRƯỚC ngày hiệu lực của bản mới, nên không ngày nào có hai người cùng hiệu lực. Bản cũ giữ nguyên làm lịch sử (BR-09).
+Một thao tác, một transaction, có hiệu lực NGAY HÔM NAY: bản của người cũ kết thúc hôm nay và người cũ mất quyền ngay lúc thay, bản của người mới bắt đầu từ hôm nay, nên tại mọi thời điểm chỉ một người hiệu lực. Không hẹn thay người vào ngày sau; muốn vậy thì kết thúc người hiện tại vào ngày đó rồi gán người mới từ ngày đó. Bản cũ giữ nguyên làm lịch sử (BR-09).
 
 **4.3.32 — Kết thúc trách nhiệm / End Responsibility**  
 `BE + Web` · 0.5 MD · dep: 4.3.28  
@@ -593,7 +605,7 @@ Mọi thao tác tay đổi nguồn tiết từ Sinh tự động sang Chỉnh ta
 
 **4.4.24 — Kiểm thử điều chỉnh lịch / Adjustment Tests**  
 `QA` · 2 MD · dep: 4.4.20, 4.4.21, 4.4.22  
-Không thao tác được trên tiết bị khóa; tiết bù trùng khung giờ bị chặn; mọi thao tác đều sinh Audit và thông báo; email chỉ tới đúng giáo viên của bốn trường hợp ở 4.4.23, hồ sơ không có email thì bỏ qua và Gmail SMTP hỏng không làm thao tác thất bại.
+Không thao tác được trên tiết bị khóa; tiết bù trùng khung giờ bị chặn; mọi thao tác đều sinh Audit và thông báo; email chỉ tới đúng giáo viên của bốn trường hợp ở 4.4.23, hồ sơ không có email thì bỏ qua và Gmail SMTP hỏng không làm thao tác thất bại; khai ngày nghỉ sau Phát hành hủy đúng các tiết chưa khóa của phạm vi ngày nghỉ (4.2.17), tiết đã khóa giữ nguyên và xóa ngày nghỉ không khôi phục tiết.
 
 ### SCD-03 Teacher Absence (Xử lý giáo viên vắng)
 
@@ -803,7 +815,7 @@ Mỗi bài nộp (kể cả bị tự nộp) được gửi AI MỘT LẦN, tự
 
 **4.6.20 — Xem phân tích bài làm / View Analysis**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.6.19  
-Khung phân tích AI nằm dưới kết quả từng bài, hiện cho Student, Parent và Teacher đang phụ trách chuyên môn. Khi phân tích xong, Backend ghép thêm mục "Xem lại trong sách" từ bài nguồn của các câu sai (tên bài, trang theo số in, số thứ tự các câu sai), không do AI sinh và không gửi thêm gì cho AI; câu không có bài nguồn (soạn tay) thì không có dòng nào. Mỗi dòng có nút xem ảnh các trang của bài: giáo viên xem qua đường của giáo viên, Student và Parent (của con được liên kết) chỉ xem được trang của bài là nguồn của các câu trong bài mình đã nộp; chưa nộp hoặc bài không thuộc bài đã nộp thì báo không tìm thấy, để không duyệt được cả cuốn sách. Kiểm thử: học sinh chưa nộp, học sinh khác, bài ngoài bài đã nộp đều bị từ chối. Đang phân tích hiện avatar MSMS AI chờ; Lỗi để trống. Phân tích kẹt ở trạng thái đang chạy quá 5 phút (tiến trình dừng giữa chừng) được coi là Lỗi.
+Khung phân tích AI nằm dưới kết quả từng bài, hiện cho Student, Parent và Teacher đang phụ trách chuyên môn; tổ trưởng của môn xem được ở chế độ chỉ đọc. Khi phân tích xong, Backend ghép thêm mục "Xem lại trong sách" từ bài nguồn của các câu sai (tên bài, trang theo số in, số thứ tự các câu sai), không do AI sinh và không gửi thêm gì cho AI; câu không có bài nguồn (soạn tay) thì không có dòng nào. Mỗi dòng có nút xem ảnh các trang của bài: giáo viên (kể cả tổ trưởng) xem qua đường của giáo viên, Student và Parent (của con được liên kết) chỉ xem được trang của bài là nguồn của các câu trong bài mình đã nộp; chưa nộp hoặc bài không thuộc bài đã nộp thì báo không tìm thấy, để không duyệt được cả cuốn sách. Kiểm thử: học sinh chưa nộp, học sinh khác, bài ngoài bài đã nộp đều bị từ chối. Đang phân tích hiện avatar MSMS AI chờ; Lỗi để trống. Phân tích kẹt ở trạng thái đang chạy quá 5 phút (tiến trình dừng giữa chừng) được coi là Lỗi.
 
 **4.6.21 — Giao diện MSMS AI / MSMS AI Presence**  
 `Web + Mobile` · 2 MD · dep: 4.6.5, 4.6.12, 4.6.20  
@@ -971,7 +983,7 @@ Sự kiện `NotificationCreated` và `MessageReceived` chỉ được đẩy **
 
 **4.8.8 — Đang nhập, đã xem và online/offline / Typing, Seen and Presence**  
 `BE` · 1.5 MD · dep: 4.8.6, 4.7.19  
-Hub nhận thêm lệnh `Typing(conversationId)` và `JoinConversation(conversationId)`; mỗi lệnh kiểm người gọi thuộc hội thoại rồi chuyển cho bên kia. Đang nhập không lưu CSDL, tự tắt sau vài giây. Đã xem tính khi người nhận mở hội thoại: ghi `Message.ReadAt` và đẩy `MessageRead` cho người gửi. Online khi tài khoản còn ít nhất một kết nối, offline khi mất hết (nhiều tab, nhiều thiết bị); trạng thái chỉ hiện cho bên kia trong cùng hội thoại. School Admin không tham gia hội thoại nên không hiện online và không gửi đang nhập.
+Hub nhận thêm lệnh `SendTyping(conversationId, isTyping)` và `JoinConversation(conversationId)`; mỗi lệnh kiểm người gọi thuộc hội thoại. `SendTyping` chuyển sự kiện `UserTyping` cho bên kia; `JoinConversation` đưa kết nối vào nhóm hội thoại và trả trạng thái online hiện tại của bên kia. Đang nhập không lưu CSDL, tự tắt sau vài giây. Đã xem tính khi người nhận mở hội thoại: ghi `Message.ReadAt` và đẩy `MessagesRead` cho người gửi. Online khi tài khoản còn ít nhất một kết nối, offline khi mất hết (nhiều tab, nhiều thiết bị), báo bên kia bằng sự kiện `PresenceChanged`; trạng thái chỉ hiện cho bên kia trong cùng hội thoại. School Admin không tham gia hội thoại nên không hiện online và không gửi đang nhập.
 
 **4.8.9 — Realtime trên Web / Web Realtime Client**  
 `Web` · 2 MD · dep: 4.8.7, 4.8.8  
@@ -1023,7 +1035,7 @@ Chuyên cần 4 tuần (có mặt, muộn, vắng có phép, vắng không phép
 
 **4.9.2 — Tình hình toàn trường, phân hiệu, tổ và lớp / View Situation Boards**
 `BE + Web` · 3.5 MD · dep: 4.9.1
-Principal xem toàn trường, lọc được theo phân hiệu, có bảng so sánh phân hiệu; Vice Principal xem phân hiệu mình phụ trách; tổ trưởng xem các môn của tổ, tải dạy, thầy cô vắng và chuyên cần các tiết của tổ; chủ nhiệm xem chuyên cần, sĩ số, đơn nghỉ và phụ huynh của lớp. Không có số liệu bài tập ở các màn này. Giáo viên không giữ trách nhiệm nào không có Bảng điều khiển; Trang chủ tách riêng, không hiển thị số liệu (mục 5.1).
+Principal xem toàn trường, lọc được theo phân hiệu, có biểu đồ chuyên cần theo phân hiệu (bảng so sánh phân hiệu và lớp ở 4.9.15); Vice Principal xem phân hiệu mình phụ trách; tổ trưởng xem các môn của tổ, tải dạy, thầy cô vắng và chuyên cần các tiết của tổ; chủ nhiệm xem chuyên cần, sĩ số, đơn nghỉ và phụ huynh của lớp. Không có số liệu bài tập ở các màn này. Giáo viên không giữ trách nhiệm nào không có Bảng điều khiển; Trang chủ tách riêng, không hiển thị số liệu (mục 5.1).
 
 **4.9.3 — Tiến độ bài tập rèn luyện / Assignment Progress Board**
 `BE + Web` · 3 MD · dep: 4.9.1
@@ -1039,7 +1051,11 @@ Màn đầu tiên của mọi loại tài khoản, cùng một nội dung cho m�
 
 **4.9.6 — Kiểm thử phạm vi Bảng điều khiển / Board Scope Tests**
 `QA` · 1 MD · dep: 4.9.2, 4.9.3
-Vice Principal không xem được số liệu phân hiệu khác (gọi kèm phân hiệu khác bị từ chối); bộ lọc phân hiệu của Principal cho số khớp với từng hàng của bảng so sánh; chủ nhiệm chỉ thấy bài của lớp mình, giáo viên không chủ nhiệm bị từ chối; con số khớp với danh sách gốc mở ra.
+Vice Principal không xem được số liệu phân hiệu khác (gọi kèm phân hiệu khác bị từ chối); bộ lọc phân hiệu của Principal cho số khớp với từng cột của biểu đồ chuyên cần theo phân hiệu; chủ nhiệm chỉ thấy bài của lớp mình, giáo viên không chủ nhiệm bị từ chối; con số khớp với danh sách gốc mở ra.
+
+**4.9.15 — Báo cáo toàn trường / School-wide Report**  
+`BE + Web` · 3 MD · dep: 4.9.1, 4.9.3  
+Principal xem màn hình chỉ đọc, mục menu cấp 1 ngay dưới Bảng tin: so sánh phân hiệu và lớp trong một khoảng ngày (mặc định 28 ngày, tối đa 186), lọc theo phân hiệu và khối. Gồm ba nhóm cảnh báo theo ngưỡng cố định, không lưu CSDL (chuyên cần dưới 90%, từ 5 tiết đã qua chưa điểm danh, tỷ lệ nộp bài dưới 50% tính trên bài đã hết hạn trong khoảng ngày), bấm một nhóm để lọc bảng lớp; bảng so sánh phân hiệu khi xem cả trường và bảng so sánh lớp kèm nhãn cảnh báo. Không có số liệu từng học sinh; lấy file thì sang màn Xuất dữ liệu (mục 5.1, 5.2).
 
 ### ADM-02 Audit Log (Nhật ký kiểm toán)
 
@@ -1067,20 +1083,16 @@ Không có API sửa hay xóa nhật ký; quyền CSDL chặn UPDATE và DELETE;
 
 **4.9.12 — Xuất điểm danh theo lớp và khoảng ngày / Export Class Attendance**  
 `BE + Web` · 1.5 MD · dep: 4.5.3  
-Nguồn là bản ghi điểm danh, kèm nhãn cuối suy ra. Chủ nhiệm xuất lớp mình, Vice Principal xuất phân hiệu mình (BR-18, mục 5.2).
+Nguồn là bản ghi điểm danh, kèm nhãn cuối suy ra. Chủ nhiệm xuất lớp mình, Vice Principal xuất lớp thuộc phân hiệu mình, Principal xuất mọi lớp (BR-18, mục 5.2).
 
 **4.9.13 — Xuất thời khóa biểu hiện hành / Export Current Timetable**  
 `BE + Web` · 1.5 MD · dep: 4.4.11  
-Nguồn là LỊCH DẠY chứ không phải phiên bản thời khóa biểu, để phản ánh cả các điều chỉnh tay. Vice Principal xuất phân hiệu mình (BR-14, mục 5.2).
+Nguồn là LỊCH DẠY chứ không phải phiên bản thời khóa biểu, để phản ánh cả các điều chỉnh tay. Vice Principal xuất phân hiệu mình, Principal xuất mọi phân hiệu (BR-14, mục 5.2).
 
-**4.9.14 — Xuất kết quả bài tập theo lớp / Export Class Assignment Results**  
-`BE + Web` · 1.5 MD · dep: 4.6.15  
-Nguồn là lượt làm bài. Chỉ Teacher đang phụ trách chuyên môn xuất được (mục 5.2).
-
-**4.9.15 — Kiểm thử phạm vi xuất dữ liệu / Export Scope Tests**  
-`QA` · 1 MD · dep: 4.9.12, 4.9.13, 4.9.14  
-Mỗi mục chỉ xuất đúng phạm vi của người gọi; danh sách tài khoản kèm mật khẩu tạm KHÔNG phải một mục xuất và không xuất lại được (BR-04).
+**4.9.14 — Kiểm thử phạm vi xuất dữ liệu / Export Scope Tests**  
+`QA` · 1 MD · dep: 4.9.12, 4.9.13  
+Mỗi mục chỉ xuất đúng phạm vi của người gọi (Principal xuất mọi lớp và mọi phân hiệu, School Admin không xuất); danh sách tài khoản kèm mật khẩu tạm KHÔNG phải một mục xuất và không xuất lại được (BR-04).
 
 ---
 
-**Tổng:** 240 task · 344 MD
+**Tổng:** 243 task · 348.5 MD
