@@ -41,7 +41,7 @@ function useDownload() {
   return { busy, run };
 }
 
-/** 4.9.12: chủ nhiệm xuất lớp mình, Hiệu phó xuất lớp thuộc phân hiệu mình (spec 5.2). */
+/** 4.9.12: chủ nhiệm xuất lớp mình, Hiệu phó xuất lớp thuộc phân hiệu mình, Hiệu trưởng xuất mọi lớp (spec 5.2). */
 function AttendanceExport() {
   const classes = useQuery({ queryKey: ['att', 'classes'], queryFn: attApi.classes });
   const [picked, setPicked] = useState<number | undefined>();
@@ -72,7 +72,7 @@ function AttendanceExport() {
   );
 }
 
-/** 4.9.13: Hiệu phó xuất thời khóa biểu hiện hành của phân hiệu mình, đọc từ lịch dạy (BR-14). */
+/** 4.9.13: Hiệu phó xuất thời khóa biểu hiện hành của phân hiệu mình, Hiệu trưởng xuất mọi phân hiệu; đọc từ lịch dạy (BR-14). */
 function TimetableExport() {
   const campuses = useQuery({ queryKey: ['scd', 'campuses'], queryFn: scdApi.campuses });
   const [picked, setPicked] = useState<number | undefined>();
@@ -105,6 +105,7 @@ function TimetableExport() {
 /** ADM-03 Xuất dữ liệu (spec 5.2): chỉ hiện mục người dùng có quyền xuất. */
 export function ExportsPage() {
   const { user } = useAuth();
+  const isPrincipal = user?.accountType === 'Principal';
   const leadsCampus = user?.accountType === 'VicePrincipal' && !!user.scope?.ledCampusIds.length;
   const isHomeroom = user?.accountType === 'Teacher' && !!user.scope?.homeroomClassIds.length;
 
@@ -112,8 +113,8 @@ export function ExportsPage() {
     <>
       <PageHeader title="Xuất dữ liệu" />
       <div className="exports-grid">
-        {(leadsCampus || isHomeroom) && <AttendanceExport />}
-        {leadsCampus && <TimetableExport />}
+        {(isPrincipal || leadsCampus || isHomeroom) && <AttendanceExport />}
+        {(isPrincipal || leadsCampus) && <TimetableExport />}
       </div>
     </>
   );

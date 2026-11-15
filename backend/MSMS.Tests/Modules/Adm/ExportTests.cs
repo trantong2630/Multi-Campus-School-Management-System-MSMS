@@ -13,7 +13,7 @@ using MSMS.Tests.Modules.Iam;
 
 namespace MSMS.Tests.Modules.Adm;
 
-/// <summary>ADM-03 (4.9.12, 4.9.13, 4.9.15): mỗi mục xuất chỉ đúng phạm vi người gọi; điểm danh kèm nhãn suy ra, thời khóa biểu đọc từ lịch dạy.</summary>
+/// <summary>ADM-03 (4.9.12, 4.9.13, 4.9.14): mỗi mục xuất chỉ đúng phạm vi người gọi; điểm danh kèm nhãn suy ra, thời khóa biểu đọc từ lịch dạy.</summary>
 public class ExportTests
 {
     private static AttendanceService Attendance(AccountTestFixture f, string role, int personId)
@@ -103,7 +103,7 @@ public class ExportTests
     }
 
     [Fact]
-    public async Task Attendance_OnlyHomeroomClassOrLedCampus_AdminAndPrincipalRejected()
+    public async Task Attendance_OnlyHomeroomClassOrLedCampus_PrincipalAnyClass_AdminRejected()
     {
         using var f = new AccountTestFixture();
         f.AddAccount(1, AccountTypes.VicePrincipal);
@@ -117,11 +117,12 @@ public class ExportTests
 
         await Attendance(f, AccountTypes.VicePrincipal, 1).ExportAsync(1, from, to);
         await Attendance(f, AccountTypes.Teacher, 5).ExportAsync(1, from, to);
+        await Attendance(f, AccountTypes.Principal, 2).ExportAsync(1, from, to);                                  // Hiệu trưởng xuất mọi lớp
+        await Attendance(f, AccountTypes.Principal, 2).ExportAsync(2, from, to);
 
         Assert.Equal(403, Status(() => Attendance(f, AccountTypes.VicePrincipal, 1).ExportAsync(2, from, to)));   // phân hiệu khác
         Assert.Equal(403, Status(() => Attendance(f, AccountTypes.Teacher, 5).ExportAsync(2, from, to)));         // lớp không chủ nhiệm
         Assert.Equal(403, Status(() => Attendance(f, AccountTypes.Teacher, 6).ExportAsync(1, from, to)));         // không chủ nhiệm lớp nào
-        Assert.Equal(403, Status(() => Attendance(f, AccountTypes.Principal, 2).ExportAsync(1, from, to)));
         Assert.Equal(403, Status(() => Attendance(f, AccountTypes.SchoolAdmin, 900).ExportAsync(1, from, to)));
     }
 
@@ -163,8 +164,11 @@ public class ExportTests
         Assert.Contains(sessions, s => s.Source == "Manual");
 
         Assert.Equal(403, Status(() => Schedule(f, AccountTypes.VicePrincipal, 1).GetCampusSessionsForExportAsync(2, from, to)));
-        Assert.Equal(403, Status(() => Schedule(f, AccountTypes.Principal, 2).GetCampusSessionsForExportAsync(1, from, to)));
         Assert.Equal(403, Status(() => Schedule(f, AccountTypes.Teacher, 5).GetCampusSessionsForExportAsync(1, from, to)));
+
+        var (otherCampus, otherSessions) = await Schedule(f, AccountTypes.Principal, 2).GetCampusSessionsForExportAsync(2, from, to);   // Hiệu trưởng xuất mọi phân hiệu
+        Assert.Equal("Phân hiệu 2", otherCampus);
+        Assert.Single(otherSessions);
     }
 
     [Fact]
@@ -194,12 +198,12 @@ public class ExportTests
 
     [Theory]
     [InlineData(AccountTypes.SchoolAdmin, false)]
-    [InlineData(AccountTypes.Principal, false)]
+    [InlineData(AccountTypes.Principal, true)]
     [InlineData(AccountTypes.VicePrincipal, true)]
     [InlineData(AccountTypes.Teacher, true)]
     [InlineData(AccountTypes.Student, false)]
     [InlineData(AccountTypes.Parent, false)]
-    public async Task DataExporterPolicy_OnlyVicePrincipalAndTeacher(string role, bool expected)
+    public async Task DataExporterPolicy_PrincipalVicePrincipalAndTeacher(string role, bool expected)
     {
         await using var provider = new ServiceCollection().AddLogging().AddAuthorization(Policies.Register).BuildServiceProvider();
         var auth = provider.GetRequiredService<IAuthorizationService>();
