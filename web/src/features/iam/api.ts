@@ -1,5 +1,5 @@
 import { apiClient, AUTH_REQUEST_TIMEOUT_MS, loginSession, logoutSession } from '@/app/apiClient';
-import type { LoginResponse, OwnProfile, UserInfo } from './types';
+import type { FeatureChange, FeatureImpact, FeatureMatrix, LoginResponse, OwnProfile, UserInfo } from './types';
 
 export interface PasswordResetVerification {
   resetToken: string;
@@ -38,6 +38,14 @@ export const iamApi = {
     apiClient.post('/auth/reset-password', { username, resetToken, newPassword }, {
       timeout: AUTH_REQUEST_TIMEOUT_MS, headers: { Authorization: '' },
     }),
+
+  // Phân quyền động: bật/tắt chức năng theo loại tài khoản (chỉ School Admin)
+  permissions: {
+    get: () => apiClient.get<FeatureMatrix>('/iam/permissions').then((r) => r.data),
+    update: (changes: FeatureChange[]) => apiClient.put<FeatureMatrix>('/iam/permissions', { changes }).then((r) => r.data),
+    /** Việc đang dở của các chức năng sắp tắt (chỉ đếm, không lưu). */
+    impact: (changes: FeatureChange[]) => apiClient.post<FeatureImpact[]>('/iam/permissions/impact', { changes }).then((r) => r.data),
+  },
 
   // IAM-04: hồ sơ cá nhân (4.1.27–4.1.30)
   profile: {

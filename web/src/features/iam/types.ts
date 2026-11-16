@@ -47,6 +47,36 @@ export interface UserInfo {
   mustChangePassword: boolean;
   avatarPath: string | null;
   scope: AccountScope;
+  /** Phân quyền động: key mục menu mà School Admin đang tắt cho loại tài khoản này. */
+  disabledFeatures: string[];
+}
+
+/** Một ô của bảng phân quyền: allowed = thuộc nghiệp vụ của loại tài khoản; locked = luôn bật. */
+export interface FeatureCell {
+  accountType: AccountType;
+  allowed: boolean;
+  locked: boolean;
+  enabled: boolean;
+}
+
+export interface FeatureRow {
+  key: string;
+  group: string;
+  label: string;
+  cells: FeatureCell[];
+}
+
+export interface FeatureMatrix {
+  accountTypes: AccountType[];
+  features: FeatureRow[];
+  updatedAt: string | null;
+  updatedByName: string | null;
+}
+
+export interface FeatureChange {
+  accountType: AccountType;
+  featureKey: string;
+  enabled: boolean;
 }
 
 export interface LoginResponse {
@@ -101,4 +131,12 @@ export interface BulkCreateResult {
 export interface ResetPasswordResult {
   username: string;
   tempPassword: string;
+}
+
+/** Việc đang dở của một chức năng sắp tắt, hiện trong hộp xác nhận trước khi lưu. */
+export interface FeatureImpact {
+  accountType: AccountType;
+  featureKey: string;
+  label: string;
+  message: string;
 }

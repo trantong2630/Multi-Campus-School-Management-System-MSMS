@@ -17,6 +17,9 @@ public record UserInfo(
     string AccountType, string Status, bool MustChangePassword, string? AvatarPath)
 {
     public Common.Auth.AccountScope? Scope { get; init; }
+
+    /// <summary>Mã chức năng (trùng key menu) mà School Admin đang tắt cho loại tài khoản này.</summary>
+    public List<string> DisabledFeatures { get; init; } = [];
 }
 
 /// <summary>Web gửi refresh token qua cookie nên body có thể trống; mobile gửi trong body.</summary>
