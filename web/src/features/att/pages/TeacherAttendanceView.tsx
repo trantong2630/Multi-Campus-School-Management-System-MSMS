@@ -8,7 +8,6 @@ import { FilterBar } from '@/shared/components/FilterBar';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { toDateString } from '@/shared/lib/format';
 import { attApi } from '../api';
-import { dayText } from '../attFormat';
 import { ClassSummaryView } from '../components/ClassSummaryView';
 import { SessionTable } from '../components/SessionTable';
 
@@ -22,7 +21,6 @@ export function TeacherAttendanceView() {
   const [view, setView] = useState<View>('today');
 
   const today = useQuery({ queryKey: ['att', 'today'], queryFn: attApi.today, enabled: view === 'today' });
-  const date = today.data?.[0]?.date ?? toDateString(dayjs());
 
   return (
     <>

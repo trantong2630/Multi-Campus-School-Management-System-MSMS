@@ -95,7 +95,7 @@ Việc đứng tên người khác — chỉ đúng vai trò làm được:
 | Soạn câu hỏi, giao bài | Teacher — soạn câu hỏi của mình; giao bài thì cần phụ trách chuyên môn đang hiệu lực |
 | Điểm danh với tư cách giáo viên dạy | Giáo viên của tiết, trong ngày của tiết |
 
-Việc duy nhất School Admin làm thay được trên dữ liệu giảng dạy là nhập bù và sửa điểm danh của tiết đã qua (ghi là người sửa, BR-17). Hai thao tác danh mục của School Admin có hệ quả lên lịch dạy nhưng không phải thao tác lịch dạy: khóa tài khoản giáo viên (BR-05) và khai ngày nghỉ (BR-08). School Admin không duyệt đơn nghỉ, không đọc hội thoại, không thao tác thời khóa biểu, chỉ có Thống kê hệ thống chứ không có số liệu học vụ, và không xuất Excel. Mọi thao tác ghi lưu người thực hiện ngay trên bản ghi nghiệp vụ.
+Việc duy nhất School Admin làm thay được trên dữ liệu giảng dạy là nhập bù và sửa điểm danh của tiết có ngày từ hôm nay trở về trước (ghi là người sửa, BR-17). Hai thao tác danh mục của School Admin có hệ quả lên lịch dạy nhưng không phải thao tác lịch dạy: khóa tài khoản giáo viên (BR-05) và khai ngày nghỉ (BR-08). School Admin không duyệt đơn nghỉ, không đọc hội thoại, không thao tác thời khóa biểu, chỉ có Thống kê hệ thống chứ không có số liệu học vụ, và không xuất Excel. Mọi thao tác ghi lưu người thực hiện ngay trên bản ghi nghiệp vụ.
 
 ### 2.5. Kiểm thử phân quyền
 
@@ -242,7 +242,7 @@ SA là người duy nhất ghi. HT có các màn hình xem Thông tin trường,
 
 | ID | Feature | Nội dung chính | Ghi | Đọc | BR |
 | --- | --- | --- | --- | --- | --- |
-| ATT-01 | Điểm danh theo tiết | Giáo viên của tiết điểm danh và sửa trong ngày của tiết; School Admin nhập bù và sửa tiết đã qua trên cùng màn hình; nhãn có phép suy từ đơn nghỉ đã duyệt | GV của tiết 📱, SA | HS 📱, PH 📱, CN 📱, HP, HT, SA | BR-17, 18 |
+| ATT-01 | Điểm danh theo tiết | Giáo viên của tiết điểm danh và sửa trong ngày của tiết; School Admin nhập bù và sửa tiết có ngày ≤ hôm nay trên cùng màn hình; nhãn có phép suy từ đơn nghỉ đã duyệt | GV của tiết 📱, SA | HS 📱, PH 📱, CN 📱, HP, HT, SA | BR-17, 18 |
 
 ### LRN — Learning (6)
 
