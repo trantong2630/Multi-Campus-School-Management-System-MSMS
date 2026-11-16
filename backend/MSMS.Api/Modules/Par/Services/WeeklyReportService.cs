@@ -140,7 +140,7 @@ public sealed class WeeklyReportService(MsmsDbContext db, IClock clock, CurrentU
             .ClassId;
     }
 
-    /// <summary>BR-24: 5 chỉ số chuyên cần từ các tiết "Đã xếp lịch đã diễn ra" trong tuần.</summary>
+    /// <summary>BR-24, BR-18: 5 chỉ số chuyên cần từ các tiết "Đã xếp lịch đã diễn ra" trong tuần.</summary>
     private async Task<AttendanceSummaryDto> ComputeAttendanceAsync(int studentId, DateOnly weekStart, DateOnly weekEnd)
     {
         var today = clock.Today;
@@ -155,6 +155,13 @@ public sealed class WeeklyReportService(MsmsDbContext db, IClock clock, CurrentU
 
         var classIds = enrollments.Select(e => e.ClassId).Distinct().ToList();
 
+        // Đơn xin nghỉ phép đã duyệt trong tuần để suy nhãn Vắng có phép / Vắng không phép (BR-18).
+        var leaves = await db.LeaveRequest
+            .AsNoTracking()
+            .Where(l => l.Status == AttendanceRules.LeaveApproved && l.StudentId == studentId && l.FromDate <= weekEnd && l.ToDate >= weekStart)
+            .Select(l => new ApprovedLeave(l.StudentId, l.FromDate, l.ToDate, l.SessionOfDay, l.SlotIds))
+            .ToListAsync();
+
         var sessions = await db.TeachingSession
             .AsNoTracking()
             .Where(ts => classIds.Contains(ts.ClassId) && ts.SessionDate >= weekStart && ts.SessionDate <= weekEnd)
@@ -164,6 +171,8 @@ public sealed class WeeklyReportService(MsmsDbContext db, IClock clock, CurrentU
                 ts.SessionId,
                 ts.ClassId,
                 ts.SessionDate,
+                SessionOfDay = ts.PeriodSlot.SessionOfDay,
+                PeriodNo = ts.PeriodSlot.PeriodNo,
                 EndTime = ts.PeriodSlot.EndTime,
                 AttendanceStatus = ts.AttendanceRecord
                     .Where(ar => ar.StudentId == studentId)
@@ -180,11 +189,30 @@ public sealed class WeeklyReportService(MsmsDbContext db, IClock clock, CurrentU
         // Tiết "đã diễn ra": trước hôm nay, hoặc hôm nay và đã qua giờ kết thúc.
         var occurred = relevant.Where(s => s.SessionDate < today || (s.SessionDate == today && s.EndTime <= nowTime)).ToList();
 
-        var present = occurred.Count(s => s.AttendanceStatus == "Present");
-        var late = occurred.Count(s => s.AttendanceStatus == "Late");
-        var excused = occurred.Count(s => s.AttendanceStatus == "Excused");
-        var unexcused = occurred.Count(s => s.AttendanceStatus == "Unexcused");
-        var unmarked = occurred.Count(s => s.AttendanceStatus is null);
+        int present = 0, late = 0, excused = 0, unexcused = 0, unmarked = 0;
+        foreach (var s in occurred)
+        {
+            var isExcused = AttendanceRules.IsExcused(studentId, s.SessionDate, s.SessionOfDay, s.PeriodNo, leaves);
+            var label = AttendanceRules.Label(s.AttendanceStatus, isExcused);
+            switch (label)
+            {
+                case AttendanceLabels.Present:
+                    present++;
+                    break;
+                case AttendanceLabels.Late:
+                    late++;
+                    break;
+                case AttendanceLabels.ExcusedAbsent:
+                    excused++;
+                    break;
+                case AttendanceLabels.UnexcusedAbsent:
+                    unexcused++;
+                    break;
+                case AttendanceLabels.NotMarked:
+                    unmarked++;
+                    break;
+            }
+        }
 
         return new AttendanceSummaryDto(occurred.Count, present, late, excused, unexcused, unmarked);
     }
