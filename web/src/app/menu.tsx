@@ -6,7 +6,7 @@ import type { AccountType } from '@/shared/lib/labels';
 import type { UserInfo } from '@/features/iam/types';
 
 type ScopeRequirement = 'homeroom' | 'department' | 'homeroomOrDepartment' | 'subject' | 'campus';
-type NavigationUser = Pick<UserInfo, 'accountType' | 'scope'>;
+type NavigationUser = Pick<UserInfo, 'accountType' | 'scope'> & Partial<Pick<UserInfo, 'disabledFeatures'>>;
 
 interface MenuAccess {
   /** Mục không có quyền bị ẩn hẳn, không khóa (Conventions §4.7). */
@@ -124,14 +124,17 @@ export const menu: MenuGroup[] = [
     key: 'adm', label: 'Quản trị', icon: ShieldCheck, section: 'system',
     children: [
       { key: 'adm-account', label: 'Tài khoản', path: '/adm/accounts', roles: ['SchoolAdmin'], ready: true },
+      { key: 'adm-permission', label: 'Phân quyền', path: '/adm/permissions', roles: ['SchoolAdmin'], ready: true },
       { key: 'adm-audit', label: 'Nhật ký', path: '/adm/audit-log', roles: ['SchoolAdmin'], ready: true },
       { key: 'adm-export', label: 'Xuất dữ liệu', path: '/adm/exports', roles: ['Principal', 'VicePrincipal', 'Teacher'], requires: { Teacher: 'homeroom', VicePrincipal: 'campus' }, ready: true },
     ],
   },
 ];
 
-function canAccess(item: Pick<MenuGroup, 'roles' | 'requires' | 'ready'>, user: NavigationUser): boolean {
+function canAccess(item: Pick<MenuGroup, 'key' | 'roles' | 'requires' | 'ready'>, user: NavigationUser): boolean {
   if (!item.ready || !item.roles?.includes(user.accountType)) return false;
+  // Phân quyền động: School Admin tắt chức năng cho loại tài khoản này thì ẩn mục và chặn URL (backend vẫn tự chặn API).
+  if (user.disabledFeatures?.includes(item.key)) return false;
   switch (item.requires?.[user.accountType]) {
     case 'homeroom': return !!user.scope?.homeroomClassIds.length;
     case 'department': return !!user.scope?.headDepartmentIds.length;

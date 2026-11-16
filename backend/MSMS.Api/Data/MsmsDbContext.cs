@@ -43,6 +43,8 @@ public partial class MsmsDbContext : DbContext
 
     public virtual DbSet<Enrollment> Enrollment { get; set; }
 
+    public virtual DbSet<FeaturePermission> FeaturePermission { get; set; }
+
     public virtual DbSet<Holiday> Holiday { get; set; }
 
     public virtual DbSet<HomeroomAssignment> HomeroomAssignment { get; set; }
@@ -433,6 +435,19 @@ public partial class MsmsDbContext : DbContext
                 .HasForeignKey(d => d.StudentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Enrollmen__Stude__09A971A2");
+        });
+
+        modelBuilder.Entity<FeaturePermission>(entity =>
+        {
+            entity.HasKey(e => new { e.AccountType, e.FeatureKey });
+
+            entity.Property(e => e.AccountType).HasMaxLength(20);
+            entity.Property(e => e.FeatureKey).HasMaxLength(50);
+            entity.Property(e => e.UpdatedAt).HasPrecision(0);
+
+            entity.HasOne(d => d.UpdatedByNavigation).WithMany()
+                .HasForeignKey(d => d.UpdatedBy)
+                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         modelBuilder.Entity<Holiday>(entity =>

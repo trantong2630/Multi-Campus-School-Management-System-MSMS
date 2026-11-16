@@ -11,4 +11,5 @@ public static class ErrorCodes
     public const string NotFound = "NOT_FOUND";
     public const string Conflict = "CONFLICT";
     public const string Internal = "INTERNAL_ERROR";
+    public const string FeatureDisabled = "FEATURE_DISABLED";
 }
