@@ -106,7 +106,6 @@ app.UseMiddleware<ExceptionMiddleware>();
 app.UseAuthentication();
 app.UseMiddleware<AccountStatusMiddleware>();
 app.UseAuthorization();
-app.UseMiddleware<FeatureGateMiddleware>();   // phân quyền động: chặn chức năng School Admin đã tắt
 app.UseRateLimiter();
 app.MapControllers();
 

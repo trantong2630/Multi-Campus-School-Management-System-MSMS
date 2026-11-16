@@ -675,33 +675,6 @@ namespace MSMS.Api.Migrations
                     b.ToTable("Enrollment");
                 });
 
-            modelBuilder.Entity("MSMS.Api.Data.Entities.FeaturePermission", b =>
-                {
-                    b.Property<string>("AccountType")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("FeatureKey")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<bool>("IsEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasPrecision(0)
-                        .HasColumnType("datetime2(0)");
-
-                    b.Property<int>("UpdatedBy")
-                        .HasColumnType("int");
-
-                    b.HasKey("AccountType", "FeatureKey");
-
-                    b.HasIndex("UpdatedBy");
-
-                    b.ToTable("FeaturePermission");
-                });
-
             modelBuilder.Entity("MSMS.Api.Data.Entities.Holiday", b =>
                 {
                     b.Property<int>("HolidayId")
@@ -2268,16 +2241,6 @@ namespace MSMS.Api.Migrations
                     b.Navigation("Class");
 
                     b.Navigation("Student");
-                });
-
-            modelBuilder.Entity("MSMS.Api.Data.Entities.FeaturePermission", b =>
-                {
-                    b.HasOne("MSMS.Api.Data.Entities.Account", "UpdatedByNavigation")
-                        .WithMany()
-                        .HasForeignKey("UpdatedBy")
-                        .IsRequired();
-
-                    b.Navigation("UpdatedByNavigation");
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.Holiday", b =>
