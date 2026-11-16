@@ -1,5 +1,5 @@
 import {
-  BookOpen, CalendarDays, ChartColumn, ClipboardCheck, FileText, HeartHandshake, House, LayoutDashboard, Mail, Newspaper, Settings2, ShieldCheck, Users,
+  BookOpen, BookUser, CalendarDays, ChartColumn, ClipboardCheck, FileText, HeartHandshake, House, LayoutDashboard, Mail, Newspaper, Settings2, ShieldCheck, Users,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { AccountType } from '@/shared/lib/labels';
@@ -67,17 +67,23 @@ export const menu: MenuGroup[] = [
     ],
   },
   { key: 'report', label: 'Báo cáo toàn trường', icon: ChartColumn, section: 'overview', path: '/adm/report', roles: ['Principal'], ready: true },
+  // Danh sách học sinh lớp chủ nhiệm, chỉ xem. SA, HT, HP xem lớp ở Lớp & Ghi danh.
+  {
+    key: 'homeroom-students', label: 'Danh sách học sinh', icon: BookUser, section: 'manage', path: '/sch/homeroom-students',
+    roles: ['Teacher'], requires: { Teacher: 'homeroom' }, ready: true,
+  },
   {
     key: 'sch', label: 'Cơ cấu nhà trường', icon: Settings2, section: 'manage',
     children: [
-      { key: 'sch-school', label: 'Thông tin trường', path: '/sch/school', roles: ['SchoolAdmin', 'Principal'], ready: true },
-      // Màn cấu trúc kèm thống kê: School Admin sửa, Hiệu trưởng chỉ xem.
+      // Màn cấu trúc kèm thống kê: School Admin sửa, Hiệu trưởng chỉ xem; Hiệu phó chỉ xem mọi màn trừ Phân hiệu.
+      { key: 'sch-school', label: 'Thông tin trường', path: '/sch/school', roles: ['SchoolAdmin', 'Principal', 'VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
       { key: 'sch-campus', label: 'Phân hiệu', path: '/sch/campuses', roles: ['SchoolAdmin', 'Principal'], ready: true },
-      { key: 'sch-subject', label: 'Tổ chuyên môn & Môn học', path: '/sch/subjects', roles: ['SchoolAdmin', 'Principal'], ready: true },
-      { key: 'sch-year', label: 'Năm học & Học kỳ', path: '/sch/years', roles: ['SchoolAdmin', 'Principal'], ready: true },
+      { key: 'sch-subject', label: 'Tổ chuyên môn & Môn học', path: '/sch/subjects', roles: ['SchoolAdmin', 'Principal', 'VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
+      { key: 'sch-year', label: 'Năm học & Học kỳ', path: '/sch/years', roles: ['SchoolAdmin', 'Principal', 'VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
       { key: 'sch-holiday', label: 'Ngày nghỉ', path: '/sch/holidays', roles: ['SchoolAdmin'], ready: true },
       { key: 'sch-slot', label: 'Khung giờ tiết', path: '/sch/period-slots', roles: ['SchoolAdmin'], ready: true },
-      { key: 'sch-class', label: 'Lớp & Ghi danh', path: '/sch/classes', roles: ['SchoolAdmin', 'Principal'], ready: true },
+      // Hiệu phó chỉ thấy lớp của phân hiệu mình phụ trách.
+      { key: 'sch-class', label: 'Lớp & Ghi danh', path: '/sch/classes', roles: ['SchoolAdmin', 'Principal', 'VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
       { key: 'sch-rollover', label: 'Kết chuyển năm học', path: '/sch/rollover', roles: ['SchoolAdmin'], ready: true },
     ],
   },

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Avatar,
@@ -84,7 +84,8 @@ export function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeConversationIdRef = useRef<number | null>(null);
-  activeConversationIdRef.current = selectedId;
+  // Handler SignalR đọc hội thoại đang mở qua ref; cập nhật ngay sau khi render xong, không ghi ref trong lúc render.
+  useLayoutEffect(() => { activeConversationIdRef.current = selectedId; }, [selectedId]);
 
   const activeConversation = useMemo(
     () => conversations.find((c) => c.conversationId === selectedId) ?? null,

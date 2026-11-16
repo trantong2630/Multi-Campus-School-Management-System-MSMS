@@ -151,7 +151,7 @@ Xem loại tài khoản, trạng thái và lần đăng nhập gần nhất củ
 
 ## 4.2 SCH — School Setup (Thiết lập trường)
 
-School Admin là người duy nhất ghi dữ liệu của module. Principal có các màn hình xem Thông tin trường, Phân hiệu, Tổ chuyên môn & Môn học, Năm học & Học kỳ và Lớp & Ghi danh kèm thống kê cấu trúc; Ngày nghỉ, Khung giờ tiết và Kết chuyển năm học chỉ có màn hình cho School Admin. Vice Principal và Teacher không có màn hình nào của SCH — họ đọc dữ liệu SCH qua API ngay tại thời khóa biểu, lịch dạy và trang chủ (Vice Principal chỉ đọc dữ liệu của phân hiệu mình phụ trách; Dev_Conventions §4.7).
+School Admin là người duy nhất ghi dữ liệu của module. Principal có các màn hình xem Thông tin trường, Phân hiệu, Tổ chuyên môn & Môn học, Năm học & Học kỳ và Lớp & Ghi danh kèm thống kê cấu trúc; Ngày nghỉ, Khung giờ tiết và Kết chuyển năm học chỉ có màn hình cho School Admin. Vice Principal xem các màn chỉ xem của Principal, trừ Phân hiệu: thống kê tổ, môn là toàn trường, còn Lớp & Ghi danh chỉ có lớp của phân hiệu mình phụ trách; giáo viên chủ nhiệm có màn hình Danh sách học sinh chỉ xem học sinh của lớp mình chủ nhiệm (4.2.29). Ngoài hai màn đó, Vice Principal và Teacher đọc dữ liệu SCH qua API ngay tại thời khóa biểu, lịch dạy và trang chủ (Vice Principal chỉ đọc dữ liệu của phân hiệu mình phụ trách; Dev_Conventions §4.7).
 
 ### SCH-01 Campus (Phân hiệu)
 
@@ -261,7 +261,7 @@ Không bỏ được khung đang có tiết học hoặc thời khóa biểu tha
 
 **4.2.25 — Xem danh sách lớp theo năm và phân hiệu / View Class List**  
 `BE + Web` · 1 MD · dep: 4.2.2, 4.2.13  
-Xem các lớp của một năm học tại một phân hiệu cùng khối, sĩ số hiện tại và chủ nhiệm. Màn hình dành cho School Admin (sửa) và Hiệu trưởng (chỉ xem); Vice Principal đọc dữ liệu lớp của phân hiệu mình phụ trách ở các màn hình nghiệp vụ. Màn hình kèm số lớp, học sinh theo khối và số lớp chưa có chủ nhiệm.
+Xem các lớp của một năm học tại một phân hiệu cùng khối, sĩ số hiện tại và chủ nhiệm. Màn hình dành cho School Admin (sửa), Hiệu trưởng và Vice Principal (chỉ xem; Vice Principal chỉ thấy lớp của phân hiệu mình phụ trách, bộ lọc phân hiệu chỉ hiện khi phụ trách từ hai phân hiệu trở lên). Màn hình kèm số lớp, học sinh theo khối và số lớp chưa có chủ nhiệm.
 
 **4.2.26 — Tạo lớp / Create Class**  
 `BE + Web` · 1 MD · dep: 4.2.25  
@@ -277,7 +277,7 @@ Ngừng dùng lớp mà giữ nguyên dữ liệu đã phát sinh. Bị chặn n
 
 **4.2.29 — Xem danh sách học sinh của lớp / View Class Roster**  
 `BE + Web` · 1 MD · dep: 4.2.26  
-Xem học sinh có ghi danh hiệu lực của lớp tại ngày đang xem, kèm ngày bắt đầu ghi danh. Đọc được: School Admin, Principal, Vice Principal của phân hiệu đó và giáo viên chủ nhiệm lớp.
+Xem học sinh có ghi danh hiệu lực của lớp tại ngày đang xem, kèm ngày bắt đầu ghi danh. Đọc được: School Admin, Principal, Vice Principal của phân hiệu đó và giáo viên chủ nhiệm lớp. School Admin, Principal và Vice Principal mở từ màn Lớp & Ghi danh; giáo viên chủ nhiệm mở từ màn Danh sách học sinh (chỉ xem): đầu màn có khung gồm tên lớp, phân hiệu, năm học, ngày xem, sĩ số, tỉ lệ nam nữ và học sinh có sinh nhật trong tháng; bảng đánh số thứ tự, không chia trang, cột Kết thúc chỉ hiện khi có em đã kết thúc ghi danh; chủ nhiệm nhiều lớp thì chuyển lớp bằng các nút ở đầu trang.
 
 **4.2.30 — Ghi danh học sinh vào lớp / Enroll Student into Class**  
 `BE + Web` · 1.5 MD · dep: 4.2.29  
@@ -325,7 +325,7 @@ Xem tên, địa chỉ, điện thoại, email, website và logo của trường
 
 **4.2.40 — Cập nhật thông tin trường / Update School Profile**
 `BE + Web` · 1.5 MD · dep: 4.2.39
-Chỉ School Admin sửa; Hiệu trưởng xem ở chế độ chỉ đọc. Tên trường bắt buộc; email và website kiểm định dạng. Đúng một bản, lưu người sửa và thời điểm sửa ngay trên bản ghi; không ghi Audit vì không thuộc ba nhóm của BR-28.
+Chỉ School Admin sửa; Hiệu trưởng và Vice Principal xem ở chế độ chỉ đọc. Tên trường bắt buộc; email và website kiểm định dạng. Đúng một bản, lưu người sửa và thời điểm sửa ngay trên bản ghi; không ghi Audit vì không thuộc ba nhóm của BR-28.
 
 **4.2.41 — Tải và gỡ logo trường / Upload and Remove School Logo**
 `BE + Web` · 2 MD · dep: 4.2.40

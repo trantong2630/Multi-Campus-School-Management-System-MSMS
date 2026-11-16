@@ -8,18 +8,14 @@ import { useState } from 'react';
 import { DataTable } from '@/shared/components/DataTable';
 import { FormModal } from '@/shared/components/FormModal';
 import { InlineAlert } from '@/shared/components/InlineAlert';
-import { PersonCell } from '@/shared/components/PersonCell';
 import { RowActions } from '@/shared/components/RowActions';
 import { showError } from '@/shared/lib/feedback';
 import { formatDate, toDateString } from '@/shared/lib/format';
-import { enrollmentCloseReasonLabel } from '@/shared/lib/labels';
 import { schApi } from '../api';
 import './school.css';
 import { useYears } from '../hooks/useCatalogs';
 import type { RosterItem, SchoolClass, StudentCandidate } from '../types';
-
-const GENDER_LABELS: Record<string, string> = { Male: 'Nam', Female: 'Nữ', Other: 'Khác' };
-const genderText = (v: string | null) => (v ? GENDER_LABELS[v] ?? v : '—');
+import { defaultRosterDate, genderText, rosterColumns } from './rosterColumns';
 
 interface Props {
   cls: SchoolClass | null;
@@ -57,13 +53,8 @@ export function ClassRosterDrawer({ cls, canWrite, onClose }: Props) {
 
   const year = years.data?.find((y) => y.academicYearId === cls?.academicYearId);
   const outOfYear = (d: Dayjs) => !year || d.isBefore(year.startDate, 'day') || d.isAfter(year.endDate, 'day');
-  const defaultStart = () => {
-    const today = dayjs();
-    return year && today.isBefore(year.startDate, 'day') ? dayjs(year.startDate) : today;
-  };
-
-  // Mặc định xem theo hôm nay; lớp của năm học chưa bắt đầu thì xem theo ngày bắt đầu năm học để thấy các em đã được xếp.
-  const date = picked ?? (year && dayjs().isBefore(year.startDate, 'day') ? dayjs(year.startDate) : dayjs());
+  const defaultStart = () => defaultRosterDate(year?.startDate);
+  const date = picked ?? defaultStart();
   const dateKey = toDateString(date);
   const roster = useQuery({
     queryKey: ['sch', 'roster', cls?.classId, dateKey],
@@ -120,7 +111,6 @@ export function ClassRosterDrawer({ cls, canWrite, onClose }: Props) {
   const openRows = roster.data?.students.filter((r) => selected.includes(r.enrollmentId)) ?? [];
   const candidateIds = new Set((candidates.data ?? []).map((c) => c.studentId));
   const closeCount = closing?.length ?? 1;
-  const latestStart = transferring?.reduce((m, r) => (r.startDate > m ? r.startDate : m), transferring[0].startDate);
 
   return (
     <>
@@ -154,21 +144,7 @@ export function ClassRosterDrawer({ cls, canWrite, onClose }: Props) {
             getCheckboxProps: (r) => ({ disabled: r.endDate !== null }),
           } : undefined}
           columns={[
-            { title: 'Học sinh', dataIndex: 'fullName', width: 240, render: (v: string, r: RosterItem) => <PersonCell name={v} sub={r.personCode} /> },
-            { title: 'Ngày sinh', dataIndex: 'dateOfBirth', width: 104, className: 'tabular', render: (v: string | null) => formatDate(v) },
-            { title: 'Giới tính', dataIndex: 'gender', width: 84, render: (v: string | null) => genderText(v) },
-            { title: 'Bắt đầu', dataIndex: 'startDate', width: 112, className: 'tabular', render: (v: string) => formatDate(v) },
-            {
-              title: 'Kết thúc', dataIndex: 'endDate', width: 124, className: 'tabular',
-              render: (v: string | null, r: RosterItem) => v
-                ? (
-                  <>
-                    {formatDate(v)}
-                    {r.reason && <div className="roster-reason">{enrollmentCloseReasonLabel[r.reason] ?? r.reason}</div>}
-                  </>
-                )
-                : <span className="muted">Hết năm học</span>,
-            },
+            ...rosterColumns,
             ...(canWrite ? [{
               title: 'Thao tác', key: 'actions', width: 84, align: 'center' as const,
               render: (_: unknown, r: RosterItem) => (

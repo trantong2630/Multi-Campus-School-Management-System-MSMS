@@ -51,7 +51,10 @@ export function ClassesPage() {
 
 
   const navigate = useNavigate();
+  // Hiệu phó chỉ nhận lớp của phân hiệu mình phụ trách nên ô lọc chỉ có các phân hiệu đó.
+  const ledCampusIds = user?.accountType === 'VicePrincipal' ? user.scope?.ledCampusIds ?? [] : null;
   const campusOptions = (campuses.data ?? [])
+    .filter((c) => !ledCampusIds || ledCampusIds.includes(c.campusId))
     .map((c) => ({ value: c.campusId, label: c.name }));
 
   // Số liệu theo đúng bộ lọc đang chọn, chỉ tính lớp đang hoạt động.
@@ -94,10 +97,13 @@ export function ClassesPage() {
           placeholder="Năm học" value={effectiveYear} onChange={setYearId}
           options={years.data?.map((y) => ({ value: y.academicYearId, label: `Năm học ${y.name}` }))}
         />
-        <Select
-          allowClear placeholder="Tất cả phân hiệu"
-          value={campusId} onChange={setCampusId} options={campusOptions}
-        />
+        {/* Hiệu phó phụ trách một phân hiệu thì không có gì để lọc. */}
+        {(!ledCampusIds || ledCampusIds.length > 1) && (
+          <Select
+            allowClear placeholder="Tất cả phân hiệu"
+            value={campusId} onChange={setCampusId} options={campusOptions}
+          />
+        )}
         <label className="inline-switch"><Switch checked={includeInactive} onChange={setIncludeInactive} /> Hiện cả lớp ngừng hoạt động</label>
       </FilterBar>
       <StatStrip>

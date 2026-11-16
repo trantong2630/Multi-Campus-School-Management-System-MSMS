@@ -359,6 +359,7 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | --- | --- |
 | Trang chủ | — |
 | Bảng điều khiển | Tình hình toàn trường · Tình hình phân hiệu · Tình hình tổ chuyên môn · Tình hình lớp chủ nhiệm · Tiến độ bài tập rèn luyện · Thống kê hệ thống |
+| Danh sách học sinh | — |
 | Cơ cấu nhà trường | Thông tin trường · Phân hiệu · Tổ chuyên môn & Môn học · Năm học & Học kỳ · Ngày nghỉ · Khung giờ tiết · Lớp & Ghi danh · Kết chuyển năm học |
 | Hồ sơ | Cán bộ · Học sinh · Phụ huynh · Trách nhiệm |
 | Thời khóa biểu | Thời khóa biểu · Phụ trách chuyên môn · Lịch dạy · Giáo viên vắng |
@@ -376,7 +377,7 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 - **Ẩn hẳn mục không có quyền**, không hiện rồi khóa.
 - Thông báo, hồ sơ cá nhân, đổi mật khẩu, đăng xuất nằm ở **góc phải header**, không vào sidebar.
 
-**Ai thấy mục nào.** Một mục chỉ hiện cho loại tài khoản **có việc làm trên màn hình đó**. Quyền đọc dữ liệu (cột Đọc của Business Spec §5) không tự sinh ra màn hình: Hiệu phó và giáo viên đọc môn học, khung giờ tiết, lớp, ngày nghỉ ngay trong lưới thời khóa biểu, lịch dạy và trang chủ, nên không có màn hình Cơ cấu nhà trường; Hiệu trưởng xem các màn này ở chế độ chỉ đọc, mọi thao tác sửa thuộc School Admin. Gõ thẳng đường dẫn của mục không được thấy thì hiện trang 403. Nguồn duy nhất ở web là `app/menu.tsx`.
+**Ai thấy mục nào.** Một mục chỉ hiện cho loại tài khoản **có việc làm trên màn hình đó**. Quyền đọc dữ liệu (cột Đọc của Business Spec §5) không tự sinh ra màn hình: Hiệu phó và giáo viên đọc môn học, khung giờ tiết, lớp, ngày nghỉ ngay trong lưới thời khóa biểu, lịch dạy và trang chủ, nên giáo viên không có màn hình Cơ cấu nhà trường; Hiệu phó xem Thông tin trường, Tổ chuyên môn & Môn học, Năm học & Học kỳ và Lớp & Ghi danh ở chế độ chỉ đọc như Hiệu trưởng, trừ Phân hiệu (Lớp & Ghi danh chỉ có lớp của phân hiệu mình phụ trách); chủ nhiệm xem học sinh lớp mình ở mục cấp 1 **Danh sách học sinh**, mục đầu tiên của cụm Quản lý; Hiệu trưởng xem các màn này ở chế độ chỉ đọc, mọi thao tác sửa thuộc School Admin. Gõ thẳng đường dẫn của mục không được thấy thì hiện trang 403. Nguồn duy nhất ở web là `app/menu.tsx`.
 
 | Mục | Ai thấy |
 | --- | --- |
@@ -388,7 +389,9 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Bảng điều khiển › Tình hình lớp chủ nhiệm | GV (chỉ chủ nhiệm) |
 | Bảng điều khiển › Tiến độ bài tập rèn luyện | HT, HP, GV (chủ nhiệm hoặc tổ trưởng) |
 | Bảng điều khiển › Thống kê hệ thống | SA |
-| Cơ cấu nhà trường › Thông tin trường · Phân hiệu · Tổ chuyên môn & Môn học · Năm học & Học kỳ · Lớp & Ghi danh | SA (sửa), HT (chỉ xem) |
+| Danh sách học sinh | GV (chỉ chủ nhiệm) |
+| Cơ cấu nhà trường › Phân hiệu | SA (sửa), HT (chỉ xem) |
+| Cơ cấu nhà trường › Thông tin trường · Tổ chuyên môn & Môn học · Năm học & Học kỳ · Lớp & Ghi danh | SA (sửa), HT, HP (chỉ xem; Lớp & Ghi danh của HP chỉ có lớp thuộc phân hiệu mình phụ trách) |
 | Cơ cấu nhà trường › Ngày nghỉ · Khung giờ tiết · Kết chuyển năm học | SA |
 | Hồ sơ › Cán bộ · Học sinh · Phụ huynh | SA, HT, HP |
 | Hồ sơ › Trách nhiệm | SA, HT |
@@ -404,4 +407,4 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Quản trị › Tài khoản · Nhật ký | SA |
 | Quản trị › Xuất dữ liệu | HT, HP, GV |
 
-Ký hiệu như Business Spec §5. Kết quả với các màn đã có: **SA** Trang chủ · Bảng điều khiển (Thống kê hệ thống) · Cơ cấu nhà trường (đủ 8 mục) · Hồ sơ (Cán bộ, Trách nhiệm) · Tài khoản — **HT** Trang chủ · Bảng điều khiển (Tình hình toàn trường, Tiến độ bài tập rèn luyện) · Cơ cấu nhà trường (5 mục chỉ xem) · Hồ sơ (Cán bộ, Trách nhiệm) · Lịch dạy · Báo cáo toàn trường · Quản trị (Xuất dữ liệu) — **HP** Trang chủ · Bảng điều khiển (Tình hình phân hiệu, Tiến độ bài tập rèn luyện) · Cán bộ · Thời khóa biểu (Thời khóa biểu, Lịch dạy) — **GV** Trang chủ · Lịch dạy (chủ nhiệm hoặc tổ trưởng thêm Bảng điều khiển) — **HS, PH** Trang chủ.
+Ký hiệu như Business Spec §5. Kết quả với các màn đã có: **SA** Trang chủ · Bảng điều khiển (Thống kê hệ thống) · Cơ cấu nhà trường (đủ 8 mục) · Hồ sơ (Cán bộ, Trách nhiệm) · Tài khoản — **HT** Trang chủ · Bảng điều khiển (Tình hình toàn trường, Tiến độ bài tập rèn luyện) · Cơ cấu nhà trường (5 mục chỉ xem) · Hồ sơ (Cán bộ, Trách nhiệm) · Lịch dạy · Báo cáo toàn trường · Quản trị (Xuất dữ liệu) — **HP** Trang chủ · Bảng điều khiển (Tình hình phân hiệu, Tiến độ bài tập rèn luyện) · Cơ cấu nhà trường (4 mục chỉ xem, không có Phân hiệu) · Cán bộ · Thời khóa biểu (Thời khóa biểu, Lịch dạy) — **GV** Trang chủ · Lịch dạy (chủ nhiệm thêm Danh sách học sinh; chủ nhiệm hoặc tổ trưởng thêm Bảng điều khiển) — **HS, PH** Trang chủ.

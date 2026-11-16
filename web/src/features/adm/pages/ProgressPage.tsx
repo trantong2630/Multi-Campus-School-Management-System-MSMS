@@ -109,7 +109,7 @@ function Board({ d }: { d: Progress }) {
     if (l === 'campus') return d.campuses.length > 1;
     if (l === 'class') return d.classes.length > 1;
     return true;
-  }), [trail, isClass, d.campuses.length, d.classes.length]);
+  }), [trail, isClass, d.scope, d.campuses.length, d.classes.length]);
   const defaultLens: Lens = isClass ? 'subject' : d.campuses.length > 1 ? 'campus' : d.scope === 'Campus' ? (d.classes.length > 1 ? 'class' : 'subject') : 'department';
   const lens: Lens = lensPick && available.includes(lensPick) ? lensPick : available.includes(defaultLens) ? defaultLens : (available[0] ?? 'subject');
   const canDrill = available.some((l) => l !== lens);
