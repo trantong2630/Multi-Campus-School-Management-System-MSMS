@@ -16,9 +16,6 @@ import './exports.css';
 
 type Range = [Dayjs, Dayjs];
 
-/** Khoảng ngày chung của các mục xuất, khớp ExportRules.MaxRangeDays ở Backend. */
-const MAX_RANGE_DAYS = 186;
-
 function RangeField({ value, onChange }: { value: Range; onChange: (v: Range) => void }) {
   return (
     <Form.Item label="Khoảng ngày">
