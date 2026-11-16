@@ -25,7 +25,7 @@ public interface IAuthService
 }
 
 public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOptions> jwt, SessionService sessions,
-    AccountScopeResolver? scope = null, FeaturePermissionService? features = null) : IAuthService
+    AccountScopeResolver? scope = null) : IAuthService
 {
     private readonly AccountScopeResolver _scope = scope ?? new AccountScopeResolver(db, clock);
     private static readonly PasswordHasher<Account> Hasher = new();
@@ -133,7 +133,5 @@ public sealed class AuthService(MsmsDbContext db, IClock clock, IOptions<JwtOpti
     {
         // Tính lại từ dữ liệu đang hiệu lực, không đóng băng phạm vi trong JWT hoặc phiên đăng nhập.
         Scope = await _scope.ResolveAsync(a.PersonId, a.AccountType),
-        // Phân quyền động: web ẩn mục menu và chặn URL của chức năng đang tắt; backend vẫn tự chặn API.
-        DisabledFeatures = features is null ? [] : [.. await features.DisabledForAsync(a.AccountType)],
     };
 }

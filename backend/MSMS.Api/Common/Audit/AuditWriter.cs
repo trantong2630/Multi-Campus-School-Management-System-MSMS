@@ -11,7 +11,6 @@ public static class AuditCategories
     public const string Account = "Account";
     public const string TimetablePublish = "TimetablePublish";
     public const string ScheduleAdjust = "ScheduleAdjust";
-    public const string Permission = "Permission";   // phân quyền động: bật/tắt chức năng theo loại tài khoản
 }
 
 /// <summary>

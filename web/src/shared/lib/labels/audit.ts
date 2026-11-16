@@ -3,7 +3,6 @@ export const auditCategoryLabel: Record<string, string> = {
   Account: 'Tài khoản',
   TimetablePublish: 'Phát hành thời khóa biểu',
   ScheduleAdjust: 'Điều chỉnh lịch',
-  Permission: 'Phân quyền',
 };
 
 export const auditActionLabel: Record<string, string> = {
@@ -23,7 +22,6 @@ export const auditActionLabel: Record<string, string> = {
   DeleteTeacherAbsence: 'Xóa khai báo giáo viên vắng',
   ResolvePendingSubstitute: 'Xử lý tiết chờ: dạy thay',
   ResolvePendingCancel: 'Xử lý tiết chờ: hủy tiết',
-  UpdateFeaturePermissions: 'Cập nhật phân quyền',
 };
 
 export const auditTargetKindLabel: Record<string, string> = {
@@ -61,7 +59,4 @@ export const auditFieldLabel: Record<string, string> = {
   pending: 'Số tiết chuyển Chờ xử lý',
   restored: 'Mã các tiết trả lại',
   absenceId: 'Mã khai báo vắng',
-  accountType: 'Loại tài khoản',
-  turnedOn: 'Đã bật',
-  turnedOff: 'Đã tắt',
 };
