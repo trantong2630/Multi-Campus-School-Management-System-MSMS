@@ -2,6 +2,7 @@ import type { RouteObject } from 'react-router-dom';
 import { CampusPage } from './pages/CampusPage';
 import { ClassesPage } from './pages/ClassesPage';
 import { HolidaysPage } from './pages/HolidaysPage';
+import { HomeroomStudentsPage } from './pages/HomeroomStudentsPage';
 import { PeriodSlotsPage } from './pages/PeriodSlotsPage';
 import { RolloverPage } from './pages/RolloverPage';
 import { SchoolProfilePage } from './pages/SchoolProfilePage';
@@ -17,4 +18,5 @@ export const schRoutes: RouteObject[] = [
   { path: 'sch/period-slots', element: <PeriodSlotsPage /> },
   { path: 'sch/classes', element: <ClassesPage /> },
   { path: 'sch/rollover', element: <RolloverPage /> },
+  { path: 'sch/homeroom-students', element: <HomeroomStudentsPage /> },
 ];

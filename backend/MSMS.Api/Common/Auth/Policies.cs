@@ -11,7 +11,7 @@ public static class Policies
     public const string TimetableManager = nameof(TimetableManager);   // ghi thời khóa biểu: VicePrincipal (SchoolAdmin không làm thời khóa biểu)
     public const string TimetableReader = nameof(TimetableReader);     // đọc thời khóa biểu và lịch dạy theo phân hiệu: Principal, VicePrincipal
     public const string ResponsibilityManager = nameof(ResponsibilityManager);   // gán trách nhiệm: SchoolAdmin, Principal
-    public const string SchoolStructureReader = nameof(SchoolStructureReader);   // xem cơ cấu nhà trường (thống kê phân hiệu, tổ, lớp): SchoolAdmin, Principal
+    public const string SchoolStructureReader = nameof(SchoolStructureReader);   // xem thống kê phân hiệu và lớp của Cơ cấu nhà trường: SchoolAdmin, Principal
     public const string DashboardReader = nameof(DashboardReader);     // Dashboard: Principal (toàn trường hoặc lọc phân hiệu), VicePrincipal (phân hiệu mình)
     public const string CampusReader = nameof(CampusReader);           // đọc dữ liệu phân hiệu: SchoolAdmin, Principal, VicePrincipal
     public const string Teacher = nameof(Teacher);

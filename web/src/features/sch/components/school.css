@@ -437,7 +437,7 @@ button.hol-chip {
 /* Chế độ chỉ xem: giữ chữ đậm màu thường, không phủ xám cả form. */
 .school-form--readonly .ant-input-disabled,
 .school-form--readonly .ant-input[disabled],
-.school-form--readonly .ant-select-disabled .ant-select-content,
+.school-form--readonly .ant-select-disabled,
 .school-form--readonly .ant-select-disabled .ant-select-selector {
   color: var(--c-text1);
   -webkit-text-fill-color: var(--c-text1);
@@ -445,11 +445,229 @@ button.hol-chip {
   cursor: default;
 }
 
+/* Ruột của Select (antd v6) trong suốt để nền khung ngoài liền một màu, không thành dải trắng trên nền xám. */
+.school-form--readonly .ant-select-disabled .ant-select-content,
+.school-form--readonly .ant-select-disabled input {
+  color: var(--c-text1);
+  -webkit-text-fill-color: var(--c-text1);
+  background: transparent;
+  cursor: default;
+}
+
 .school-form--readonly .ant-input-disabled,
+.school-form--readonly .ant-select-disabled,
 .school-form--readonly .ant-select-disabled .ant-select-selector {
   border-color: var(--c-borderMint);
 }
 
 .school-form--readonly .ant-select-disabled .ant-select-suffix {
   display: none;
+}
+
+/* Danh sách học sinh của chủ nhiệm: khung đầu có tên lớp, ngày xem và ba số liệu (sĩ số, nam nữ, sinh nhật trong tháng). */
+.homeroom-hero {
+  margin-bottom: 12px;
+  border-radius: var(--radius-xl);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+/* Phần trên có nền bạc hà nhạt loang sang trắng để khoảng trống không bị trơ. */
+.homeroom-hero__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  padding: 26px 32px;
+  background: linear-gradient(100deg, var(--c-green50) 0%, var(--c-surface) 60%);
+}
+
+/* Đọc liền một cụm "Lớp chủ nhiệm 6A1" cùng màu mực, tên lớp lớn hơn; dòng dưới cách ra cho thoáng. */
+.homeroom-hero__title {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.homeroom-hero__title h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin: 0;
+  line-height: 1;
+  color: var(--c-ink);
+}
+
+.homeroom-hero__title h2 span {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.homeroom-hero__title h2 b {
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  color: var(--c-green700);
+}
+
+/* Phân hiệu và năm học trong một khung viên thuốc chia đôi, chữ xanh đậm nhỏ hơn để tách khỏi dòng tên lớp. */
+.homeroom-hero__title p {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: stretch;
+  margin: 0;
+  border: 1px solid var(--c-borderMint);
+  border-radius: var(--radius-pill);
+  background: var(--c-surface);
+  box-shadow: 0 1px 2px rgba(16, 42, 48, .04);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-green800);
+  overflow: hidden;
+}
+
+.homeroom-hero__title p span {
+  padding: 5px 14px;
+}
+
+.homeroom-hero__title p span + span {
+  border-left: 1px solid var(--c-borderMint);
+  background: var(--c-green50);
+}
+
+.homeroom-hero__date {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--c-text3);
+}
+
+.homeroom-hero__facts {
+  display: grid;
+  grid-template-columns: 140px 280px minmax(0, 1fr);
+  border-top: 1px solid var(--c-border);
+}
+
+.homeroom-fact {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 14px 32px;
+}
+
+.homeroom-fact + .homeroom-fact {
+  border-left: 1px solid var(--c-border);
+}
+
+.homeroom-fact__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text3);
+}
+
+.homeroom-fact__value {
+  font-size: 24px;
+  line-height: 1;
+  color: var(--c-ink);
+}
+
+.homeroom-fact__gender {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--c-text1);
+}
+
+.homeroom-fact__empty {
+  font-size: 14px;
+  color: var(--c-text3);
+}
+
+/* Tỉ lệ nam nữ: thanh mảnh, màu nhạt, chỉ để nhìn nhanh; con số nằm ngay bên cạnh. */
+.gender-split {
+  display: flex;
+  gap: 2px;
+  width: 96px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--c-neutralBg);
+  overflow: hidden;
+}
+
+.gender-split i {
+  display: block;
+  flex-basis: 0;
+}
+
+.gender-split__male {
+  background: var(--c-skyFg);
+  opacity: .7;
+}
+
+.gender-split__female {
+  background: var(--c-coralFg);
+  opacity: .7;
+}
+
+.birthday-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  color: var(--c-text1);
+}
+
+.birthday-list b {
+  color: var(--c-amberInk);
+}
+
+.dob-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dob-cell__tag {
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--c-amberSoft);
+  color: var(--c-amberInk);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Chủ nhiệm nhiều lớp: chuyển lớp bằng dãy nút bo tròn ở đầu trang. */
+.homeroom-switch {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.homeroom-switch button {
+  padding: 6px 16px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--c-text2);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.homeroom-switch button.is-active {
+  background: var(--c-green600);
+  color: var(--c-surface);
 }
