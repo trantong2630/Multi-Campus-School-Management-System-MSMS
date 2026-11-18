@@ -18,7 +18,7 @@ Tài liệu kỹ thuật đi kèm Business Specification V3. Chốt bốn thứ:
 | Đăng nhập | JWT Bearer (access token 15 phút) + refresh token 7 ngày xoay vòng; phiên theo thiết bị lưu ở bảng `AccountSession` (chỉ lưu bản băm refresh token) để thu hồi được. Web giữ refresh token trong cookie HttpOnly `msms_rt` (Path `/api/auth`, SameSite=Lax, Secure khi HTTPS, không đặt hạn nên đóng trình duyệt là hết), access token chỉ giữ trong bộ nhớ trang; mobile nhận refresh token trong body và lưu bằng `flutter_secure_storage`. Web và API phải cùng domain khi deploy |
 | Phân quyền | Authorization Policy |
 | Excel | ClosedXML |
-| Realtime | ASP.NET Core SignalR, một hub cho thông báo và chat. Server → client: `NotificationCreated`, `MessageReceived`, `MessageRead`, `Typing`, `PresenceChanged`; client → server chỉ `Typing` và `JoinConversation`, gửi tin vẫn qua REST. Web dùng `@microsoft/signalr`, mobile dùng `signalr_netcore` (chỉ khi app mở, có polling dự phòng). Token truyền qua query `access_token`, hub đi qua cùng kiểm tài khoản và phiên như REST. Đẩy sau `SaveChanges`. Đang nhập và online chỉ ở bộ nhớ, không thêm bảng; không backplane khi chạy một instance |
+| Realtime | ASP.NET Core SignalR, một hub cho thông báo và chat. Server → client: `NotificationCreated`, `MessageReceived`, `MessagesRead`, `UserTyping`, `PresenceChanged`; client → server chỉ `SendTyping` và `JoinConversation`, gửi tin vẫn qua REST. Web dùng `@microsoft/signalr`, mobile dùng `signalr_netcore` (chỉ khi app mở, có polling dự phòng). Token truyền qua query `access_token`, hub đi qua cùng kiểm tài khoản và phiên như REST. Đẩy sau `SaveChanges`. Đang nhập và online chỉ ở bộ nhớ, không thêm bảng; không backplane khi chạy một instance |
 | Email OTP | Gmail SMTP (`smtp.gmail.com:587`, STARTTLS) bằng App Password của hộp thư chung của trường; tài khoản và mật khẩu ứng dụng đặt trong cấu hình môi trường, không commit (spec mục 3.2) |
 | Gọi AI | HttpClient + REST của nhà cung cấp (Gemini); khóa và model đặt ở mục `Ai` trong `appsettings.json` (`Ai:ApiKey`, `Ai:Model`). Yêu cầu có thể kèm ảnh (`IAiClient`, `AiImage`) |
 | Sách giáo khoa | Ảnh từng trang nằm trên Cloudinary qua `IImageStorage`, thư mục `msms/textbooks`, tên `<mã sách>-p-<trang PDF>.jpg`; API lấy ảnh rồi trả lại qua endpoint có kiểm quyền, ảnh không đi thẳng từ Cloudinary tới người dùng. Mục lục (bài, trang in bắt đầu và kết thúc, độ lệch số trang của cuốn) nằm trong mã nguồn ở `backend/MSMS.Api/Data/Textbooks/<mã sách>.json` và `TextbookSeeder` nạp vào CSDL mỗi lần API khởi động, ở mọi môi trường. Nạp một cuốn mới bằng `python -I tools/textbook-import/import_textbook.py` (cần thư viện `pymupdf`; khóa Gemini và Cloudinary lấy từ biến môi trường hoặc user-secrets); chữ do Gemini đọc từ mục lục phải được người rà lại trước khi commit file JSON |
@@ -36,9 +36,9 @@ Ant Design vì MSMS toàn bảng, lưới và form phức tạp — có sẵn Ta
 
 ### Mobile
 
-Flutter · dio · go_router · Riverpod · flutter_secure_storage
+Flutter 3.50 (Material qua gói `material_ui`) · dio · go_router · Riverpod 3 · flutter_secure_storage · signalr_netcore · image_picker · lucide_icons_flutter
 
-Chỉ các màn hình thuộc phạm vi mobile (spec mục 8.1).
+Chỉ các màn hình thuộc phạm vi mobile (spec mục 8.1). Địa chỉ API truyền lúc build: `--dart-define=API_URL=...`, mặc định `http://10.0.2.2:5063` (máy chạy emulator). Project nằm trong OneDrive nên `android/gradle.properties` tắt `kotlin.incremental` (OneDrive khóa cache tăng dần của Kotlin làm build lỗi).
 
 ### Môi trường
 
@@ -149,17 +149,22 @@ Tên feature trùng tên module backend. Gọi API chỉ qua `features/<module>/
 
 ### Mobile
 
-Chưa có code mobile (`mobile/` mới chỉ có `.gitkeep`). Cấu trúc dự kiến:
-
 ```
 lib/
-  core/       http, auth_store, theme, format
+  core/
+    auth/         user.dart (UserInfo, AccountScope), auth_controller.dart (phiên, apiProvider)
+    http/         api_client.dart: Dio dùng chung, gắn Bearer, gặp 401 thì refresh một lần rồi gửi lại
+    theme/        app_color.dart, app_spacing.dart, app_theme.dart
+    widgets/      widget dùng chung: AuthScaffold, HeroHeader, AppCard, Pill, PersonRow, StatTile, MsmsAiBubble, AsyncView…
+    config.dart  json.dart  format.dart  labels.dart  realtime.dart  router.dart
   features/
+    home/         trang chủ theo loại tài khoản (ghép dữ liệu nhiều module)
     iam/  scd/  att/  lrn/  par/  com/
+                  <module>_api.dart: model + hàm gọi API + provider; các file *_page(s).dart là màn hình
   main.dart
 ```
 
-Không có `sch/`, `ppl/`, `adm/` — mobile không có màn hình nào thuộc ba module đó.
+Gọi API chỉ qua `features/<module>/<module>_api.dart` (riêng hộp thư ở `par/inbox_api.dart`; COM tách theo tính năng: `com/notification_api.dart` cho thông báo, `com/feed_api.dart` cho bảng tin). Nhãn enum dịch một chỗ trong `core/labels.dart`. Provider đọc dữ liệu dùng `autoDispose` và theo dõi `currentUserProvider` để đổi tài khoản không lẫn dữ liệu cũ. Không có `sch/`, `ppl/`, `adm/` — mobile không có màn hình nào thuộc ba module đó.
 
 ### Test
 

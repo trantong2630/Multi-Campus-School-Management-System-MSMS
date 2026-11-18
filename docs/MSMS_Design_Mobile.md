@@ -1,6 +1,6 @@
 # MSMS — Mobile Design System
 
-20/10/2026 · V1.3 · Trần Đức Kiên
+18/11/2026 · V1.4 · Trần Đức Kiên
 
 **Audience: coding agents.** Companion to `MSMS_Design_Web.md` (shared tokens) and Business Specification V3 §8.1 (mobile scope).
 
@@ -8,7 +8,7 @@
 1. Mobile serves **Teacher, Student, Parent** only. School Admin, Principal, Vice Principal are web-only. Never build a mobile screen for them.
 2. Never hard-code a hex value in a widget. Import from `lib/core/theme/`.
 3. All user-visible strings are Vietnamese, from the Flutter counterpart of `labels.ts`. Code identifiers stay English.
-4. Flutter Material 3 only. Do not add a UI component package.
+4. Flutter Material 3 only, imported from `package:material_ui/material_ui.dart` (Flutter 3.50 moved Material out of the SDK into this package). Do not add a UI component package.
 5. Reuse across screens the same way web does (Web §12): `AuthScaffold`, hero header, stat/quick-action card, status pill and person row are each one shared widget. Do not write a per-screen copy.
 6. If a screen needs a table, a grid, a file import, or a configuration form — it belongs on web. Stop and report.
 
@@ -25,16 +25,16 @@ One notch warmer than web — users are teachers on their feet, students, and pa
 | --- | --- |
 | Bottom-rounded header with a pale green gradient and a faint illustration | Flat single-color header |
 | Large cards, radius 18, very light shadow | Bare `ListTile` rows flush to screen edges |
-| Quick actions as a grid of pastel cards | Screens that are all text |
+| Quick actions and figures as solid-color tiles in a white panel | Screens that are all text |
 | Big numbers, small labels underneath | Numbers and labels at the same size |
-| Floating bottom nav, rounded, 12 above the screen bottom | Default edge-docked bottom nav |
-| Solid color only on primary buttons and FAB | Solid-filled cards |
+| Floating green bottom nav, pill-shaped, 12 above the screen bottom | Default edge-docked bottom nav |
+| Solid color only on primary buttons, FAB, the bottom nav and home tiles | Solid-filled content cards (lists, forms, details) |
 
 ---
 
 ## 2. Tokens
 
-Color, type, and radius **inherit `MSMS_Design_Web.md` §2–4 (V1.1) unchanged** — page `bg` is `#F1F5F2`, `sm/md` radius 10/12, status badges are pills. The mobile header gradient is spelled out in §2.1 below. Mobile overrides exactly five values:
+Color, type, and radius **inherit `MSMS_Design_Web.md` §2–4 (V1.1) unchanged** — the same values as `web/src/shared/lib/tokens.ts`: page `bg` is `#F4FCF7`, `sm/md` radius 8/12, status badges are pills, body font Be Vietnam Pro. The mobile header gradient is spelled out in §2.1 below. Mobile overrides exactly six values:
 
 | Aspect | Web | Mobile |
 | --- | --- | --- |
@@ -43,6 +43,7 @@ Color, type, and radius **inherit `MSMS_Design_Web.md` §2–4 (V1.1) unchanged*
 | Screen horizontal padding | 24 | **16** |
 | Base font size | 14 | **15** |
 | Minimum touch target | — | **48×48** |
+| Accent colors | `*Fg` / `*Bg` pastel pairs of §2.2 | pastel pair **one step deeper**, plus a **solid** fill for home tiles (§2.2) — web pastels look washed out on a phone |
 
 ### 2.1 Header gradient
 
@@ -51,46 +52,51 @@ BoxDecoration(
   gradient: LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF8FDCC0), Color(0xFFCFF0E2)], // green300 → pale green100
+    colors: [Color(0xFF9DEFD3), Color(0xFFD5F5E3)], // aqua mint → pale green
   ),
   borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
 )
 ```
 
-Text on the header uses `green800` `#08523B`, **not white** — the gradient is too light for white text. Header height 150–180, containing: greeting, class/date line, and two white pill quick-action buttons.
+The faint illustration is the login landscape (§5.7) at 20% opacity, anchored to the bottom so the hills sit under the pills. Text on the header uses `green800` `#17744A`, **not white** — the gradient is too light for white text. Header height 150–180, containing: the green wordmark (or the parent's child chip) with the notification bell, greeting, class/date line, and two white pill quick-action buttons.
 
 ### 2.2 Action card colors
 
-Six tinted backgrounds, using the `*Bg` / `*Fg` pairs from web §2.2: green · teal · amber · coral · sky · violet. **No color repeats inside one grid.** Mobile is the warmer platform, so a 2×2 grid may use up to four different pastels, but green stays the lead (header, bottom nav, primary buttons, selected states) and `coral` is reserved for things that need attention. Web's sprinkling rule (§2.2) is the stricter one; mobile relaxes it only in the quick-action grid.
+Each accent (`Accent` in `app_color.dart`) has three colors. **Solid** fills the home stat and action tiles, which sit together in one white panel: green `#2FB98B` · teal `#2AAFBC` · amber `#F6A04D` · coral `#F07070` · sky `#4C9BEA` · violet `#857DEB` — the same lightness, so any four side by side look like one set. Tile text is white: the label top-left 15/700, the number inside a white 2.5px ring top-right, one hint line at the bottom; an action tile shows its icon in a white 24% square instead of the ring. Tiles are 104 high with radius 22. **fg / bg** is the pastel pair, one step deeper than web §2.2, for avatars, subject badges, AI-analysis blocks and inline alerts: green `#17744A` / `#C4EED5` · teal `#0B8088` / `#C6EAEC` · amber `#A9660A` / `#FBE2B8` · coral `#D2463A` / `#F9D2CD` · sky `#2468C2` / `#CFE2FA` · violet `#5848CF` / `#DCD7FA`. **No color repeats inside one grid.** Green stays the lead (header, bottom nav, primary buttons, selected states) and `coral` is reserved for things that need attention.
 
 ### 2.3 Theme implementation
 
-Define `lib/core/theme/app_color.dart`, `app_spacing.dart`, `app_radius.dart`, `app_theme.dart`. Widgets import these; raw hex in a widget file is a review rejection.
+Define `lib/core/theme/app_color.dart` (`AppColor`, `Accent`, `BadgeGroup`, `AppGradient`), `app_spacing.dart` (`AppSpacing`, `AppRadius`, `AppShadow`) and `app_theme.dart`. Widgets import these; raw hex in a widget file is a review rejection. Excerpt:
 
 ```dart
 // lib/core/theme/app_color.dart
 class AppColor {
-  static const green50  = Color(0xFFEEF8F3);
-  static const green100 = Color(0xFFD8F0E5);
-  static const green200 = Color(0xFFA9E0C8);
-  static const green300 = Color(0xFF6CCBA6);
-  static const green500 = Color(0xFF16A47A);
-  static const green600 = Color(0xFF0E8A63); // primary fill
-  static const green700 = Color(0xFF0B6E4F);
-  static const green800 = Color(0xFF08523B);
+  static const green50  = Color(0xFFEEFBF3);
+  static const green100 = Color(0xFFD8F6E3);
+  static const green200 = Color(0xFFB2EDC8);
+  static const green300 = Color(0xFF83DDA6);
+  static const green500 = Color(0xFF47C987);
+  static const green600 = Color(0xFF2DB872); // primary fill
+  static const green700 = Color(0xFF1D8E55);
+  static const green800 = Color(0xFF17744A);
+  static const ink      = Color(0xFF12353A); // big numbers
 
-  static const coralFg  = Color(0xFFE0574B); static const coralBg  = Color(0xFFFDEDEB);
+  static const coralFg  = Color(0xFFE5594C); static const coralBg  = Color(0xFFFDECEA);
   static const amberFg  = Color(0xFFC97F0A); static const amberBg  = Color(0xFFFDF3E2);
-  static const skyFg    = Color(0xFF2E74B5); static const skyBg    = Color(0xFFE9F2FA);
-  static const violetFg = Color(0xFF6A5BC9); static const violetBg = Color(0xFFEFEDFB);
-  static const tealFg   = Color(0xFF128E90); static const tealBg   = Color(0xFFE3F4F4);
+  static const skyFg    = Color(0xFF2F80DB); static const skyBg    = Color(0xFFE8F2FD);
+  static const violetFg = Color(0xFF6B5CE0); static const violetBg = Color(0xFFEEECFD);
+  static const tealFg   = Color(0xFF0F9AA3); static const tealBg   = Color(0xFFE0F5F6);
 
-  static const bg = Color(0xFFF1F5F2);
+  // Login landscape: sky aqua → limeSoft, three hills meadow1 → meadow3.
+  static const aqua = Color(0xFF8CF4D2); static const limeSoft = Color(0xFFD9F4B8);
+  static const meadow1 = Color(0xFFA6E39A); static const meadow2 = Color(0xFF5CC477); static const meadow3 = Color(0xFF1F9A55);
+
+  static const bg = Color(0xFFF4FCF7);
   static const surface = Color(0xFFFFFFFF);
-  static const border = Color(0xFFE8ECEA);
-  static const text1 = Color(0xFF16211C);
-  static const text2 = Color(0xFF5B6B64);
-  static const text3 = Color(0xFF92A09A);
+  static const border = Color(0xFFE6EDF0);
+  static const text1 = Color(0xFF13292B);
+  static const text2 = Color(0xFF51666A);
+  static const text3 = Color(0xFF8A9DA2);
   static const danger = Color(0xFFD64535);
 }
 ```
@@ -98,28 +104,30 @@ class AppColor {
 ```dart
 // lib/core/theme/app_spacing.dart
 class AppSpacing { static const xs=4.0, sm=8.0, md=12.0, lg=16.0, xl=24.0, xxl=32.0; }
-class AppRadius  { static const sm=8.0, md=12.0, card=18.0, sheet=24.0, pill=999.0; }
+class AppRadius  { static const sm=8.0, md=12.0, field=14.0, card=18.0, sheet=24.0, pill=999.0; }
 ```
 
-Status badge grouping reuses the same five-group mapping as web §2.4. Implement one `statusGroup()` in Dart mirroring the TypeScript one — do not re-derive per screen.
+Status badge grouping reuses the same five-group mapping as web §2.4. `lib/core/labels.dart` holds one `statusLabel()` / `statusGroup()` mirroring the TypeScript registry — do not re-derive per screen. Avatar tints use the same hash and tone order as web `PersonAvatar`, so one person has the same color on both platforms.
 
 ### 2.4 Brand wordmark
 
-The logo is identical to web (Web §3.1): text `msms.` in Montserrat 700 + 300 with an amber `logoDot` period, never an image. Bundle the two Montserrat weights as font assets (not a UI package) and expose one `BrandLogo` widget with `tone: green | white` and `size`. White tone on the green login panel and the home header; green tone on light surfaces. Same prohibitions as web: no recoloring, no tagline beside it, no other font.
+The logo is identical to web (Web §3.1): text `msms.` in Montserrat 700 + 300 with an amber `logoDot` period, never an image. Bundle the two Montserrat weights as font assets (not a UI package) and expose one `BrandLogo` widget with `tone: green | white` and `size`. White tone on the landscape (login, splash); green tone on light surfaces and the home header. Same prohibitions as web: no recoloring, no tagline beside it, no other font.
 
 ---
 
 ## 3. Navigation
 
-### 3.1 Bottom nav — max 4 tabs, per account type
+### 3.1 Bottom nav — 5 tabs, per account type
 
 | Actor | Tabs |
 | --- | --- |
-| **Teacher** | Trang chủ · Lịch dạy · Hộp thư · Cá nhân |
-| **Student** | Trang chủ · Lịch học · Bài tập · Cá nhân |
-| **Parent** | Trang chủ · Lịch của con · Hộp thư · Cá nhân |
+| **Teacher** | Trang chủ · Lịch dạy · Bảng tin · Hộp thư · Cá nhân |
+| **Student** | Trang chủ · Lịch học · Bảng tin · Bài tập · Cá nhân |
+| **Parent** | Trang chủ · Lịch học · Bảng tin · Hộp thư · Cá nhân |
 
-Spec: white, radius 20, floated 12 above the bottom and inset 16 each side, shadow `pop`. Selected tab = filled icon + label 11/600 `green700`. Unselected = outline icon + label `text3`.
+Tab names follow the web menu (`web/src/app/menu.tsx`): the parent's schedule is "Lịch học" there too.
+
+Spec: height 68, fully rounded (pill), horizontal gradient `green600 → green500`, floated 12 above the bottom and inset 16 each side, soft green shadow. Selected tab = white icon + label 11/700 on a white 22% pill; unselected = icon + label in white 72%. Hộp thư carries a coral unread-count badge with a green outline. Five labels fit at 360dp because each label stays one short word pair.
 
 **Notifications are not a tab** — a bell in the header's top-right, identical to web. Keep both platforms consistent.
 
@@ -135,34 +143,33 @@ A child selector sits in the Trang chủ header as an avatar+name chip, opening 
 
 ## 4. Home screens
 
-Shared skeleton: **gradient header → highlight card → quick-action grid → short list.**
+Shared skeleton: **gradient header → highlight card → quick-action grid**, plus a short list where the role has one. The news feed is its own tab (§3.1), not a section of Trang chủ.
 
 ### 4.1 Teacher
 
 | Block | Content |
 | --- | --- |
-| Header | `"Chào, {tên}"` · weekday + date · two pills: **Điểm danh** · **Lịch hôm nay** |
-| Highlight card | Next session: subject, class, period slot, **Điểm danh** button. If none: `"Hết tiết hôm nay"` |
-| 2×2 grid | Tiết hôm nay (count) · Chưa điểm danh (coral) · Đơn nghỉ chờ duyệt *(homeroom only, amber)* · Tin nhắn chưa đọc (sky) |
-| List | Next 3 sessions today, each with a status badge |
+| Header | `"Chào, {tên}"` · weekday + date · two pills: **Điểm danh** (next session's sheet, or today's list) · **Lịch hôm nay** |
+| Highlight card | Next or ongoing session: subject, class, period slot, **Điểm danh** button. If none: MSMS AI says `"Hết tiết hôm nay"` |
+| 2×2 grid | Tiết hôm nay (green) · Chưa điểm danh (coral, sessions already started and not fully marked) · Đơn nghỉ chờ duyệt *(homeroom only, amber)*, otherwise Tiết tuần này (violet) · Tin nhắn chưa đọc (sky) |
+| Lớp chủ nhiệm *(homeroom only)* | Two action tiles: Chuyên cần lớp · Sổ liên lạc |
+| List | Next 3 sessions today with attendance progress |
 
 ### 4.2 Student
 
 | Block | Content |
 | --- | --- |
-| Header | Name · class · weekday + date |
-| Highlight card | Current or next session |
-| 2×2 grid | Bài chưa nộp (coral) · Sắp hết hạn (amber) · Điểm mới công bố (violet) · Chuyên cần tuần (teal) |
-| List | Bảng tin — 3 latest posts, cover-image cards |
+| Header | `"Chào, {tên}"` · class · weekday + date · two pills: **Sổ liên lạc** · **Chuyên cần** |
+| Highlight card | Current or next session; none left: MSMS AI line |
+| 2×2 grid | Bài chưa nộp (coral) · Sắp hết hạn (amber, due within 48 h) · Điểm mới (violet, submitted in the last 7 days) · Chuyên cần tuần (teal, % present) |
 
 ### 4.3 Parent
 
 | Block | Content |
 | --- | --- |
-| Header | Child chip · child's class |
-| Highlight card | This week's contact book — 4 figures: có mặt / muộn / vắng có phép / vắng không phép |
-| 2×2 grid | Xin nghỉ (green, opens form) · Đơn đang chờ (amber) · Điểm mới (violet) · Nhắn giáo viên (sky) |
-| List | Bảng tin |
+| Header | Child chip (in place of the wordmark) · `"Hôm nay của {tên con}"` · child's class + date · two pills: **Lịch học** · **Chuyên cần** |
+| Highlight card | This week's contact book — 4 figures: có mặt / muộn / vắng có phép / vắng không phép, plus a homework line; opens Sổ liên lạc |
+| 2×2 grid | Xin nghỉ (green action tile, opens form) · Đơn đang chờ (amber, opens Đơn xin nghỉ) · Điểm mới (violet, opens Kết quả của con) · Nhắn giáo viên (sky, unread count) |
 
 ---
 
@@ -175,8 +182,8 @@ Target: a teacher finishes one class in **under 60 seconds, one-handed**.
 | Element | Spec |
 | --- | --- |
 | Sticky header | Subject · class · period slot · date. Below it, four live counts: Có mặt / Muộn / Vắng / Chưa |
-| Bulk action | **"Tất cả có mặt"** button at the top of the list — the common case; the teacher then corrects a few |
-| Student row | Card radius 18, height 68, 40px avatar left, name + code, three segmented buttons right |
+| Bulk action | **"Tất cả có mặt"** button at the top of the list — the common case; the teacher then corrects a few. It fills only students not yet marked, so once some are marked it reads **"Còn lại có mặt (n)"** and never overwrites a choice |
+| Student row | Card radius 18, height 68, 40px avatar left (dropped below 380dp width so long names keep room), name + code, three segmented buttons right. A student with an approved leave shows "Có đơn nghỉ đã duyệt" under the name |
 | Segmented buttons | C / M / V, height 40, equal width; selected state fills with the matching tint |
 | Note | Pencil icon at the far right opens a bottom sheet for an optional note |
 | Save | Primary button docked to the bottom, showing progress: `"Lưu · 32/32"` |
@@ -216,17 +223,32 @@ Thread: bubbles radius 16; own messages fill `green600` with white text, counter
 
 When the underlying relationship has ended, replace the composer with a grey banner: `"Hội thoại đã kết thúc, chỉ xem lại."`
 
-### 5.6 Assignments (LRN-02, student side)
+### 5.6 Assignments and results (LRN-02 list, LRN-03/04, student and parent side)
+
+Students take assignments **on web only**; mobile has no attempt screen. The Bài tập tab is for keeping track of deadlines and reading results.
 
 List cards: title · subject · **countdown to deadline** (switches to coral under 24h) · status badge.
 
-Attempt screen: question progress bar on top, one question per screen, four selectable option cards (radio cards when the question has one correct answer; checkbox cards under a **Chọn nhiều đáp án** label when it has more), Previous/Next at the bottom. A question-number grid in a bottom sheet allows jumping.
+- **Not submitted, still open:** tapping opens a detail card (deadline, duration, question count) with one line `"Làm bài trên web."` and no start button.
+- **Submitted or past deadline:** tapping opens the result: score, each question with the chosen and correct options and the explanation, then the MSMS AI analysis box. While the analysis is `Pending`, the MSMS AI avatar shows a waiting bubble and the screen refetches every 3 seconds until it settles; `Failed` leaves the box empty. Not submitted shows `"Không nộp"`, never `0`.
 
-**Nộp bài** requires confirmation: `"Nộp một lần, không làm lại được."` (BR-21)
+Parents open the same result screen from the child's list.
 
 ### 5.7 Login and forced password change
 
-The mobile counterpart of Web §6.0, with the same identity: a full-screen `gradient.sider` panel (the web sider gradient) with the white MSMS wordmark (Web §3.1) at the top (no tagline or extra copy), then the form directly on the green — labels white, fields white, radius 14. Primary button is **inverted** (white fill, `green700` text, height 48, full width) for the same reason as on web. Errors appear as a pale in-page banner above the button, never a toast. Forced password change reuses the exact layout with the title "Đổi mật khẩu lần đầu" and a white text link "Đăng xuất". One shared `AuthScaffold` widget serves both screens.
+The mobile counterpart of Web §6.0, with the same identity, stacked vertically instead of side by side: the top ~36% of the screen is the web login landscape (aqua sky, sun, two clouds drifting slowly, three hills, two trees) redrawn with `CustomPainter`, with the white MSMS wordmark (Web §3.1) centered over the hills (no tagline or extra copy). Below it a white sheet with 28 top corners overlaps the landscape by 28 and rises in on open (480 ms, same curve as web). The sheet holds the time-of-day greeting as title ("Chào buổi sáng / chiều / tối"), a one-line subtitle, then the form: labels above fields, fields white with radius 14, primary button `green600` full width height 48. Errors appear as a pale in-page banner above the button, never a toast; a session that expired shows an amber banner on arrival. A caption "© {năm} · Hệ thống quản lý trường học đa phân hiệu" closes the page. Forced password change ("Đổi mật khẩu", text link "Đăng xuất"), and the three forgot-password steps (tên đăng nhập → mã 6 số với gửi lại sau 60 giây → mật khẩu mới) reuse the exact layout through one shared `AuthScaffold` widget. The splash screen while the saved session is restored shows the landscape and the wordmark only.
+
+### 5.8 Other screens
+
+| Screen | Treatment |
+| --- | --- |
+| Điểm danh hôm nay (teacher) | Today's sessions with a progress bar `marked/roster` and Đã xong / Chưa xong / Đã khóa pill |
+| Chuyên cần (student, parent) | Range chips Tuần này / Tháng này / 3 tháng; ring of present ratio, four stat tiles (muộn, vắng có phép, vắng không phép, chưa điểm danh), then only the sessions that were not "Có mặt" |
+| Chuyên cần lớp chủ nhiệm | Day stepper (no future days); one card per session with marked count and a pill per student who was not present; tap opens the read-only sheet |
+| Sổ liên lạc lớp | Homeroom student list (search above 12 students) → the student's weekly book (§5.3) |
+| Thông báo | Pale-green unread cards with a type icon; tap re-checks permission on the server and opens the matching mobile screen, or says the content is on web |
+| Bảng tin (tab) | Cover-image cards (16:9, image count badge), "Nội bộ" pill for internal posts, bell in the app bar; detail has a swipeable image strip, then title, author, content. |
+| Cá nhân | Identity card (tap avatar to change or remove it), active responsibilities, contact info with "Sửa", then Đổi mật khẩu · Đăng xuất |
 
 ---
 
@@ -252,10 +274,11 @@ No UI package. Material 3 + a custom `ThemeData`.
 | Bottom-rounded gradient header | `Container` + `BoxDecoration` |
 | Card | `Container` (not `Card` — its elevation API fights the token shadow) |
 | Three attendance buttons | `SegmentedButton` restyled, or `Row` + `InkWell` |
-| Floating bottom nav | `NavigationBar` wrapped in `Padding` + `ClipRRect` |
+| Floating bottom nav | `Container` with gradient + pill radius, one `InkWell` item per tab (not `NavigationBar`, whose indicator fights the white-on-green style) |
 | Bottom sheet | `showModalBottomSheet`, top radius 24 |
-| Icons | `lucide_icons` |
-| Illustrations | `flutter_svg` |
+| Icons | `lucide_icons_flutter` |
+| Illustrations | `CustomPainter` (landscape, empty-state hills); MSMS AI mascot is `assets/images/msms_ai.png` |
+| Fonts | Be Vietnam Pro 400/500/600/700 and Montserrat 300/700 bundled under `assets/fonts/` |
 | Date / time formatting | `intl` with `Locale('vi')`, `dd/MM/yyyy`, `HH:mm` |
 
 Routing via `go_router`, state via `Riverpod`, HTTP via `dio` — per `MSMS_Dev_Conventions.md` §1.
@@ -271,6 +294,7 @@ Routing via `go_router`, state via `Riverpod`, HTTP via `dio` — per `MSMS_Dev_
 | Offline-first | Not required; introduces sync complexity |
 | Custom page transitions | Keep Material defaults |
 | Table / grid screens | Web-only per spec §8.1 |
+| Taking an assignment | Web-only per spec §8.1; mobile lists assignments and shows results (§5.6) |
 | Like, comment, share on Bảng tin | Not in BR-27 — mobile **reads** the feed only |
 
 ---
