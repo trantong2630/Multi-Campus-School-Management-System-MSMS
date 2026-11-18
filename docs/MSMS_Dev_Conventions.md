@@ -36,9 +36,9 @@ Ant Design vì MSMS toàn bảng, lưới và form phức tạp — có sẵn Ta
 
 ### Mobile
 
-Flutter · dio · go_router · Riverpod · flutter_secure_storage
+Flutter 3.50 (Material qua gói `material_ui`) · dio · go_router · Riverpod 3 · flutter_secure_storage · signalr_netcore · image_picker · lucide_icons_flutter
 
-Chỉ các màn hình thuộc phạm vi mobile (spec mục 8.1).
+Chỉ các màn hình thuộc phạm vi mobile (spec mục 8.1). Địa chỉ API truyền lúc build: `--dart-define=API_URL=...`, mặc định `http://10.0.2.2:5063` (máy chạy emulator). Project nằm trong OneDrive nên `android/gradle.properties` tắt `kotlin.incremental` (OneDrive khóa cache tăng dần của Kotlin làm build lỗi).
 
 ### Môi trường
 
@@ -149,17 +149,22 @@ Tên feature trùng tên module backend. Gọi API chỉ qua `features/<module>/
 
 ### Mobile
 
-Chưa có code mobile (`mobile/` mới chỉ có `.gitkeep`). Cấu trúc dự kiến:
-
 ```
 lib/
-  core/       http, auth_store, theme, format
+  core/
+    auth/         user.dart (UserInfo, AccountScope), auth_controller.dart (phiên, apiProvider)
+    http/         api_client.dart: Dio dùng chung, gắn Bearer, gặp 401 thì refresh một lần rồi gửi lại
+    theme/        app_color.dart, app_spacing.dart, app_theme.dart
+    widgets/      widget dùng chung: AuthScaffold, HeroHeader, AppCard, Pill, PersonRow, StatTile, MsmsAiBubble, AsyncView…
+    config.dart  json.dart  format.dart  labels.dart  realtime.dart  router.dart
   features/
+    home/         trang chủ theo loại tài khoản (ghép dữ liệu nhiều module)
     iam/  scd/  att/  lrn/  par/  com/
+                  <module>_api.dart: model + hàm gọi API + provider; các file *_page(s).dart là màn hình
   main.dart
 ```
 
-Không có `sch/`, `ppl/`, `adm/` — mobile không có màn hình nào thuộc ba module đó.
+Gọi API chỉ qua `features/<module>/<module>_api.dart` (riêng hộp thư ở `par/inbox_api.dart`; COM tách theo tính năng: `com/notification_api.dart` cho thông báo, `com/feed_api.dart` cho bảng tin). Nhãn enum dịch một chỗ trong `core/labels.dart`. Provider đọc dữ liệu dùng `autoDispose` và theo dõi `currentUserProvider` để đổi tài khoản không lẫn dữ liệu cũ. Không có `sch/`, `ppl/`, `adm/` — mobile không có màn hình nào thuộc ba module đó.
 
 ### Test
 
