@@ -249,7 +249,7 @@ SA là người duy nhất ghi. HT có các màn hình xem Thông tin trường,
 | ID | Feature | Nội dung chính | Ghi | Đọc | BR |
 | --- | --- | --- | --- | --- | --- |
 | LRN-01 | Ngân hàng câu hỏi | Câu hỏi dùng chung theo môn, khối 6–9, nháp AI | GV (của mình) | mọi GV | BR-20 |
-| LRN-02 | Giao bài & Làm bài | Giao bài cho (lớp, môn) mình phụ trách, thời lượng tùy chọn; học sinh bắt đầu, tự lưu nháp, nộp một lượt | GV giao · HS làm 📱 | HS 📱 | BR-21 |
+| LRN-02 | Giao bài & Làm bài | Giao bài cho (lớp, môn) mình phụ trách, thời lượng tùy chọn; học sinh bắt đầu, tự lưu nháp, nộp một lượt | GV giao · HS làm | HS 📱 | BR-21 |
 | LRN-03 | Kết quả bài làm | Chấm ngay khi nộp; điểm, đáp án đúng và giải thích hiện ngay; giáo viên xem điểm từng học sinh | — | GV phụ trách, TT (chỉ đọc) · HS 📱 · PH 📱 | BR-22 |
 | LRN-04 | Phân tích bài làm bằng AI | MSMS AI phân tích từng bài làm khi nộp: điểm mạnh, điểm yếu, giải thích lỗi sai, gợi ý kiến thức | — | GV phụ trách, TT (chỉ đọc) · HS 📱 · PH 📱 | BR-23 |
 | LRN-05 | Tiến độ bài tập của tổ | Tổ trưởng xem tiến độ bài tập của mọi lớp thuộc các môn trong tổ: hạn nộp, số nộp / sĩ số, số bài mỗi giáo viên đã giao, thầy cô trong tổ kèm tiết dạy mỗi tuần. Nằm ở Bảng điều khiển › Tiến độ bài tập rèn luyện. Chỉ đọc, Backend chặn mọi đường ghi | — | TT | — |
@@ -587,11 +587,12 @@ Mỗi điều dưới đây nếu thêm vào sẽ làm lược đồ khó thiế
 
 | Actor | Mobile |
 | --- | --- |
-| **Parent, Student** | Toàn bộ chức năng của mình |
+| **Parent** | Toàn bộ chức năng của mình |
+| **Student** | Toàn bộ chức năng của mình trừ làm bài tập rèn luyện: trên mobile xem bài được giao và hạn nộp, kết quả và phân tích AI; làm bài trên web |
 | **Teacher** | Lịch dạy của mình · điểm danh và sửa trong ngày · hộp thư · thông báo · bảng tin (đọc) · hồ sơ cá nhân · nếu chủ nhiệm: hộp đơn nghỉ, duyệt và từ chối, sổ liên lạc lớp mình |
 | **School Admin, Principal, Vice Principal** | Không có mobile, dùng web |
 
-Chỉ có trên web: soạn câu hỏi, giao bài, dựng đề và bản in đề, xem kết quả bài tập theo lớp, tiến độ bài tập của tổ, soạn bài đăng; toàn bộ SCH, PPL, SCD (trừ màn hình xem lịch cá nhân) và ADM.
+Chỉ có trên web: soạn câu hỏi, giao bài, dựng đề và bản in đề, làm bài tập rèn luyện, xem kết quả bài tập theo lớp, tiến độ bài tập của tổ, soạn bài đăng; toàn bộ SCH, PPL, SCD (trừ màn hình xem lịch cá nhân) và ADM.
 
 ### 8.2. Ký hiệu Platform trong WBS
 

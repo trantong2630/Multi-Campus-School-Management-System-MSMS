@@ -775,18 +775,18 @@ Giáo viên xem bài của lớp và môn mình phụ trách kèm hạn nộp v�
 
 **4.6.11 — Xem danh sách bài của mình / View My Assignments**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.6.9  
-Học sinh xem bài được giao kèm hạn nộp và thời lượng ở mục Bài tập được giao (bài chưa nộp, bấm vào là làm bài ngay) và các bài đã nộp hoặc quá hạn ở mục Danh sách bài tập (bấm vào để xem kết quả).
+Học sinh xem bài được giao kèm hạn nộp và thời lượng ở mục Bài tập được giao (bài chưa nộp, bấm vào là làm bài ngay) và các bài đã nộp hoặc quá hạn ở mục Danh sách bài tập (bấm vào để xem kết quả). Trên mobile danh sách chỉ để theo dõi hạn nộp: bài chưa nộp hiện thông tin bài và nhắc làm trên web, bài đã nộp hoặc quá hạn mở kết quả.
 
 **4.6.12 — Bắt đầu và làm bài / Start and Take Practice**  
-`BE + Web + Mobile` · 2.5 MD · dep: 4.6.11  
+`BE + Web` · 2.5 MD · dep: 4.6.11  
 Học sinh trong danh sách được giao (4.6.9) mở bài từ thời điểm mở tới hạn nộp. Bài có thời lượng: học sinh bấm Bắt đầu, đồng hồ tính từ lúc đó theo giờ Backend và vẫn chạy khi thoát ra rồi vào lại; hạn thực tế là mốc sớm hơn giữa hạn nộp và (giờ bắt đầu + thời lượng). Câu có nhiều đáp án đúng cho chọn nhiều lựa chọn (BR-21). Mỗi câu hiện điểm của câu.
 
 **4.6.13 — Tự lưu nháp bài làm / Autosave Attempt**  
-`BE + Web + Mobile` · 1.5 MD · dep: 4.6.12  
+`BE + Web` · 1.5 MD · dep: 4.6.12  
 Bài làm tự lưu nháp trong lúc làm; Backend từ chối lưu sau hạn thực tế (BR-21).
 
 **4.6.14 — Nộp bài một lượt và tự nộp khi hết hạn / Submit and Auto-submit Attempt**  
-`BE + Web + Mobile` · 2 MD · dep: 4.6.13  
+`BE + Web` · 2 MD · dep: 4.6.13  
 Tối đa MỘT lần nộp. Backend từ chối nộp sau hạn thực tế (có dung sai 10 giây cho độ trễ mạng) và nộp lại. Hết hạn thực tế mà chưa nộp: bản nháp có ít nhất một câu trả lời được Backend tự nộp và chấm ở lần đầu bài được truy cập sau hạn thực tế (không job nền); bản nháp rỗng hoặc chưa từng mở thì Không nộp. Không kiểm lại ghi danh khi nộp nên chuyển lớp giữa chừng không làm mất bài (BR-21, mục 7.8). Kiểm thử: nộp sau hạn thực tế bị chặn; nộp lần hai bị chặn; học sinh ngoài danh sách được giao không mở được bài; đóng trình duyệt giữa chừng rồi hết giờ vẫn được chấm bản nháp; chuyển lớp sau khi giao không đổi người nhận, mẫu số và bài đã nộp.
 
 ### LRN-03 Practice Results (Kết quả bài làm)
@@ -819,7 +819,7 @@ Khung phân tích AI nằm dưới kết quả từng bài, hiện cho Student, 
 
 **4.6.21 — Giao diện MSMS AI / MSMS AI Presence**  
 `Web + Mobile` · 2 MD · dep: 4.6.5, 4.6.12, 4.6.20  
-Avatar MSMS AI (logo/chatbot.png) kèm bong bóng chat ở bốn chỗ: tạo câu hỏi (đang soạn, xong), làm bài (đồng hồ đếm ngược trong bong bóng, lời động viên, nhắc còn 1 phút, báo hết giờ), phân tích (đang phân tích, xong) và màn Tiến độ bài tập rèn luyện (một câu nhận xét tình hình). Lời nhắn soạn sẵn ở frontend, không gọi AI; animation CSS đơn giản.
+Avatar MSMS AI (logo/chatbot.png) kèm bong bóng chat ở bốn chỗ: tạo câu hỏi (đang soạn, xong), làm bài (đồng hồ đếm ngược trong bong bóng, lời động viên, nhắc còn 1 phút, báo hết giờ), phân tích (đang phân tích, xong) và màn Tiến độ bài tập rèn luyện (một câu nhận xét tình hình). Mobile chỉ có chỗ phân tích, vì làm bài và soạn câu hỏi chỉ có trên web. Lời nhắn soạn sẵn ở frontend, không gọi AI; animation CSS đơn giản.
 
 **4.6.22 — Kiểm thử giao bài, hạn thực tế và phân tích / Practice Flow Tests**  
 `QA` · 2 MD · dep: 4.6.14, 4.6.19  
