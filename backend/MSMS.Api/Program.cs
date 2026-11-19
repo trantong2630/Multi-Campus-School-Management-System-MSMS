@@ -97,12 +97,19 @@ builder.Services.AddAdmModule();
 // COM-4.8.6: Hub xác thực bằng access_token qua query string
 builder.Services.AddSignalR();
 
+builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
+    .SetIsOriginAllowed(_ => true)
+    .AllowAnyHeader()
+    .AllowAnyMethod()
+    .AllowCredentials()));
+
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(o => o.InvalidModelStateResponseFactory = ModelStateErrorResponse.Create);
 
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseCors();
 app.UseAuthentication();
 app.UseMiddleware<AccountStatusMiddleware>();
 app.UseAuthorization();
