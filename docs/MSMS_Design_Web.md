@@ -562,6 +562,14 @@ Read-only page of one student at `/ppl/students/:id` (School Admin, Principal, V
 - **Lịch sử lớp**: a vertical timeline, newest first; school year on the left, class name 16/700 and campus, then the date range and the reason an enrollment ended. The current class has a filled `green500` dot with a `green100` halo and an "Đang học" tag.
 - No homework results on this page (permission matrix).
 
+### 9.7 Hồ sơ cán bộ (PPL-01)
+
+Read-only page of one staff member at `/ppl/staff/:id`, opened from the name in Hồ sơ › Cán bộ (School Admin, Principal, Vice Principal). Same frame and styles as Hồ sơ học sinh (§9.6, `features/ppl/pages/StaffProfilePage.tsx`, shared `student-profile.css`); no edit actions, editing and deactivation stay in the directory.
+
+- **Hero band**: avatar, name, profile status badge, code · position · teacher abbreviation. On the right the primary campus and the department.
+- **Left**: Thông tin cá nhân (date of birth, gender, national ID, phone, email, address, hire date, account type).
+- **Right**: **Trách nhiệm** as a vertical timeline, current ones first with the filled green dot (Phụ trách phân hiệu / Tổ trưởng / Chủ nhiệm lớp, with the date range), then ended ones. **Giảng dạy học kỳ này** lists class, subject, campus and periods per week from the latest published timetable; the Vice Principal sees only the campuses in charge.
+
 ---
 
 ## 10. Responsive and accessibility

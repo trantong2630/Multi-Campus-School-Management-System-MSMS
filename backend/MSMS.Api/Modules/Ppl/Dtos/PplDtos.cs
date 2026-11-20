@@ -10,6 +10,18 @@ public record StaffDto(
     string? TeacherAbbr, string? Position, bool IsActive,
     int? AccountId, string? AccountType, string? AccountStatus);
 
+// PPL-01 Hồ sơ cán bộ (4.3.2), chỉ xem.
+public record StaffDetailDto(
+    StaffDto Profile, string? Address, DateOnly? HireDate,
+    IReadOnlyList<StaffResponsibilityDto> Responsibilities,
+    IReadOnlyList<StaffTeachingDto> Teaching);
+
+/// <summary>Một trách nhiệm của cán bộ. Kind: campus, department, homeroom. EndDate để trống là chưa có ngày kết thúc.</summary>
+public record StaffResponsibilityDto(string Kind, string TargetName, string? TargetGroup, DateOnly StartDate, DateOnly? EndDate, bool IsCurrent);
+
+/// <summary>Một cặp lớp – môn cán bộ đang dạy theo thời khóa biểu đã phát hành của học kỳ hiện hành, kèm số tiết mỗi tuần.</summary>
+public record StaffTeachingDto(int ClassId, string ClassName, string CampusName, int SubjectId, string SubjectName, int PeriodsPerWeek);
+
 public record StaffRequest(
     string FullName, DateOnly? DateOfBirth, string? NationalId, string? Gender, string? PhoneNumber, string? Email,
     int PrimaryCampusId, int? DepartmentId, string? TeacherAbbr, string? Position);

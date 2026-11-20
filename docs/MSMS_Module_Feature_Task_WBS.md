@@ -353,6 +353,8 @@ Hệ thống sinh mã hồ sơ khi tạo hồ sơ: tiền tố HS / CB / PH cộ
 `BE + Web` · 1.5 MD · dep: 4.1.4  
 Xem hồ sơ cán bộ cùng phân hiệu chính, tổ chuyên môn, viết tắt giáo viên, chức danh và loại tài khoản. School Admin và Principal xem toàn trường, Vice Principal chỉ cán bộ trong phạm vi phân hiệu mình phụ trách.
 
+Bấm tên một cán bộ mở trang **Hồ sơ cán bộ** (chỉ xem): thông tin cá nhân (ngày sinh, giới tính, số định danh, điện thoại, email, địa chỉ, ngày vào làm, loại tài khoản), trạng thái hồ sơ, và các trách nhiệm đang giữ rồi đã kết thúc (phụ trách phân hiệu, tổ trưởng, chủ nhiệm lớp). Kèm các cặp lớp – môn đang dạy theo thời khóa biểu đã phát hành của học kỳ hiện hành và số tiết mỗi tuần (Vice Principal chỉ lớp của phân hiệu mình phụ trách). Cán bộ ngoài phạm vi báo không tìm thấy. Sửa và ngừng hoạt động vẫn làm ở danh bạ.
+
 **4.3.3 — Tìm kiếm và lọc cán bộ / Search and Filter Staff**  
 `BE + Web` · 1 MD · dep: 4.3.2  
 Lọc theo phân hiệu chính, tổ chuyên môn, loại tài khoản, tình trạng có viết tắt hay chưa và Đang hoạt động / Tất cả hồ sơ; tìm theo họ tên, mã hồ sơ hoặc viết tắt.

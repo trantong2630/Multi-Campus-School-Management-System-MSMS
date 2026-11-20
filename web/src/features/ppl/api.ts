@@ -1,5 +1,5 @@
 import { apiClient } from '@/app/apiClient';
-import type { Paged, ResponsibilityHistoryRow, ResponsibilityKind, ResponsibilityRow, ChangeGuardianBody, Guardian, GuardianChild, GuardianImportResult, Staff, StaffImportResult, Student, StudentDetail, StudentImportResult } from './types';
+import type { Paged, ResponsibilityHistoryRow, ResponsibilityKind, ResponsibilityRow, ChangeGuardianBody, Guardian, GuardianChild, GuardianImportResult, Staff, StaffImportResult, Student, StudentDetail, StudentImportResult, StaffDetail } from './types';
 
 export interface StaffQuery {
   search?: string;
@@ -38,6 +38,7 @@ export const pplApi = {
   },
   staff: {
     list: (params: StaffQuery) => apiClient.get<Paged<Staff>>('/ppl/staff', { params }).then((r) => r.data),
+    detail: (id: number) => apiClient.get<StaffDetail>(`/ppl/staff/${id}`).then((r) => r.data),
     create: (b: object) => apiClient.post<Staff>('/ppl/staff', b).then((r) => r.data),
     update: (id: number, b: object) => apiClient.put<Staff>(`/ppl/staff/${id}`, b).then((r) => r.data),
     setActive: (id: number, isActive: boolean) => apiClient.put(`/ppl/staff/${id}/active`, { isActive }),

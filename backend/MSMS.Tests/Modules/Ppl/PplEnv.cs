@@ -30,7 +30,7 @@ internal sealed class PplEnv : IDisposable
     public CurrentUser User { get; }
     public ScopeResolver Scope { get; }
 
-    public StaffService Staff => new(Db, Clock, Scope);
+    public StaffService Staff => new(Db, Clock, User, Scope);
     public GuardianService Guardians => new(Db, Clock, Scope);
     public ResponsibilityService Resp => new(Db, User, Clock, Scope);
     public EnrollmentService Enrollments => new(Db, Clock, User, Scope, new AuditWriter(Db, User, Clock), new SessionService(Db, Clock, Options.Create(new JwtOptions())));

@@ -203,3 +203,30 @@ export interface ResponsibilityHistoryRow {
   /** Giờ mất quyền, khi thay người hoặc kết thúc có hiệu lực ngay. */
   endedAt: string | null;
 }
+
+/** Hồ sơ một cán bộ, chỉ xem (PPL-01, 4.3.2). */
+export interface StaffDetail {
+  profile: Staff;
+  address: string | null;
+  hireDate: string | null;
+  responsibilities: StaffResponsibility[];
+  teaching: StaffTeaching[];
+}
+
+export interface StaffResponsibility {
+  kind: ResponsibilityKind;
+  targetName: string;
+  targetGroup: string | null;
+  startDate: string;
+  endDate: string | null;
+  isCurrent: boolean;
+}
+
+export interface StaffTeaching {
+  classId: number;
+  className: string;
+  campusName: string;
+  subjectId: number;
+  subjectName: string;
+  periodsPerWeek: number;
+}

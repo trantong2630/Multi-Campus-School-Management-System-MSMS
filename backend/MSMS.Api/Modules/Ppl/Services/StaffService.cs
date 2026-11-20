@@ -25,8 +25,57 @@ public static class Genders
 }
 
 /// <summary>PPL-01: danh bạ cán bộ. Import chỉ tạo hồ sơ, sửa hồ sơ luôn làm ở đây (BR-11).</summary>
-public sealed class StaffService(MsmsDbContext db, IClock clock, ScopeResolver scope)
+public sealed class StaffService(MsmsDbContext db, IClock clock, CurrentUser user, ScopeResolver scope)
 {
+    /// <summary>
+    /// 4.3.2: Hồ sơ cán bộ, chỉ xem, cùng phạm vi danh bạ (School Admin, Hiệu trưởng toàn trường; Hiệu phó theo phân hiệu chính của cán bộ).
+    /// Phần giảng dạy cho cả ba vai trò quản lý; Hiệu phó chỉ thấy lớp của phân hiệu mình phụ trách.
+    /// </summary>
+    public async Task<StaffDetailDto> GetDetailAsync(int id)
+    {
+        var visible = await scope.FilterStaffAsync(db.StaffProfile.AsNoTracking().Where(s => s.StaffId == id));
+        if (!await visible.AnyAsync()) throw ApiException.NotFound("Không tìm thấy hồ sơ cán bộ.");
+
+        var profile = await GetAsync(id);
+        var extra = await db.StaffProfile.AsNoTracking().Where(s => s.StaffId == id)
+            .Select(s => new { s.Staff.Address, s.HireDate }).FirstAsync();
+        var today = clock.Today;
+        bool Current(DateOnly start, DateOnly? end) => start <= today && (end == null || end > today);
+
+        var campus = await db.CampusLeadership.AsNoTracking().Where(x => x.StaffId == id)
+            .Select(x => new { Name = x.Campus.Name, x.StartDate, x.EndDate }).ToListAsync();
+        var dept = await db.DepartmentHead.AsNoTracking().Where(x => x.StaffId == id)
+            .Select(x => new { Name = x.Department.Name, x.StartDate, x.EndDate }).ToListAsync();
+        var homeroom = await db.HomeroomAssignment.AsNoTracking().Where(x => x.StaffId == id)
+            .Select(x => new { Name = x.Class.Name, Group = x.Class.Campus.Name + " · " + x.Class.AcademicYear.Name, x.StartDate, x.EndDate }).ToListAsync();
+        var responsibilities = campus.Select(x => new StaffResponsibilityDto(ResponsibilityKinds.Campus, x.Name, null, x.StartDate, x.EndDate, Current(x.StartDate, x.EndDate)))
+            .Concat(dept.Select(x => new StaffResponsibilityDto(ResponsibilityKinds.Department, x.Name, null, x.StartDate, x.EndDate, Current(x.StartDate, x.EndDate))))
+            .Concat(homeroom.Select(x => new StaffResponsibilityDto(ResponsibilityKinds.Homeroom, x.Name, x.Group, x.StartDate, x.EndDate, Current(x.StartDate, x.EndDate))))
+            .OrderByDescending(r => r.IsCurrent).ThenByDescending(r => r.StartDate).ToList();
+
+        return new StaffDetailDto(profile, extra.Address, extra.HireDate, responsibilities, await TeachingAsync(id));
+    }
+
+    private async Task<List<StaffTeachingDto>> TeachingAsync(int staffId)
+    {
+        var today = clock.Today;
+        var semesterId = await db.Semester.AsNoTracking()
+            .Where(s => s.AcademicYear.IsCurrent && s.StartDate <= today && s.EndDate >= today)
+            .Select(s => (int?)s.SemesterId).FirstOrDefaultAsync();
+        if (semesterId is null) return [];
+
+        var entries = PublishedTimetable.LatestEntries(db, semesterId.Value).Where(e => e.TeacherId == staffId);
+        if (user.AccountType == AccountTypes.VicePrincipal)
+        {
+            var campuses = await scope.LedCampusIdsAsync();
+            entries = entries.Where(e => campuses.Contains(e.Class.CampusId));
+        }
+        var rows = await entries.GroupBy(e => new { e.ClassId, ClassName = e.Class.Name, CampusName = e.Class.Campus.Name, e.SubjectId, SubjectName = e.Subject.Name })
+            .Select(g => new { g.Key.ClassId, g.Key.ClassName, g.Key.CampusName, g.Key.SubjectId, g.Key.SubjectName, Periods = g.Count() }).ToListAsync();
+        return rows.OrderBy(r => r.ClassName).ThenBy(r => r.SubjectName)
+            .Select(r => new StaffTeachingDto(r.ClassId, r.ClassName, r.CampusName, r.SubjectId, r.SubjectName, r.Periods)).ToList();
+    }
+
     public async Task<PagedResult<StaffDto>> ListAsync(int? campusId, int? departmentId, string? accountType, bool? hasAbbr,
         string? search, bool includeInactive, int page, int pageSize)
     {
