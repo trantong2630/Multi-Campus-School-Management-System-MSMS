@@ -99,7 +99,7 @@ export const menu: MenuGroup[] = [
   {
     key: 'scd', label: 'Thời khóa biểu', icon: CalendarDays, section: 'manage',
     children: [
-      { key: 'scd-timetable', label: 'Thời khóa biểu', path: '/scd/timetable', roles: ['VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
+      { key: 'scd-timetable', label: 'Thời khóa biểu', path: '/scd/timetable', roles: ['Principal', 'VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
       { key: 'scd-responsibility', label: 'Phụ trách chuyên môn', path: '/scd/responsibilities', roles: ['VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
       { key: 'scd-schedule', label: 'Lịch dạy', path: '/scd/schedule', roles: ['Principal', 'VicePrincipal', 'Teacher'], requires: { VicePrincipal: 'campus' }, ready: true },
       { key: 'scd-my-class', label: 'Lịch học', path: '/scd/my-class', roles: ['Student', 'Parent'], ready: true },
