@@ -663,7 +663,7 @@ Không có bảng riêng, không nhập tay: tính mỗi khi cần. Với mỗi 
 
 **4.4.36 — Xem phụ trách chuyên môn toàn trường / View Subject Responsibility**  
 `BE + Web` · 2.5 MD · dep: 4.4.35  
-Màn hình chỉ đọc của Vice Principal, nằm dưới menu Thời khóa biểu. Bảng ba cột: Giáo viên, Phụ trách, Tổng tiết. Mỗi giáo viên một dòng; cột Phụ trách là các hộp, mỗi hộp một mục `Môn Lớp — số tiết`, tự xuống dòng, sắp theo môn rồi lớp, không hiện phân hiệu của lớp. Tổng tiết là tổng số tiết mỗi tuần của giáo viên qua mọi phân hiệu. Bộ lọc Phân hiệu (mặc định là phân hiệu của Vice Principal), Môn và ô tìm theo giáo viên, môn hoặc lớp (không phân biệt hoa thường và dấu); lọc phân hiệu chỉ chọn giáo viên có tiết ở phân hiệu đó, còn mỗi dòng vẫn hiện đủ mục của giáo viên ở mọi phân hiệu. Không có cảnh báo tải, không xuất Excel (BR-14, mục 2.3).
+Màn hình chỉ đọc của Principal và Vice Principal, nằm dưới menu Thời khóa biểu. Bảng ba cột: Giáo viên, Phụ trách, Tổng tiết. Mỗi giáo viên một dòng; cột Phụ trách là các hộp, mỗi hộp một mục `Môn Lớp — số tiết`, tự xuống dòng, sắp theo môn rồi lớp, không hiện phân hiệu của lớp. Tổng tiết là tổng số tiết mỗi tuần của giáo viên qua mọi phân hiệu. Bộ lọc Phân hiệu (mặc định là phân hiệu đầu tiên xem được), Môn và ô tìm theo giáo viên, môn hoặc lớp (không phân biệt hoa thường và dấu); lọc phân hiệu chỉ chọn giáo viên có tiết ở phân hiệu đó, còn mỗi dòng vẫn hiện đủ mục của giáo viên ở mọi phân hiệu. Không có cảnh báo tải, không xuất Excel (BR-14, mục 2.3).
 
 **4.4.37 — Kiểm thử phụ trách chuyên môn / Subject Responsibility Tests**  
 `QA` · 1.5 MD · dep: 4.4.35, 4.4.36  
