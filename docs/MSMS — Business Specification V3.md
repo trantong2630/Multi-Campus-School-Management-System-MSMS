@@ -235,7 +235,7 @@ SA là người duy nhất ghi. HT có các màn hình xem Thông tin trường,
 | --- | --- | --- | --- | --- | --- |
 | SCD-01 | Import & Phát hành thời khóa biểu | Tải mẫu điền sẵn, import theo học kỳ (file gồm các lớp cần đổi), đối chiếu viết tắt, bảng lỗi theo ô, sửa bản Nháp bằng kéo thả, kiểm xung đột toàn trường, xem trước, Phát hành và Phát hành lại | HP | lưới TKB và lịch dạy: HT, HP · lịch cá nhân: GV 📱, HS 📱, PH 📱 | BR-06, 12, 13, 14 |
 | SCD-02 | Điều chỉnh lịch dạy | Đổi giáo viên của tiết, hủy tiết, thêm tiết bù | HP | GV 📱, HS 📱, PH 📱 | BR-13, 15 |
-| SCD-03 | Xử lý giáo viên vắng | Khai báo vắng theo ngày hoặc theo tiết, xóa khai báo, danh sách tiết Chờ xử lý, gợi ý giáo viên rảnh, xử lý từng tiết: dạy thay hoặc hủy | HP | HP | BR-13, 16 |
+| SCD-03 | Xử lý giáo viên vắng | Khai báo vắng theo ngày hoặc theo tiết, xóa khai báo, danh sách tiết Chờ xử lý, gợi ý giáo viên rảnh, xử lý từng tiết: dạy thay hoặc hủy; HT xem được danh sách khai báo và tiết Chờ xử lý toàn trường, không thao tác | HP | HT, HP | BR-13, 16 |
 | SCD-04 | Phụ trách chuyên môn | Màn hình chỉ đọc, tính từ thời khóa biểu đã phát hành: mỗi giáo viên một dòng, liệt kê các mục môn – lớp kèm số tiết mỗi tuần và tổng tiết; lọc theo phân hiệu và môn; xem toàn trường | — | HP | BR-14 |
 
 ### ATT — Attendance (1)

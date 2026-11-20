@@ -613,6 +613,8 @@ Không thao tác được trên tiết bị khóa; tiết bù trùng khung giờ
 
 ### SCD-03 Teacher Absence (Xử lý giáo viên vắng)
 
+Principal có menu Giáo viên vắng chỉ xem: hai danh sách Tiết chờ xử lý và Khai báo vắng của phân hiệu đã chọn (mọi phân hiệu), ẩn các nút Khai báo vắng, Xóa khai báo và Xử lý tiết. Mọi thao tác ghi vẫn chỉ Vice Principal phụ trách phân hiệu.
+
 **4.4.25 — Khai báo giáo viên vắng / Declare Teacher Absence**  
 `BE + Web` · 2 MD  
 Vice Principal khai giáo viên có tiết ở phân hiệu mình theo một trong hai cách: theo ngày (từ ngày – đến ngày, vắng cả ngày) hoặc theo tiết (một ngày, chọn các tiết vắng, liền hay rời đều được), kèm lý do (tùy chọn). Chỉ khai cho tiết chưa kết thúc (từ hôm nay trở đi, tiết hôm nay đã quá giờ kết thúc thì bỏ qua), một khai báo tối đa 90 ngày, và giáo viên phải có tiết ở phân hiệu của người khai trong phạm vi đó. Đây KHÔNG phải đơn xin nghỉ của cán bộ — MSMS chỉ ghi nhận hệ quả lên lịch dạy (BR-16).

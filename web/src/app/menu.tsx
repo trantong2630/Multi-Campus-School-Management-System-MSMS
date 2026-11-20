@@ -103,7 +103,7 @@ export const menu: MenuGroup[] = [
       { key: 'scd-responsibility', label: 'Phụ trách chuyên môn', path: '/scd/responsibilities', roles: ['VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
       { key: 'scd-schedule', label: 'Lịch dạy', path: '/scd/schedule', roles: ['Principal', 'VicePrincipal', 'Teacher'], requires: { VicePrincipal: 'campus' }, ready: true },
       { key: 'scd-my-class', label: 'Lịch học', path: '/scd/my-class', roles: ['Student', 'Parent'], ready: true },
-      { key: 'scd-absence', label: 'Giáo viên vắng', path: '/scd/absences', roles: ['VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
+      { key: 'scd-absence', label: 'Giáo viên vắng', path: '/scd/absences', roles: ['Principal', 'VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
     ],
   },
   { key: 'att', label: 'Điểm danh', icon: ClipboardCheck, section: 'manage', path: '/att', roles: [...STAFF, 'Student', 'Parent'], requires: { VicePrincipal: 'campus' }, ready: true },
