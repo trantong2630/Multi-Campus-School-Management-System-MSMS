@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { Card, Select, Space, Spin } from 'antd';
 import { AlertCircle } from 'lucide-react';
 import { useAuth } from '@/app/AuthProvider';
@@ -15,6 +16,9 @@ import './weekly-report.css';
 
 export function WeeklyReportPage() {
   const { user } = useAuth();
+  // Mở từ Hồ sơ học sinh: ?studentId= chọn sẵn em đó nếu em thuộc lớp chủ nhiệm.
+  const [params] = useSearchParams();
+  const requestedId = Number(params.get('studentId')) || null;
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [selectedWeekStart, setSelectedWeekStart] = useState<string | null>(null);
 
@@ -36,9 +40,10 @@ export function WeeklyReportPage() {
     } else if (user?.accountType === 'Parent' && children && children.length > 0) {
       setSelectedStudentId(children[0].studentId);
     } else if (user?.accountType === 'Teacher' && homeroomStudents && homeroomStudents.length > 0) {
-      setSelectedStudentId(homeroomStudents[0].studentId);
+      const requested = homeroomStudents.find((s) => s.studentId === requestedId);
+      setSelectedStudentId((requested ?? homeroomStudents[0]).studentId);
     }
-  }, [user, children, homeroomStudents]);
+  }, [user, children, homeroomStudents, requestedId]);
 
   const { data: weeks, isLoading: weeksLoading } = useQuery({
     queryKey: ['par-report-weeks', selectedStudentId],
@@ -59,13 +64,9 @@ export function WeeklyReportPage() {
     enabled: selectedStudentId !== null && selectedWeekStart !== null,
   });
 
-  if (!user) {
-    return <div>Vui lòng đăng nhập.</div>;
-  }
-
-  const isStudent = user.accountType === 'Student';
-  const isParent = user.accountType === 'Parent';
-  const isTeacher = user.accountType === 'Teacher';
+  const isStudent = user?.accountType === 'Student';
+  const isParent = user?.accountType === 'Parent';
+  const isTeacher = user?.accountType === 'Teacher';
 
   const studentOptions = useMemo(() => {
     if (isStudent) return [];
@@ -82,6 +83,11 @@ export function WeeklyReportPage() {
     if (!weeks) return [];
     return weeks.map(w => ({ label: w.label, value: w.weekStart }));
   }, [weeks]);
+
+  // Thoát sớm sau mọi hook để số hook không đổi giữa các lần render.
+  if (!user) {
+    return <div>Vui lòng đăng nhập.</div>;
+  }
 
   return (
     <div className="weekly-report-page">

@@ -3,6 +3,7 @@ import { Button, Card, DatePicker, Select, Switch, Tabs, Tag, Tooltip } from 'an
 import type { Dayjs } from 'dayjs';
 import { ClipboardCheck, Trash2, UserRoundX } from 'lucide-react';
 import { useState } from 'react';
+import { useAuth } from '@/app/AuthProvider';
 import { schApi } from '@/features/sch/api';
 import { DataTable } from '@/shared/components/DataTable';
 import { FilterBar } from '@/shared/components/FilterBar';
@@ -22,6 +23,8 @@ import { useScdCampus } from '../useScdCampus';
 /** SCD-03: giáo viên vắng. Khai báo không tự đổi lịch — tiết bị ảnh hưởng về Chờ xử lý, hiệu phó quyết định từng tiết (BR-16). */
 export function AbsencePage() {
   const qc = useQueryClient();
+  // Hiệu trưởng xem được cả hai danh sách (toàn trường) nhưng không khai báo, xóa hay xử lý tiết: đó là việc của Hiệu phó (BR-16).
+  const canManage = useAuth().user?.accountType === 'VicePrincipal';
   const { campuses, effective: effectiveCampus, select: campusSelect, head: campusHead } = useScdCampus();
   const [declareOpen, setDeclareOpen] = useState(false);
   const [tab, setTab] = useState('pending');
@@ -33,26 +36,26 @@ export function AbsencePage() {
     <>
       <PageHeader
         title="Giáo viên vắng"
-        extra={
+        extra={canManage && (
           <Button type="primary" icon={<UserRoundX size={16} />} disabled={effectiveCampus === undefined} onClick={() => setDeclareOpen(true)}>
             Khai báo vắng
           </Button>
-        }
+        )}
       />
       {campusHead}
-      {campuses.isSuccess && campuses.data.length === 0 && (
+      {campuses.isSuccess && campuses.data.length === 0 && canManage && (
         <InlineAlert type="warning" title="Chưa có phân hiệu nào để thao tác" description="Hiệu phó cần được gán phụ trách phân hiệu ở Hồ sơ → Trách nhiệm." />
       )}
       {effectiveCampus !== undefined && (
         <Tabs
           activeKey={tab} onChange={setTab}
           items={[
-            { key: 'pending', label: 'Tiết chờ xử lý', children: <PendingTab campusId={effectiveCampus} lead={campusSelect} onChanged={refresh} /> },
-            { key: 'absences', label: 'Khai báo vắng', children: <AbsenceTab campusId={effectiveCampus} lead={campusSelect} onChanged={refresh} /> },
+            { key: 'pending', label: 'Tiết chờ xử lý', children: <PendingTab campusId={effectiveCampus} lead={campusSelect} canManage={canManage} onChanged={refresh} /> },
+            { key: 'absences', label: 'Khai báo vắng', children: <AbsenceTab campusId={effectiveCampus} lead={campusSelect} canManage={canManage} onChanged={refresh} /> },
           ]}
         />
       )}
-      {effectiveCampus !== undefined && (
+      {effectiveCampus !== undefined && canManage && (
         <DeclareAbsenceModal
           open={declareOpen} campusId={effectiveCampus} onClose={() => setDeclareOpen(false)}
           onDone={() => { setDeclareOpen(false); setTab('pending'); }}
@@ -63,7 +66,7 @@ export function AbsencePage() {
 }
 
 // ---------------------------------------------------------------- Tiết chờ xử lý
-function PendingTab({ campusId, lead, onChanged }: { campusId: number; lead: React.ReactNode; onChanged: () => void }) {
+function PendingTab({ campusId, lead, canManage, onChanged }: { campusId: number; lead: React.ReactNode; canManage: boolean; onChanged: () => void }) {
   const [range, setRange] = useState<[Dayjs, Dayjs] | null>(null);
   const [classId, setClassId] = useState<number | undefined>();
   const [resolving, setResolving] = useState<ResolveTarget | null>(null);
@@ -119,12 +122,12 @@ function PendingTab({ campusId, lead, onChanged }: { campusId: number; lead: Rea
               title: 'Tình trạng', key: 'state', width: 130, align: 'center',
               render: () => <Tag color="gold">Chờ xử lý</Tag>,
             },
-            {
-              title: 'Thao tác', key: 'actions', width: 90, align: 'center', fixed: 'right',
+            ...(canManage ? [{
+              title: 'Thao tác', key: 'actions', width: 90, align: 'center' as const, fixed: 'right' as const,
               render: (_: unknown, s: PendingSession) => (
                 <RowActions actions={[{ key: 'resolve', label: 'Xử lý tiết', icon: <ClipboardCheck size={16} />, onClick: () => resolve(s) }]} />
               ),
-            },
+            }] : []),
           ]}
         />
       </Card>
@@ -134,7 +137,7 @@ function PendingTab({ campusId, lead, onChanged }: { campusId: number; lead: Rea
 }
 
 // ---------------------------------------------------------------- Khai báo vắng
-function AbsenceTab({ campusId, lead, onChanged }: { campusId: number; lead: React.ReactNode; onChanged: () => void }) {
+function AbsenceTab({ campusId, lead, canManage, onChanged }: { campusId: number; lead: React.ReactNode; canManage: boolean; onChanged: () => void }) {
   const absences = useQuery({ queryKey: ['scd', 'absences', campusId], queryFn: () => scdApi.absences(campusId) });
   const slots = useQuery({ queryKey: ['sch', 'slots'], queryFn: schApi.periodSlots.list });
   const [showPast, setShowPast] = useState(false);
@@ -186,8 +189,8 @@ function AbsenceTab({ campusId, lead, onChanged }: { campusId: number; lead: Rea
             { title: 'Còn chờ xử lý', dataIndex: 'pendingCount', width: 120, align: 'right', className: 'tabular' },
             { title: 'Bỏ lỡ', dataIndex: 'missedCount', width: 90, align: 'right', className: 'tabular', render: (v: number) => v > 0 ? <span style={{ color: 'var(--c-amber)' }}>{v}</span> : v },
             { title: 'Đã xử lý', dataIndex: 'handledCount', width: 100, align: 'right', className: 'tabular' },
-            {
-              title: 'Thao tác', key: 'actions', width: 90, align: 'center', fixed: 'right',
+            ...(canManage ? [{
+              title: 'Thao tác', key: 'actions', width: 90, align: 'center' as const, fixed: 'right' as const,
               // Khai báo đã qua không còn thao tác nào: để trống thay vì một nút tắt.
               render: (_: unknown, a: Absence) => a.isPast ? null : (
                 <div className="row-actions">
@@ -199,7 +202,7 @@ function AbsenceTab({ campusId, lead, onChanged }: { campusId: number; lead: Rea
                   </Tooltip>
                 </div>
               ),
-            },
+            }] : []),
           ]}
         />
       </Card>

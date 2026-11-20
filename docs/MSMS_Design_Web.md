@@ -413,6 +413,7 @@ Any table or list whose rows are people (staff, students, parents, accounts) lea
 - Name 14/500 `text1`; below it one 12px `text3` line (person code or email, `tabular-nums`). Inactive people: name in `text3`.
 - The code/email moves into this cell — do not keep a separate "Mã hồ sơ" column next to it.
 - Implemented once as `shared/components/PersonCell.tsx`. No per-screen avatar code.
+- Where the person has a profile page (Hồ sơ học sinh, §9.6), pass `to`: the name becomes a link that keeps the table text colour and only turns `green700` with an underline on hover or focus. The row itself is not clickable, so row selection and the action column keep working.
 
 ### 8.3 Filter bar
 
@@ -475,7 +476,7 @@ Sticky header row **and** sticky first columns, inside a white card (1px `border
 - Morning/Afternoon separated by an 8px band row in `sunken`.
 - Daily schedule (Lịch dạy): a cancelled period is a `neutralBg` chip with struck-through text; a pending period is an `amberBg` chip with a 1.5px `amber` outline. Filled periods keep their subject color.
 - My teaching schedule (Lịch dạy của tôi, teacher): the same grid turned into a week — rows = Buổi × Tiết, columns = Thứ 2 → Thứ 7 of the chosen week, each header showing the weekday and `DD/MM`; today's header is `green700` on `green50`. A chip reads subject 13/700 and `class · status` 11 `text2` (status only for Chờ xử lý / Đã hủy); a cancelled period and its replacement stack in the same cell, the live one first. Week picker with previous/next arrows and a "Tuần này" button.
-- Lịch dạy view modes (Principal, Vice Principal): a segmented switch **Theo ngày / Theo lớp / Theo giáo viên** beside the campus select. *Theo ngày* is the daily grid above. *Theo lớp* and *Theo giáo viên* pick one class or one teacher (searchable select) and show the same week grid as My teaching schedule; the second chip line is the teacher name in the class view, and `class · campus` in the teacher view. Read-only — no edit actions on this screen.
+- Lịch dạy view modes (Principal, Vice Principal): a segmented switch **Theo ngày / Theo lớp / Theo giáo viên** beside the campus select. *Theo ngày* is the daily grid above. *Theo lớp* and *Theo giáo viên* pick one class or one teacher (searchable select) and show the same week grid as My teaching schedule; the second chip line is the teacher name in the class view, and `class · campus` in the teacher view. The three tabs are read-only. The Vice Principal also gets an **Điều chỉnh** button at the far right of the filter row, apart from the tabs: it turns the week grid into the adjustment mode (class select, click a lesson to change teacher or cancel, click an empty cell to add a make-up lesson), the button becomes a filled **Xong** and pressing it, or picking a view tab, leaves the mode. The Principal never sees the button. Menu Thời khóa biểu › Thời khóa biểu and Phụ trách chuyên môn are also open to the Principal, read-only: no template, upload, draft edit or publish actions.
 - Conflicting cell: 2px `danger` border + red dot top-right.
 
 #### Draft editing (Vice Principal, before Publish)
@@ -548,6 +549,26 @@ Mô-đun này là ngoại lệ có chủ ý của §8: không dùng khung danh s
 - **Danh sách bài tập (học sinh) và Kết quả của con (phụ huynh)** là **bức tường điểm**: số điểm trung bình thật lớn, mỗi bài là một ô pastel theo màu môn với con số điểm khổng lồ, tên bài và dải ô nhỏ cho từng câu (xanh đúng, san hô sai). Bài không nộp là ô viền nét đứt. Phụ huynh có nhiều con chọn con ở dải thẻ tròn phía trên.
 - **Bài tập đã giao (giáo viên)** chia hai cột: bên trái là danh sách nhóm **Đang mở** và **Đã đóng**, mỗi bài có vòng tròn nhỏ cho số bài đã nộp; bên phải là chi tiết bài đang chọn (mã bài nằm trên đường dẫn `?id=`): ba ô số (đã nộp, điểm trung bình, trạng thái), hai tab **Học sinh** và **Đề bài**. Danh sách học sinh có thanh điểm màu theo mức, sắp theo tên hoặc điểm thấp trước; bấm một em đã nộp mở ngăn kéo kết quả đầy đủ kèm phân tích AI. Dưới phần đầu của bài luôn có hộp tick Kèm đáp án và hai nút **Tải PDF**, **Tải Word**: bấm thì tải về file của đề để tự in hoặc chỉnh sửa. Tab **Đề bài** hiện mỗi câu với độ khó và điểm, cùng dải tóm tắt số câu và điểm theo phần.
 - **Tiến độ bài tập rèn luyện của tổ (tổ trưởng; `/dashboard/progress`; người vừa chủ nhiệm vừa là tổ trưởng chọn giữa chế độ tổ và chế độ lớp)**: Bên trái là số bài mỗi giáo viên trong tổ đã giao, dòng riêng bên dưới tên có tên phân hiệu chính của giáo viên, mỗi phân hiệu một màu chữ; bấm một giáo viên để chỉ xem bài của người đó, bấm lần nữa để bỏ lọc. Bên phải là danh sách bài của mọi lớp, bài đang mở xếp theo hạn gần nhất rồi tới bài đã đóng, có ô tìm theo tên bài, lớp hoặc giáo viên và nút Tất cả / Đang mở / Đã đóng; thanh nộp chuyển màu cam với bài đã đóng mà dưới một nửa lớp nộp. Bấm một bài mở ngăn kéo chi tiết chỉ đọc. Có dải nút lọc theo môn khi tổ có từ hai môn. Người không phải tổ trưởng thấy lời giải thích thay cho màn hình.
+
+### 9.6 Hồ sơ học sinh (PPL-02)
+
+Read-only page of one student at `/ppl/students/:id` (School Admin, Principal, Vice Principal, opened from the name in Hồ sơ › Học sinh) and `/sch/homeroom-students/:id` (homeroom teacher, opened from the name in Danh sách học sinh). Both paths render the same `features/ppl/pages/StudentProfilePage.tsx`, so the menu entry the user came from decides access and the breadcrumb. Styles live in `features/ppl/components/student-profile.css`.
+
+- **Page header**: title "Hồ sơ học sinh", **Quay lại** (back to the list the user came from, or to that role's list when opened by URL) and, for the homeroom teacher only, a primary **Sổ liên lạc** button that opens the weekly report with the student preselected (`/par/weekly-reports?studentId=`). No edit actions: editing stays in the directory.
+- **Hero band**: mint-to-white gradient like the homeroom roster hero (neutral grey for a student who has left). 76px avatar, the name at 28/800 `ink`, the status badge beside it, then code · age · gender. The current class sits on the right, split off by a mint hairline: a small label, the class name at 34/800 `green700` and the campus below; with no current class it says "Chưa xếp lớp" or "Rời trường {ngày}".
+- **Ghi chú**: when the profile has a note, an amber band (`amberSoft`, 4px `amber` left edge, uppercase `amberInk` label) right under the hero, before anything else.
+- **Two columns** (narrow left 280–360px, wide right): left holds **Thông tin cá nhân** (label/value rows with dashed separators; empty values show a muted dash) and **Phụ huynh** (avatar, name, relationship, phone at 18/700 `green700` as a `tel:` link, email). Right holds **Chuyên cần** and **Lịch sử lớp**.
+- **Chuyên cần** (current school year up to today): the presence rate as a 40/800 number with "có mặt trên N lượt đã điểm danh", one 12px bar split by the four final labels (Có mặt `green500`, Muộn `amber`, Vắng có phép `skyFg`, Vắng không phép `coralFg`) and a legend with the counts, so colour never stands alone. Lessons not yet marked are a one-line note, not part of the rate. Below, "Muộn và vắng gần đây": the five latest late or absent lessons with weekday and date, session, period, subject, the teacher's note and the attendance badge. No lesson marked yet: "Chưa có lượt điểm danh nào trong năm học này." instead of 0%.
+- **Lịch sử lớp**: a vertical timeline, newest first; school year on the left, class name 16/700 and campus, then the date range and the reason an enrollment ended. The current class has a filled `green500` dot with a `green100` halo and an "Đang học" tag.
+- No homework results on this page (permission matrix).
+
+### 9.7 Hồ sơ cán bộ (PPL-01)
+
+Read-only page of one staff member at `/ppl/staff/:id`, opened from the name in Hồ sơ › Cán bộ (School Admin, Principal, Vice Principal). Same frame and styles as Hồ sơ học sinh (§9.6, `features/ppl/pages/StaffProfilePage.tsx`, shared `student-profile.css`); no edit actions, editing and deactivation stay in the directory.
+
+- **Hero band**: avatar, name, profile status badge, code · position · teacher abbreviation. On the right the primary campus and the department.
+- **Left**: Thông tin cá nhân (date of birth, gender, national ID, phone, email, address, hire date, account type).
+- **Right**: **Trách nhiệm** as a vertical timeline, current ones first with the filled green dot (Phụ trách phân hiệu / Tổ trưởng / Chủ nhiệm lớp, with the date range), then ended ones. **Giảng dạy học kỳ này** lists class, subject, campus and periods per week from the latest published timetable; the Vice Principal sees only the campuses in charge.
 
 ---
 

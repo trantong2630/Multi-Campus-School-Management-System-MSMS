@@ -22,11 +22,14 @@ import { DraftEditorModal } from '../components/DraftEditorModal';
 import { PublishPreviewModal } from '../components/PublishPreviewModal';
 import { TimetableGrid } from '../components/TimetableGrid';
 import type { TimetableImportResult, TimetableVersion } from '../types';
+import { useAuth } from '@/app/AuthProvider';
 import { useScdCampus } from '../useScdCampus';
 
 /** SCD-01: tải mẫu → sửa → tải lên → sửa bản Nháp trên lưới → Phát hành. Mỗi phiên bản là hồ sơ của một lần import, đọc lại được như lịch sử. */
 export function TimetablePage() {
   const qc = useQueryClient();
+  // Hiệu trưởng chỉ xem (UC28); import, sửa nháp và phát hành là việc của Hiệu phó.
+  const canManage = useAuth().user?.accountType === 'VicePrincipal';
   const { campuses, effective: effectiveCampus, select: campusSelect, head: campusHead } = useScdCampus();
   const years = useYears();
   const { current } = useCurrentYear();
@@ -90,16 +93,16 @@ export function TimetablePage() {
     <>
       <PageHeader
         title="Thời khóa biểu"
-        extra={
+        extra={canManage && (
           <>
             <Button icon={<FileDown size={16} />} disabled={!ready} onClick={template}>Tải file mẫu</Button>
             <FileButton type="primary" icon={<FileUp size={16} />} disabled={!ready} loading={uploading} onFile={upload}>Tải lên</FileButton>
           </>
-        }
+        )}
       />
       {campusHead}
 
-      {noCampus && (
+      {noCampus && canManage && (
         <InlineAlert
           type="warning" title="Chưa có phân hiệu nào để thao tác"
           description="Hiệu phó cần được hiệu trưởng gán phụ trách phân hiệu ở Hồ sơ → Trách nhiệm trước khi import thời khóa biểu."
@@ -143,8 +146,8 @@ export function TimetablePage() {
               render: (_: unknown, v: TimetableVersion) => (
                 <RowActions actions={[
                   { key: 'grid', label: 'Xem lưới', icon: <Eye size={16} />, hidden: v.status === 'Draft', onClick: () => setGridOf(v) },
-                  { key: 'edit', label: 'Sửa bản Nháp', icon: <Pencil size={16} />, hidden: v.status !== 'Draft', onClick: () => setDraftOf(v) },
-                  { key: 'publish', label: 'Xem trước và phát hành', icon: <Rocket size={16} />, hidden: v.status !== 'Draft', onClick: () => setPreviewId(v.versionId) },
+                  { key: 'edit', label: 'Sửa bản Nháp', icon: <Pencil size={16} />, hidden: v.status !== 'Draft' || !canManage, onClick: () => setDraftOf(v) },
+                  { key: 'publish', label: 'Xem trước và phát hành', icon: <Rocket size={16} />, hidden: v.status !== 'Draft' || !canManage, onClick: () => setPreviewId(v.versionId) },
                 ]} />
               ),
             },

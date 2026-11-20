@@ -1,7 +1,7 @@
 import 'theme/app_color.dart';
 
 /// Bản Dart của `labels/status.ts` trên web: dịch enum một chỗ (Dev_Conventions §4.4), nhóm màu theo Design_Web §2.4.
-enum StatusDomain { account, session, attendance, leave, aiFeedback, submission, post, attempt }
+enum StatusDomain { account, session, attendance, leave, aiFeedback, submission, post, attempt, student }
 
 typedef _Entry = (String label, BadgeGroup group);
 
@@ -44,6 +44,11 @@ const Map<StatusDomain, Map<String, _Entry>> _registry = {
     'Submitted': ('Đã nộp', BadgeGroup.info),
     'NotSubmitted': ('Không nộp', BadgeGroup.neutral),
   },
+  StatusDomain.student: {
+    'Studying': ('Đang học', BadgeGroup.active),
+    'Transferred': ('Đã chuyển trường', BadgeGroup.danger),
+    'Graduated': ('Đã tốt nghiệp', BadgeGroup.info),
+  },
 };
 
 String statusLabel(StatusDomain domain, String value) => _registry[domain]?[value]?.$1 ?? value;
@@ -52,6 +57,17 @@ String statusLabel(StatusDomain domain, String value) => _registry[domain]?[valu
 BadgeGroup statusGroup(StatusDomain domain, String value) => _registry[domain]?[value]?.$2 ?? BadgeGroup.neutral;
 
 String sessionOfDayLabel(String v) => v == 'Morning' ? 'Sáng' : 'Chiều';
+
+/// Giới tính lưu trên hồ sơ.
+String genderLabel(String v) => switch (v) {
+  'Male' => 'Nam',
+  'Female' => 'Nữ',
+  'Other' => 'Khác',
+  _ => v,
+};
+
+/// Lý do kết thúc ghi danh (SCH-05), như `labels/enrollment.ts` trên web.
+const enrollmentCloseReasonLabel = {'ClassTransfer': 'Chuyển lớp', 'SchoolTransfer': 'Chuyển trường', 'Graduated': 'Tốt nghiệp'};
 
 /// Phạm vi trong ngày của đơn xin nghỉ.
 String leaveScopeLabel(String sessionOfDay, String? slotIds) {

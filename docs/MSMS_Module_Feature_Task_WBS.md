@@ -277,7 +277,7 @@ Ngừng dùng lớp mà giữ nguyên dữ liệu đã phát sinh. Bị chặn n
 
 **4.2.29 — Xem danh sách học sinh của lớp / View Class Roster**  
 `BE + Web` · 1 MD · dep: 4.2.26  
-Xem học sinh có ghi danh hiệu lực của lớp tại ngày đang xem, kèm ngày bắt đầu ghi danh. Đọc được: School Admin, Principal, Vice Principal của phân hiệu đó và giáo viên chủ nhiệm lớp. School Admin, Principal và Vice Principal mở từ màn Lớp & Ghi danh; giáo viên chủ nhiệm mở từ màn Danh sách học sinh (chỉ xem): đầu màn có khung gồm tên lớp, phân hiệu, năm học, ngày xem, sĩ số, tỉ lệ nam nữ và học sinh có sinh nhật trong tháng; bảng đánh số thứ tự, không chia trang, cột Kết thúc chỉ hiện khi có em đã kết thúc ghi danh; chủ nhiệm nhiều lớp thì chuyển lớp bằng các nút ở đầu trang.
+Xem học sinh có ghi danh hiệu lực của lớp tại ngày đang xem, kèm ngày bắt đầu ghi danh. Đọc được: School Admin, Principal, Vice Principal của phân hiệu đó và giáo viên chủ nhiệm lớp. School Admin, Principal và Vice Principal mở từ màn Lớp & Ghi danh; giáo viên chủ nhiệm mở từ màn Danh sách học sinh (chỉ xem): đầu màn có khung gồm tên lớp, phân hiệu, năm học, ngày xem, sĩ số, tỉ lệ nam nữ và học sinh có sinh nhật trong tháng; bảng đánh số thứ tự, không chia trang, cột Kết thúc chỉ hiện khi có em đã kết thúc ghi danh; chủ nhiệm nhiều lớp thì chuyển lớp bằng các nút ở đầu trang; bấm tên một em mở Hồ sơ học sinh (4.3.12).
 
 **4.2.30 — Ghi danh học sinh vào lớp / Enroll Student into Class**  
 `BE + Web` · 1.5 MD · dep: 4.2.29  
@@ -353,6 +353,8 @@ Hệ thống sinh mã hồ sơ khi tạo hồ sơ: tiền tố HS / CB / PH cộ
 `BE + Web` · 1.5 MD · dep: 4.1.4  
 Xem hồ sơ cán bộ cùng phân hiệu chính, tổ chuyên môn, viết tắt giáo viên, chức danh và loại tài khoản. School Admin và Principal xem toàn trường, Vice Principal chỉ cán bộ trong phạm vi phân hiệu mình phụ trách.
 
+Bấm tên một cán bộ mở trang **Hồ sơ cán bộ** (chỉ xem): thông tin cá nhân (ngày sinh, giới tính, số định danh, điện thoại, email, địa chỉ, ngày vào làm, loại tài khoản), trạng thái hồ sơ, và các trách nhiệm đang giữ rồi đã kết thúc (phụ trách phân hiệu, tổ trưởng, chủ nhiệm lớp). Kèm các cặp lớp – môn đang dạy theo thời khóa biểu đã phát hành của học kỳ hiện hành và số tiết mỗi tuần (Vice Principal chỉ lớp của phân hiệu mình phụ trách). Cán bộ ngoài phạm vi báo không tìm thấy. Sửa và ngừng hoạt động vẫn làm ở danh bạ.
+
 **4.3.3 — Tìm kiếm và lọc cán bộ / Search and Filter Staff**  
 `BE + Web` · 1 MD · dep: 4.3.2  
 Lọc theo phân hiệu chính, tổ chuyên môn, loại tài khoản, tình trạng có viết tắt hay chưa và Đang hoạt động / Tất cả hồ sơ; tìm theo họ tên, mã hồ sơ hoặc viết tắt.
@@ -397,6 +399,8 @@ Xem hồ sơ học sinh cùng lớp đang học, phân hiệu, phụ huynh đạ
 
 **4.3.13 — Tìm kiếm và lọc học sinh / Search and Filter Students**  
 `BE + Web` · 1 MD · dep: 4.3.12  
+Bấm tên một học sinh mở trang **Hồ sơ học sinh** (chỉ xem): thông tin cá nhân (ngày sinh, giới tính, số định danh, điện thoại, địa chỉ, ngày nhập học, ngày rời trường), ghi chú đặt nổi bật, lớp và phân hiệu hiện tại, phụ huynh đại diện kèm quan hệ và số điện thoại, chuyên cần năm học hiện hành (tỷ lệ có mặt = Có mặt + Muộn trên số lượt đã điểm danh, số lượt theo bốn nhãn của BR-18, năm lần muộn hoặc vắng gần nhất; chưa có lượt nào thì báo chưa có dữ liệu) và lịch sử lớp qua các năm kèm lý do kết thúc ghi danh. Không có kết quả bài tập. School Admin, Principal và Vice Principal mở từ danh bạ; giáo viên chủ nhiệm mở từ Danh sách học sinh (4.2.29) và chỉ mở được học sinh từng ghi danh ở lớp đang chủ nhiệm. Chuyên cần chỉ tính trong phạm vi người xem: Vice Principal theo phân hiệu phụ trách, chủ nhiệm theo lớp chủ nhiệm. Học sinh ngoài phạm vi báo không tìm thấy. Sửa hồ sơ và đổi phụ huynh vẫn làm ở danh bạ.
+
 Lọc theo năm học, phân hiệu, lớp và trạng thái; tìm theo tên hoặc mã hồ sơ.
 
 **4.3.14 — Tạo hồ sơ học sinh / Create Student Profile**  
@@ -585,7 +589,7 @@ Tiết đã qua và tiết đã điểm danh không bị xóa; tiết Chỉnh ta
 
 **4.4.19 — Xem lịch tuần của phân hiệu để điều chỉnh / View Weekly Campus Schedule**  
 `BE + Web` · 2 MD · dep: 4.4.11  
-Chế độ "Điều chỉnh" ngay trên màn hình Lịch dạy của Vice Principal: chọn một lớp, hiện lưới tuần (Thứ 2–7) theo khung giờ kèm ngày nghỉ trong tuần, mỗi tiết cho mở các thao tác điều chỉnh; tiết bù được đánh dấu. Principal xem được lưới tuần nhưng không thao tác. Tiết bị khóa hiện rõ là không thao tác được (mục 6.2).
+Chế độ "Điều chỉnh" ngay trên màn hình Lịch dạy của Vice Principal, bật bằng nút Điều chỉnh ở cuối hàng điều khiển (nút đổi thành Xong để thoát; chọn lại một tab xem cũng thoát) chứ không phải một tab ngang hàng với Theo ngày, Theo lớp, Theo giáo viên: chọn một lớp, hiện lưới tuần (Thứ 2–7) theo khung giờ kèm ngày nghỉ trong tuần, mỗi tiết cho mở các thao tác điều chỉnh; tiết bù được đánh dấu. Principal xem được lưới tuần nhưng không thao tác. Tiết bị khóa hiện rõ là không thao tác được (mục 6.2).
 
 **4.4.20 — Đổi giáo viên của tiết / Change Lesson Teacher**  
 `BE + Web` · 1.5 MD · dep: 4.4.19  
@@ -608,6 +612,8 @@ Mọi thao tác tay đổi nguồn tiết từ Sinh tự động sang Chỉnh ta
 Không thao tác được trên tiết bị khóa; tiết bù trùng khung giờ bị chặn; mọi thao tác đều sinh Audit và thông báo; email chỉ tới đúng giáo viên của bốn trường hợp ở 4.4.23, hồ sơ không có email thì bỏ qua và Gmail SMTP hỏng không làm thao tác thất bại; khai ngày nghỉ sau Phát hành hủy đúng các tiết chưa khóa của phạm vi ngày nghỉ (4.2.17), tiết đã khóa giữ nguyên và xóa ngày nghỉ không khôi phục tiết.
 
 ### SCD-03 Teacher Absence (Xử lý giáo viên vắng)
+
+Principal có menu Giáo viên vắng chỉ xem: hai danh sách Tiết chờ xử lý và Khai báo vắng của phân hiệu đã chọn (mọi phân hiệu), ẩn các nút Khai báo vắng, Xóa khai báo và Xử lý tiết. Mọi thao tác ghi vẫn chỉ Vice Principal phụ trách phân hiệu.
 
 **4.4.25 — Khai báo giáo viên vắng / Declare Teacher Absence**  
 `BE + Web` · 2 MD  
@@ -657,7 +663,7 @@ Không có bảng riêng, không nhập tay: tính mỗi khi cần. Với mỗi 
 
 **4.4.36 — Xem phụ trách chuyên môn toàn trường / View Subject Responsibility**  
 `BE + Web` · 2.5 MD · dep: 4.4.35  
-Màn hình chỉ đọc của Vice Principal, nằm dưới menu Thời khóa biểu. Bảng ba cột: Giáo viên, Phụ trách, Tổng tiết. Mỗi giáo viên một dòng; cột Phụ trách là các hộp, mỗi hộp một mục `Môn Lớp — số tiết`, tự xuống dòng, sắp theo môn rồi lớp, không hiện phân hiệu của lớp. Tổng tiết là tổng số tiết mỗi tuần của giáo viên qua mọi phân hiệu. Bộ lọc Phân hiệu (mặc định là phân hiệu của Vice Principal), Môn và ô tìm theo giáo viên, môn hoặc lớp (không phân biệt hoa thường và dấu); lọc phân hiệu chỉ chọn giáo viên có tiết ở phân hiệu đó, còn mỗi dòng vẫn hiện đủ mục của giáo viên ở mọi phân hiệu. Không có cảnh báo tải, không xuất Excel (BR-14, mục 2.3).
+Màn hình chỉ đọc của Principal và Vice Principal, nằm dưới menu Thời khóa biểu. Bảng ba cột: Giáo viên, Phụ trách, Tổng tiết. Mỗi giáo viên một dòng; cột Phụ trách là các hộp, mỗi hộp một mục `Môn Lớp — số tiết`, tự xuống dòng, sắp theo môn rồi lớp, không hiện phân hiệu của lớp. Tổng tiết là tổng số tiết mỗi tuần của giáo viên qua mọi phân hiệu. Bộ lọc Phân hiệu (mặc định là phân hiệu đầu tiên xem được), Môn và ô tìm theo giáo viên, môn hoặc lớp (không phân biệt hoa thường và dấu); lọc phân hiệu chỉ chọn giáo viên có tiết ở phân hiệu đó, còn mỗi dòng vẫn hiện đủ mục của giáo viên ở mọi phân hiệu. Không có cảnh báo tải, không xuất Excel (BR-14, mục 2.3).
 
 **4.4.37 — Kiểm thử phụ trách chuyên môn / Subject Responsibility Tests**  
 `QA` · 1.5 MD · dep: 4.4.35, 4.4.36  

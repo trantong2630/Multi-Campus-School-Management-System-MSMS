@@ -193,12 +193,14 @@ public class PplAuthorizationTests
 
     [Theory(DisplayName = "PPL | Phân quyền | Cán bộ | mỗi API gắn đúng policy")]
     [InlineData("List", Policies.CampusReader)] [InlineData("Create", Policies.SchoolAdmin)] [InlineData("Update", Policies.SchoolAdmin)]
+    [InlineData("Detail", Policies.CampusReader)]
     [InlineData("SetActive", Policies.SchoolAdmin)] [InlineData("Template", Policies.SchoolAdmin)] [InlineData("Import", Policies.SchoolAdmin)]
     public void Staff_ActionPolicy(string action, string policy) => Assert.Equal(policy, PolicyOf(typeof(StaffController), action));
 
     [Theory(DisplayName = "PPL | Phân quyền | Học sinh | mỗi API gắn đúng policy")]
     [InlineData("List", Policies.CampusReader)] [InlineData("Create", Policies.SchoolAdmin)] [InlineData("Update", Policies.SchoolAdmin)]
     [InlineData("Leave", Policies.SchoolAdmin)] [InlineData("Template", Policies.SchoolAdmin)] [InlineData("Import", Policies.SchoolAdmin)]
+    [InlineData("Detail", Policies.Staff)]
     public void Students_ActionPolicy(string action, string policy) => Assert.Equal(policy, PolicyOf(typeof(StudentsController), action));
 
     [Theory(DisplayName = "PPL | Phân quyền | Phụ huynh | mỗi API gắn đúng policy")]
