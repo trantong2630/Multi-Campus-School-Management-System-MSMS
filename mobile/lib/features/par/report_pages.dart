@@ -293,7 +293,7 @@ class _ScoresCard extends StatelessWidget {
   }
 }
 
-/// Danh sách học sinh lớp chủ nhiệm, bấm để xem sổ liên lạc từng em.
+/// Học sinh lớp chủ nhiệm, bấm để mở hồ sơ từng em; sổ liên lạc mở từ nút trong hồ sơ (Design_Mobile §5.8).
 class HomeroomStudentsPage extends ConsumerStatefulWidget {
   const HomeroomStudentsPage({super.key});
 
@@ -308,7 +308,7 @@ class _HomeroomStudentsPageState extends ConsumerState<HomeroomStudentsPage> {
   Widget build(BuildContext context) {
     final value = ref.watch(homeroomStudentsProvider);
     return PageScaffold(
-      title: 'Sổ liên lạc lớp',
+      title: 'Học sinh lớp',
       body: AsyncView(
         value: value,
         onRetry: () => ref.invalidate(homeroomStudentsProvider),
@@ -337,7 +337,7 @@ class _HomeroomStudentsPageState extends ConsumerState<HomeroomStudentsPage> {
                       name: s.name,
                       subtitle: '${s.code} · Lớp ${s.className}',
                       trailing: const Icon(LucideIcons.chevronRight, size: 18, color: AppColor.text3),
-                      onTap: () => context.push('/report?studentId=${s.id}'),
+                      onTap: () => context.push('/students/${s.id}'),
                     );
                   },
                 ),

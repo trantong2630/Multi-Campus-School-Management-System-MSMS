@@ -152,7 +152,7 @@ Shared skeleton: **gradient header → highlight card → quick-action grid**, p
 | Header | `"Chào, {tên}"` · weekday + date · two pills: **Điểm danh** (next session's sheet, or today's list) · **Lịch hôm nay** |
 | Highlight card | Next or ongoing session: subject, class, period slot, **Điểm danh** button. If none: MSMS AI says `"Hết tiết hôm nay"` |
 | 2×2 grid | Tiết hôm nay (green) · Chưa điểm danh (coral, sessions already started and not fully marked) · Đơn nghỉ chờ duyệt *(homeroom only, amber)*, otherwise Tiết tuần này (violet) · Tin nhắn chưa đọc (sky) |
-| Lớp chủ nhiệm *(homeroom only)* | Two action tiles: Chuyên cần lớp · Sổ liên lạc |
+| Lớp chủ nhiệm *(homeroom only)* | Two action tiles: Chuyên cần lớp · Học sinh lớp |
 | List | Next 3 sessions today with attendance progress |
 
 ### 4.2 Student
@@ -245,7 +245,8 @@ The mobile counterpart of Web §6.0, with the same identity, stacked vertically 
 | Điểm danh hôm nay (teacher) | Today's sessions with a progress bar `marked/roster` and Đã xong / Chưa xong / Đã khóa pill |
 | Chuyên cần (student, parent) | Range chips Tuần này / Tháng này / 3 tháng; ring of present ratio, four stat tiles (muộn, vắng có phép, vắng không phép, chưa điểm danh), then only the sessions that were not "Có mặt" |
 | Chuyên cần lớp chủ nhiệm | Day stepper (no future days); one card per session with marked count and a pill per student who was not present; tap opens the read-only sheet |
-| Sổ liên lạc lớp | Homeroom student list (search above 12 students) → the student's weekly book (§5.3) |
+| Học sinh lớp | Homeroom student list (search above 12 students) → the student's profile |
+| Hồ sơ học sinh (homeroom, read-only) | Header tinted with the avatar's pastel: 60px avatar, name, code · age · gender, a white pill "Lớp 6A · phân hiệu" and the status pill. The note sits right below as an amber banner. A full-width **Sổ liên lạc** button opens the student's weekly book (§5.3). Then Phụ huynh (name, relationship, phone large and copyable), Chuyên cần of the current school year (presence ring, four stat tiles Có mặt · Muộn · Vắng có phép · Vắng không phép, the latest late or absent lessons), Thông tin cá nhân rows and Lịch sử lớp as a vertical timeline with the current class as a filled green dot |
 | Thông báo | Pale-green unread cards with a type icon; tap re-checks permission on the server and opens the matching mobile screen, or says the content is on web |
 | Bảng tin (tab) | Cover-image cards (16:9, image count badge), "Nội bộ" pill for internal posts, bell in the app bar; detail has a swipeable image strip, then title, author, content. |
 | Cá nhân | Identity card (tap avatar to change or remove it), active responsibilities, contact info with "Sửa", then Đổi mật khẩu · Đăng xuất |

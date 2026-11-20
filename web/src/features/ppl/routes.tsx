@@ -10,3 +10,5 @@ export const pplRoutes: RouteObject[] = [
   { path: 'ppl/parents', element: <GuardiansPage /> },
   { path: 'ppl/responsibilities', element: <ResponsibilitiesPage /> },
 ];
+  // Hồ sơ học sinh: trang con của danh bạ nên dùng chung quyền và breadcrumb Hồ sơ › Học sinh.
+  { path: 'ppl/students/:id', element: <StudentProfilePage /> },

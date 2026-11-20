@@ -1,0 +1,470 @@
+/* Hồ sơ học sinh (PPL-02, Design_Web §9.6): dải đầu có tên và lớp hiện tại, ghi chú nổi bật, hai cột thông tin. */
+
+.sp-hero {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px 24px;
+  margin-bottom: 12px;
+  padding: 24px 32px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(100deg, var(--c-green50) 0%, var(--c-surface) 62%);
+  box-shadow: var(--shadow-card);
+}
+
+/* Học sinh đã rời trường: dải đầu và avatar chuyển sang xám trung tính như dòng mờ trong danh bạ. */
+.sp-hero--left {
+  background: linear-gradient(100deg, var(--c-neutralBg) 0%, var(--c-surface) 62%);
+}
+
+.sp-hero--left .person-cell__avatar.ant-avatar {
+  color: var(--c-text3);
+  background: var(--c-neutralBg);
+}
+
+.sp-hero__id {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sp-hero__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+
+.sp-hero__name h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -.01em;
+  color: var(--c-ink);
+}
+
+.sp-hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  margin: 0;
+  font-size: 14px;
+  color: var(--c-text2);
+}
+
+.sp-hero__meta span + span::before {
+  content: '·';
+  margin: 0 8px;
+  color: var(--c-text3);
+}
+
+/* Lớp hiện tại đứng riêng bên phải như một nhãn tên lớp lớn: câu hỏi đầu tiên khi mở hồ sơ là "em học lớp nào". */
+.sp-hero__class {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  padding-left: 24px;
+  border-left: 1px solid var(--c-borderMint);
+  text-align: right;
+}
+
+.sp-hero__class-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text3);
+}
+
+.sp-hero__class b {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.05;
+  color: var(--c-green700);
+}
+
+.sp-hero__class-campus {
+  font-size: 13px;
+  color: var(--c-text2);
+}
+
+.sp-hero__class-none {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--c-text2);
+}
+
+/* Ghi chú (sức khỏe, hoàn cảnh…) là thứ chủ nhiệm cần thấy trước: băng hổ phách nhạt ngay dưới dải đầu. */
+.sp-note {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  padding: 14px 20px;
+  border-left: 4px solid var(--c-amber);
+  border-radius: var(--radius-lg);
+  background: var(--c-amberSoft);
+}
+
+.sp-note__label {
+  flex: none;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 22px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--c-amberInk);
+}
+
+.sp-note p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 22px;
+  white-space: pre-line;
+  color: var(--c-text1);
+}
+
+.sp-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.sp-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sp-card {
+  padding: 20px 24px;
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.sp-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-bottom: 14px;
+}
+
+.sp-card__title {
+  margin: 0 0 14px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--c-ink);
+}
+
+.sp-card__head .sp-card__title {
+  margin: 0;
+}
+
+.sp-card__hint {
+  font-size: 12px;
+  color: var(--c-text3);
+}
+
+.sp-empty {
+  margin: 0;
+  font-size: 14px;
+  color: var(--c-text3);
+}
+
+.sp-facts {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.sp-fact {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 12px;
+  padding: 9px 0;
+}
+
+.sp-fact + .sp-fact {
+  border-top: 1px dashed var(--c-border);
+}
+
+.sp-fact dt {
+  font-size: 13px;
+  color: var(--c-text3);
+}
+
+.sp-fact dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--c-text1);
+  overflow-wrap: anywhere;
+}
+
+.sp-guardian {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.sp-guardian__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sp-guardian__text b {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--c-text1);
+}
+
+.sp-guardian__text span {
+  font-size: 13px;
+  color: var(--c-text3);
+}
+
+/* Số điện thoại phụ huynh là thứ được dùng nhiều nhất của hồ sơ: chữ lớn, bấm được để gọi. */
+.sp-guardian__phone,
+.sp-guardian__email {
+  grid-column: 2;
+}
+
+.sp-guardian__phone {
+  margin-top: 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--c-green700);
+}
+
+.sp-guardian__phone:hover {
+  color: var(--c-green800);
+}
+
+.sp-guardian__email {
+  font-size: 13px;
+  color: var(--c-text2);
+  overflow-wrap: anywhere;
+}
+
+/* Chuyên cần: một con số lớn, một thanh chia bốn nhãn, chú giải có số ngay bên dưới. */
+.sp-att__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.sp-att__rate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.sp-att__rate b {
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--c-ink);
+}
+
+.sp-att__rate span {
+  font-size: 13px;
+  color: var(--c-text2);
+}
+
+.sp-att__bar {
+  display: flex;
+  gap: 3px;
+  height: 12px;
+}
+
+.sp-att__seg {
+  min-width: 6px;
+  border-radius: var(--radius-pill);
+}
+
+.sp-att__seg--present { background: var(--c-green500); }
+.sp-att__seg--late { background: var(--c-amber); }
+.sp-att__seg--excused { background: var(--c-skyFg); }
+.sp-att__seg--unexcused { background: var(--c-coralFg); }
+
+.sp-att__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--c-text2);
+}
+
+.sp-att__legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.sp-att__legend b {
+  font-size: 14px;
+  color: var(--c-text1);
+}
+
+.sp-att__dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-pill);
+}
+
+.sp-att__unmarked {
+  margin: 0;
+  font-size: 12px;
+  color: var(--c-text3);
+}
+
+.sp-att__recent-title {
+  margin: 16px 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text2);
+}
+
+.sp-att__recent {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sp-att__recent li {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+}
+
+.sp-att__recent li + li {
+  border-top: 1px dashed var(--c-border);
+}
+
+.sp-att__when {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text1);
+}
+
+.sp-att__slot {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--c-text2);
+}
+
+.sp-att__note {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--c-text3);
+}
+
+/* Lịch sử lớp: dòng thời gian dọc, năm học bên trái, lớp đang học có chấm xanh đặc. */
+.sp-timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sp-timeline li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 16px;
+  padding: 0 0 18px 22px;
+}
+
+.sp-timeline li:last-child {
+  padding-bottom: 0;
+}
+
+.sp-timeline li::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--c-borderStrong);
+  border-radius: var(--radius-pill);
+  background: var(--c-surface);
+}
+
+.sp-timeline li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 19px;
+  bottom: 2px;
+  left: 6px;
+  width: 2px;
+  background: var(--c-border);
+}
+
+.sp-timeline li.is-current::before {
+  border-color: var(--c-green500);
+  background: var(--c-green500);
+  box-shadow: 0 0 0 4px var(--c-green100);
+}
+
+.sp-timeline__year {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text2);
+}
+
+.sp-timeline__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sp-timeline__class {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.sp-timeline__class b {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--c-ink);
+}
+
+.sp-timeline__class span {
+  font-size: 13px;
+  color: var(--c-text2);
+}
+
+.sp-timeline__class .sp-timeline__now {
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-green700);
+  background: var(--c-green50);
+}
+
+.sp-timeline__range {
+  font-size: 12px;
+  color: var(--c-text3);
+}
+

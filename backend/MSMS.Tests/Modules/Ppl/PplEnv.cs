@@ -5,6 +5,7 @@ using MSMS.Api.Common.Errors;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
 using MSMS.Api.Data.Entities;
+using MSMS.Api.Modules.Att.Services;
 using MSMS.Api.Modules.Iam.Services;
 using MSMS.Api.Modules.Ppl.Services;
 using MSMS.Api.Modules.Sch.Services;
@@ -33,7 +34,8 @@ internal sealed class PplEnv : IDisposable
     public GuardianService Guardians => new(Db, Clock, Scope);
     public ResponsibilityService Resp => new(Db, User, Clock, Scope);
     public EnrollmentService Enrollments => new(Db, Clock, User, Scope, new AuditWriter(Db, User, Clock), new SessionService(Db, Clock, Options.Create(new JwtOptions())));
-    public StudentService Students => new(Db, Clock, Scope, Enrollments);
+    public AttendanceService Attendance => new(Db, User, Scope, new AccountScopeResolver(Db, Clock), Clock);
+    public StudentService Students => new(Db, Clock, User, Scope, Enrollments, Attendance);
 
     public PplEnv(string accountType = AccountTypes.SchoolAdmin, int personId = Admin)
     {

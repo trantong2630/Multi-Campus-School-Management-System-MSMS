@@ -149,9 +149,9 @@ class TeacherHome extends ConsumerWidget {
                   onTap: () => context.push('/homeroom-attendance'),
                 ),
                 ActionTile(
-                  icon: LucideIcons.notebookText,
-                  label: 'Sổ liên lạc',
-                  hint: 'Xem theo tuần',
+                  icon: LucideIcons.users,
+                  label: 'Học sinh lớp',
+                  hint: 'Hồ sơ, sổ liên lạc',
                   accent: Accent.violet,
                   onTap: () => context.push('/homeroom-students'),
                 ),

@@ -405,6 +405,19 @@
   color: var(--c-text1);
 }
 
+/* Tên mở được hồ sơ: vẫn giữ màu chữ của bảng, chỉ đổi xanh và gạch chân khi trỏ vào để bảng không thành một cột link xanh. */
+.person-cell__link {
+  align-self: flex-start;
+  text-decoration: none;
+}
+
+.person-cell__link:hover,
+.person-cell__link:focus-visible {
+  color: var(--c-green700);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .person-cell__sub {
   font-size: 12px;
   color: var(--c-text3);

@@ -12,6 +12,7 @@ namespace MSMS.Api.Common.Auth;
 public sealed class ScopeResolver(MsmsDbContext db, CurrentUser user, IClock clock)
 {
     private IReadOnlyList<int>? _ledCampuses;
+    private IReadOnlyList<int>? _homeroomClasses;
 
     /// <summary>Các phân hiệu mà Vice Principal đang phụ trách tại hôm nay.</summary>
     public async Task<IReadOnlyList<int>> LedCampusIdsAsync()
@@ -37,6 +38,15 @@ public sealed class ScopeResolver(MsmsDbContext db, CurrentUser user, IClock clo
     /// <summary>School Admin và Principal thấy toàn trường; vai trò khác bị giới hạn theo phạm vi.</summary>
     public bool SeesWholeSchool => user.AccountType is AccountTypes.SchoolAdmin or AccountTypes.Principal;
 
+    /// <summary>Các lớp mà giáo viên đang chủ nhiệm tại hôm nay.</summary>
+    public async Task<IReadOnlyList<int>> HomeroomClassIdsAsync()
+    {
+        if (user.AccountType != AccountTypes.Teacher) return [];
+        if (_homeroomClasses is not null) return _homeroomClasses;
+        _homeroomClasses = (await new AccountScopeResolver(db, clock).ResolveAsync(user.PersonId, user.AccountType)).HomeroomClassIds;
+        return _homeroomClasses;
+    }
+
     /// <summary>Danh bạ học sinh: SA và HT toàn trường; HP chỉ học sinh từng ghi danh ở phân hiệu mình phụ trách.</summary>
     public async Task<IQueryable<StudentProfile>> FilterStudentsAsync(IQueryable<StudentProfile> query)
     {
@@ -47,6 +57,17 @@ public sealed class ScopeResolver(MsmsDbContext db, CurrentUser user, IClock clo
             return query.Where(s => s.Enrollment.Any(e => campuses.Contains(e.Class.CampusId)));
         }
         throw ApiException.Forbidden("Không có quyền xem danh bạ học sinh.");
+    }
+
+    /// <summary>
+    /// Hồ sơ một học sinh (chỉ xem): như danh bạ, thêm giáo viên chủ nhiệm với học sinh từng ghi danh ở lớp đang chủ nhiệm.
+    /// Danh bạ vẫn không mở cho giáo viên.
+    /// </summary>
+    public async Task<IQueryable<StudentProfile>> FilterStudentProfileAsync(IQueryable<StudentProfile> query)
+    {
+        if (user.AccountType != AccountTypes.Teacher) return await FilterStudentsAsync(query);
+        var classes = await HomeroomClassIdsAsync();
+        return query.Where(s => s.Enrollment.Any(e => classes.Contains(e.ClassId)));
     }
 
     /// <summary>Danh sách lớp cũng phải lọc trước khi trả sĩ số và chủ nhiệm.</summary>

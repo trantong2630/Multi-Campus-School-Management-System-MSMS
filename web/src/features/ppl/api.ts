@@ -1,5 +1,5 @@
 import { apiClient } from '@/app/apiClient';
-import type { Paged, ResponsibilityHistoryRow, ResponsibilityKind, ResponsibilityRow, ChangeGuardianBody, Guardian, GuardianChild, GuardianImportResult, Staff, StaffImportResult, Student, StudentImportResult } from './types';
+import type { Paged, ResponsibilityHistoryRow, ResponsibilityKind, ResponsibilityRow, ChangeGuardianBody, Guardian, GuardianChild, GuardianImportResult, Staff, StaffImportResult, Student, StudentDetail, StudentImportResult } from './types';
 
 export interface StaffQuery {
   search?: string;
@@ -49,6 +49,7 @@ export const pplApi = {
   },
   students: {
     list: (params: StudentQuery) => apiClient.get<Paged<Student>>('/ppl/students', { params }).then((r) => r.data),
+    detail: (id: number) => apiClient.get<StudentDetail>(`/ppl/students/${id}`).then((r) => r.data),
     create: (b: object) => apiClient.post<Student>('/ppl/students', b).then((r) => r.data),
     leave: (studentIds: number[], reason: 'SchoolTransfer' | 'Graduated') => apiClient.post('/ppl/students/leave', { studentIds, reason }),
     update: (id: number, b: object) => apiClient.put<Student>(`/ppl/students/${id}`, b).then((r) => r.data),

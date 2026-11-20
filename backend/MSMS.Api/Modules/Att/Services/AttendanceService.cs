@@ -177,11 +177,50 @@ public sealed class AttendanceService(MsmsDbContext db, CurrentUser user, ScopeR
             .Select(p => new { p.FullName, p.PersonCode }).FirstOrDefaultAsync()
             ?? throw ApiException.NotFound("Không tìm thấy học sinh.");
 
-        // Tiết của lớp mà học sinh có ghi danh hiệu lực vào ngày của tiết; tiết Đã hủy, Chờ xử lý không vào chuyên cần.
-        var sessions = await db.TeachingSession.AsNoTracking()
+        var items = await StudentItemsAsync(studentId, from, to, null, null);
+        var counts = Count(items.Where(i => i.Date <= today).Select(i => i.Label));
+        return new StudentAttendanceDto(studentId, person.FullName, person.PersonCode, counts, items);
+    }
+
+    /// <summary>
+    /// Chuyên cần năm học hiện hành của một học sinh cho màn Hồ sơ học sinh (PPL-02). Người gọi đã kiểm học sinh nằm trong phạm vi;
+    /// <paramref name="campusIds"/> hoặc <paramref name="classIds"/> khác null thì chỉ tính tiết của các phân hiệu hoặc lớp đó
+    /// (Hiệu phó: phân hiệu phụ trách; chủ nhiệm: lớp chủ nhiệm). Tỷ lệ có mặt = (Có mặt + Muộn) trên số lượt đã ghi, như Bảng điều khiển.
+    /// </summary>
+    public async Task<StudentAttendanceOverviewDto?> StudentOverviewAsync(int studentId, IReadOnlyCollection<int>? campusIds, IReadOnlyCollection<int>? classIds, int recent = 5)
+    {
+        var today = clock.Today;
+        var year = await db.AcademicYear.AsNoTracking().Where(y => y.IsCurrent)
+            .Select(y => new { y.Name, y.StartDate, y.EndDate }).FirstOrDefaultAsync();
+        if (year is null) return null;
+
+        var to = year.EndDate < today ? year.EndDate : today;
+        // Năm học chưa bắt đầu: chưa có tiết nào để tính.
+        List<StudentAttendanceItemDto> items = to < year.StartDate ? [] : await StudentItemsAsync(studentId, year.StartDate, to, campusIds, classIds);
+        var counts = Count(items.Select(i => i.Label));
+        var marked = counts.Present + counts.Late + counts.ExcusedAbsent + counts.UnexcusedAbsent;
+        double? rate = marked == 0 ? null : Math.Round((counts.Present + counts.Late) * 100.0 / marked, 1);
+        // Danh sách tiết đã xếp theo ngày và giờ bắt đầu; đảo lại để lần gần nhất lên đầu.
+        var notable = items.Where(i => i.Label is AttendanceLabels.Late or AttendanceLabels.ExcusedAbsent or AttendanceLabels.UnexcusedAbsent)
+            .Reverse().Take(recent).ToList();
+        return new StudentAttendanceOverviewDto(year.Name, year.StartDate, to, rate, counts, notable);
+    }
+
+    /// <summary>
+    /// Tiết của lớp mà học sinh có ghi danh hiệu lực vào ngày của tiết, kèm nhãn cuối (BR-17, BR-18).
+    /// Tiết Đã hủy, Chờ xử lý không vào chuyên cần.
+    /// </summary>
+    private async Task<List<StudentAttendanceItemDto>> StudentItemsAsync(int studentId, DateOnly from, DateOnly to,
+        IReadOnlyCollection<int>? campusIds, IReadOnlyCollection<int>? classIds)
+    {
+        var query = db.TeachingSession.AsNoTracking()
             .Where(s => s.SessionDate >= from && s.SessionDate <= to && s.Status == AttendanceRules.SessionScheduled
                 && s.Class.Enrollment.Any(e => e.StudentId == studentId && e.StartDate <= s.SessionDate
-                    && (e.EndDate ?? e.Class.AcademicYear.EndDate) >= s.SessionDate))
+                    && (e.EndDate ?? e.Class.AcademicYear.EndDate) >= s.SessionDate));
+        if (campusIds is not null) query = query.Where(s => campusIds.Contains(s.Class.CampusId));
+        if (classIds is not null) query = query.Where(s => classIds.Contains(s.ClassId));
+
+        var sessions = await query
             .OrderBy(s => s.SessionDate).ThenBy(s => s.PeriodSlot.StartTime)
             .Select(s => new
             {
@@ -193,13 +232,10 @@ public sealed class AttendanceService(MsmsDbContext db, CurrentUser user, ScopeR
             .ToListAsync();
 
         var leaves = await ApprovedLeavesAsync([studentId], from, to);
-        var items = sessions.Select(s => new StudentAttendanceItemDto(
+        return sessions.Select(s => new StudentAttendanceItemDto(
             s.SessionId, s.SessionDate, s.PeriodSlotId, s.SessionOfDay, s.PeriodNo, s.ClassName, s.SubjectId, s.SubjectName, s.TeacherName,
             AttendanceRules.Label(s.Record?.Status, AttendanceRules.IsExcused(studentId, s.SessionDate, s.SessionOfDay, s.PeriodNo, leaves)),
             s.Record?.Note)).ToList();
-
-        var counts = Count(items.Where(i => i.Date <= today).Select(i => i.Label));
-        return new StudentAttendanceDto(studentId, person.FullName, person.PersonCode, counts, items);
     }
 
     // ---------------------------------------------------------------- 4.5.13 Chuyên cần của lớp

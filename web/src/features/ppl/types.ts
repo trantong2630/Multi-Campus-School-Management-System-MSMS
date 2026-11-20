@@ -1,3 +1,4 @@
+import type { AttendanceCounts, StudentAttendanceItem } from '@/features/att/types';
 import type { ImportError, SkippedRow } from '@/shared/components/ImportErrorPanel';
 
 export interface Staff {
@@ -38,6 +39,60 @@ export interface Student {
   className: string | null;
   guardianName: string | null;
   guardianPhone: string | null;
+}
+
+/** Hồ sơ một học sinh, chỉ xem (PPL-02, 4.3.12). */
+export interface StudentDetail {
+  studentId: number;
+  personCode: string;
+  fullName: string;
+  dateOfBirth: string | null;
+  nationalId: string | null;
+  gender: string | null;
+  phoneNumber: string | null;
+  address: string | null;
+  status: Student['status'];
+  note: string | null;
+  admissionDate: string | null;
+  leftDate: string | null;
+  classId: number | null;
+  className: string | null;
+  campusName: string | null;
+  guardian: StudentGuardian | null;
+  enrollments: StudentEnrollment[];
+  attendance: StudentAttendanceOverview | null;
+}
+
+export interface StudentGuardian {
+  parentId: number;
+  personCode: string;
+  fullName: string;
+  relationship: string | null;
+  phoneNumber: string | null;
+  email: string | null;
+}
+
+export interface StudentEnrollment {
+  enrollmentId: number;
+  academicYearName: string;
+  classId: number;
+  className: string;
+  campusName: string;
+  startDate: string;
+  /** Ngày kết thúc thực tế: để trống ở ghi danh nghĩa là hết năm học. */
+  endDate: string;
+  reason: string | null;
+  isCurrent: boolean;
+}
+
+/** Chuyên cần năm học hiện hành; rate null khi chưa có lượt điểm danh nào. */
+export interface StudentAttendanceOverview {
+  academicYearName: string;
+  from: string;
+  to: string;
+  rate: number | null;
+  counts: AttendanceCounts;
+  recent: StudentAttendanceItem[];
 }
 
 export interface Guardian {

@@ -208,7 +208,7 @@ Cột Đọc là quyền đọc **dữ liệu**, không phải quyền có **mà
 
 ### SCH — School Setup (7) — chỉ SA ghi, chỉ web
 
-SA là người duy nhất ghi. HT có các màn hình xem Thông tin trường, Phân hiệu, Tổ chuyên môn & Môn học, Năm học & Học kỳ, Lớp & Ghi danh kèm thống kê cấu trúc. Ngày nghỉ, Khung giờ tiết và Kết chuyển năm học chỉ có màn hình cho SA. HP xem các màn chỉ xem của HT, trừ Phân hiệu: thống kê tổ, môn là toàn trường, còn Lớp & Ghi danh chỉ có lớp của phân hiệu mình phụ trách. CN có màn hình Danh sách học sinh chỉ xem học sinh của lớp mình chủ nhiệm. Ngoài các màn đó, cột Đọc thêm là dữ liệu HP và GV dùng ở màn hình khác (HP chỉ đọc dữ liệu của phân hiệu mình phụ trách).
+SA là người duy nhất ghi. HT có các màn hình xem Thông tin trường, Phân hiệu, Tổ chuyên môn & Môn học, Năm học & Học kỳ, Lớp & Ghi danh kèm thống kê cấu trúc. Ngày nghỉ, Khung giờ tiết và Kết chuyển năm học chỉ có màn hình cho SA. HP xem các màn chỉ xem của HT, trừ Phân hiệu: thống kê tổ, môn là toàn trường, còn Lớp & Ghi danh chỉ có lớp của phân hiệu mình phụ trách. CN có màn hình Danh sách học sinh chỉ xem học sinh của lớp mình chủ nhiệm; bấm tên một em mở Hồ sơ học sinh (PPL-02). Ngoài các màn đó, cột Đọc thêm là dữ liệu HP và GV dùng ở màn hình khác (HP chỉ đọc dữ liệu của phân hiệu mình phụ trách).
 
 | ID | Feature | Nội dung chính | Đọc thêm | BR |
 | --- | --- | --- | --- | --- |
@@ -225,7 +225,7 @@ SA là người duy nhất ghi. HT có các màn hình xem Thông tin trường,
 | ID | Feature | Nội dung chính | Ghi | Đọc | BR |
 | --- | --- | --- | --- | --- | --- |
 | PPL-01 | Danh bạ cán bộ | Hồ sơ cán bộ, import Excel, gán viết tắt giáo viên | SA | HT, HP | BR-03, 10, 11 |
-| PPL-02 | Danh bạ học sinh | Hồ sơ học sinh, import kèm ghi danh và phụ huynh, chuyển trường, tốt nghiệp (khối cuối cấp) | SA | HT, HP | BR-03, 10, 11 |
+| PPL-02 | Danh bạ học sinh | Hồ sơ học sinh, import kèm ghi danh và phụ huynh, chuyển trường, tốt nghiệp (khối cuối cấp); trang Hồ sơ học sinh chỉ xem gồm thông tin cá nhân, ghi chú, phụ huynh đại diện, chuyên cần năm học hiện hành và lịch sử lớp | SA | HT, HP, CN (hồ sơ học sinh lớp mình) | BR-03, 10, 11 |
 | PPL-03 | Danh bạ phụ huynh & Liên kết | Hồ sơ phụ huynh; mỗi học sinh một phụ huynh đại diện, một phụ huynh nhiều con; đổi phụ huynh đại diện | SA | HT, HP | BR-10 |
 | PPL-04 | Trách nhiệm | Gán và thay phụ trách phân hiệu, tổ trưởng, chủ nhiệm; cảnh báo lớp chưa có chủ nhiệm | HT, SA | HP, cán bộ (phần của mình) | BR-09 |
 
