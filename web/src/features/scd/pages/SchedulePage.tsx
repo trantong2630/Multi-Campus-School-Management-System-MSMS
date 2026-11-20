@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { Card, Segmented, Select } from 'antd';
+import { Button, Card, Segmented, Select } from 'antd';
+import { Check, Pencil } from 'lucide-react';
 import { InlineAlert } from '@/shared/components/InlineAlert';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
@@ -23,7 +24,7 @@ export function SchedulePage() {
   return user?.accountType === 'Teacher' ? <MySchedule /> : <CampusSchedule />;
 }
 
-type ViewMode = 'day' | 'class' | 'teacher' | 'adjust';
+type ViewMode = 'day' | 'class' | 'teacher';
 
 /** Hiệu trưởng và hiệu phó: xem cả phân hiệu theo ngày, hoặc xem tuần của một lớp / một giáo viên. */
 function CampusSchedule() {
@@ -31,17 +32,25 @@ function CampusSchedule() {
   const isVice = user?.accountType === 'VicePrincipal';
   const { campuses, effective: effectiveCampus, select: campusSelect, head: campusHead } = useScdCampus();
   const [mode, setMode] = useState<ViewMode>('day');
+  // Điều chỉnh (SCD-02) là chế độ sửa của lưới tuần theo lớp, chỉ Hiệu phó có: bật bằng nút ở cuối hàng, chọn lại tab xem thì thoát.
+  const [adjusting, setAdjusting] = useState(false);
 
   const modeSwitch = (
     <Segmented
-      value={mode} onChange={(v) => setMode(v as ViewMode)}
-      options={[
-        { value: 'day', label: 'Theo ngày' }, { value: 'class', label: 'Theo lớp' }, { value: 'teacher', label: 'Theo giáo viên' },
-        ...(isVice ? [{ value: 'adjust', label: 'Điều chỉnh' }] : []),
-      ]}
+      value={mode} onChange={(v) => { setMode(v as ViewMode); setAdjusting(false); }}
+      options={[{ value: 'day', label: 'Theo ngày' }, { value: 'class', label: 'Theo lớp' }, { value: 'teacher', label: 'Theo giáo viên' }]}
     />
   );
   const lead = <>{modeSwitch}{campusSelect}</>;
+  const tail = isVice && (
+    <Button
+      className="tt-adjust-toggle" type={adjusting ? 'primary' : 'default'}
+      icon={adjusting ? <Check size={16} /> : <Pencil size={16} />}
+      onClick={() => { setAdjusting(!adjusting); if (!adjusting) setMode('class'); }}
+    >
+      {adjusting ? 'Xong' : 'Điều chỉnh'}
+    </Button>
+  );
 
   return (
     <>
@@ -52,16 +61,16 @@ function CampusSchedule() {
       {campuses.isSuccess && campuses.data.length === 0 && (
         <InlineAlert type="warning" title="Chưa có phân hiệu nào để xem" description="Hiệu phó cần được gán phụ trách phân hiệu ở Hồ sơ → Trách nhiệm." />
       )}
-      {effectiveCampus !== undefined && (mode === 'day'
-        ? <CampusDayView campusId={effectiveCampus} lead={lead} />
-        : mode === 'adjust'
-          ? <AdjustView key={effectiveCampus} campusId={effectiveCampus} lead={lead} />
-          : <EntityWeekView key={`${mode}-${effectiveCampus}`} mode={mode} campusId={effectiveCampus} lead={lead} />)}
+      {effectiveCampus !== undefined && (adjusting
+        ? <AdjustView key={effectiveCampus} campusId={effectiveCampus} lead={lead} tail={tail} />
+        : mode === 'day'
+          ? <CampusDayView campusId={effectiveCampus} lead={lead} tail={tail} />
+          : <EntityWeekView key={`${mode}-${effectiveCampus}`} mode={mode} campusId={effectiveCampus} lead={lead} tail={tail} />)}
     </>
   );
 }
 
-function CampusDayView({ campusId, lead }: { campusId: number; lead: React.ReactNode }) {
+function CampusDayView({ campusId, lead, tail }: { campusId: number; lead: React.ReactNode; tail?: React.ReactNode }) {
   const [date, setDate] = useState<Dayjs>(dayjs());
   const day = useQuery({
     queryKey: ['scd', 'day', campusId, toDateString(date)],
@@ -73,6 +82,7 @@ function CampusDayView({ campusId, lead }: { campusId: number; lead: React.React
       <FilterBar>
         {lead}
         <DayNav date={date} onChange={setDate} />
+        {tail}
       </FilterBar>
       {day.data?.isHoliday && (
         <InlineAlert type="info" title={`Ngày nghỉ: ${day.data.holidayReason}`} description="Ngày nghỉ không có tiết dạy." />
@@ -188,7 +198,7 @@ function MySchedule() {
 }
 
 /** Lịch tuần của một lớp hoặc một giáo viên trong phân hiệu đang chọn. */
-function EntityWeekView({ mode, campusId, lead }: { mode: 'class' | 'teacher'; campusId: number; lead: React.ReactNode }) {
+function EntityWeekView({ mode, campusId, lead, tail }: { mode: 'class' | 'teacher'; campusId: number; lead: React.ReactNode; tail?: React.ReactNode }) {
   const isClass = mode === 'class';
   const [monday, setMonday] = useState<Dayjs>(() => dayjs().startOf('week'));
   const [entityId, setEntityId] = useState<number | undefined>();
@@ -219,6 +229,7 @@ function EntityWeekView({ mode, campusId, lead }: { mode: 'class' | 'teacher'; c
           placeholder={isClass ? 'Chọn lớp' : 'Chọn giáo viên'} loading={options.isLoading} options={options.data}
         />
         <WeekNav monday={monday} onChange={setMonday} />
+        {tail}
       </FilterBar>
       {entityId === undefined ? (
         <InlineAlert type="info" title={isClass ? 'Chọn một lớp để xem lịch' : 'Chọn một giáo viên để xem lịch'} description="Lịch hiện theo tuần, Thứ 2 đến Thứ 7." />

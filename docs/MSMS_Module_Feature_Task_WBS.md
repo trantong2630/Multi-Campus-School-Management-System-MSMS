@@ -589,7 +589,7 @@ Tiết đã qua và tiết đã điểm danh không bị xóa; tiết Chỉnh ta
 
 **4.4.19 — Xem lịch tuần của phân hiệu để điều chỉnh / View Weekly Campus Schedule**  
 `BE + Web` · 2 MD · dep: 4.4.11  
-Chế độ "Điều chỉnh" ngay trên màn hình Lịch dạy của Vice Principal: chọn một lớp, hiện lưới tuần (Thứ 2–7) theo khung giờ kèm ngày nghỉ trong tuần, mỗi tiết cho mở các thao tác điều chỉnh; tiết bù được đánh dấu. Principal xem được lưới tuần nhưng không thao tác. Tiết bị khóa hiện rõ là không thao tác được (mục 6.2).
+Chế độ "Điều chỉnh" ngay trên màn hình Lịch dạy của Vice Principal, bật bằng nút Điều chỉnh ở cuối hàng điều khiển (nút đổi thành Xong để thoát; chọn lại một tab xem cũng thoát) chứ không phải một tab ngang hàng với Theo ngày, Theo lớp, Theo giáo viên: chọn một lớp, hiện lưới tuần (Thứ 2–7) theo khung giờ kèm ngày nghỉ trong tuần, mỗi tiết cho mở các thao tác điều chỉnh; tiết bù được đánh dấu. Principal xem được lưới tuần nhưng không thao tác. Tiết bị khóa hiện rõ là không thao tác được (mục 6.2).
 
 **4.4.20 — Đổi giáo viên của tiết / Change Lesson Teacher**  
 `BE + Web` · 1.5 MD · dep: 4.4.19  
