@@ -14,6 +14,13 @@ public static class TextNormalizer
         return string.Join(' ', parts);
     }
 
+    /// <summary>Văn bản dài nhiều đoạn (nội dung bài đăng): chỉ trim và NFC, giữ nguyên xuống dòng và khoảng trắng bên trong.</summary>
+    public static string NormalizeMultiline(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+        return value.Normalize(NormalizationForm.FormC).Trim();
+    }
+
     /// <summary>Bỏ dấu, xử lý riêng đ/Đ vì Unicode decomposition bỏ sót chữ này.</summary>
     public static string RemoveDiacritics(string? value)
     {
