@@ -319,24 +319,24 @@ Chạy lại không sinh ghi danh trùng; dữ liệu năm cũ không bị đụ
 
 ### SCH-07 School Profile (Thông tin trường)
 
-**4.2.39 — Xem thông tin trường / View School Profile**
-`BE + Web` · 1 MD · dep: 4.1.4
+**4.2.39 — Xem thông tin trường / View School Profile**  
+`BE + Web` · 1 MD · dep: 4.1.4  
 Xem tên, địa chỉ, điện thoại, email, website và logo của trường. Chưa lưu lần nào thì giao diện dùng tên mặc định MSMS. Tên và logo là thông tin công khai nên đọc được cả khi chưa đăng nhập (SCH-07).
 
-**4.2.40 — Cập nhật thông tin trường / Update School Profile**
-`BE + Web` · 1.5 MD · dep: 4.2.39
+**4.2.40 — Cập nhật thông tin trường / Update School Profile**  
+`BE + Web` · 1.5 MD · dep: 4.2.39  
 Chỉ School Admin sửa; Hiệu trưởng và Vice Principal xem ở chế độ chỉ đọc. Tên trường bắt buộc; email và website kiểm định dạng. Đúng một bản, lưu người sửa và thời điểm sửa ngay trên bản ghi; không ghi Audit vì không thuộc ba nhóm của BR-28.
 
-**4.2.41 — Tải và gỡ logo trường / Upload and Remove School Logo**
-`BE + Web` · 2 MD · dep: 4.2.40
+**4.2.41 — Tải và gỡ logo trường / Upload and Remove School Logo**  
+`BE + Web` · 2 MD · dep: 4.2.40  
 Một ảnh JPG hoặc PNG, tối đa 2 MB, kiểm theo nội dung file chứ không tin đuôi file. Dùng chung cách lưu file với ảnh đại diện và ảnh bảng tin; đổi hoặc gỡ logo thì xóa file cũ (BR-27).
 
-**4.2.42 — Hiển thị tên và logo trường / Show School Identity**
-`BE + Web` · 1 MD · dep: 4.2.39
+**4.2.42 — Hiển thị tên và logo trường / Show School Identity**  
+`BE + Web` · 1 MD · dep: 4.2.39  
 Tên trường hiện ở thanh đường dẫn đầu trang và tiêu đề tab trình duyệt; logo trường hiện ở Trang chủ. Sau đăng nhập, tiêu đề tab là `Tên trang · Tên trường` (Trang chủ chỉ có tên trường); các màn chưa đăng nhập để tiêu đề `MSMS`. Biểu tượng tab là logo MSMS, không đổi theo trường. Màn hình đăng nhập và thanh bên chỉ dùng logo chữ MSMS. Không lấy được thì dùng biểu tượng và tên mặc định, không báo lỗi.
 
-**4.2.43 — Kiểm thử thông tin trường / School Profile Tests**
-`QA` · 1.5 MD · dep: 4.2.41
+**4.2.43 — Kiểm thử thông tin trường / School Profile Tests**  
+`QA` · 1.5 MD · dep: 4.2.41  
 Chỉ School Admin sửa được; file không phải ảnh hoặc quá 2 MB bị từ chối; đổi logo xóa file cũ; chưa có tên thì không tải được logo; người chưa đăng nhập đọc được tên và logo nhưng không sửa được.
 
 ---
