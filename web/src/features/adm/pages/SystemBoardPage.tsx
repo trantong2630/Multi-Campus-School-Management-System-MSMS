@@ -49,10 +49,7 @@ export function SystemBoardPage() {
   return (
     <div className="bd">
       <header className="bd-head">
-        <div>
-          <h1>Thống kê hệ thống</h1>
-          <p>{['Toàn trường', d.academicYearName && `Năm học ${d.academicYearName}`].filter(Boolean).join(' · ')}</p>
-        </div>
+        <h1>Thống kê hệ thống</h1>
       </header>
 
       <section className="bd-panel bd-panel--tint sb-hero" aria-label="Tổng quan">

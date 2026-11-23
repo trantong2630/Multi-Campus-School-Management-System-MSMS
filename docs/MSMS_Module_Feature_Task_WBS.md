@@ -1,6 +1,6 @@
 # 4. Software Product Development — MSMS
 
-Cấu trúc phân rã: Module → Feature → Task. Mỗi Task là một hành động nghiệp vụ hoàn chỉnh của một actor. Các task thuộc cùng một Feature tô cùng màu ở cột Feature. Căn theo Business Specification V3.1 (Oct 20, 2026) — 9 Module / 34 Feature / 243 Task.
+Cấu trúc phân rã: Module → Feature → Task. Mỗi Task là một hành động nghiệp vụ hoàn chỉnh của một actor. Các task thuộc cùng một Feature tô cùng màu ở cột Feature. Căn theo Business Specification V3.1 (Oct 20, 2026) — 9 Module / 33 Feature / 241 Task.
 
 Cột Platform của mỗi Task: `BE` (không có giao diện), `BE + Web`, `BE + Web + Mobile` hoặc `QA` (kiểm thử). Task chỉ làm phần máy khách của một Task Backend đã có ghi `Web`, `Mobile` hoặc `Web + Mobile`. Mọi Task có giao diện đều có trên web; chỉ một số có thêm trên mobile app (Business Specification V3 mục 8.1–8.2).
 
@@ -845,8 +845,8 @@ Câu có từ trước khi có độ khó ở trạng thái Chưa phân loại v
 `BE + Web` · 5 MD · dep: 4.6.10  
 Từ đề đang soạn ở bước Hoàn tất của màn Soạn đề (chưa giao, không cần lớp hay hạn nộp; môn phải là môn giáo viên đang phụ trách ở ít nhất một lớp, đề theo cùng quy tắc với giao bài) hoặc từ một bài đã giao (giáo viên đang phụ trách chuyên môn ở (lớp, môn) của bài), tạo file PDF khổ A4 hoặc Word (.docx) và tải về để tự in hoặc chỉnh sửa (hệ thống không điều khiển máy in): tên bài, môn, lớp, số câu, tổng điểm, thời gian làm, lời dặn, chỗ ghi họ tên, các câu theo thứ tự kèm điểm từng câu và bốn lựa chọn. Hộp tick Kèm đáp án thêm trang riêng cuối file gồm đáp án đúng và giải thích của từng câu để tách ra khi phát đề. Bản PDF lấy phông tiếng Việt từ hệ điều hành, thiếu phông thì báo lỗi thay vì in chữ sai; bản Word chỉ ghi tên phông nên hiển thị theo máy giáo viên.
 
-**4.6.28 — Kiểm thử độ khó, thang điểm, ma trận và bản in đề / Difficulty, Scoring and Print Tests**
-`QA` · 2 MD · dep: 4.6.26, 4.6.27, 4.6.15
+**4.6.28 — Kiểm thử độ khó, thang điểm, ma trận và bản in đề / Difficulty, Scoring and Print Tests**  
+`QA` · 2 MD · dep: 4.6.26, 4.6.27, 4.6.15  
 Tổng điểm các phần đúng 10 và chia câu không dư thiếu; phần có câu mà không có điểm, điểm cho phần không có câu, quá 2 chữ số thập phân, tổng khác 10 đều bị từ chối; câu chưa phân loại không vào được bài; chấm theo trọng số và câu nhiều đáp án vẫn đúng và đủ; bài cũ giữ cách chấm; AI ghi sai độ khó thì lấy mức còn thiếu; ma trận bốc đủ số câu, không trùng, báo thiếu đúng, chỉ lấy câu Sẵn dùng cùng môn và khối; bản in đề tạo được file PDF và Word có và không có đáp án, file Word hợp lệ theo lược đồ Open XML.
 
 ---
@@ -1025,33 +1025,29 @@ Học sinh và phụ huynh không thấy bài Nội bộ; giáo viên đăng đ�
 
 ### ADM-01 Bảng điều khiển / Control Board
 
-**4.9.1 — Tính chỉ số theo phạm vi / Compute Board Metrics**
-`BE` · 2.5 MD · dep: —
-Chuyên cần 4 tuần (có mặt, muộn, vắng có phép, vắng không phép theo BR-18, dùng chung AttendanceRules với màn Điểm danh), tiết đã qua chưa điểm danh, bốn số quy mô (lớp đang hoạt động, học sinh đang học, cán bộ đang công tác, tiết dạy hôm nay), đường chuyên cần 8 tuần và bảng các lớp (hoặc phân hiệu) kèm chuyên cần. Không có số liệu bài tập (xem 4.9.3). Lọc được theo phân hiệu và khối. Danh sách Cần chú ý gồm tiết Chờ xử lý, giáo viên vắng hôm nay, đơn nghỉ chờ duyệt (chỉ Vice Principal, chỉ xem số, không mở được danh sách đơn) và lớp chưa có chủ nhiệm. Một tiết, đơn hay bài thuộc phân hiệu nào là theo PHÂN HIỆU CỦA LỚP liên quan (mục 5.1).
+**4.9.1 — Tính chỉ số theo phạm vi / Compute Board Metrics**  
+`BE` · 3 MD · dep: —  
+Chỉ số so 4 tuần gần nhất với 4 tuần liền trước, kèm 8 giá trị theo tuần: chuyên cần (có mặt, muộn, vắng có phép, vắng không phép theo BR-18, dùng chung AttendanceRules với màn Điểm danh), tỷ lệ vắng không phép, tiết bị ảnh hưởng (tiết của giáo viên vắng đã dạy thay, đã hủy hoặc còn Chờ xử lý, cộng tiết đã hủy, không tính tiết hủy vì ngày nghỉ), tỷ lệ nộp bài rèn luyện (bài đã hết hạn, theo tuần hết hạn). Cơ cấu điểm danh 4 tuần; học sinh vắng liên tiếp (vắng mọi tiết đã điểm danh trong ngày, từ 3 ngày học liên tiếp tính tới hôm qua), tiết chưa có người dạy, tiết chưa điểm danh; chuyên cần 4 tuần theo phân hiệu, khối, thứ; tiết bị ảnh hưởng theo tuần; bài đang mở, hết hạn trong 7 ngày, nộp dưới 50%; tỷ lệ nộp theo khối hoặc môn. Số liệu theo lớp, tổ, giáo viên được tính sẵn cho phân tích sâu (MSMS AI). Tuần ghi theo tuần của năm học. Lọc được theo phân hiệu và khối. Một tiết, đơn hay bài thuộc phân hiệu nào là theo PHÂN HIỆU CỦA LỚP liên quan; thầy cô theo phân hiệu chính (mục 5.1). Chỉ đọc, không lưu số liệu suy ra.
 
-**4.9.2 — Tình hình toàn trường, phân hiệu, tổ và lớp / View Situation Boards**
-`BE + Web` · 3.5 MD · dep: 4.9.1
-Principal xem toàn trường, lọc được theo phân hiệu, có biểu đồ chuyên cần theo phân hiệu (bảng so sánh phân hiệu và lớp ở 4.9.15); Vice Principal xem phân hiệu mình phụ trách; tổ trưởng xem các môn của tổ, tải dạy, thầy cô vắng và chuyên cần các tiết của tổ; chủ nhiệm xem chuyên cần, sĩ số, đơn nghỉ và phụ huynh của lớp. Không có số liệu bài tập ở các màn này. Giáo viên không giữ trách nhiệm nào không có Bảng điều khiển; Trang chủ tách riêng, không hiển thị số liệu (mục 5.1).
+**4.9.2 — Tình hình toàn trường, phân hiệu, tổ và lớp / View Situation Boards**  
+`BE + Web` · 5 MD · dep: 4.9.1  
+Mỗi vai trò một màn tổng quan, cùng một khung: bốn thẻ số (việc tồn đọng hiện trên thẻ liên quan), nhóm Chuyên cần (Giảng dạy ở màn tổ) và nhóm Rèn luyện; không có danh sách hay bảng so sánh chi tiết (mục 5.1). Biểu đồ theo tuần chỉ một đường (màn lớp thêm đường xám trung bình khối); so sánh nhiều nhóm dùng thanh ngang một màu. Principal và Vice Principal: đường chuyên cần, cơ cấu điểm danh hoặc danh sách tiết hôm nay, theo phân hiệu, theo khối, theo thứ, đường nộp bài, bài rèn luyện theo khối. Tổ trưởng: tiết bị ảnh hưởng theo tuần, tải dạy, đường nộp bài, bài rèn luyện theo môn. Chủ nhiệm: lớp so với khối, cơ cấu điểm danh, đường nộp bài, bài rèn luyện theo môn. Thiếu dữ liệu thì ẩn mức thay đổi hoặc đường xu hướng. Giáo viên không giữ trách nhiệm nào không có Bảng điều khiển; Trang chủ tách riêng, không hiển thị số liệu.
 
-**4.9.3 — Tiến độ bài tập rèn luyện / Assignment Progress Board**
-`BE + Web` · 3 MD · dep: 4.9.1
-Một màn cho Principal, Vice Principal và chủ nhiệm (tổ trưởng dùng màn LRN-05 trong cùng mục): tỷ lệ nộp kèm so với tuần trước, bài nộp thấp, tiến độ từng đơn vị theo phân hiệu, tổ, môn, lớp, giáo viên (mỗi vai trò chỉ có các cách xem thuộc phạm vi của mình: Hiệu phó không xem theo tổ, chủ nhiệm chỉ theo môn) và danh sách bài lọc được theo tình trạng và từ khóa. Chỉ số liệu tổng hợp theo bài, không có bài nộp hay điểm từng học sinh.
+**4.9.3 — Hỏi đáp số liệu với MSMS AI / Ask MSMS AI About Figures**  
+`BE + Web` · 4 MD · dep: 4.9.1, 4.9.2  
+Principal, Vice Principal hỏi bằng câu tự do để báo cáo, so sánh, xếp hạng chuyên cần, bài tập rèn luyện, giáo viên vắng, tải dạy (BR-29). Backend khai báo cho AI bảy truy vấn chỉ đọc (chuyên cần theo phân hiệu, khối, lớp, tuần, thứ, tiết; học sinh vắng nhiều, vắng không phép, vắng liền; bài tập theo phân hiệu, khối, lớp, môn, giáo viên giao bài, tuần, mức nhận thức, chủ đề, kèm số bài đã giao và đang mở; xếp hạng học sinh theo điểm, tỷ lệ nộp, chuyên cần kèm điều kiện ghép; tình hình một học sinh; giáo viên vắng và tiết bị ảnh hưởng theo tổ, giáo viên, tuần; tải dạy theo giáo viên, tổ) cùng một lệnh vẽ biểu đồ từ kết quả truy vấn. Mỗi truy vấn chặn phạm vi, lọc phân hiệu, khối, lớp, tổ, môn, kỳ (tuần này, 4 tuần, tháng, học kỳ, tự chọn), so với kỳ trước. Danh mục phân hiệu, lớp, tổ, môn đi kèm lời nhắc hệ thống. Người chỉ đi ra dưới dạng mã HS#, GV#; tên hoặc mã thật trong câu hỏi đổi thành mã trước khi gửi, mã trong câu trả lời đổi lại thành tên. Vòng gọi truy vấn tối đa 4, vòng cuối buộc AI trả lời; mỗi tài khoản tối đa 6 câu một phút; model chat cấu hình riêng (Ai:ChatModel). Web: bấm avatar trên màn Tình hình thì màn chat chiếm vùng nội dung, câu trả lời theo bố cục cố định (nhãn phạm vi và kỳ, câu kết luận, thẻ số chính, bảng xếp hạng đánh số, khung gợi ý) kèm biểu đồ thanh hoặc đường; gõ @ để chọn học sinh, giáo viên trong phạm vi, tên đã chọn hiện thành nhãn xanh dương ngay trong ô nhập và trong câu đã gửi; hội thoại chỉ nằm trong tab, gửi kèm 20 lượt gần nhất.
 
-**4.9.4 — Thống kê hệ thống / System Statistics**
-`BE + Web` · 2 MD · dep: —
+**4.9.4 — Thống kê hệ thống / System Statistics**  
+`BE + Web` · 2 MD · dep: —  
 School Admin xem quy mô trường, tài khoản theo loại, dữ liệu cần bổ sung (lớp chưa có chủ nhiệm, học sinh chưa ghi danh vào lớp, học sinh chưa liên kết phụ huynh, cán bộ chưa có tài khoản, giáo viên chưa thuộc tổ chuyên môn, tổ chuyên môn chưa có tổ trưởng, phân hiệu chưa có hiệu phó phụ trách; chỉ hiện mục lớn hơn 0 và mỗi dòng mở màn hình sửa), hoạt động nhật ký 7 ngày gần nhất và tiến độ phát hành thời khóa biểu theo phân hiệu.
 
-**4.9.5 — Trang chủ / Home**
-`Web` · 2 MD · dep: 4.2.15, 4.2.17, 4.2.21, 4.2.42, 4.4.15
-Màn đầu tiên của mọi loại tài khoản, cùng một nội dung cho mọi loại; chỉ chào và hiện thông tin chung, không có số liệu thống kê, lối tắt hay bảng tin (mục 5.1). Lời chào theo buổi kèm logo trường và đồng hồ của ngày; **Hôm nay**: khung giờ tiết của trường, đánh dấu tiết đang diễn ra theo giờ thực, giáo viên thấy thêm lớp và môn mình dạy ở từng tiết, ngày nghỉ cấp trường hoặc Chủ nhật thì báo trường nghỉ; **Năm học**: học kỳ hiện tại và tuần thứ mấy; **Ngày nghỉ sắp tới**: ba ngày gần nhất, ngày đầu có đếm ngược và lịch tháng. Dùng lại dữ liệu đã có của SCH và lịch dạy của mình, không có API riêng.
+**4.9.5 — Trang chủ / Home**  
+`Web + Mobile` · 2 MD · dep: 4.2.15, 4.2.17, 4.2.21, 4.2.42, 4.4.15  
+Màn đầu tiên của mọi loại tài khoản. Trên web cùng một nội dung cho mọi loại; chỉ chào và hiện thông tin chung, không có số liệu thống kê, lối tắt hay bảng tin (mục 5.1). Lời chào theo buổi kèm logo trường và đồng hồ của ngày; **Hôm nay**: khung giờ tiết của trường, đánh dấu tiết đang diễn ra theo giờ thực, giáo viên thấy thêm lớp và môn mình dạy ở từng tiết, ngày nghỉ cấp trường hoặc Chủ nhật thì báo trường nghỉ; **Năm học**: học kỳ hiện tại và tuần thứ mấy; **Ngày nghỉ sắp tới**: ba ngày gần nhất, ngày đầu có đếm ngược và lịch tháng. Trên mobile Trang chủ là điểm vào các việc trong ngày nên khác theo loại tài khoản (Design_Mobile §4): Teacher có tiết sắp tới kèm nút Điểm danh, bốn ô số (tiết hôm nay, chưa điểm danh, đơn nghỉ chờ duyệt hoặc tiết tuần này, tin nhắn chưa đọc), lối vào Chuyên cần lớp và Học sinh lớp khi chủ nhiệm, và các tiết hôm nay; Student có tiết đang hoặc sắp học và bốn ô bài chưa nộp, sắp hết hạn, điểm mới, chuyên cần tuần; Parent có bộ chọn con, sổ liên lạc tuần này và bốn ô xin nghỉ, đơn đang chờ, điểm mới, nhắn giáo viên. Các con số chỉ là việc cần làm của chính người dùng, không phải số liệu của Bảng điều khiển. Dùng lại dữ liệu đã có của SCH, lịch, điểm danh, bài tập, đơn nghỉ và hộp thư, không có API riêng.
 
-**4.9.6 — Kiểm thử phạm vi Bảng điều khiển / Board Scope Tests**
-`QA` · 1 MD · dep: 4.9.2, 4.9.3
-Vice Principal không xem được số liệu phân hiệu khác (gọi kèm phân hiệu khác bị từ chối); bộ lọc phân hiệu của Principal cho số khớp với từng cột của biểu đồ chuyên cần theo phân hiệu; chủ nhiệm chỉ thấy bài của lớp mình, giáo viên không chủ nhiệm bị từ chối; con số khớp với danh sách gốc mở ra.
-
-**4.9.15 — Báo cáo toàn trường / School-wide Report**  
-`BE + Web` · 3 MD · dep: 4.9.1, 4.9.3  
-Principal xem màn hình chỉ đọc, mục menu cấp 1 ngay dưới Bảng tin: so sánh phân hiệu và lớp trong một khoảng ngày (mặc định 28 ngày, tối đa 186), lọc theo phân hiệu và khối. Gồm ba nhóm cảnh báo theo ngưỡng cố định, không lưu CSDL (chuyên cần dưới 90%, từ 5 tiết đã qua chưa điểm danh, tỷ lệ nộp bài dưới 50% tính trên bài đã hết hạn trong khoảng ngày), bấm một nhóm để lọc bảng lớp; bảng so sánh phân hiệu khi xem cả trường và bảng so sánh lớp kèm nhãn cảnh báo. Không có số liệu từng học sinh; lấy file thì sang màn Xuất dữ liệu (mục 5.1, 5.2).
+**4.9.6 — Kiểm thử phạm vi Bảng điều khiển / Board Scope Tests**  
+`QA` · 1.5 MD · dep: 4.9.2, 4.9.3  
+Vice Principal không xem được số liệu phân hiệu khác (gọi kèm phân hiệu khác bị từ chối) và không có mục lớp chưa có chủ nhiệm; chủ nhiệm chỉ thấy lớp mình, tổ trưởng chỉ thấy tổ mình, người không giữ trách nhiệm bị từ chối; vắng có phép không tính vào vắng không phép; vắng liên tiếp đứt khi có một ngày có mặt; tỷ lệ nộp chỉ tính bài đã hết hạn; tiết bị ảnh hưởng gồm dạy thay, hủy và Chờ xử lý, không gồm tiết hủy vì ngày nghỉ; màn tổ tính tỷ lệ nộp kỳ trước trên đủ 4 tuần. MSMS AI (dùng AI giả): truy vấn phân hiệu khác của Vice Principal bị từ chối; kết quả truy vấn chỉ có mã, không có tên hay mã thật; tên trong câu hỏi và lịch sử đổi thành mã trước khi gửi; mã ngoài phạm vi không đổi thành tên; vòng gọi dừng ở giới hạn; xếp hạng bỏ em dưới 3 bài; tải dạy không so với trung bình tổ khi tổ dưới 3 người; tình hình một em chuyển lớp giữa kỳ vẫn tính phần ở lớp cũ; danh sách vắng không có em đã rời lớp; số tiết chờ người dạy theo đúng giáo viên được hỏi; kỳ chưa tới báo chưa có số liệu; bài tập theo giáo viên tính theo người giao, đếm cả bài chưa tới hạn; biểu đồ lấy đúng số của truy vấn; AI lỗi trả thông báo đọc được; Teacher bị từ chối.
 
 ### ADM-02 Audit Log (Nhật ký kiểm toán)
 
@@ -1085,10 +1081,14 @@ Nguồn là bản ghi điểm danh, kèm nhãn cuối suy ra. Chủ nhiệm xu�
 `BE + Web` · 1.5 MD · dep: 4.4.11  
 Nguồn là LỊCH DẠY chứ không phải phiên bản thời khóa biểu, để phản ánh cả các điều chỉnh tay. Vice Principal xuất phân hiệu mình, Principal xuất mọi phân hiệu (BR-14, mục 5.2).
 
+**4.9.15 — Xuất danh sách trách nhiệm / Export Responsibilities**  
+`BE + Web` · 1 MD · dep: 4.3.27  
+Chọn một trong ba nhóm (phụ trách phân hiệu, tổ trưởng, chủ nhiệm lớp; nhóm chủ nhiệm chọn thêm năm học, mặc định năm hiện hành) rồi tải Excel: đích, người phụ trách, mã hồ sơ, từ ngày, đến ngày và trạng thái (Đã phân công, Sắp hiệu lực, Đã kết thúc, Chưa phân công). Principal xuất toàn trường, Vice Principal chỉ phân hiệu mình phụ trách; School Admin và Teacher không xuất. Nút nằm ở màn Xuất dữ liệu, không nằm ở màn Trách nhiệm.
+
 **4.9.14 — Kiểm thử phạm vi xuất dữ liệu / Export Scope Tests**  
-`QA` · 1 MD · dep: 4.9.12, 4.9.13  
-Mỗi mục chỉ xuất đúng phạm vi của người gọi (Principal xuất mọi lớp và mọi phân hiệu, School Admin không xuất); danh sách tài khoản kèm mật khẩu tạm KHÔNG phải một mục xuất và không xuất lại được (BR-04).
+`QA` · 1 MD · dep: 4.9.12, 4.9.13, 4.9.15  
+Mỗi mục chỉ xuất đúng phạm vi của người gọi (Principal xuất mọi lớp, mọi phân hiệu và mọi nhóm trách nhiệm, School Admin không xuất); danh sách tài khoản kèm mật khẩu tạm KHÔNG phải một mục xuất và không xuất lại được (BR-04).
 
 ---
 
-**Tổng:** 243 task · 348.5 MD
+**Tổng:** 241 task · 345.5 MD
