@@ -10,20 +10,21 @@ using MSMS.Api.Modules.Adm.Dtos;
 namespace MSMS.Api.Modules.Adm.Services;
 
 /// <summary>
-/// ADM-01: Principal xem toàn trường hoặc lọc một phân hiệu; Vice Principal chỉ xem phân hiệu đang phụ trách. Lọc thêm được theo khối.
-/// Lớp, học sinh, tiết, bài tập, điểm danh tính theo phân hiệu của lớp; cán bộ tính theo phân hiệu chính.
-/// Principal không đọc đơn nghỉ (mục 2.3) nên không nhận số đơn chờ duyệt.
+/// ADM-01 Tình hình toàn trường (Principal, lọc được phân hiệu) và Tình hình phân hiệu (Vice Principal, chỉ phân hiệu đang phụ trách). Lọc thêm được theo khối.
+/// Lớp, học sinh, tiết, bài tập, điểm danh tính theo phân hiệu của lớp; thầy cô tính theo phân hiệu chính. Chỉ số liệu tổng hợp, không có tên học sinh.
+/// Mọi chỉ số so kỳ 4 tuần tính tới hôm nay với 4 tuần liền trước.
 /// </summary>
 public sealed class DashboardService(MsmsDbContext db, CurrentUser user, ScopeResolver scope, IClock clock)
 {
-    private const int AttendanceDays = 28;
-
     public async Task<DashboardDto> GetAsync(int? campusId, int? gradeLevel = null)
     {
         var campusIds = await ResolveScopeAsync(campusId);
         var today = clock.Today;
+        var now = clock.Now;
         var term = await DashboardSupport.CurrentTermAsync(db, today);
-        var trendFrom = DashboardSupport.WeekStart(today).AddDays(-49);
+        var weekStarts = DashboardSupport.TrendWeekStarts(today);
+        var (current, previous) = DashboardSupport.Periods(today);
+        var currentFrom = current.ToDateTime(TimeOnly.MinValue);
 
         var campuses = await db.Campus.AsNoTracking().Where(c => campusIds.Contains(c.CampusId))
             .OrderBy(c => c.Name).Select(c => new { c.CampusId, c.Name }).ToListAsync();
@@ -31,87 +32,107 @@ public sealed class DashboardService(MsmsDbContext db, CurrentUser user, ScopeRe
         var inScope = db.Class.AsNoTracking()
             .Where(c => c.IsActive && c.AcademicYearId == term.YearId && campusIds.Contains(c.CampusId));
         var gradeOptions = await inScope.Select(c => (int)c.GradeLevel).Distinct().OrderBy(g => g).ToListAsync();
-        var classes = gradeLevel is null ? inScope : inScope.Where(c => c.GradeLevel == gradeLevel);
+        var classQuery = gradeLevel is null ? inScope : inScope.Where(c => c.GradeLevel == gradeLevel);
 
-        var classStats = await classes
+        var classes = await classQuery
             .Select(c => new
             {
-                c.ClassId, ClassName = c.Name, c.CampusId, CampusName = c.Campus.Name, c.GradeLevel,
-                Students = c.Enrollment.AsQueryable().Count(EffectivePeriod.EffectiveAt<Enrollment>(today)),
+                c.ClassId, ClassName = c.Name, c.CampusId, CampusName = c.Campus.Name, GradeLevel = (int)c.GradeLevel,
+                Students = c.Enrollment.AsQueryable().Count(EnrollmentRules.ActiveAt(today)),
                 HasHomeroom = c.HomeroomAssignment.AsQueryable().Any(EffectivePeriod.CurrentResponsibility<HomeroomAssignment>(today)),
             })
             .ToListAsync();
-        var classIds = classStats.Select(c => c.ClassId).ToList();
+        var classIds = classes.Select(c => c.ClassId).ToList();
+        var classCampus = classes.ToDictionary(c => c.ClassId, c => c.CampusId);
+        var classGrade = classes.ToDictionary(c => c.ClassId, c => c.GradeLevel);
 
-        var staffByCampus = await db.StaffProfile.AsNoTracking()
-            .Where(s => s.IsActive && campusIds.Contains(s.PrimaryCampusId))
-            .GroupBy(s => s.PrimaryCampusId).Select(g => new { g.Key, Count = g.Count() })
-            .ToDictionaryAsync(g => g.Key, g => g.Count);
+        var days = await AttendanceSupport.DaysAsync(db, classIds, DashboardSupport.ReadFrom(today), today);
+        var recent = days.Where(d => d.Date >= current).ToList();
+        var streaks = await AttendanceSupport.StreaksAsync(db, classIds, today);
+        var unmarked = await AttendanceSupport.UnmarkedByClassAsync(db, classIds, current, today);
+        var uncovered = classIds.Count == 0 ? 0 : await db.TeachingSession.AsNoTracking()
+            .Where(SessionLockRules.NotEnded(clock))
+            .CountAsync(s => s.Status == OperationsSupport.Outcomes.Pending && classIds.Contains(s.ClassId));
+        var affected = await OperationsSupport.AffectedAsync(db, classIds, DashboardSupport.ReadFrom(today), today);
+        var assignments = await OperationsSupport.AssignmentsAsync(db, classIds, DashboardSupport.ReadFrom(today).ToDateTime(TimeOnly.MinValue));
 
-        var todayByCampus = await db.TeachingSession.AsNoTracking()
-            .Where(s => classIds.Contains(s.ClassId) && s.Status == AttendanceRules.SessionScheduled && s.SessionDate == today)
-            .GroupBy(s => s.Class.CampusId).Select(g => new { g.Key, Count = g.Count() })
-            .ToDictionaryAsync(g => g.Key, g => g.Count);
-
-        var leaders = (await db.CampusLeadership.AsNoTracking()
-                .Where(EffectivePeriod.CurrentResponsibility<CampusLeadership>(today))
-                .Where(l => l.Staff.Staff.Account != null && l.Staff.Staff.Account.AccountType == AccountTypes.VicePrincipal)
-                .Where(l => campusIds.Contains(l.CampusId))
-                .Select(l => new { l.CampusId, l.Staff.Staff.FullName }).ToListAsync())
-            .GroupBy(l => l.CampusId).ToDictionary(g => g.Key, g => g.Select(x => x.FullName).Order().ToList());
-
-        var days = await AttendanceSupport.DaysAsync(db, classIds, trendFrom, today);
-        var recent = days.Where(d => d.Date > today.AddDays(-AttendanceDays)).ToList();
-        var unmarkedByClass = await AttendanceSupport.UnmarkedByClassAsync(db, classIds, today.AddDays(-AttendanceDays + 1), today);
-        var todayMarked = await db.TeachingSession.AsNoTracking()
-            .Where(s => classIds.Contains(s.ClassId) && s.Status == AttendanceRules.SessionScheduled && s.SessionDate == today)
-            .Select(s => s.AttendanceRecord.Any()).ToListAsync();
-        var classCampus = classStats.ToDictionary(c => c.ClassId, c => c.CampusId);
-        var classGrade = classStats.ToDictionary(c => c.ClassId, c => c.GradeLevel);
-
-        var rows = campuses.Select(c =>
-        {
-            var cs = classStats.Where(x => x.CampusId == c.CampusId).ToList();
-            return new DashboardCampusRow(c.CampusId, c.Name, cs.Count, cs.Sum(x => x.Students), staffByCampus.GetValueOrDefault(c.CampusId),
-                todayByCampus.GetValueOrDefault(c.CampusId), leaders.GetValueOrDefault(c.CampusId) ?? [],
-                AttendanceSupport.Rate(recent.Where(d => classCampus[d.ClassId] == c.CampusId)));
-        }).ToList();
-
-        var attention = await AttentionAsync(campusIds, classIds, today, classStats.Count(c => !c.HasHomeroom));
-        var byGrade = DashboardSupport.ByGrade(classStats, x => x.GradeLevel, x => x.Students,
-            g => AttendanceSupport.Rate(recent.Where(d => classGrade[d.ClassId] == g))).ToList();
-        var attendance = AttendanceSupport.Summary(recent, unmarkedByClass.Values.Sum(), todayMarked.Count, todayMarked.Count(m => m));
-
-        var homerooms = (await db.HomeroomAssignment.AsNoTracking()
+        var homerooms = classIds.Count == 0 ? [] : (await db.HomeroomAssignment.AsNoTracking()
                 .Where(EffectivePeriod.CurrentResponsibility<HomeroomAssignment>(today))
                 .Where(h => classIds.Contains(h.ClassId))
                 .Select(h => new { h.ClassId, h.Staff.Staff.FullName }).ToListAsync())
             .GroupBy(h => h.ClassId).ToDictionary(g => g.Key, g => string.Join(", ", g.Select(x => x.FullName).Order()));
-        var classRows = classStats.Select(c => new DashboardClassRow(c.ClassId, c.ClassName, c.GradeLevel, c.CampusId, c.CampusName,
-                homerooms.GetValueOrDefault(c.ClassId), c.Students, AttendanceSupport.Rate(recent.Where(d => d.ClassId == c.ClassId)),
-                unmarkedByClass.GetValueOrDefault(c.ClassId)))
-            .OrderBy(r => r.AttendanceRate ?? 101).ThenByDescending(r => r.UnmarkedSessions)
-            .ThenBy(r => r.ClassName, StringComparer.CurrentCultureIgnoreCase).ToList();
 
-        return new DashboardDto(campusId, term.YearName, term.SemesterName,
-            campuses.Count, byGrade.Count, rows.Sum(r => r.ClassCount), rows.Sum(r => r.StudentCount), rows.Sum(r => r.StaffCount),
-            rows.Sum(r => r.SessionsToday),
-            attention, byGrade, rows, AttendanceSupport.Weeks(days, today),
-            attendance, classRows, AttendanceSupport.Weekdays(recent), gradeOptions, gradeLevel);
-    }
+        // Chuyên cần 4 tuần theo phân hiệu và theo khối: chỉ nhóm có học sinh.
+        var campusRates = campuses.Where(c => classes.Any(x => x.CampusId == c.CampusId && x.Students > 0))
+            .Select(c => new RateRow(c.CampusId, c.Name, AttendanceSupport.Rate(recent.Where(d => classCampus[d.ClassId] == c.CampusId))))
+            .ToList();
+        var gradeRates = classes.Where(c => c.Students > 0).Select(c => c.GradeLevel).Distinct().Order()
+            .Select(g => new RateRow(g, $"Khối {g}", AttendanceSupport.Rate(recent.Where(d => classGrade[d.ClassId] == g)))).ToList();
 
-    private async Task<DashboardAttention> AttentionAsync(List<int> campusIds, List<int> classIds, DateOnly today, int classesWithoutHomeroom)
-    {
-        var pendingSessions = await db.TeachingSession.AsNoTracking()
-            .Where(SessionLockRules.NotEnded(clock))
-            .CountAsync(s => s.Status == "Pending" && classIds.Contains(s.ClassId));
-        var absences = await db.TeacherAbsence.AsNoTracking()
-            .Where(a => a.FromDate <= today && a.ToDate >= today && campusIds.Contains(a.Teacher.PrimaryCampusId))
-            .Select(a => a.TeacherId).Distinct().CountAsync();
-        int? pendingLeave = user.AccountType == AccountTypes.VicePrincipal
-            ? await db.LeaveRequest.AsNoTracking().CountAsync(l => l.Status == "Pending" && classIds.Contains(l.ClassId))
-            : null;
-        return new DashboardAttention(pendingSessions, absences, pendingLeave, classesWithoutHomeroom);
+        var streakByClass = streaks.Values.GroupBy(s => s.ClassId).ToDictionary(g => g.Key, g => g.Count());
+        var classRows = classes.Select(c =>
+            {
+                var cd = days.Where(d => d.ClassId == c.ClassId).ToList();
+                var cur = cd.Where(d => d.Date >= current).ToList();
+                return new LeadershipClassRow(c.ClassId, c.ClassName, c.GradeLevel, c.CampusName, homerooms.GetValueOrDefault(c.ClassId), c.Students,
+                    AttendanceSupport.Rate(cur), AttendanceSupport.Rate(cd.Where(d => d.Date >= previous && d.Date < current)),
+                    AttendanceSupport.UnexcusedRate(cur), streakByClass.GetValueOrDefault(c.ClassId), unmarked.GetValueOrDefault(c.ClassId),
+                    OperationsSupport.Submission(assignments.Where(a => a.ClassId == c.ClassId), currentFrom, now).Rate);
+            })
+            .OrderBy(r => r.Rate ?? 101).ThenByDescending(r => r.StreakStudents)
+            .ThenBy(r => r.ClassName, StringComparer.Create(new System.Globalization.CultureInfo("vi-VN"), true))
+            .ToList();
+
+        // Thầy cô trong phạm vi: theo phân hiệu chính.
+        var staff = await db.StaffProfile.AsNoTracking()
+            .Where(s => s.IsActive && campusIds.Contains(s.PrimaryCampusId)
+                && s.Staff.Account != null && s.Staff.Account.AccountType == AccountTypes.Teacher)
+            .Select(s => new { s.StaffId, s.Staff.FullName, s.DepartmentId, DepartmentName = s.Department != null ? s.Department.Name : null })
+            .ToListAsync();
+        var staffIds = staff.Select(s => s.StaffId).ToList();
+        var absentDays = await OperationsSupport.AbsentDaysAsync(db, staffIds, current, today);
+        var unmarkedByTeacher = await OperationsSupport.UnmarkedByTeacherAsync(db, classIds, current, today);
+        var unmarkedByDept = await OperationsSupport.UnmarkedByDepartmentAsync(db, classIds, current, today);
+
+        var departments = await db.SubjectDepartment.AsNoTracking().Where(d => d.IsActive)
+            .OrderBy(d => d.Name).Select(d => new { d.DepartmentId, d.Name }).ToListAsync();
+        var departmentRows = departments.Select(d =>
+            {
+                var members = staff.Where(s => s.DepartmentId == d.DepartmentId).ToList();
+                var mine = assignments.Where(a => a.DepartmentId == d.DepartmentId).ToList();
+                return new LeadershipDepartmentRow(d.DepartmentId, d.Name, members.Count,
+                    members.Count(m => absentDays.GetValueOrDefault(m.StaffId) > 0),
+                    affected.Count(a => a.DepartmentId == d.DepartmentId && a.Row.Date >= current),
+                    unmarkedByDept.GetValueOrDefault(d.DepartmentId),
+                    mine.Count(a => a.OpenAt >= currentFrom && a.OpenAt <= now),
+                    OperationsSupport.Submission(mine, currentFrom, now).Rate);
+            })
+            .Where(r => r.TeacherCount > 0 || r.AffectedSessions > 0 || r.AssignmentCount > 0)
+            .ToList();
+
+        var teacherRows = staff
+            .Select(s => new LeadershipTeacherRow(s.StaffId, s.FullName, s.DepartmentName, absentDays.GetValueOrDefault(s.StaffId), unmarkedByTeacher.GetValueOrDefault(s.StaffId)))
+            .Where(t => t.AbsentDays > 0 || t.UnmarkedSessions > 0)
+            .OrderByDescending(t => t.AbsentDays + t.UnmarkedSessions).ThenBy(t => t.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+
+        var alerts = new LeadershipAlerts(streaks.Count, uncovered, unmarked.Values.Sum(),
+            user.AccountType == AccountTypes.Principal ? classes.Count(c => !c.HasHomeroom) : null);
+
+        var submissionGrades = assignments.Select(a => a.GradeLevel).Distinct().Order()
+            .Select(g => new RateRow(g, $"Khối {g}", OperationsSupport.Submission(assignments.Where(a => a.GradeLevel == g), currentFrom, now).Rate))
+            .Where(r => r.Rate is not null).ToList();
+
+        return new DashboardDto(campusId, DashboardSupport.WeekNo(term, today), weekStarts, campuses.Count, classes.Count, classes.Sum(c => c.Students),
+            alerts,
+            AttendanceSupport.Kpi(days, today, weekStarts, AttendanceSupport.Rate),
+            AttendanceSupport.Kpi(days, today, weekStarts, AttendanceSupport.UnexcusedRate),
+            OperationsSupport.AffectedKpi(affected, today, weekStarts),
+            OperationsSupport.SubmissionKpi(assignments, today, now, weekStarts),
+            AttendanceSupport.Mix(recent),
+            campusRates, gradeRates, AttendanceSupport.Weekdays(recent), submissionGrades, OperationsSupport.Summary(assignments, today, now),
+            affected.Where(a => a.Row.Date == today).Select(a => a.Row).ToList(),
+            classRows, departmentRows, teacherRows, gradeOptions, gradeLevel);
     }
 
     private async Task<List<int>> ResolveScopeAsync(int? campusId)

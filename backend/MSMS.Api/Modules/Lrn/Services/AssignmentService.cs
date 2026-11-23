@@ -44,7 +44,7 @@ public sealed class AssignmentService(
             .Select(r => ToDto(r, now)).ToList();
     }
 
-    /// <summary>Chi tiết một bài cho người xem được kết quả: giáo viên phụ trách hoặc tổ trưởng của môn.</summary>
+    /// <summary>Chi tiết một bài cho giáo viên đang phụ trách chuyên môn ở (lớp, môn) của bài.</summary>
     public async Task<AssignmentDetailDto> GetAsync(int id)
     {
         var a = await access.LoadForViewAsync(id);

@@ -60,4 +60,11 @@ public class TimetableController(
     [HttpPost("versions/{id:int}/reset"), Authorize(Policy = Policies.TimetableManager)]
     public Task<VersionGridDto> ResetDraft(int id) => draft.ResetAsync(id);
 
+    [HttpDelete("versions/{id:int}"), Authorize(Policy = Policies.TimetableManager)]
+    public async Task<IActionResult> DeleteDraft(int id)
+    {
+        await draft.DeleteAsync(id);
+        return NoContent();
+    }
+
 }

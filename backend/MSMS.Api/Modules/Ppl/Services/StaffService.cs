@@ -168,6 +168,9 @@ public sealed class StaffService(MsmsDbContext db, IClock clock, CurrentUser use
             var sessions = await db.TeachingSession.Where(SessionLockRules.NotEnded(clock)).CountAsync(s => s.TeacherId == id && s.Status == "Scheduled");
             if (sessions > 0)
                 throw ApiException.BadRequest($"Cán bộ còn {sessions} tiết Đã xếp lịch chưa kết thúc. Đổi giáo viên hoặc hủy các tiết đó trước.");
+
+            // Lịch hẹn chưa bắt đầu hủy luôn: người đã nghỉ không được nhận trách nhiệm khi tới ngày (BR-09).
+            await ResponsibilityService.UpcomingDutiesAsync(db, id, today, cancel: true);
         }
         staff.IsActive = isActive;
         await db.SaveChangesAsync();

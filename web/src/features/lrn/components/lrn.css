@@ -1,7 +1,7 @@
 /* Bài tập rèn luyện (LRN). Giao diện riêng của mô-đun này: mỗi màn một bố cục theo việc người dùng đang làm,
    dùng chung token màu/bo góc của hệ thống nhưng không dùng lại khung danh sách – bộ lọc – bảng của các màn quản trị. */
 
-.todo h1, .done h1, .bank h1, .build h1, .assigned h1, .dept h1 {
+.todo h1, .done h1, .bank h1, .build h1, .assigned h1 {
   margin: 0;
   font-size: 26px;
   line-height: 34px;
@@ -780,114 +780,6 @@
 .paper ul { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .paper ul li { display: flex; gap: 8px; padding: 6px 10px; border: 1px solid var(--c-border); border-radius: 12px; }
 .paper ul li.is-correct { border-color: var(--c-green300); background: var(--c-green50); }
-
-/* ====================== Tiến độ giao bài của tổ ====================== */
-
-/* ====================== Tổ trưởng: Nhịp giao bài của tổ ====================== */
-
-.dept__hero { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 20px; padding: 22px 32px 22px 30px; border: 1px solid var(--c-borderMint); border-radius: 28px; background: linear-gradient(115deg, var(--c-green100) 0%, var(--c-green50) 55%, var(--c-surface) 100%); }
-.dept__heroText { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
-.dept__heroText p { margin: 0 0 8px; color: var(--c-text2); font-size: 15px; }
-
-.dept__pulse { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 12px 36px; margin-bottom: 20px; padding: 18px 24px; border: 1px solid var(--c-border); border-radius: 28px; background: var(--c-surface); box-shadow: var(--shadow-card); }
-.dept__gauge { display: flex; align-items: center; gap: 18px; padding-right: 36px; border-right: 1px dashed var(--c-border); }
-.dept__gauge > div > strong { display: block; font-size: 17px; }
-.dept__gauge > div > span { display: block; max-width: 150px; margin-top: 2px; color: var(--c-text2); font-size: 13px; line-height: 18px; }
-.dept__stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.dept__stat { display: flex; flex-direction: column; align-items: flex-start; gap: 0; padding: 12px 16px; border: 0; border-radius: 20px; background: none; font: inherit; text-align: left; cursor: pointer; transition: background 140ms; }
-.dept__stat:hover { background: var(--c-rowHoverBg); }
-.dept__stat.is-on { background: var(--c-green50); box-shadow: inset 0 0 0 2px var(--c-green500); }
-.dept__stat > span { color: var(--c-text2); font-size: 13px; font-weight: 700; }
-.dept__stat strong { font-size: 38px; line-height: 46px; font-weight: 800; letter-spacing: -0.02em; }
-.dept__stat small { color: var(--c-text2); font-size: 12px; }
-.dept__stat--open strong { color: var(--c-green700); }
-.dept__stat--low strong { color: #B45309; }
-.dept__stat--low > span::before { content: ""; display: inline-block; width: 8px; height: 8px; margin: 0 6px 1px 0; border-radius: 50%; background: var(--c-amber); }
-
-.dring { position: relative; display: inline-flex; flex: none; align-items: center; justify-content: center; --rg: var(--c-green500); }
-.dring--warn { --rg: var(--c-amber); }
-.dring--idle { --rg: #9DB2A8; }
-.dring svg { position: absolute; inset: 0; }
-.dring__bg { stroke: var(--c-neutralBg); }
-.dring__fg { stroke: var(--rg); }
-.dring b { position: relative; font-size: 1em; font-weight: 800; }
-.dring small { font-size: 0.6em; font-weight: 700; }
-.dept__gauge .dring { font-size: 28px; }
-.dept__list .dring { font-size: 15px; }
-
-.dept__grid { display: grid; grid-template-columns: 330px 1fr; align-items: start; gap: 20px; }
-.dept__teachers, .dept__items { padding: 20px 20px 18px; border: 1px solid var(--c-border); border-radius: 28px; background: var(--c-surface); box-shadow: var(--shadow-card); }
-.dept h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font-size: 17px; font-weight: 700; }
-.dept h2 svg { color: var(--c-green600); }
-.dept__none { margin: 0; padding: 12px 4px; color: var(--c-text2); }
-.dept ul { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
-
-.dept__teachers li button { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 0; border-radius: 18px; background: none; font: inherit; text-align: left; cursor: pointer; }
-.dept__teachers li button:hover { background: var(--c-rowHoverBg); }
-.dept__teachers li button.is-on { background: var(--c-green50); box-shadow: inset 0 0 0 2px var(--c-green500); }
-.dept__tmain { display: flex; flex: 1; flex-direction: column; gap: 1px; min-width: 0; }
-.dept__tmain > strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
-.dept__tmeta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--c-text2); font-size: 12px; }
-.dept__split { display: flex; gap: 2px; height: 6px; min-width: 24px; margin-top: 6px; overflow: hidden; border-radius: 6px; }
-.dept__split b, .dept__split i { display: block; flex-basis: 0; min-width: 0; }
-.dept__split b { background: var(--c-green500); }
-.dept__split i { background: var(--c-green200); }
-.dept__tnum { display: flex; flex: none; flex-direction: column; align-items: flex-end; line-height: 1.2; }
-.dept__tnum strong { font-size: 22px; font-weight: 800; }
-.dept__tnum small { color: var(--c-text2); font-size: 11px; }
-.dept__tnum em { margin-top: 3px; color: var(--c-green700); font-size: 12px; font-style: normal; font-weight: 700; }
-.dept__tnum em.is-low { color: #B45309; }
-.dept__legend { display: flex; align-items: center; gap: 6px; margin: 12px 4px 0; color: var(--c-text2); font-size: 12px; }
-.dept__legend b { width: 14px; height: 6px; margin-left: 8px; border-radius: 6px; background: var(--c-green200); }
-.dept__legend b:first-child { margin-left: 0; }
-.dept__legend b.is-open { background: var(--c-green500); }
-
-.dept__tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-bottom: 10px; }
-.dept__tools h2 { margin: 0; }
-.dept__count { padding: 2px 10px; border-radius: var(--radius-pill); background: var(--c-neutralBg); color: var(--c-text2); font-size: 12px; font-weight: 700; }
-.dept__who { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px 0 12px; border: 0; border-radius: var(--radius-pill); background: var(--c-green100); color: var(--c-green800); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
-.dept__who:hover { background: var(--c-green200); }
-.dept__search { display: inline-flex; align-items: center; gap: 8px; height: 38px; margin-left: auto; padding: 0 16px; border: 1px solid var(--c-border); border-radius: var(--radius-pill); background: var(--c-surface); color: var(--c-text2); }
-.dept__search:focus-within { border-color: var(--c-green600); }
-.dept__search input { width: 210px; border: 0; outline: 0; background: none; color: var(--c-text1); font: inherit; font-size: 14px; }
-
-.dept ul.dept__list { gap: 8px; }
-.dept__row { display: grid; grid-template-columns: 54px minmax(0, 1fr) 130px 84px 18px; align-items: center; gap: 16px; width: 100%; padding: 12px 16px 12px 14px; border: 1px solid var(--c-border); border-radius: 22px; background: var(--c-surface); font: inherit; text-align: left; cursor: pointer; transition: transform 140ms, box-shadow 140ms, border-color 140ms; }
-.dept__row:hover { transform: translateY(-2px); border-color: var(--c-green200); box-shadow: 0 8px 18px rgba(20, 60, 40, 0.1); }
-.dept__row.is-closed { background: #FAFCFB; }
-.dept__rowMain { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.dept__rowMain > strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; }
-.dept__rowSub { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--c-text2); font-size: 13px; white-space: nowrap; }
-.dept__rowSub b { padding: 1px 9px; border-radius: var(--radius-pill); background: var(--sj-bg); color: var(--sj-fg); font-size: 12px; font-weight: 700; }
-.dept__rowSub i { width: 3px; height: 3px; border-radius: 50%; background: var(--c-text2); opacity: 0.5; }
-.dept__rowDue { display: flex; flex-direction: column; line-height: 1.3; }
-.dept__rowDue strong { font-size: 14px; color: var(--c-text1); }
-.dept__rowDue strong.is-ok { color: var(--c-green700); }
-.dept__rowDue strong.is-soon { color: #B45309; }
-.dept__rowDue strong.is-late { color: var(--c-coralFg); }
-.dept__rowDue small { color: var(--c-text2); font-size: 12px; }
-.dept__rowDone { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.25; }
-.dept__rowDone strong { font-size: 18px; font-weight: 800; }
-.dept__rowDone strong small { color: var(--c-text2); font-size: 13px; font-weight: 600; }
-.dept__rowDone > small { color: var(--c-text2); font-size: 12px; }
-.dept__rowDone em { padding: 0 8px; border-radius: var(--radius-pill); background: #FEF3C7; color: #B45309; font-size: 11px; font-style: normal; font-weight: 700; }
-.dept__go { color: var(--c-text2); transition: transform 140ms; }
-.dept__row:hover .dept__go { transform: translateX(3px); color: var(--c-green600); }
-
-@media (max-width: 1100px) { .dept__grid { grid-template-columns: 1fr; } .dept__pulse { grid-template-columns: 1fr; } .dept__gauge { padding: 0 0 12px; border-right: 0; border-bottom: 1px dashed var(--c-border); } }
-@media (max-width: 760px) { .dept__stats { grid-template-columns: repeat(2, 1fr); } .dept__row { grid-template-columns: 54px minmax(0, 1fr) 84px; } .dept__rowDue, .dept__go { display: none; } }
-
-/* Thầy cô và phân công dạy của tổ (LRN-05): chỉ đọc, suy từ thời khóa biểu đã phát hành */
-.dept__members { margin-top: 20px; padding: 20px 20px 18px; border: 1px solid var(--c-border); border-radius: 28px; background: var(--c-surface); box-shadow: var(--shadow-card); }
-.dept__hint { margin-left: auto; color: var(--c-text2); font-size: 12px; }
-.dept ul.dept__mlist { gap: 0; }
-.dept__member { display: grid; grid-template-columns: 36px minmax(160px, 240px) minmax(0, 1fr) 72px; align-items: center; gap: 14px; padding: 10px 12px; border-top: 1px solid var(--c-border); }
-.dept__member:first-child { border-top: 0; }
-.dept__tag { margin-left: 8px; padding: 1px 8px; border-radius: var(--radius-pill); background: var(--c-neutralBg); color: var(--c-text2); font-size: 11px; font-style: normal; font-weight: 700; vertical-align: 2px; }
-.dept__teach { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
-.dept__chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: var(--radius-pill); background: var(--c-sunken); color: var(--c-text2); font-size: 12px; }
-.dept__chip b { padding: 1px 9px; border-radius: var(--radius-pill); background: var(--sj-bg); color: var(--sj-fg); font-weight: 700; }
-@media (max-width: 1100px) { .dept__member { grid-template-columns: 36px minmax(0, 1fr) 72px; } .dept__teach { grid-column: 2 / -1; } }
 
 /* Ô chọn bài trong quầy soạn: tên bài rút gọn khi hẹp, trang in luôn nằm gọn trong viên thuốc bên phải. */
 .lessonline { display: flex; align-items: center; gap: 10px; min-width: 0; }

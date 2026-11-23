@@ -13,6 +13,7 @@ using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
 using MSMS.Api.Data.Entities;
 using MSMS.Api.Modules.Iam.Dtos;
+using MSMS.Api.Modules.Ppl.Services;
 
 namespace MSMS.Api.Modules.Iam.Services;
 
@@ -157,7 +158,8 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
         var byCampus = sessions.GroupBy(s => s.Class.Campus.Name)
             .Select(g => new CampusSessionCount(g.Key, g.Count())).ToList();
         var duties = (await EffectiveDutiesAsync(account.PersonId)).Select(d => new DutyImpact(d.Kind, d.TargetName)).ToList();
-        return new LockImpact(sessions.Count, byCampus, duties);
+        var upcoming = await ResponsibilityService.UpcomingDutiesAsync(db, account.PersonId, clock.Today, cancel: false);
+        return new LockImpact(sessions.Count, byCampus, duties, upcoming);
     }
 
     /// <summary>
@@ -208,7 +210,7 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
 
     /// <summary>
     /// Dùng chung cho khóa và đổi loại tài khoản: tiết tương lai của Teacher sang Chờ xử lý và để trống giáo viên,
-    /// Vice Principal phân hiệu chứa tiết nhận thông báo; trách nhiệm đang hiệu lực kết thúc vào ngày hôm nay.
+    /// Vice Principal phân hiệu chứa tiết nhận thông báo; trách nhiệm đang hiệu lực kết thúc vào ngày hôm nay, lịch hẹn chưa bắt đầu bị hủy.
     /// Chỉ thêm vào context, người gọi SaveChanges trong transaction của mình.
     /// </summary>
     private async Task<(int Sessions, int Duties)> ReleaseDutiesAsync(Account account)
@@ -240,7 +242,9 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
 
         var duties = await EffectiveDutiesAsync(account.PersonId);
         foreach (var d in duties) d.Record.EndDate = today;
-        return (affected.Count, duties.Count);
+        // Lịch hẹn chưa bắt đầu bị hủy luôn, để tới ngày đó đích không rơi vào người không còn dùng tài khoản (BR-09).
+        var upcoming = await ResponsibilityService.UpcomingDutiesAsync(db, account.PersonId, today, cancel: true);
+        return (affected.Count, duties.Count + upcoming.Count);
     }
 
     /// <summary>

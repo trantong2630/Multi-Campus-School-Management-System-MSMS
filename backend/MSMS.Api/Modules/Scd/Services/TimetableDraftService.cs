@@ -9,7 +9,7 @@ namespace MSMS.Api.Modules.Scd.Services;
 
 /// <summary>
 /// SCD-01: sửa bản Nháp trước khi Phát hành (BR-12) — chuyển hoặc đổi chỗ tiết, thêm tiết, đổi giáo viên, xóa tiết,
-/// khôi phục về file import. Chỉ sửa phiên bản đang Nháp và chỉ trong các lớp của phiên bản. Thao tác gây xung đột
+/// khôi phục về file import, xóa cả bản Nháp. Chỉ sửa phiên bản đang Nháp và chỉ trong các lớp của phiên bản. Thao tác gây xung đột
 /// (BR-13) vẫn được lưu; xung đột chỉ chặn Phát hành. Mỗi thao tác lưu ngay, không đụng lịch dạy, không thông báo, không Audit.
 /// </summary>
 public sealed class TimetableDraftService(MsmsDbContext db, ScopeResolver scope, ScheduleQueryService query)
@@ -116,6 +116,33 @@ public sealed class TimetableDraftService(MsmsDbContext db, ScopeResolver scope,
         await db.SaveChangesAsync();
         await tx.CommitAsync();
         return await query.GetVersionGridAsync(versionId);
+    }
+
+    /// <summary>
+    /// Xóa hẳn một bản Nháp (BR-14): bản Nháp chưa từng sinh tiết hay báo cho ai nên không phải hồ sơ cần giữ. Bản Đã phát hành
+    /// không xóa được. Phát hành cùng lúc thì bản đã có tiết tham chiếu, lần xóa bị từ chối.
+    /// </summary>
+    public async Task DeleteAsync(int versionId)
+    {
+        var version = await db.TimetableVersion.FirstOrDefaultAsync(v => v.VersionId == versionId)
+                      ?? throw ApiException.NotFound("Không tìm thấy phiên bản thời khóa biểu.");
+        await scope.EnsureCanManageCampusAsync(version.CampusId);
+        if (version.Status != "Draft")
+            throw ApiException.BadRequest("Phiên bản đã phát hành là hồ sơ của lịch đang chạy nên không xóa được. Chỉ xóa được bản Nháp.");
+
+        await using var tx = await db.Database.BeginTransactionAsync();
+        db.TimetableEntry.RemoveRange(await db.TimetableEntry.Where(e => e.VersionId == versionId).ToListAsync());
+        db.TimetableVersionClass.RemoveRange(await db.TimetableVersionClass.Where(c => c.VersionId == versionId).ToListAsync());
+        db.TimetableVersion.Remove(version);
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            throw ApiException.Conflict("Phiên bản vừa được phát hành nên không xóa được. Tải lại danh sách.");
+        }
+        await tx.CommitAsync();
     }
 
     // ---------------------------------------------------------------- Kiểm tra dùng chung

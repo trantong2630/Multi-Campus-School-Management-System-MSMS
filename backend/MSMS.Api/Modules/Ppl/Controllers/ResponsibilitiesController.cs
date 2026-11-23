@@ -12,10 +12,6 @@ public class ResponsibilitiesController(ResponsibilityService service) : Control
     [HttpGet, Authorize(Policy = Policies.CampusReader)]
     public Task<List<ResponsibilityRow>> List([FromQuery] string kind, [FromQuery] int? yearId) => service.ListCurrentAsync(kind, yearId);
 
-    // Xuất Excel cùng phạm vi với danh sách trên màn hình.
-    [HttpGet("export"), Authorize(Policy = Policies.CampusReader)]
-    public Task<FileContentResult> Export([FromQuery] string kind, [FromQuery] int? yearId) => service.ExportAsync(kind, yearId);
-
     [HttpGet("history"), Authorize(Policy = Policies.CampusReader)]
     public Task<List<ResponsibilityHistoryRow>> History([FromQuery] string kind, [FromQuery] int targetId) => service.HistoryAsync(kind, targetId);
 
@@ -25,4 +21,8 @@ public class ResponsibilitiesController(ResponsibilityService service) : Control
 
     [HttpPost("end"), Authorize(Policy = Policies.ResponsibilityManager)]
     public async Task<IActionResult> End(ResponsibilityEndRequest r) { await service.EndAsync(r); return NoContent(); }
+
+    // Hủy lịch hẹn chưa tới ngày bắt đầu.
+    [HttpPost("cancel"), Authorize(Policy = Policies.ResponsibilityManager)]
+    public async Task<IActionResult> Cancel(ResponsibilityCancelRequest r) { await service.CancelAsync(r); return NoContent(); }
 }

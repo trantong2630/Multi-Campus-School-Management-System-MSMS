@@ -68,5 +68,6 @@ export const pplApi = {
     assign: (b: { kind: ResponsibilityKind; targetId: number; staffId: number; startDate: string }) =>
       apiClient.post('/ppl/responsibilities/assign', b),
     end: (b: { kind: ResponsibilityKind; recordId: number; endDate: string }) => apiClient.post('/ppl/responsibilities/end', b),
+    cancel: (b: { kind: ResponsibilityKind; recordId: number }) => apiClient.post('/ppl/responsibilities/cancel', b),
   },
 };

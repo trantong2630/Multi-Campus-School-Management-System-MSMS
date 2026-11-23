@@ -1,5 +1,5 @@
 import {
-  BookOpen, BookUser, CalendarDays, ChartColumn, ClipboardCheck, FileText, HeartHandshake, House, LayoutDashboard, Mail, Newspaper, Settings2, ShieldCheck, Users,
+  BookOpen, BookUser, CalendarDays, ClipboardCheck, FileText, HeartHandshake, House, LayoutDashboard, Mail, Newspaper, Settings2, ShieldCheck, Users,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { AccountType } from '@/shared/lib/labels';
@@ -47,14 +47,13 @@ const STAFF: AccountType[] = [...MGMT, 'Teacher'];
 export const menu: MenuGroup[] = [
   { key: 'home', label: 'Trang chủ', icon: House, section: 'overview', path: '/', roles: ALL, ready: true },
   {
-    // Bảng điều khiển: tình hình vận hành theo phạm vi của vai trò, và tiến độ bài tập rèn luyện dùng chung tên cho mọi cấp quản lý.
+    // Bảng điều khiển: mỗi vai trò một màn tình hình theo phạm vi, gồm cả vận hành lẫn bài tập rèn luyện.
     key: 'dashboard', label: 'Bảng điều khiển', icon: LayoutDashboard, section: 'overview', keepGroup: true,
     children: [
       { key: 'dash-school', label: 'Tình hình toàn trường', path: '/dashboard/school', roles: ['Principal'], ready: true },
       { key: 'dash-campus', label: 'Tình hình phân hiệu', path: '/dashboard/campus', roles: ['VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
       { key: 'dash-dept', label: 'Tình hình tổ chuyên môn', path: '/dashboard/department', roles: ['Teacher'], requires: { Teacher: 'department' }, ready: true },
       { key: 'dash-class', label: 'Tình hình lớp chủ nhiệm', path: '/dashboard/homeroom', roles: ['Teacher'], requires: { Teacher: 'homeroom' }, ready: true },
-      { key: 'dash-progress', label: 'Tiến độ bài tập rèn luyện', path: '/dashboard/progress', roles: ['Principal', 'VicePrincipal', 'Teacher'], requires: { VicePrincipal: 'campus', Teacher: 'homeroomOrDepartment' }, ready: true },
       { key: 'dash-system', label: 'Thống kê hệ thống', path: '/dashboard/system', roles: ['SchoolAdmin'], ready: true },
     ],
   },
@@ -66,7 +65,6 @@ export const menu: MenuGroup[] = [
       { key: 'com-feed', label: 'Bảng tin', path: '/com/feed', roles: ALL, ready: true },
     ],
   },
-  { key: 'report', label: 'Báo cáo toàn trường', icon: ChartColumn, section: 'overview', path: '/adm/report', roles: ['Principal'], ready: true },
   // Danh sách học sinh lớp chủ nhiệm, chỉ xem. SA, HT, HP xem lớp ở Lớp & Ghi danh.
   {
     key: 'homeroom-students', label: 'Danh sách học sinh', icon: BookUser, section: 'manage', path: '/sch/homeroom-students',

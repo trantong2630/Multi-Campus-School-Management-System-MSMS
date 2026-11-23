@@ -59,6 +59,8 @@ export interface LockImpact {
   sessionCount: number;
   campuses: { campus: string; count: number }[];
   duties: { kind: string; targetName: string }[];
+  /** Lịch hẹn trách nhiệm chưa bắt đầu, sẽ bị hủy. */
+  upcomingDuties: string[];
 }
 
 export interface Account {

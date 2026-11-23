@@ -72,6 +72,22 @@ public class CatalogServiceTests
     }
 
     // ---- Môn học ----
+    [Fact(DisplayName = "SCH | Bật lại môn học | Tổ của môn đã ngừng hoạt động | bị chặn, bật lại tổ trước thì được (BR-07)")]
+    public async Task ReactivateSubject_UnderInactiveDepartment_IsRejected()
+    {
+        var (_, svc) = Create();
+        var dept = await Dept(svc);
+        var subject = await svc.CreateSubjectAsync(new SubjectRequest(dept.DepartmentId, "Toán", "TOAN"));
+        await svc.SetSubjectActiveAsync(subject.SubjectId, false);
+        await svc.SetDepartmentActiveAsync(dept.DepartmentId, false);
+
+        var ex = await Assert.ThrowsAsync<ApiException>(() => svc.SetSubjectActiveAsync(subject.SubjectId, true));
+        Assert.Contains("Bật lại tổ", ex.Message);
+
+        await svc.SetDepartmentActiveAsync(dept.DepartmentId, true);
+        await svc.SetSubjectActiveAsync(subject.SubjectId, true);
+    }
+
     [Fact]
     public async Task CreateSubject_StoresAbbreviation_AndListsUnderDepartment()
     {

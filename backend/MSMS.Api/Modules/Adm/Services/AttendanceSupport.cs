@@ -64,26 +64,6 @@ internal static class AttendanceSupport
             .ToDictionaryAsync(x => x.Key, x => x.Count);
     }
 
-    /// <summary>Số buổi vắng của từng học sinh trong lớp, tách có phép và không phép.</summary>
-    public static async Task<Dictionary<int, (int Excused, int Unexcused)>> AbsencesByStudentAsync(MsmsDbContext db, int classId, DateOnly from, DateOnly to)
-    {
-        var absents = await db.AttendanceRecord.AsNoTracking()
-            .Where(r => r.Session.ClassId == classId && r.Status == AttendanceStatuses.Absent && r.Session.Status == AttendanceRules.SessionScheduled
-                && r.Session.SessionDate >= from && r.Session.SessionDate <= to)
-            .Select(r => new { r.StudentId, Date = r.Session.SessionDate, r.Session.PeriodSlot.SessionOfDay, r.Session.PeriodSlot.PeriodNo })
-            .ToListAsync();
-        if (absents.Count == 0) return [];
-        var studentIds = absents.Select(a => a.StudentId).Distinct().ToList();
-        var leaves = await db.LeaveRequest.AsNoTracking()
-            .Where(l => l.Status == AttendanceRules.LeaveApproved && studentIds.Contains(l.StudentId) && l.FromDate <= to && l.ToDate >= from)
-            .Select(l => new ApprovedLeave(l.StudentId, l.FromDate, l.ToDate, l.SessionOfDay, l.SlotIds)).ToListAsync();
-        return absents.GroupBy(a => a.StudentId).ToDictionary(g => g.Key, g =>
-        {
-            var ex = g.Count(a => AttendanceRules.IsExcused(a.StudentId, a.Date, a.SessionOfDay, a.PeriodNo, leaves));
-            return (ex, g.Count() - ex);
-        });
-    }
-
     public static double? Rate(IEnumerable<AttendanceDay> days)
     {
         int present = 0, marked = 0;
@@ -91,27 +71,79 @@ internal static class AttendanceSupport
         return marked == 0 ? null : Math.Round(present * 100.0 / marked, 1);
     }
 
-    public static AttendanceSummary Summary(IReadOnlyCollection<AttendanceDay> days, int unmarked, int todaySessions, int todayMarkedSessions) =>
-        new(Rate(days), days.Sum(d => d.Present), days.Sum(d => d.Late), days.Sum(d => d.AbsentExcused), days.Sum(d => d.AbsentUnexcused),
-            unmarked, todaySessions, todayMarkedSessions);
-
-    /// <summary>8 tuần gần nhất tính cả tuần này (tuần bắt đầu thứ Hai): tỷ lệ có mặt và số lượt vắng.</summary>
-    public static List<AttendanceWeek> Weeks(IReadOnlyCollection<AttendanceDay> days, DateOnly today)
+    /// <summary>Tỷ lệ lượt vắng không phép trên số lượt đã ghi.</summary>
+    public static double? UnexcusedRate(IEnumerable<AttendanceDay> days)
     {
-        var byWeek = days.GroupBy(d => DashboardSupport.WeekStart(d.Date)).ToDictionary(g => g.Key, g => g.ToList());
-        return Enumerable.Range(0, 8).Select(i => DashboardSupport.WeekStart(today).AddDays(-7 * (7 - i)))
-            .Select(w => byWeek.TryGetValue(w, out var g)
-                ? new AttendanceWeek(w, Rate(g), g.Sum(d => d.AbsentExcused + d.AbsentUnexcused))
-                : new AttendanceWeek(w, null, 0)).ToList();
+        int unexcused = 0, marked = 0;
+        foreach (var d in days) { unexcused += d.AbsentUnexcused; marked += d.Marked; }
+        return DashboardSupport.Percent(unexcused, marked);
     }
 
-    /// <summary>Tỷ lệ có mặt theo thứ trong tuần (Thứ Hai tới Thứ Bảy): cho thấy ngày nào vắng nhiều.</summary>
-    public static List<WeekdayRate> Weekdays(IEnumerable<AttendanceDay> days)
+    /// <summary>Một chỉ số chuyên cần theo từng tuần (tuần bắt đầu thứ Hai), đúng thứ tự weekStarts.</summary>
+    public static List<double?> Weekly(IEnumerable<AttendanceDay> days, IReadOnlyList<DateOnly> weekStarts, Func<IEnumerable<AttendanceDay>, double?> measure)
+    {
+        var byWeek = days.GroupBy(d => DashboardSupport.WeekStart(d.Date)).ToDictionary(g => g.Key, g => g.ToList());
+        return weekStarts.Select(w => byWeek.TryGetValue(w, out var g) ? measure(g) : null).ToList();
+    }
+
+    public static AttendanceMix Mix(IEnumerable<AttendanceDay> days)
+    {
+        var list = days.ToList();
+        return new AttendanceMix(list.Sum(d => d.Present), list.Sum(d => d.Late), list.Sum(d => d.AbsentExcused), list.Sum(d => d.AbsentUnexcused));
+    }
+
+    /// <summary>Chuyên cần theo thứ Hai tới thứ Bảy.</summary>
+    public static List<double?> Weekdays(IEnumerable<AttendanceDay> days)
     {
         var byDay = days.GroupBy(d => d.Date.DayOfWeek).ToDictionary(g => g.Key, g => g.ToList());
         return new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday }
-            .Select(d => byDay.TryGetValue(d, out var g)
-                ? new WeekdayRate((int)d, Rate(g), g.Sum(x => x.AbsentExcused + x.AbsentUnexcused))
-                : new WeekdayRate((int)d, null, 0)).ToList();
+            .Select(d => byDay.TryGetValue(d, out var g) ? Rate(g) : null).ToList();
+    }
+
+    /// <summary>Chỉ số chuyên cần ở dạng Kpi: kỳ 4 tuần hiện tại, kỳ liền trước và 8 tuần.</summary>
+    public static Kpi Kpi(IReadOnlyCollection<AttendanceDay> days, DateOnly today, IReadOnlyList<DateOnly> weekStarts, Func<IEnumerable<AttendanceDay>, double?> measure)
+    {
+        var (current, previous) = DashboardSupport.Periods(today);
+        return new Kpi(measure(days.Where(d => d.Date >= current)), measure(days.Where(d => d.Date >= previous && d.Date < current)),
+            Weekly(days, weekStarts, measure));
+    }
+
+    /// <summary>Số ngày học liên tiếp tối thiểu để tính là vắng liên tiếp.</summary>
+    public const int StreakDays = 3;
+
+    /// <summary>
+    /// Học sinh đang vắng liên tiếp: tính trên các ngày học đã qua (trước hôm nay) mà lớp có điểm danh, từ ngày gần nhất lùi về;
+    /// một ngày tính là vắng khi mọi lượt đã ghi của em trong ngày đều là Vắng (có phép hay không đều tính). Chỉ trả em vắng từ 3 ngày.
+    /// Key là StudentId, giá trị là lớp và số ngày liên tiếp.
+    /// </summary>
+    public static async Task<Dictionary<int, (int ClassId, int Days)>> StreaksAsync(MsmsDbContext db, List<int> classIds, DateOnly today)
+    {
+        if (classIds.Count == 0) return [];
+        var from = today.AddDays(-30);
+        var rows = await db.AttendanceRecord.AsNoTracking()
+            .Where(r => classIds.Contains(r.Session.ClassId) && r.Session.Status == AttendanceRules.SessionScheduled
+                && r.Session.SessionDate >= from && r.Session.SessionDate < today)
+            .GroupBy(r => new { r.StudentId, r.Session.ClassId, r.Session.SessionDate })
+            .Select(g => new { g.Key.StudentId, g.Key.ClassId, Date = g.Key.SessionDate, Attended = g.Count(r => r.Status != AttendanceStatuses.Absent) })
+            .ToListAsync();
+
+        var result = new Dictionary<int, (int ClassId, int Days)>();
+        foreach (var cls in rows.GroupBy(r => r.ClassId))
+        {
+            var schoolDays = cls.Select(r => r.Date).Distinct().OrderByDescending(d => d).ToList();
+            foreach (var student in cls.GroupBy(r => r.StudentId))
+            {
+                var absentAllDay = student.ToDictionary(r => r.Date, r => r.Attended == 0);
+                var streak = 0;
+                foreach (var day in schoolDays)
+                {
+                    if (!absentAllDay.TryGetValue(day, out var absent) || !absent) break;
+                    streak++;
+                }
+                if (streak >= StreakDays && (!result.TryGetValue(student.Key, out var known) || known.Days < streak))
+                    result[student.Key] = (cls.Key, streak);
+            }
+        }
+        return result;
     }
 }

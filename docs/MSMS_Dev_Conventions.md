@@ -20,7 +20,7 @@ Tài liệu kỹ thuật đi kèm Business Specification V3. Chốt bốn thứ:
 | Excel | ClosedXML |
 | Realtime | ASP.NET Core SignalR, một hub cho thông báo và chat. Server → client: `NotificationCreated`, `MessageReceived`, `MessagesRead`, `UserTyping`, `PresenceChanged`; client → server chỉ `SendTyping` và `JoinConversation`, gửi tin vẫn qua REST. Web dùng `@microsoft/signalr`, mobile dùng `signalr_netcore` (chỉ khi app mở, có polling dự phòng). Token truyền qua query `access_token`, hub đi qua cùng kiểm tài khoản và phiên như REST. Đẩy sau `SaveChanges`. Đang nhập và online chỉ ở bộ nhớ, không thêm bảng; không backplane khi chạy một instance |
 | Email OTP | Gmail SMTP (`smtp.gmail.com:587`, STARTTLS) bằng App Password của hộp thư chung của trường; tài khoản và mật khẩu ứng dụng đặt trong cấu hình môi trường, không commit (spec mục 3.2) |
-| Gọi AI | HttpClient + REST của nhà cung cấp (Gemini); khóa và model đặt ở mục `Ai` trong `appsettings.json` (`Ai:ApiKey`, `Ai:Model`). Yêu cầu có thể kèm ảnh (`IAiClient`, `AiImage`) |
+| Gọi AI | HttpClient + REST của nhà cung cấp (Gemini); khóa và model đặt ở mục `Ai` trong `appsettings.json` (`Ai:ApiKey`, `Ai:Model`). Yêu cầu có thể kèm ảnh (`IAiClient`, `AiImage`). MSMS AI của quản lý (BR-29) gọi `IAiClient.ChatAsync` (hội thoại nhiều lượt, khai báo tool) với model riêng `Ai:ChatModel` (bỏ trống thì dùng `Ai:Model`) để không tranh hạn mức với soạn câu hỏi và phân tích bài làm; `Ai:ChatHistoryTurns` (20), `Ai:ChatMaxToolRounds` (4), `Ai:ChatPerUserPerMinute` (6) |
 | Sách giáo khoa | Ảnh từng trang nằm trên Cloudinary qua `IImageStorage`, thư mục `msms/textbooks`, tên `<mã sách>-p-<trang PDF>.jpg`; API lấy ảnh rồi trả lại qua endpoint có kiểm quyền, ảnh không đi thẳng từ Cloudinary tới người dùng. Mục lục (bài, trang in bắt đầu và kết thúc, độ lệch số trang của cuốn) nằm trong mã nguồn ở `backend/MSMS.Api/Data/Textbooks/<mã sách>.json` và `TextbookSeeder` nạp vào CSDL mỗi lần API khởi động, ở mọi môi trường. Nạp một cuốn mới bằng `python -I tools/textbook-import/import_textbook.py` (cần thư viện `pymupdf`; khóa Gemini và Cloudinary lấy từ biến môi trường hoặc user-secrets); chữ do Gemini đọc từ mục lục phải được người rà lại trước khi commit file JSON |
 | Lưu ảnh | Cloudinary (gói Free) qua `CloudinaryDotNet`, cho ảnh đại diện, logo trường và ảnh bài đăng (BR-27). Code chỉ làm việc với `IImageStorage` (`Common/Storage`). CSDL chỉ giữ tên file; ảnh nằm ở thư mục `msms/avatars`, `msms/school`, `msms/posts` và vẫn đi qua API có kiểm quyền, API lấy từ Cloudinary rồi trả lại trình duyệt. Khóa `Cloudinary:CloudName`, `Cloudinary:ApiKey`, `Cloudinary:ApiSecret` đặt trong user-secrets hoặc biến môi trường, không commit; thiếu khóa thì API không khởi động |
 | Log | Serilog, ghi ra file |
@@ -52,7 +52,7 @@ Triển khai thật (VPS Windows + IIS, Docker, CI/CD) **có thể làm sau**, c
 
 | Bỏ | Lý do |
 | --- | --- |
-| Hangfire / Quartz | Spec không có job chạy nền nào; trạng thái suy lúc đọc |
+| Hangfire / Quartz | Job nền duy nhất (tự nộp bản nháp quá hạn, BR-21) chỉ là một vòng lặp định kỳ nên dùng `BackgroundService` có sẵn của ASP.NET Core; các trạng thái khác vẫn suy lúc đọc |
 | ASP.NET Core Identity | Đã có bảng Account riêng, 6 loại tài khoản cố định |
 | Redis | Chưa có nhu cầu cache thật |
 | Thư viện i18n | Chỉ một ngôn ngữ |
@@ -126,7 +126,7 @@ MSMS.Api/
 
 Entities để chung ở `Data/`, không rải vào module — Class, Person, TeachingSession bị gần như mọi module dùng. Cấu hình EF viết trong `MsmsDbContext`, không tách thư mục `Configurations/`.
 
-Thứ chỉ một module dùng và gắn với một cơ chế riêng thì nằm cạnh `Controllers/Services/Dtos` của module đó, không đưa lên `Common`: `Com` giữ `CommunicationHub`, `PresenceTracker`, `NotificationPushInterceptor` (SignalR).
+Thứ chỉ một module dùng và gắn với một cơ chế riêng thì nằm cạnh `Controllers/Services/Dtos` của module đó, không đưa lên `Common`: `Com` giữ `CommunicationHub`, `PresenceTracker`, `NotificationPushInterceptor` (SignalR); `Adm/Ai/` giữ MSMS AI của quản lý: `AiScope` (phạm vi, kỳ, bộ lọc), `AiTools` (các truy vấn chỉ đọc khai báo cho AI), `PersonDirectory` (đổi tên, mã thật sang mã giả HS#, GV# và ngược lại), `AdmAiChatService` (vòng gọi tool, biểu đồ).
 
 ### Web
 
@@ -264,7 +264,7 @@ Chốt chữ nào hiện trên màn hình. Mọi màn hình, mọi file xuất E
 | LRN | Bài tập rèn luyện |
 | PAR | Phụ huynh |
 | COM | Thông báo · Bảng tin |
-| ADM | Bảng điều khiển · Báo cáo toàn trường · Quản trị (Tài khoản · Nhật ký · Xuất dữ liệu) |
+| ADM | Bảng điều khiển · Quản trị (Tài khoản · Nhật ký · Xuất dữ liệu) |
 | IAM | Tài khoản (góc phải) |
 
 ### 4.2. Tên thực thể
@@ -363,7 +363,7 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Cấp 1 | Cấp 2 |
 | --- | --- |
 | Trang chủ | — |
-| Bảng điều khiển | Tình hình toàn trường · Tình hình phân hiệu · Tình hình tổ chuyên môn · Tình hình lớp chủ nhiệm · Tiến độ bài tập rèn luyện · Thống kê hệ thống |
+| Bảng điều khiển | Tình hình toàn trường · Tình hình phân hiệu · Tình hình tổ chuyên môn · Tình hình lớp chủ nhiệm · Thống kê hệ thống |
 | Danh sách học sinh | — |
 | Cơ cấu nhà trường | Thông tin trường · Phân hiệu · Tổ chuyên môn & Môn học · Năm học & Học kỳ · Ngày nghỉ · Khung giờ tiết · Lớp & Ghi danh · Kết chuyển năm học |
 | Hồ sơ | Cán bộ · Học sinh · Phụ huynh · Trách nhiệm |
@@ -372,7 +372,6 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Bài tập rèn luyện | Kho câu hỏi · Giao bài tập · Bài tập đã giao · Bài tập được giao · Danh sách bài tập · Kết quả của con |
 | Phụ huynh | Đơn xin nghỉ · Sổ liên lạc · Hộp thư |
 | Bảng tin | Đăng tin · Bảng tin |
-| Báo cáo toàn trường | — |
 | Quản trị | Tài khoản · Nhật ký · Xuất dữ liệu |
 
 - Nhóm chỉ có một màn hình thì không có cấp 2. Áp dụng cả sau khi lọc theo quyền: nhóm chỉ còn một mục con hiển thị cho loại tài khoản đó thì hiện thẳng thành mục cấp 1 (ví dụ giáo viên chỉ thấy **Lịch dạy**; chủ nhiệm chỉ có quyền xuất điểm danh thì nhóm Quản trị hiện thẳng thành **Xuất dữ liệu**). School Admin không thấy Thời khóa biểu và Xuất dữ liệu; nhóm Quản trị của School Admin gồm **Tài khoản** và **Nhật ký**. **Bảng điều khiển** là ngoại lệ có chủ ý: luôn giữ nhóm cha dù chỉ còn một mục con (School Admin chỉ có **Thống kê hệ thống**), cờ `keepGroup` trong `app/menu.tsx`.
@@ -387,12 +386,10 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Mục | Ai thấy |
 | --- | --- |
 | Trang chủ · Bảng tin | Mọi loại |
-| Báo cáo toàn trường | HT |
 | Bảng điều khiển › Tình hình toàn trường | HT |
 | Bảng điều khiển › Tình hình phân hiệu | HP |
 | Bảng điều khiển › Tình hình tổ chuyên môn | GV (chỉ tổ trưởng) |
 | Bảng điều khiển › Tình hình lớp chủ nhiệm | GV (chỉ chủ nhiệm) |
-| Bảng điều khiển › Tiến độ bài tập rèn luyện | HT, HP, GV (chủ nhiệm hoặc tổ trưởng) |
 | Bảng điều khiển › Thống kê hệ thống | SA |
 | Danh sách học sinh | GV (chỉ chủ nhiệm) |
 | Cơ cấu nhà trường › Phân hiệu | SA (sửa), HT (chỉ xem) |
@@ -413,4 +410,4 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Quản trị › Tài khoản · Nhật ký | SA |
 | Quản trị › Xuất dữ liệu | HT, HP, GV |
 
-Ký hiệu như Business Spec §5. Kết quả với các màn đã có: **SA** Trang chủ · Bảng điều khiển (Thống kê hệ thống) · Cơ cấu nhà trường (đủ 8 mục) · Hồ sơ (Cán bộ, Trách nhiệm) · Tài khoản — **HT** Trang chủ · Bảng điều khiển (Tình hình toàn trường, Tiến độ bài tập rèn luyện) · Cơ cấu nhà trường (5 mục chỉ xem) · Hồ sơ (Cán bộ, Trách nhiệm) · Lịch dạy · Báo cáo toàn trường · Quản trị (Xuất dữ liệu) — **HP** Trang chủ · Bảng điều khiển (Tình hình phân hiệu, Tiến độ bài tập rèn luyện) · Cơ cấu nhà trường (4 mục chỉ xem, không có Phân hiệu) · Cán bộ · Thời khóa biểu (Thời khóa biểu, Lịch dạy) — **GV** Trang chủ · Lịch dạy (chủ nhiệm thêm Danh sách học sinh; chủ nhiệm hoặc tổ trưởng thêm Bảng điều khiển) — **HS, PH** Trang chủ.
+Ký hiệu như Business Spec §5. Kết quả với các màn đã có: **SA** Trang chủ · Bảng điều khiển (Thống kê hệ thống) · Cơ cấu nhà trường (đủ 8 mục) · Hồ sơ (Cán bộ, Trách nhiệm) · Tài khoản — **HT** Trang chủ · Bảng điều khiển (Tình hình toàn trường) · Cơ cấu nhà trường (5 mục chỉ xem) · Hồ sơ (Cán bộ, Trách nhiệm) · Lịch dạy · Quản trị (Xuất dữ liệu) — **HP** Trang chủ · Bảng điều khiển (Tình hình phân hiệu) · Cơ cấu nhà trường (4 mục chỉ xem, không có Phân hiệu) · Cán bộ · Thời khóa biểu (Thời khóa biểu, Lịch dạy) — **GV** Trang chủ · Lịch dạy (chủ nhiệm thêm Danh sách học sinh; chủ nhiệm hoặc tổ trưởng thêm Bảng điều khiển) — **HS, PH** Trang chủ.

@@ -30,14 +30,6 @@ public class DepartmentBoardController(DepartmentBoardService board) : Controlle
     public Task<DepartmentBoardDto> Get() => board.GetAsync();
 }
 
-/// <summary>Tiến độ bài tập rèn luyện theo phạm vi: Hiệu trưởng toàn trường, Hiệu phó phân hiệu phụ trách, chủ nhiệm lớp mình. Policy chỉ chặn loại tài khoản; phạm vi do service kiểm.</summary>
-[ApiController, Route("api/adm/progress"), Authorize(Policy = Policies.AssignmentOversight)]
-public class ProgressController(ProgressService progress) : ControllerBase
-{
-    [HttpGet]
-    public Task<ProgressDto> Get([FromQuery] int? campusId) => progress.GetAsync(campusId);
-}
-
 /// <summary>Theo dõi lớp chủ nhiệm. Policy chỉ chặn loại tài khoản; trách nhiệm chủ nhiệm do service kiểm.</summary>
 [ApiController, Route("api/adm/homeroom"), Authorize(Policy = Policies.Teacher)]
 public class HomeroomOverviewController(HomeroomOverviewService homeroom) : ControllerBase

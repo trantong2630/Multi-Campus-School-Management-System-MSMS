@@ -209,7 +209,7 @@ public class PplAuthorizationTests
     public void Guardians_ActionPolicy(string action, string policy) => Assert.Equal(policy, PolicyOf(typeof(GuardiansController), action));
 
     [Theory(DisplayName = "PPL | Phân quyền | Trách nhiệm | mỗi API gắn đúng policy")]
-    [InlineData("List", Policies.CampusReader)] [InlineData("Export", Policies.CampusReader)] [InlineData("History", Policies.CampusReader)]
+    [InlineData("List", Policies.CampusReader)] [InlineData("History", Policies.CampusReader)]
     [InlineData("Assign", Policies.ResponsibilityManager)] [InlineData("End", Policies.ResponsibilityManager)]
     public void Responsibilities_ActionPolicy(string action, string policy) => Assert.Equal(policy, PolicyOf(typeof(ResponsibilitiesController), action));
 

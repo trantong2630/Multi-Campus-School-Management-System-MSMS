@@ -37,10 +37,11 @@ public record ResponsibilityRow(
     int? RecordId, int? StaffId, string? StaffName, DateOnly? StartDate,
     string? NextStaffName = null, DateOnly? NextStartDate = null,
     string? StaffCode = null, DateOnly? EndDate = null, string? EndedStaffName = null, DateOnly? EndedDate = null, string? TargetCode = null,
-    int? NextStaffId = null, DateTime? StartedAt = null);
+    int? NextStaffId = null, DateTime? StartedAt = null, int? NextRecordId = null);
 
 public record ResponsibilityAssignRequest(string Kind, int TargetId, int StaffId, DateOnly StartDate);
 public record ResponsibilityEndRequest(string Kind, int RecordId, DateOnly EndDate);
+public record ResponsibilityCancelRequest(string Kind, int RecordId);
 public record ResponsibilityHistoryRow(int RecordId, int StaffId, string StaffName, DateOnly StartDate, DateOnly? EndDate, bool IsEffective, DateTime AssignedAt, DateTime? EndedAt);
 
 // Import học sinh kèm ghi danh và phụ huynh (PPL-02, 4.3.16–4.3.18)

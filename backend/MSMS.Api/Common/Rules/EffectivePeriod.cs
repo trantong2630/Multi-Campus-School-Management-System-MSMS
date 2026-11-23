@@ -39,7 +39,10 @@ namespace MSMS.Api.Common.Rules
         public static bool IsEffectiveAt(this IEffectivePeriod p, DateOnly date) =>
             p.StartDate <= date && (p.EndDate == null || p.EndDate >= date);
 
-        /// <summary>Biểu thức cho EF để lọc bản ghi hiệu lực tại một ngày.</summary>
+        /// <summary>
+        /// Biểu thức cho EF để lọc bản ghi hiệu lực tại một ngày. Ghi danh không dùng hàm này mà dùng <see cref="EnrollmentRules.ActiveAt"/>,
+        /// vì ngày kết thúc để trống của ghi danh nghĩa là tới hết năm học chứ không phải không bao giờ hết.
+        /// </summary>
         public static Expression<Func<T, bool>> EffectiveAt<T>(DateOnly date) where T : class, IEffectivePeriod =>
             x => x.StartDate <= date && (x.EndDate == null || x.EndDate >= date);
 

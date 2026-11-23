@@ -19,4 +19,4 @@ public record ResetPasswordResult(string Username, string TempPassword);
 
 public record CampusSessionCount(string Campus, int Count);
 public record DutyImpact(string Kind, string TargetName);
-public record LockImpact(int SessionCount, IReadOnlyList<CampusSessionCount> Campuses, IReadOnlyList<DutyImpact> Duties);
+public record LockImpact(int SessionCount, IReadOnlyList<CampusSessionCount> Campuses, IReadOnlyList<DutyImpact> Duties, IReadOnlyList<string> UpcomingDuties);
