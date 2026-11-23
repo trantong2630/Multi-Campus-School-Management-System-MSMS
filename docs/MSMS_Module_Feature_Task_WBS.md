@@ -199,7 +199,7 @@ Sửa tên môn, tổ phụ trách và viết tắt. Đổi viết tắt chỉ �
 
 **4.2.11 — Ngừng hoạt động môn học / Deactivate Subject**  
 `BE + Web` · 0.5 MD · dep: 4.2.9  
-Ngừng dùng môn thay vì xóa: môn không còn xuất hiện khi khai báo và import thời khóa biểu mới, dữ liệu đã có giữ nguyên (BR-07).
+Ngừng dùng môn thay vì xóa: môn không còn xuất hiện khi khai báo và import thời khóa biểu mới, dữ liệu đã có giữ nguyên. Bật lại môn bị chặn khi tổ của môn đã ngừng hoạt động: bật lại tổ trước, hoặc chuyển môn sang tổ khác (BR-07).
 
 ### SCH-03 Academic Year, Semester & Non-teaching Days (Năm học, Học kỳ & Ngày nghỉ)
 
