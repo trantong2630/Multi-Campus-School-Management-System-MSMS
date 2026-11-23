@@ -15,7 +15,7 @@ public class StaffEmailTests
         var db = NewDb();
         AddCampus(db, 1, "Phân hiệu 1");
         var user = UserOf(AccountTypes.SchoolAdmin, 900);
-        return (db, new StaffService(db, ClockAt(), new ScopeResolver(db, user, ClockAt())));
+        return (db, new StaffService(db, ClockAt(), user, new ScopeResolver(db, user, ClockAt())));
     }
 
     private static StaffRequest Request(string? email) =>

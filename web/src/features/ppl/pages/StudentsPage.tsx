@@ -42,7 +42,7 @@ const STATUSES = [
 ];
 const dash = <span className="muted">—</span>;
 
-/** PPL-02: danh bạ học sinh (4.3.12–4.3.16). Chỉ School Admin tạo, sửa và import; Principal và Hiệu phó chỉ xem. */
+/** PPL-02: danh bạ học sinh (4.3.12–4.3.16). Chỉ School Admin tạo, sửa và import; Principal và Hiệu phó chỉ xem. Bấm tên mở Hồ sơ học sinh. */
 export function StudentsPage() {
   const { user } = useAuth();
   const canWrite = user?.accountType === 'SchoolAdmin';
@@ -153,7 +153,7 @@ export function StudentsPage() {
           } : undefined}
           columns={[
             { title: 'Mã hồ sơ', dataIndex: 'personCode', width: 110, className: 'tabular' },
-            { title: 'Họ và tên', dataIndex: 'fullName', width: 210, render: (v: string, s: Student) => <PersonCell name={v} muted={s.status !== 'Studying'} /> },
+            { title: 'Họ và tên', dataIndex: 'fullName', width: 210, render: (v: string, s: Student) => <PersonCell name={v} muted={s.status !== 'Studying'} to={`/ppl/students/${s.studentId}`} /> },
             { title: 'Ngày sinh', dataIndex: 'dateOfBirth', width: 104, className: 'tabular', render: (v: string | null) => formatDate(v) },
             { title: 'Giới tính', dataIndex: 'gender', width: 90, render: (v: string | null) => GENDERS.find((g) => g.value === v)?.label ?? '—' },
             { title: 'Số định danh', dataIndex: 'nationalId', width: 120, className: 'tabular' },

@@ -17,6 +17,10 @@ public class StudentsController(StudentImportService import, StudentService stud
         [FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         => students.ListAsync(yearId, campusId, classId, status, search, page, pageSize);
 
+    // 4.3.12: Hồ sơ học sinh, chỉ xem. Policy mở cho cán bộ; service giới hạn HP theo phân hiệu, giáo viên theo lớp đang chủ nhiệm.
+    [HttpGet("{id:int}"), Authorize(Policy = Policies.Staff)]
+    public Task<StudentDetailDto> Detail(int id) => students.GetDetailAsync(id);
+
     // 4.3.14–4.3.15: tạo và sửa hồ sơ; số định danh không sửa được.
     [HttpPost, Authorize(Policy = Policies.SchoolAdmin)]
     public Task<StudentDto> Create(StudentRequest r) => students.CreateAsync(r);

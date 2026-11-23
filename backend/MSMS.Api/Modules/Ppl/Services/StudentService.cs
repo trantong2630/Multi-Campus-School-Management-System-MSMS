@@ -6,6 +6,7 @@ using MSMS.Api.Common.Rules;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
 using MSMS.Api.Data.Entities;
+using MSMS.Api.Modules.Att.Services;
 using MSMS.Api.Modules.Ppl.Dtos;
 using MSMS.Api.Modules.Sch.Dtos;
 using MSMS.Api.Modules.Sch.Services;
@@ -13,9 +14,47 @@ using MSMS.Api.Modules.Sch.Services;
 namespace MSMS.Api.Modules.Ppl.Services;
 
 /// <summary>PPL-02: danh bạ học sinh (4.3.12–4.3.15). Import chỉ tạo hồ sơ, sửa hồ sơ luôn làm ở đây (BR-10, BR-11).</summary>
-public sealed class StudentService(MsmsDbContext db, IClock clock, ScopeResolver scope, EnrollmentService enrollments)
+public sealed class StudentService(MsmsDbContext db, IClock clock, CurrentUser user, ScopeResolver scope, EnrollmentService enrollments, AttendanceService attendance)
 {
     public static readonly string[] Statuses = ["Studying", "Transferred", "Graduated"];
+
+    /// <summary>
+    /// 4.3.12: Hồ sơ học sinh, chỉ xem. SA và HT toàn trường, HP học sinh của phân hiệu phụ trách, chủ nhiệm học sinh của lớp mình.
+    /// Ngoài phạm vi thì báo không tìm thấy, không lộ là hồ sơ có tồn tại. Chuyên cần chỉ tính trong phạm vi người xem được xem (ma trận quyền, ATT).
+    /// </summary>
+    public async Task<StudentDetailDto> GetDetailAsync(int id)
+    {
+        var visible = await scope.FilterStudentProfileAsync(db.StudentProfile.AsNoTracking().Where(s => s.StudentId == id));
+        var s = await visible.Select(x => new
+        {
+            x.StudentId, x.Student.PersonCode, x.Student.FullName, x.Student.DateOfBirth, x.Student.NationalId, x.Student.Gender,
+            x.Student.PhoneNumber, x.Student.Address, x.Status, x.Note, x.AdmissionDate, x.LeftDate,
+        }).FirstOrDefaultAsync() ?? throw ApiException.NotFound("Không tìm thấy hồ sơ học sinh.");
+
+        var today = clock.Today;
+        var history = await db.Enrollment.AsNoTracking().Where(e => e.StudentId == id)
+            .OrderByDescending(e => e.StartDate).ThenByDescending(e => e.EnrollmentId)
+            .Select(e => new
+            {
+                e.EnrollmentId, YearName = e.Class.AcademicYear.Name, e.ClassId, ClassName = e.Class.Name, CampusName = e.Class.Campus.Name,
+                e.StartDate, End = e.EndDate ?? e.Class.AcademicYear.EndDate, e.Reason,
+            }).ToListAsync();
+        var enrollmentRows = history.Select(e => new StudentEnrollmentDto(e.EnrollmentId, e.YearName, e.ClassId, e.ClassName, e.CampusName,
+            e.StartDate, e.End, e.Reason, e.StartDate <= today && e.End >= today)).ToList();
+        var current = enrollmentRows.FirstOrDefault(e => e.IsCurrent);
+
+        var guardian = await db.ParentStudentLink.AsNoTracking().Where(l => l.StudentId == id && l.IsPrimary)
+            .Select(l => new StudentGuardianDto(l.ParentId, l.Parent.PersonCode, l.Parent.FullName, l.Relationship, l.Parent.PhoneNumber, l.Parent.Email))
+            .FirstOrDefaultAsync();
+
+        var campusIds = user.AccountType == AccountTypes.VicePrincipal ? await scope.LedCampusIdsAsync() : null;
+        var classIds = user.AccountType == AccountTypes.Teacher ? await scope.HomeroomClassIdsAsync() : null;
+        var attendanceOverview = await attendance.StudentOverviewAsync(id, campusIds, classIds);
+
+        return new StudentDetailDto(s.StudentId, s.PersonCode, s.FullName, s.DateOfBirth, s.NationalId, s.Gender, s.PhoneNumber, s.Address,
+            s.Status, s.Note, s.AdmissionDate, s.LeftDate, current?.ClassId, current?.ClassName, current?.CampusName,
+            guardian, enrollmentRows, attendanceOverview);
+    }
 
     public async Task<PagedResult<StudentDto>> ListAsync(int? yearId, int? campusId, int? classId, string? status, string? search, int page, int pageSize)
     {

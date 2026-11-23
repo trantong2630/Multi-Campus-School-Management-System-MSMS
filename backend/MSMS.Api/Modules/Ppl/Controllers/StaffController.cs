@@ -17,6 +17,10 @@ public class StaffController(StaffService staff, StaffImportService import) : Co
         [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         => staff.ListAsync(campusId, departmentId, accountType, hasAbbr, search, includeInactive, page, pageSize);
 
+    // 4.3.2: Hồ sơ cán bộ, chỉ xem; service giới hạn Hiệu phó theo phân hiệu.
+    [HttpGet("{id:int}"), Authorize(Policy = Policies.CampusReader)]
+    public Task<StaffDetailDto> Detail(int id) => staff.GetDetailAsync(id);
+
     [HttpPost, Authorize(Policy = Policies.SchoolAdmin)]
     public Task<StaffDto> Create(StaffRequest r) => staff.CreateAsync(r);
 

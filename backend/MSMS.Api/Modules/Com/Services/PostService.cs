@@ -23,7 +23,8 @@ public static class PostStatuses
 
 /// <summary>
 /// Bảng tin (COM-02, BR-27). Mọi cán bộ đăng và chọn phạm vi; học sinh, phụ huynh chỉ đọc bài Toàn trường đang đăng.
-/// Tác giả sửa, ẩn, xóa bài của mình; School Admin và Principal ẩn được bài của người khác kèm lý do.
+/// Tác giả sửa, ẩn, xóa bài của mình. Ẩn bài người khác (bắt buộc lý do) theo thứ bậc: School Admin ẩn bài của mọi người,
+/// Principal ẩn bài của Vice Principal và Teacher, Vice Principal ẩn bài của Teacher; Teacher chỉ ẩn bài của mình.
 /// Bảng tin không tạo thông báo nên không gọi NotificationSender.
 /// </summary>
 public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock, PostImageStorage storage)
@@ -36,16 +37,29 @@ public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock
     private const int ExcerptLength = 200;
 
     private bool IsStaff => user.AccountType is AccountTypes.SchoolAdmin or AccountTypes.Principal or AccountTypes.VicePrincipal or AccountTypes.Teacher;
-    private bool CanModerate => user.AccountType is AccountTypes.SchoolAdmin or AccountTypes.Principal;
+    private bool ModeratesAll => user.AccountType == AccountTypes.SchoolAdmin;
 
-    /// <summary>Bài người đọc được thấy. Bài đã ẩn chỉ hiện cho tác giả, người ẩn và School Admin/Principal.</summary>
+    /// <summary>Loại tài khoản tác giả mà người dùng hiện tại được ẩn bài (ngoài bài của chính mình).</summary>
+    private string[] ModeratedAuthorTypes => user.AccountType switch
+    {
+        AccountTypes.Principal => [AccountTypes.VicePrincipal, AccountTypes.Teacher],
+        AccountTypes.VicePrincipal => [AccountTypes.Teacher],
+        _ => [],
+    };
+
+    private bool CanModerate(string? authorType) =>
+        ModeratesAll || (authorType != null && ModeratedAuthorTypes.Contains(authorType));
+
+    /// <summary>Bài người đọc được thấy. Bài đã ẩn chỉ hiện cho tác giả, người ẩn và người có quyền ẩn bài của tác giả đó.</summary>
     private IQueryable<Post> VisibleToMe()
     {
         var q = db.Post.AsNoTracking();
         if (!IsStaff) return q.Where(p => p.Status == PostStatuses.Posted && p.Visibility == PostVisibilities.School);
         var me = user.PersonId;
-        var moderate = CanModerate;
-        return q.Where(p => p.Status == PostStatuses.Posted || moderate || p.AuthorPersonId == me || p.HiddenByPersonId == me);
+        var all = ModeratesAll;
+        var types = ModeratedAuthorTypes;
+        return q.Where(p => p.Status == PostStatuses.Posted || all || p.AuthorPersonId == me || p.HiddenByPersonId == me
+            || (p.AuthorPerson.Account != null && types.Contains(p.AuthorPerson.Account.AccountType)));
     }
 
     // ---- 4.8.11 Xem bảng tin ----
@@ -62,7 +76,7 @@ public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock
             .OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.PostId)
             .Select(p => new Row(
                 p.PostId, p.Title, p.Content, p.Visibility, p.Status, p.AuthorPersonId, p.AuthorPerson.FullName,
-                p.CreatedAt, p.UpdatedAt, p.HiddenByPersonId,
+                p.CreatedAt, p.UpdatedAt, p.HiddenByPersonId, p.AuthorPerson.Account != null ? p.AuthorPerson.Account.AccountType : null,
                 p.PostImage.OrderBy(i => i.OrderNo).ThenBy(i => i.PostImageId).Select(i => (int?)i.PostImageId).FirstOrDefault(),
                 p.PostImage.Count))
             .ToPagedAsync(q.Page, Math.Min(q.PageSize, MaxPageSize));
@@ -72,13 +86,15 @@ public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock
 
     public async Task<PostDetailDto> GetAsync(int id)
     {
-        var p = await VisibleToMe().Include(x => x.AuthorPerson).Include(x => x.HiddenByPerson).Include(x => x.PostImage)
+        var p = await VisibleToMe().Include(x => x.AuthorPerson).ThenInclude(a => a.Account)
+            .Include(x => x.HiddenByPerson).Include(x => x.PostImage)
             .FirstOrDefaultAsync(x => x.PostId == id) ?? throw NotFound();
         var images = p.PostImage.OrderBy(i => i.OrderNo).ThenBy(i => i.PostImageId).Select(i => new PostImageDto(i.PostImageId, i.OrderNo)).ToList();
         return new PostDetailDto(
             p.PostId, p.Title, p.Content, p.Visibility, p.Status, p.AuthorPersonId, p.AuthorPerson.FullName,
             p.CreatedAt, p.UpdatedAt, images, p.HiddenByPerson?.FullName, p.HiddenAt, p.HiddenReason,
-            CanEdit(p.AuthorPersonId), CanHide(p.Status, p.AuthorPersonId), CanUnhide(p.Status, p.HiddenByPersonId), CanDelete(p.AuthorPersonId));
+            CanEdit(p.AuthorPersonId), CanHide(p.Status, p.AuthorPersonId, p.AuthorPerson.Account?.AccountType),
+            CanUnhide(p.Status, p.HiddenByPersonId), CanDelete(p.AuthorPersonId));
     }
 
     /// <summary>Ảnh nếu người đọc được xem bài chứa ảnh đó.</summary>
@@ -96,7 +112,7 @@ public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock
     {
         RequireStaff();
         var title = Guard.Required(form.Title, "Tiêu đề", MaxTitle);
-        var content = Guard.Required(form.Content, "Nội dung", MaxContent);
+        var content = Guard.RequiredMultiline(form.Content, "Nội dung", MaxContent);
         var visibility = ParseVisibility(form.Visibility);
         var files = form.Files?.ToList() ?? [];
         if (files.Count > MaxImages) throw TooManyImages();
@@ -165,7 +181,7 @@ public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock
     {
         var post = await FindOwnAsync(id);
         post.Title = Guard.Required(r.Title, "Tiêu đề", MaxTitle);
-        post.Content = Guard.Required(r.Content, "Nội dung", MaxContent);
+        post.Content = Guard.RequiredMultiline(r.Content, "Nội dung", MaxContent);
         post.Visibility = ParseVisibility(r.Visibility);
         post.UpdatedAt = clock.Now;
         await db.SaveChangesAsync();
@@ -177,13 +193,14 @@ public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock
     public async Task<PostDetailDto> HideAsync(int id, HidePostRequest r)
     {
         RequireStaff();
-        var post = await db.Post.FirstOrDefaultAsync(p => p.PostId == id) ?? throw NotFound();
+        var post = await db.Post.Include(p => p.AuthorPerson).ThenInclude(a => a.Account)
+            .FirstOrDefaultAsync(p => p.PostId == id) ?? throw NotFound();
         if (post.Status == PostStatuses.Hidden) throw ApiException.Conflict("Bài đăng này đã được ẩn.");
 
         string? reason;
         if (post.AuthorPersonId == user.PersonId) reason = Guard.Optional(r.Reason, "Lý do", MaxReason);
-        else if (CanModerate) reason = Guard.Required(r.Reason, "Lý do ẩn bài", MaxReason);
-        else throw ApiException.Forbidden("Chỉ tác giả, School Admin hoặc Hiệu trưởng mới ẩn được bài này.");
+        else if (CanModerate(post.AuthorPerson.Account?.AccountType)) reason = Guard.Required(r.Reason, "Lý do ẩn bài", MaxReason);
+        else throw ApiException.Forbidden("Bạn không có quyền ẩn bài của người này.");
 
         post.Status = PostStatuses.Hidden;
         post.HiddenByPersonId = user.PersonId;
@@ -238,8 +255,8 @@ public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock
 
     private bool CanEdit(int authorId) => IsStaff && authorId == user.PersonId;
     private bool CanDelete(int authorId) => CanEdit(authorId);
-    private bool CanHide(string status, int authorId) =>
-        IsStaff && status == PostStatuses.Posted && (authorId == user.PersonId || CanModerate);
+    private bool CanHide(string status, int authorId, string? authorType) =>
+        IsStaff && status == PostStatuses.Posted && (authorId == user.PersonId || CanModerate(authorType));
     private bool CanUnhide(string status, int? hiddenBy) => IsStaff && status == PostStatuses.Hidden && hiddenBy == user.PersonId;
 
     private static string ParseVisibility(string? v) => v switch
@@ -272,12 +289,12 @@ public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock
     private PostListItemDto ToItem(Row r) => new(
         r.PostId, r.Title, Excerpt(r.Content), r.Visibility, r.Status, r.AuthorPersonId, r.AuthorName, r.CreatedAt, r.UpdatedAt,
         r.CoverImageId, r.ImageCount,
-        CanEdit(r.AuthorPersonId), CanHide(r.Status, r.AuthorPersonId), CanUnhide(r.Status, r.HiddenByPersonId), CanDelete(r.AuthorPersonId));
+        CanEdit(r.AuthorPersonId), CanHide(r.Status, r.AuthorPersonId, r.AuthorType), CanUnhide(r.Status, r.HiddenByPersonId), CanDelete(r.AuthorPersonId));
 
     private static string Excerpt(string content) =>
         content.Length <= ExcerptLength ? content : content[..ExcerptLength].TrimEnd() + "…";
 
     private sealed record Row(
         int PostId, string Title, string Content, string Visibility, string Status, int AuthorPersonId, string AuthorName,
-        DateTime CreatedAt, DateTime? UpdatedAt, int? HiddenByPersonId, int? CoverImageId, int ImageCount);
+        DateTime CreatedAt, DateTime? UpdatedAt, int? HiddenByPersonId, string? AuthorType, int? CoverImageId, int ImageCount);
 }

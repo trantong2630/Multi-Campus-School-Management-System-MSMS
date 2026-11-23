@@ -5,6 +5,7 @@ import { DataTable } from '@/shared/components/DataTable';
 import { FilterBar } from '@/shared/components/FilterBar';
 import { InlineAlert } from '@/shared/components/InlineAlert';
 import { PageHeader } from '@/shared/components/PageHeader';
+import { schApi } from '@/features/sch/api';
 import { scdApi } from '../api';
 import { subjectColorStyle } from '../subjectColor';
 import type { ResponsibilityItem, ResponsibilityTeacher } from '../types';
@@ -19,11 +20,7 @@ export function ResponsibilityPage() {
   const [subjectId, setSubjectId] = useState<number | undefined>();
   const [search, setSearch] = useState('');
 
-  const subjects = useQuery({
-    queryKey: ['scd', 'draft-options', effectiveCampus],
-    queryFn: () => scdApi.draftOptions(effectiveCampus!),
-    enabled: effectiveCampus !== undefined,
-  });
+  const subjects = useQuery({ queryKey: ['sch', 'subjects', 'all'], queryFn: () => schApi.subjects.list() });
   const list = useQuery({
     queryKey: ['scd', 'responsibilities', effectiveCampus, subjectId],
     queryFn: () => scdApi.responsibilities(effectiveCampus, subjectId),
@@ -52,7 +49,7 @@ export function ResponsibilityPage() {
         <Select
           allowClear showSearch optionFilterProp="label" placeholder="Môn" value={subjectId} onChange={setSubjectId}
           style={{ minWidth: 180 }}
-          options={subjects.data?.subjects.map((s) => ({ value: s.subjectId, label: s.name }))}
+          options={subjects.data?.map((s) => ({ value: s.subjectId, label: s.name }))}
         />
       </FilterBar>
       <DataTable<ResponsibilityTeacher>

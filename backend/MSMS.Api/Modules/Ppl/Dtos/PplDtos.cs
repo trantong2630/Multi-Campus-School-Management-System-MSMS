@@ -1,4 +1,5 @@
 ﻿using MSMS.Api.Common.Excel;
+using MSMS.Api.Modules.Att.Dtos;
 
 namespace MSMS.Api.Modules.Ppl.Dtos;
 
@@ -8,6 +9,18 @@ public record StaffDto(
     int PrimaryCampusId, string PrimaryCampusName, int? DepartmentId, string? DepartmentName,
     string? TeacherAbbr, string? Position, bool IsActive,
     int? AccountId, string? AccountType, string? AccountStatus);
+
+// PPL-01 Hồ sơ cán bộ (4.3.2), chỉ xem.
+public record StaffDetailDto(
+    StaffDto Profile, string? Address, DateOnly? HireDate,
+    IReadOnlyList<StaffResponsibilityDto> Responsibilities,
+    IReadOnlyList<StaffTeachingDto> Teaching);
+
+/// <summary>Một trách nhiệm của cán bộ. Kind: campus, department, homeroom. EndDate để trống là chưa có ngày kết thúc.</summary>
+public record StaffResponsibilityDto(string Kind, string TargetName, string? TargetGroup, DateOnly StartDate, DateOnly? EndDate, bool IsCurrent);
+
+/// <summary>Một cặp lớp – môn cán bộ đang dạy theo thời khóa biểu đã phát hành của học kỳ hiện hành, kèm số tiết mỗi tuần.</summary>
+public record StaffTeachingDto(int ClassId, string ClassName, string CampusName, int SubjectId, string SubjectName, int PeriodsPerWeek);
 
 public record StaffRequest(
     string FullName, DateOnly? DateOfBirth, string? NationalId, string? Gender, string? PhoneNumber, string? Email,
@@ -57,6 +70,22 @@ public record GuardianChildDto(
 
 /// <summary>Đổi phụ huynh đại diện: chọn phụ huynh có sẵn (ExistingParentId) hoặc khai mới (NewGuardian).</summary>
 public record ChangeGuardianRequest(int? ExistingParentId, GuardianRequest? NewGuardian, string? Relationship);
+// PPL-02 Hồ sơ học sinh (4.3.12): một học sinh, chỉ xem. Lớp hiện tại là ghi danh hiệu lực hôm nay (BR-09).
+public record StudentDetailDto(
+    int StudentId, string PersonCode, string FullName, DateOnly? DateOfBirth, string? NationalId, string? Gender, string? PhoneNumber, string? Address,
+    string Status, string? Note, DateOnly? AdmissionDate, DateOnly? LeftDate,
+    int? ClassId, string? ClassName, string? CampusName,
+    StudentGuardianDto? Guardian,
+    IReadOnlyList<StudentEnrollmentDto> Enrollments,
+    StudentAttendanceOverviewDto? Attendance);
+
+public record StudentGuardianDto(int ParentId, string PersonCode, string FullName, string? Relationship, string? PhoneNumber, string? Email);
+
+/// <summary>Một ghi danh trong lịch sử lớp. EndDate là ngày kết thúc thực tế (để trống nghĩa là hết năm học).</summary>
+public record StudentEnrollmentDto(
+    int EnrollmentId, string AcademicYearName, int ClassId, string ClassName, string CampusName,
+    DateOnly StartDate, DateOnly EndDate, string? Reason, bool IsCurrent);
+
 
 /// <summary>Chuyển trường (SchoolTransfer) hoặc tốt nghiệp (Graduated) cho một hoặc nhiều học sinh (4.3.19–4.3.20).</summary>
 public record StudentLeaveRequest(List<int> StudentIds, string Reason);

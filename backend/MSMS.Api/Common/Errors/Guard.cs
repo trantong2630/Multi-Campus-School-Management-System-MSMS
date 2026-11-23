@@ -18,6 +18,15 @@ public static partial class Guard
         return v;
     }
 
+    /// <summary>Như <see cref="Required"/> nhưng giữ xuống dòng: dùng cho văn bản dài, không dùng cho tên hay mã ngắn.</summary>
+    public static string RequiredMultiline(string? value, string label, int maxLength)
+    {
+        var v = TextNormalizer.NormalizeMultiline(value);
+        if (v.Length == 0) throw ApiException.BadRequest($"{label} không được để trống. Nhập {label.ToLowerInvariant()} rồi lưu lại.");
+        if (v.Length > maxLength) throw ApiException.BadRequest($"{label} tối đa {maxLength} ký tự. Rút gọn rồi lưu lại.");
+        return v;
+    }
+
     public static string? Optional(string? value, string label, int maxLength)
     {
         var v = TextNormalizer.Normalize(value);

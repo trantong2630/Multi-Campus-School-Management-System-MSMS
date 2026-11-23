@@ -27,7 +27,7 @@ const STATUS_LABEL: Record<AdjustSession['status'], string> = { Scheduled: 'Đã
  * SCD-02: lưới tuần của một lớp để điều chỉnh lịch dạy (BR-15). Nhấp vào tiết để đổi giáo viên hoặc hủy, nhấp vào ô trống để thêm tiết bù.
  * Tiết bị khóa (đã qua hoặc đã điểm danh, mục 6.2) hiện rõ và không thao tác được.
  */
-export function AdjustView({ campusId, lead }: { campusId: number; lead: React.ReactNode }) {
+export function AdjustView({ campusId, lead, tail }: { campusId: number; lead: React.ReactNode; tail?: React.ReactNode }) {
   const qc = useQueryClient();
   const [classId, setClassId] = useState<number | undefined>();
   const [monday, setMonday] = useState<Dayjs>(() => dayjs().startOf('week'));
@@ -105,6 +105,7 @@ export function AdjustView({ campusId, lead }: { campusId: number; lead: React.R
           placeholder="Chọn lớp" loading={classes.isLoading} options={classes.data}
         />
         <WeekNav monday={monday} onChange={setMonday} />
+        {tail}
       </FilterBar>
 
 

@@ -64,6 +64,15 @@ public record StudentAttendanceDto(
     AttendanceCountsDto Counts,
     IReadOnlyList<StudentAttendanceItemDto> Items);
 
+/// <summary>Chuyên cần năm học hiện hành trên màn Hồ sơ học sinh: tỷ lệ có mặt (null khi chưa có lượt nào), số lượt theo nhãn, vài lần muộn hoặc vắng gần nhất.</summary>
+public record StudentAttendanceOverviewDto(
+    string AcademicYearName,
+    DateOnly From,
+    DateOnly To,
+    double? Rate,
+    AttendanceCountsDto Counts,
+    IReadOnlyList<StudentAttendanceItemDto> Recent);
+
 public record StudentAttendanceItemDto(
     long SessionId,
     DateOnly Date,

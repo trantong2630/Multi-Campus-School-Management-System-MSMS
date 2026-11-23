@@ -447,3 +447,8 @@
 .rs-choice__opt--danger.rs-choice__opt--on { border-color: var(--c-danger); background: var(--c-dangerBg, var(--c-sunken)); }
 .rs-choice__title { font-size: 15px; font-weight: 700; color: var(--c-ink); }
 .rs-choice__hint { font-size: 13px; color: var(--c-text2); line-height: 18px; }
+
+/* Nút bật chế độ Điều chỉnh nằm ở cuối hàng điều khiển, tách khỏi nhóm tab xem. */
+.tt-adjust-toggle {
+  margin-left: auto;
+}

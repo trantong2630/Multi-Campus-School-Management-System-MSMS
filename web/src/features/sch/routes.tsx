@@ -1,4 +1,5 @@
 import type { RouteObject } from 'react-router-dom';
+import { StudentProfilePage } from '@/features/ppl/pages/StudentProfilePage';
 import { CampusPage } from './pages/CampusPage';
 import { ClassesPage } from './pages/ClassesPage';
 import { HolidaysPage } from './pages/HolidaysPage';
@@ -19,4 +20,6 @@ export const schRoutes: RouteObject[] = [
   { path: 'sch/classes', element: <ClassesPage /> },
   { path: 'sch/rollover', element: <RolloverPage /> },
   { path: 'sch/homeroom-students', element: <HomeroomStudentsPage /> },
+  // Chủ nhiệm mở hồ sơ học sinh lớp mình: cùng trang với danh bạ, quyền theo mục Danh sách học sinh.
+  { path: 'sch/homeroom-students/:id', element: <StudentProfilePage /> },
 ];

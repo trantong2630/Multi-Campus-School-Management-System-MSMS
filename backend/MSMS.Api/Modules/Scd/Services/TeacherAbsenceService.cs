@@ -108,7 +108,7 @@ public sealed class TeacherAbsenceService(
     // ---------------------------------------------------------------- Danh sách và xóa khai báo
     public async Task<List<AbsenceDto>> ListAsync(int campusId)
     {
-        await scope.EnsureCanManageCampusAsync(campusId);
+        await scope.EnsureCanReadCampusAsync(campusId);
         var rows = await db.TeacherAbsence.AsNoTracking()
             .Where(a => a.DeclaredByPersonId == user.PersonId || a.TeachingSession.Any(s => s.Class.CampusId == campusId))
             .OrderByDescending(a => a.FromDate).ThenByDescending(a => a.AbsenceId).Take(200)
@@ -210,7 +210,7 @@ public sealed class TeacherAbsenceService(
     /// <summary>Tiết Chờ xử lý của phân hiệu từ hôm nay trở đi; tiết đã qua bị khóa nên không còn nằm trong danh sách.</summary>
     public async Task<List<PendingSessionDto>> ListPendingAsync(int campusId, DateOnly? from, DateOnly? to, int? classId)
     {
-        await scope.EnsureCanManageCampusAsync(campusId);
+        await scope.EnsureCanReadCampusAsync(campusId);
         var query = db.TeachingSession.AsNoTracking().Where(support.NotEnded()).Where(s => s.Class.CampusId == campusId && s.Status == "Pending");
         if (from is { } f) query = query.Where(s => s.SessionDate >= f);
         if (to is { } t) query = query.Where(s => s.SessionDate <= t);

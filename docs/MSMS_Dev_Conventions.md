@@ -400,7 +400,8 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Cơ cấu nhà trường › Ngày nghỉ · Khung giờ tiết · Kết chuyển năm học | SA |
 | Hồ sơ › Cán bộ · Học sinh · Phụ huynh | SA, HT, HP |
 | Hồ sơ › Trách nhiệm | SA, HT |
-| Thời khóa biểu › Thời khóa biểu · Phụ trách chuyên môn · Giáo viên vắng | HP |
+| Thời khóa biểu › Thời khóa biểu · Phụ trách chuyên môn | HT (chỉ xem), HP |
+| Thời khóa biểu › Giáo viên vắng | HT (chỉ xem), HP |
 | Thời khóa biểu › Lịch dạy | HT, HP, GV |
 | Điểm danh | SA, HT, HP, GV, HS, PH |
 | Bài tập rèn luyện › Kho câu hỏi · Giao bài tập · Bài tập đã giao | GV |

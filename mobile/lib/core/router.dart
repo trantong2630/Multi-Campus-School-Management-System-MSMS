@@ -18,6 +18,7 @@ import '../features/par/inbox_pages.dart';
 import '../features/par/leave_pages.dart';
 import '../features/par/par_api.dart';
 import '../features/par/report_pages.dart';
+import '../features/ppl/student_profile_page.dart';
 import '../features/scd/schedule_page.dart';
 import 'auth/auth_controller.dart';
 import 'realtime.dart';
@@ -107,6 +108,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/attendance-me', builder: (_, _) => const StudentAttendancePage()),
       GoRoute(path: '/homeroom-attendance', builder: (_, _) => const HomeroomAttendancePage()),
       GoRoute(path: '/homeroom-students', builder: (_, _) => const HomeroomStudentsPage()),
+      GoRoute(
+        path: '/students/:id',
+        builder: (_, s) => StudentProfilePage(studentId: int.parse(s.pathParameters['id']!)),
+      ),
       GoRoute(
         path: '/report',
         builder: (_, s) => WeeklyReportPage(studentId: int.tryParse(s.uri.queryParameters['studentId'] ?? '')),

@@ -6,6 +6,7 @@ import type { Dayjs } from 'dayjs';
 import { useState } from 'react';
 import { useAuth } from '@/app/AuthProvider';
 import { DataTable } from '@/shared/components/DataTable';
+import { PersonCell } from '@/shared/components/PersonCell';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { formatDate, toDateString } from '@/shared/lib/format';
 import { schApi } from '../api';
@@ -39,6 +40,10 @@ function ClassStudents({ cls, year }: { cls: SchoolClass; year: AcademicYear }) 
     { title: 'STT', key: 'no', width: 64, align: 'center', className: 'tabular', render: (_: unknown, __: RosterItem, i: number) => i + 1 },
     ...rosterColumns
       .filter((c) => anyEnded || !('dataIndex' in c && c.dataIndex === 'endDate'))
+      .map((c) => ('dataIndex' in c && c.dataIndex === 'fullName'
+        // Bấm tên mở Hồ sơ học sinh (chỉ xem).
+        ? { ...c, render: (v: string, r: RosterItem) => <PersonCell name={v} sub={r.personCode} to={`/sch/homeroom-students/${r.studentId}`} /> }
+        : c))
       .map((c) => ('dataIndex' in c && c.dataIndex === 'dateOfBirth'
         ? {
           ...c, width: 180,
@@ -113,7 +118,7 @@ function ClassStudents({ cls, year }: { cls: SchoolClass; year: AcademicYear }) 
 }
 
 /**
- * SCH-05 Danh sách học sinh (UC-SCH-09): giáo viên chủ nhiệm xem học sinh của lớp mình chủ nhiệm.
+ * SCH-05 Danh sách học sinh (UC-SCH-09): giáo viên chủ nhiệm xem học sinh của lớp mình chủ nhiệm, bấm tên mở Hồ sơ học sinh.
  * Chỉ xem; School Admin, Hiệu trưởng, Hiệu phó xem ở màn Lớp & Ghi danh.
  */
 export function HomeroomStudentsPage() {
