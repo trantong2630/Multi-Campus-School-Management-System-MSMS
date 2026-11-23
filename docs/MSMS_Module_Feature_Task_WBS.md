@@ -969,7 +969,7 @@ Danh sách thông báo của chính mình, mới nhất trước, phân biệt �
 
 **4.8.3 — Mở thông báo và kiểm quyền khi mở / Open Notification with Re-check**  
 `BE + Web + Mobile` · 1 MD · dep: 4.8.2  
-Có thông báo KHÔNG đồng nghĩa có quyền — Backend kiểm lại quyền khi người dùng bấm vào, rồi mới đưa tới bản ghi nguồn (BR-26).
+Có thông báo KHÔNG đồng nghĩa có quyền — Backend kiểm lại quyền khi người dùng bấm vào, rồi mới đưa tới bản ghi nguồn (BR-26). Riêng thông báo đổi lịch chỉ đưa tới màn lịch của chính người nhận, nên giáo viên nhận thông báo (kể cả giáo viên cũ của tiết vừa đổi người dạy) luôn mở được; thông báo trả tiết sau khi xóa khai báo vắng trỏ vào tiết học, không trỏ vào khai báo đã xóa.
 
 **4.8.4 — Đánh dấu đã đọc / Mark Notification Read**  
 `BE + Web + Mobile` · 0.5 MD · dep: 4.8.2  

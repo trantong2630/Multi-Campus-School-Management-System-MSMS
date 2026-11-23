@@ -138,12 +138,17 @@ public sealed class NotificationService(MsmsDbContext db, CurrentUser user, IClo
                 var s = await db.TeachingSession.AsNoTracking().Where(x => x.SessionId == sid)
                     .Select(x => new { x.ClassId, x.TeacherId, x.Class.CampusId }).FirstOrDefaultAsync();
                 if (s is null) return (false, null, Gone);
-                var ok = s.TeacherId == me
+                // Giáo viên nhận thông báo đổi lịch là người dạy cũ hoặc mới của tiết; người cũ không còn trên tiết nhưng vẫn được mở lịch dạy của mình.
+                var ok = s.TeacherId == me || isTeacher
                          || (isVice && await db.CampusLeadership.AnyAsync(l => l.CampusId == s.CampusId && l.StaffId == me
                                                                                 && l.StartDate <= today && (l.EndDate == null || l.EndDate > today)))
                          || ((isStudent || isParent) && InClass(myEnrollments(), s.ClassId));
                 return ok ? (true, scheduleRoute, null) : (false, null, Denied);
             }
+
+            // Thông báo trả tiết cũ trỏ vào khai báo vắng (đã bị xóa cùng lúc): người nhận là giáo viên hoặc học sinh của lớp, mở lịch của mình.
+            case NotificationTypes.ScheduleChanged when n.RefEntityType == "TeacherAbsence":
+                return isTeacher || isStudent || isParent ? (true, scheduleRoute, null) : (false, null, Gone);
 
             case NotificationTypes.SessionPending:
                 // Chỉ người phụ trách phân hiệu còn hiệu lực xử lý tiết Chờ xử lý.
