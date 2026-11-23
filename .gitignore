@@ -28,3 +28,6 @@ backend/MSMS.Tests/ParTests/
 
 # SGK source PDFs for RAG experiments (copyrighted, not committed)
 sgk-source/
+
+windows/
+web/
