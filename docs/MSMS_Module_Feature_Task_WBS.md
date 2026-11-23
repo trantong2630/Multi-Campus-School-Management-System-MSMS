@@ -394,13 +394,13 @@ Một ô sai là không ghi gì; thiếu hoặc sai định dạng số định 
 ### PPL-02 Student Directory (Danh bạ học sinh)
 
 **4.3.12 — Xem danh bạ học sinh / View Student Directory**  
-`BE + Web` · 1.5 MD · dep: 4.1.4  
+`BE + Web + Mobile` · 1.5 MD · dep: 4.1.4  
 Xem hồ sơ học sinh cùng lớp đang học, phân hiệu, phụ huynh đại diện và trạng thái Đang học / Đã chuyển trường / Đã tốt nghiệp. Principal xem toàn trường, Vice Principal chỉ học sinh của phân hiệu mình phụ trách.
+
+Bấm tên một học sinh mở trang **Hồ sơ học sinh** (chỉ xem): thông tin cá nhân (ngày sinh, giới tính, số định danh, điện thoại, địa chỉ, ngày nhập học, ngày rời trường), ghi chú đặt nổi bật, lớp và phân hiệu hiện tại, phụ huynh đại diện kèm quan hệ và số điện thoại, chuyên cần năm học hiện hành (tỷ lệ có mặt = Có mặt + Muộn trên số lượt đã điểm danh, số lượt theo bốn nhãn của BR-18, năm lần muộn hoặc vắng gần nhất; chưa có lượt nào thì báo chưa có dữ liệu) và lịch sử lớp qua các năm kèm lý do kết thúc ghi danh. Không có kết quả bài tập. School Admin, Principal và Vice Principal mở từ danh bạ; giáo viên chủ nhiệm mở từ Danh sách học sinh (4.2.29) và chỉ mở được học sinh từng ghi danh ở lớp đang chủ nhiệm. Chuyên cần chỉ tính trong phạm vi người xem: Vice Principal theo phân hiệu phụ trách, chủ nhiệm theo lớp chủ nhiệm. Học sinh ngoài phạm vi báo không tìm thấy. Sửa hồ sơ và đổi phụ huynh vẫn làm ở danh bạ. Danh bạ chỉ có trên web; mobile chỉ có trang Hồ sơ học sinh cho chủ nhiệm, kèm nút mở Sổ liên lạc của em (4.7.13).
 
 **4.3.13 — Tìm kiếm và lọc học sinh / Search and Filter Students**  
 `BE + Web` · 1 MD · dep: 4.3.12  
-Bấm tên một học sinh mở trang **Hồ sơ học sinh** (chỉ xem): thông tin cá nhân (ngày sinh, giới tính, số định danh, điện thoại, địa chỉ, ngày nhập học, ngày rời trường), ghi chú đặt nổi bật, lớp và phân hiệu hiện tại, phụ huynh đại diện kèm quan hệ và số điện thoại, chuyên cần năm học hiện hành (tỷ lệ có mặt = Có mặt + Muộn trên số lượt đã điểm danh, số lượt theo bốn nhãn của BR-18, năm lần muộn hoặc vắng gần nhất; chưa có lượt nào thì báo chưa có dữ liệu) và lịch sử lớp qua các năm kèm lý do kết thúc ghi danh. Không có kết quả bài tập. School Admin, Principal và Vice Principal mở từ danh bạ; giáo viên chủ nhiệm mở từ Danh sách học sinh (4.2.29) và chỉ mở được học sinh từng ghi danh ở lớp đang chủ nhiệm. Chuyên cần chỉ tính trong phạm vi người xem: Vice Principal theo phân hiệu phụ trách, chủ nhiệm theo lớp chủ nhiệm. Học sinh ngoài phạm vi báo không tìm thấy. Sửa hồ sơ và đổi phụ huynh vẫn làm ở danh bạ.
-
 Lọc theo năm học, phân hiệu, lớp và trạng thái; tìm theo tên hoặc mã hồ sơ.
 
 **4.3.14 — Tạo hồ sơ học sinh / Create Student Profile**  
