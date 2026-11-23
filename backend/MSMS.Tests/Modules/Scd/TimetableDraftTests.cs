@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using MSMS.Api.Common.Audit;
 using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
@@ -39,7 +40,8 @@ public class TimetableDraftTests
 
     private static Fixture Create()
     {
-        var db = new MsmsDbContext(new DbContextOptionsBuilder<MsmsDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
+        var db = new MsmsDbContext(new DbContextOptionsBuilder<MsmsDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning)).Options);
         var clock = new FakeClock(new DateOnly(2026, 10, 25));
         var claims = new[]
         {
@@ -193,5 +195,42 @@ public class TimetableDraftTests
         var grid = await f.Draft.RemoveAsync(DraftId, Class1, 2, Slot1);
         Assert.Null(Cell(grid, Class1, Slot1));
         Assert.NotNull(Cell(grid, Class1, Slot2));
+    }
+
+    [Fact(DisplayName = "SCD | Xóa bản Nháp | Hiệu phó phụ trách phân hiệu | xóa phiên bản cùng các ô và lớp của nó, bản đã phát hành giữ nguyên")]
+    public async Task Delete_Draft_RemovesVersionEntriesAndClasses()
+    {
+        var f = Create();
+
+        await f.Draft.DeleteAsync(DraftId);
+
+        Assert.Null(await f.Db.TimetableVersion.FindAsync(DraftId));
+        Assert.False(await f.Db.TimetableEntry.AnyAsync(e => e.VersionId == DraftId));
+        Assert.False(await f.Db.TimetableVersionClass.AnyAsync(c => c.VersionId == DraftId));
+        Assert.NotNull(await f.Db.TimetableVersion.FindAsync(PublishedId));
+    }
+
+    [Fact(DisplayName = "SCD | Xóa bản Nháp | Phiên bản đã phát hành | bị từ chối, phiên bản còn nguyên")]
+    public async Task Delete_Published_IsRejected()
+    {
+        var f = Create();
+
+        var ex = await Assert.ThrowsAsync<ApiException>(() => f.Draft.DeleteAsync(PublishedId));
+
+        Assert.Equal(400, ex.StatusCode);
+        Assert.NotNull(await f.Db.TimetableVersion.FindAsync(PublishedId));
+    }
+
+    [Fact(DisplayName = "SCD | Xóa bản Nháp | Hiệu phó không phụ trách phân hiệu | bị từ chối, bản Nháp còn nguyên")]
+    public async Task Delete_ByViceNotLeadingCampus_IsForbidden()
+    {
+        var f = Create();
+        f.Db.CampusLeadership.RemoveRange(f.Db.CampusLeadership);
+        f.Db.SaveChanges();
+
+        var ex = await Assert.ThrowsAsync<ApiException>(() => f.Draft.DeleteAsync(DraftId));
+
+        Assert.Equal(403, ex.StatusCode);
+        Assert.NotNull(await f.Db.TimetableVersion.FindAsync(DraftId));
     }
 }

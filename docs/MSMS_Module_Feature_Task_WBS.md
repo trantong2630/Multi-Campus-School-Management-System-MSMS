@@ -531,7 +531,7 @@ Mọi lỗi kèm địa chỉ ô và giá trị gốc: ba ô meta (phân hiệu,
 
 **4.4.5 — Lưu file hợp lệ thành phiên bản nháp / Save Draft Timetable Version**  
 `BE` · 1 MD · dep: 4.4.4  
-File hợp lệ được lưu thành một phiên bản Nháp của (phân hiệu, học kỳ), chỉ chứa các lớp có trong file. Mỗi phiên bản là hồ sơ của một lần import (BR-12, BR-14).
+File hợp lệ được lưu thành một phiên bản Nháp của (phân hiệu, học kỳ), chỉ chứa các lớp có trong file. Phiên bản Đã phát hành là hồ sơ của một lần import và được giữ lại; bản Nháp chưa phát hành thì xóa được (4.4.7) (BR-12, BR-14).
 
 **4.4.6 — Xem và kéo thả sửa lưới bản nháp / View and Drag-edit Draft Timetable**  
 `BE + Web` · 4 MD · dep: 4.4.5, 4.4.8  
@@ -539,7 +539,7 @@ Xem bản Nháp dạng lưới và sửa ngay trên lưới. Kéo một tiết s
 
 **4.4.7 — Xem danh sách phiên bản thời khóa biểu / View Timetable Versions**  
 `BE + Web` · 1 MD · dep: 4.4.5  
-Xem các phiên bản Nháp và Đã phát hành của một phân hiệu và học kỳ (kèm file nguồn, người import, thời điểm phát hành, số tiết xóa và tạo), đọc lại được như lịch sử và xem lưới của phiên bản đã phát hành; Principal xem mọi phân hiệu, Vice Principal phân hiệu mình. Phát hành phiên bản mới không đổi trạng thái phiên bản trước (BR-14).
+Xem các phiên bản Nháp và Đã phát hành của một phân hiệu và học kỳ (kèm file nguồn, người import, thời điểm phát hành, số tiết xóa và tạo), đọc lại được như lịch sử và xem lưới của phiên bản đã phát hành; Principal xem mọi phân hiệu, Vice Principal phân hiệu mình. Phát hành phiên bản mới không đổi trạng thái phiên bản trước (BR-14). Vice Principal phụ trách phân hiệu xóa được bản Nháp không dùng nữa sau khi xác nhận: xóa phiên bản cùng các ô và danh sách lớp của nó, không đụng lịch dạy; phiên bản Đã phát hành không có nút xóa và Backend từ chối xóa. Kiểm thử: xóa bản Nháp, từ chối xóa bản đã phát hành, từ chối Vice Principal không phụ trách phân hiệu.
 
 **4.4.8 — Kiểm xung đột lịch toàn trường / Check School-wide Schedule Conflicts**  
 `BE` · 2 MD · dep: 4.4.5  
