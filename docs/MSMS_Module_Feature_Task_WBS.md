@@ -93,7 +93,7 @@ Cấp sai loại thì đổi loại tài khoản bằng MỘT thao tác: ghi Aud
 
 **4.1.18 — Kiểm thử vòng đời tài khoản / Account Lifecycle Tests**  
 `QA` · 1.5 MD · dep: 4.1.12, 4.1.15, 4.1.17  
-Tạo đơn lẻ và hàng loạt; một hồ sơ không tạo được tài khoản thứ hai; khóa tài khoản giáo viên còn tiết sắp tới không bị chặn, tiết chuyển Chờ xử lý, Vice Principal nhận thông báo và trách nhiệm kết thúc vào ngày khóa; đổi loại tài khoản cũng đóng trách nhiệm mà không làm mất lịch sử; mật khẩu tạm không xem lại được.
+Tạo đơn lẻ và hàng loạt; một hồ sơ không tạo được tài khoản thứ hai; khóa tài khoản giáo viên còn tiết sắp tới không bị chặn, tiết chuyển Chờ xử lý, Vice Principal nhận thông báo, trách nhiệm đang hiệu lực kết thúc vào ngày khóa và lịch hẹn chưa bắt đầu bị hủy; đổi loại tài khoản cũng đóng trách nhiệm mà không làm mất lịch sử; mật khẩu tạm không xem lại được.
 
 ### IAM-03 Password (Mật khẩu)
 

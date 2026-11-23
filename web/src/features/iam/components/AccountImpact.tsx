@@ -16,6 +16,9 @@ export function AccountImpact({ impact }: { impact: LockImpact }) {
       {impact.duties.length > 0 && (
         <p>Trách nhiệm sẽ kết thúc vào hôm nay: {impact.duties.map((d) => `${dutyLabel[d.kind] ?? d.kind} ${d.targetName}`).join('; ')}. Cần gán mới để khôi phục trách nhiệm.</p>
       )}
+      {impact.upcomingDuties.length > 0 && (
+        <p>Lịch hẹn chưa bắt đầu sẽ bị hủy: {impact.upcomingDuties.join('; ')}.</p>
+      )}
     </>
   );
 }

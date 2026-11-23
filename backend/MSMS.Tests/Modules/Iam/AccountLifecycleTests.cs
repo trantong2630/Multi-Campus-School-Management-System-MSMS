@@ -129,7 +129,7 @@ public class AccountLifecycleTests
     }
 
     [Fact]
-    public async Task LockTeacher_MovesOnlyUnlockedScheduledLessonsAcrossCampuses_NotifiesCurrentVicePrincipals_ClosesCurrentDuties()
+    public async Task LockTeacher_MovesOnlyUnlockedScheduledLessonsAcrossCampuses_NotifiesCurrentVicePrincipals_ClosesCurrentDuties_CancelsUpcoming()
     {
         using var f = new AccountTestFixture();
         var teacher = f.AddAccount(1);
@@ -159,6 +159,7 @@ public class AccountLifecycleTests
         Assert.Equal(2, preview.SessionCount);
         Assert.Equal(2, preview.Campuses.Count);
         Assert.Equal(3, preview.Duties.Count);
+        Assert.Single(preview.UpcomingDuties);   // lịch hẹn chủ nhiệm 6B sẽ bị hủy
         Assert.Equal(AccountStatuses.Active, teacher.Status);
 
         await f.Accounts.LockAsync(1);
@@ -180,7 +181,7 @@ public class AccountLifecycleTests
         Assert.Single(f.Db.AttendanceRecord);
         Assert.Equal(f.Clock.Today, f.Db.DepartmentHead.Single().EndDate);
         Assert.Equal(f.Clock.Today, f.Db.HomeroomAssignment.Single(d => d.ClassId == 1).EndDate);
-        Assert.Null(futureDuty.EndDate);
+        Assert.DoesNotContain(f.Db.HomeroomAssignment, d => d.ClassId == 2);   // lịch hẹn chưa bắt đầu bị hủy
         Assert.Equal(new[] { 2, 3 }, await f.Db.Notification.OrderBy(n => n.RecipientPersonId).Select(n => n.RecipientPersonId).ToArrayAsync());
         Assert.All(f.Db.Notification, n => Assert.Equal(NotificationTypes.SessionPending, n.NotificationType));
         Assert.False(await f.Sessions.IsActiveAsync(session1.SessionId, 1));
@@ -191,7 +192,7 @@ public class AccountLifecycleTests
         Assert.True(await f.Sessions.IsActiveAsync(unrelated.SessionId, 2));
         using var detail = JsonDocument.Parse(f.Db.AuditLog.Single().Detail!);
         Assert.Equal(2, detail.RootElement.GetProperty("pendingSessions").GetInt32());
-        Assert.Equal(3, detail.RootElement.GetProperty("closedDuties").GetInt32());
+        Assert.Equal(4, detail.RootElement.GetProperty("closedDuties").GetInt32());
 
         await f.Accounts.UnlockAsync(1);
         Assert.Equal(AccountStatuses.PendingPasswordChange, teacher.Status);
