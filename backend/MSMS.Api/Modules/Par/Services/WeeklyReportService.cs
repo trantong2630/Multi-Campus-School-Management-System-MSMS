@@ -140,7 +140,7 @@ public sealed class WeeklyReportService(MsmsDbContext db, IClock clock, CurrentU
             .ClassId;
     }
 
-    /// <summary>BR-24, BR-18: 5 chỉ số chuyên cần từ các tiết "Đã xếp lịch đã diễn ra" trong tuần.</summary>
+    /// <summary>BR-24, BR-18: 5 chỉ số chuyên cần từ các tiết "Đã xếp lịch đã diễn ra" trong tuần; tiết Chờ xử lý, Đã hủy không vào sổ (như màn Điểm danh).</summary>
     private async Task<AttendanceSummaryDto> ComputeAttendanceAsync(int studentId, DateOnly weekStart, DateOnly weekEnd)
     {
         var today = clock.Today;
@@ -165,7 +165,7 @@ public sealed class WeeklyReportService(MsmsDbContext db, IClock clock, CurrentU
         var sessions = await db.TeachingSession
             .AsNoTracking()
             .Where(ts => classIds.Contains(ts.ClassId) && ts.SessionDate >= weekStart && ts.SessionDate <= weekEnd)
-            .Where(ts => ts.Status != "Cancelled" && ts.Status != "PendingResolution")
+            .Where(ts => ts.Status == AttendanceRules.SessionScheduled)
             .Select(ts => new
             {
                 ts.SessionId,
