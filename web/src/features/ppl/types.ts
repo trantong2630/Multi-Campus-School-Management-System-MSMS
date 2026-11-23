@@ -189,6 +189,8 @@ export interface ResponsibilityRow {
   startedAt?: string | null;
   targetCode: string | null;
   nextStaffId: number | null;
+  /** Bản ghi của lịch hẹn chưa bắt đầu, dùng để hủy lịch hẹn. */
+  nextRecordId: number | null;
 }
 
 export interface ResponsibilityHistoryRow {

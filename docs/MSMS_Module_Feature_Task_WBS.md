@@ -493,7 +493,7 @@ Một thao tác, một transaction, có hiệu lực NGAY HÔM NAY: bản của 
 
 **4.3.32 — Kết thúc trách nhiệm / End Responsibility**  
 `BE + Web` · 0.5 MD · dep: 4.3.28  
-Đặt ngày kết thúc cho một trách nhiệm (mặc định là hôm nay, không trước ngày bắt đầu); với ngày kết thúc là hôm nay quyền tương ứng mất ngay tại thời điểm thao tác, không đợi hết ngày; loại tài khoản không đổi. Gán lại trong cùng ngày tạo bản mới bắt đầu từ hôm nay (BR-09).
+Đặt ngày kết thúc cho một trách nhiệm (mặc định là hôm nay, không trước ngày bắt đầu); với ngày kết thúc là hôm nay quyền tương ứng mất ngay tại thời điểm thao tác, không đợi hết ngày; loại tài khoản không đổi. Gán lại trong cùng ngày tạo bản mới bắt đầu từ hôm nay (BR-09). Trách nhiệm chưa tới ngày bắt đầu (Sắp hiệu lực) không kết thúc mà **Hủy lịch hẹn**: hỏi xác nhận rồi xóa hẳn bản đó, sau đó gán được người khác từ hôm nay; trách nhiệm đã bắt đầu thì không hủy được. Khóa tài khoản, đổi loại tài khoản và ngừng hoạt động hồ sơ cán bộ tự hủy lịch hẹn của người đó; hộp xác nhận khóa liệt kê các lịch hẹn sẽ bị hủy. Kiểm thử: hủy lịch hẹn rồi gán người khác hôm nay; từ chối hủy trách nhiệm đã bắt đầu; khóa và ngừng hoạt động đều hủy lịch hẹn.
 
 **4.3.33 — Xem lịch sử trách nhiệm theo đích / View Responsibility History**  
 `BE + Web` · 1 MD · dep: 4.3.28  
