@@ -137,7 +137,7 @@ Xem họ tên, mã hồ sơ, loại hồ sơ, ngày sinh, giới tính, số đi
 
 **4.1.28 — Cập nhật trường cá nhân được phép / Update Own Profile**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.1.27  
-Người dùng tự sửa số điện thoại, email (dùng để nhận OTP) và địa chỉ; bỏ trống là xóa giá trị. Họ tên, ngày sinh, giới tính do School Admin quản lý ở danh bạ. Phụ huynh không tự sửa số điện thoại vì đó là khóa nhận diện khi import (BR-10). Không có luồng xác nhận email riêng — email là một trường thông tin bình thường (BR-04).
+Người dùng tự sửa số điện thoại, email (dùng để nhận OTP) và địa chỉ; bỏ trống là xóa giá trị. Số điện thoại kiểm cùng quy tắc với danh bạ và import: số di động đúng 10 chữ số, đầu 03, 05, 07, 08 hoặc 09. Họ tên, ngày sinh, giới tính do School Admin quản lý ở danh bạ. Phụ huynh không tự sửa số điện thoại vì đó là khóa nhận diện khi import (BR-10). Không có luồng xác nhận email riêng — email là một trường thông tin bình thường (BR-04).
 
 **4.1.29 — Tải và đổi ảnh đại diện / Upload Avatar**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.1.27  
