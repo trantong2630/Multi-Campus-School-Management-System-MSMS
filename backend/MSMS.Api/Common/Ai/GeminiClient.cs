@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.Extensions.Options;
 
 namespace MSMS.Api.Common.Ai;
@@ -16,9 +17,6 @@ public sealed class GeminiClient(HttpClient http, IOptions<AiOptions> options, I
     public async Task<string> GenerateJsonAsync(string systemInstruction, string prompt, IReadOnlyList<AiImage> images, CancellationToken ct = default)
     {
         var o = options.Value;
-        if (string.IsNullOrWhiteSpace(o.ApiKey) || string.IsNullOrWhiteSpace(o.Model))
-            throw new AiException("Chưa cấu hình AI. Liên hệ quản trị để cấu hình khóa và model.");
-
         // Ảnh đứng trước lời nhắc để AI đọc trang rồi mới nhận yêu cầu.
         var parts = new List<object>();
         foreach (var image in images) parts.Add(new { inline_data = new { mime_type = image.MimeType, data = Convert.ToBase64String(image.Data) } });
@@ -29,7 +27,75 @@ public sealed class GeminiClient(HttpClient http, IOptions<AiOptions> options, I
             contents = new[] { new { role = "user", parts } },
             generationConfig = new { responseMimeType = "application/json", temperature = 0.4, maxOutputTokens = o.MaxOutputTokens },
         });
-        var url = $"{o.BaseUrl.TrimEnd('/')}/models/{o.Model}:generateContent";
+        var json = await SendAsync(o.Model, body, ct);
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            var text = TextOf(FirstContent(doc.RootElement));
+            if (text.Length == 0) throw new AiException("AI không trả về nội dung. Chạy lại sau.");
+            return text;
+        }
+        catch (Exception ex) when (ex is JsonException or KeyNotFoundException or InvalidOperationException or IndexOutOfRangeException)
+        {
+            throw new AiException("AI trả về dữ liệu không đọc được. Chạy lại sau.", ex);
+        }
+    }
+
+    public async Task<AiChatReply> ChatAsync(string systemInstruction, IReadOnlyList<AiChatMessage> messages, IReadOnlyList<AiTool> tools, bool allowTools,
+        CancellationToken ct = default)
+    {
+        var o = options.Value;
+        var body = JsonSerializer.Serialize(new
+        {
+            systemInstruction = new { parts = new[] { new { text = systemInstruction } } },
+            contents = messages.Select(ToContent).ToList(),
+            tools = tools.Count == 0 ? null : new[]
+            {
+                new { functionDeclarations = tools.Select(t => new { name = t.Name, description = t.Description, parameters = t.Parameters }).ToList() },
+            },
+            toolConfig = tools.Count == 0 ? null : new { functionCallingConfig = new { mode = allowTools ? "AUTO" : "NONE" } },
+            generationConfig = new { temperature = 0.2, maxOutputTokens = o.MaxOutputTokens },
+        }, new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull });
+        var json = await SendAsync(o.EffectiveChatModel, body, ct);
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            var content = FirstContent(doc.RootElement);
+            var calls = new List<AiToolCall>();
+            foreach (var part in content.GetProperty("parts").EnumerateArray())
+                if (part.TryGetProperty("functionCall", out var call))
+                    calls.Add(new AiToolCall(call.GetProperty("name").GetString() ?? "",
+                        call.TryGetProperty("args", out var args) ? args.Clone() : JsonDocument.Parse("{}").RootElement.Clone(),
+                        call.TryGetProperty("id", out var id) && id.ValueKind == JsonValueKind.String ? id.GetString() : null));
+            if (calls.Count > 0) return new AiChatReply(null, calls, content.GetRawText());
+            var text = TextOf(content);
+            if (text.Length == 0) throw new AiException("AI không trả về nội dung. Hỏi lại sau.");
+            return new AiChatReply(text, [], null);
+        }
+        catch (Exception ex) when (ex is JsonException or KeyNotFoundException or InvalidOperationException or IndexOutOfRangeException)
+        {
+            throw new AiException("AI trả về dữ liệu không đọc được. Hỏi lại sau.", ex);
+        }
+    }
+
+    private static object ToContent(AiChatMessage m) => m switch
+    {
+        AiUserText u => new { role = "user", parts = new object[] { new { text = u.Text } } },
+        AiModelText t => new { role = "model", parts = new object[] { new { text = t.Text } } },
+        // Gửi lại đúng nội dung model đã trả (kể cả chữ ký suy nghĩ), nếu không Gemini từ chối lượt gọi tool.
+        AiModelToolCalls c when c.ProviderState is not null => JsonNode.Parse(c.ProviderState)!,
+        AiModelToolCalls c => new { role = "model", parts = c.Calls.Select(x => (object)new { functionCall = new { name = x.Name, args = x.Args } }).ToArray() },
+        AiToolResults r => new { role = "user", parts = r.Results.Select(x => (object)new { functionResponse = new { id = x.Id, name = x.Name, response = x.Result } }).ToArray() },
+        _ => throw new ArgumentOutOfRangeException(nameof(m)),
+    };
+
+    /// <summary>Gửi một yêu cầu generateContent, thử lại một lần khi quá tải hoặc mất kết nối. Trả về thân phản hồi JSON.</summary>
+    private async Task<string> SendAsync(string model, string body, CancellationToken ct)
+    {
+        var o = options.Value;
+        if (string.IsNullOrWhiteSpace(o.ApiKey) || string.IsNullOrWhiteSpace(model))
+            throw new AiException("Chưa cấu hình AI. Liên hệ quản trị để cấu hình khóa và model.");
+        var url = $"{o.BaseUrl.TrimEnd('/')}/models/{model}:generateContent";
 
         for (var attempt = 1; ; attempt++)
         {
@@ -44,7 +110,7 @@ public sealed class GeminiClient(HttpClient http, IOptions<AiOptions> options, I
             {
                 using var response = await http.SendAsync(request, timeout.Token);
                 var text = await response.Content.ReadAsStringAsync(timeout.Token);
-                if (response.IsSuccessStatusCode) return ExtractText(text);
+                if (response.IsSuccessStatusCode) return text;
 
                 var retryable = response.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable;
                 logger.LogWarning("AI trả {Status} (lần {Attempt}): {Body}", (int)response.StatusCode, attempt, Truncate(text));
@@ -70,26 +136,26 @@ public sealed class GeminiClient(HttpClient http, IOptions<AiOptions> options, I
         }
     }
 
-    /// <summary>Gộp các đoạn văn bản của ứng viên đầu tiên, bỏ đoạn suy nghĩ nếu model trả kèm.</summary>
-    private static string ExtractText(string json)
+    private static JsonElement FirstContent(JsonElement root)
     {
-        try
+        if (!root.TryGetProperty("candidates", out var candidates) || candidates.GetArrayLength() == 0)
+            throw new AiException("AI không trả về nội dung. Chạy lại sau.");
+        var candidate = candidates[0];
+        if (!candidate.TryGetProperty("content", out var content) || !content.TryGetProperty("parts", out _))
+            throw new AiException("AI không trả về nội dung. Chạy lại sau.");
+        return content;
+    }
+
+    /// <summary>Gộp các đoạn văn bản, bỏ đoạn suy nghĩ nếu model trả kèm.</summary>
+    private static string TextOf(JsonElement content)
+    {
+        var sb = new StringBuilder();
+        foreach (var part in content.GetProperty("parts").EnumerateArray())
         {
-            using var doc = JsonDocument.Parse(json);
-            var candidate = doc.RootElement.GetProperty("candidates")[0];
-            var sb = new StringBuilder();
-            foreach (var part in candidate.GetProperty("content").GetProperty("parts").EnumerateArray())
-            {
-                if (part.TryGetProperty("thought", out var thought) && thought.ValueKind == JsonValueKind.True) continue;
-                if (part.TryGetProperty("text", out var t) && t.ValueKind == JsonValueKind.String) sb.Append(t.GetString());
-            }
-            if (sb.Length == 0) throw new AiException("AI không trả về nội dung. Chạy lại sau.");
-            return sb.ToString();
+            if (part.TryGetProperty("thought", out var thought) && thought.ValueKind == JsonValueKind.True) continue;
+            if (part.TryGetProperty("text", out var t) && t.ValueKind == JsonValueKind.String) sb.Append(t.GetString());
         }
-        catch (Exception ex) when (ex is JsonException or KeyNotFoundException or InvalidOperationException)
-        {
-            throw new AiException("AI trả về dữ liệu không đọc được. Chạy lại sau.", ex);
-        }
+        return sb.ToString();
     }
 
     private static string Truncate(string s) => s.Length <= 400 ? s : s[..400];

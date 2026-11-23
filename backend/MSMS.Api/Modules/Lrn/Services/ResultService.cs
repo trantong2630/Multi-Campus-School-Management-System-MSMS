@@ -11,7 +11,7 @@ namespace MSMS.Api.Modules.Lrn.Services;
 
 /// <summary>
 /// LRN-03 và LRN-04 (phía đọc): kết quả bài làm (BR-22). Không có bước công bố: học sinh thấy điểm, đáp án đúng, giải thích và
-/// phân tích AI ngay sau khi nộp. Phụ huynh xem của con được liên kết; giáo viên phụ trách và tổ trưởng xem của học sinh trong bài.
+/// phân tích AI ngay sau khi nộp. Phụ huynh xem của con được liên kết; giáo viên phụ trách xem của học sinh trong bài.
 /// Học sinh chưa nộp thì không bao giờ thấy đáp án.
 /// </summary>
 public sealed class ResultService(
@@ -31,20 +31,21 @@ public sealed class ResultService(
             {
                 r.StudentId, r.Student.Student.PersonCode, r.Student.Student.FullName,
                 Sub = db.Submission.Where(s => s.AssignmentId == assignmentId && s.StudentId == r.StudentId)
-                    .Select(s => new { s.SubmittedAt, s.Score, s.CorrectCount, Analysis = s.AiFeedback != null ? s.AiFeedback.Status : null }).FirstOrDefault(),
+                    .Select(s => new { s.SubmittedAt, s.Score, s.CorrectCount, Analysis = s.AiFeedback != null ? s.AiFeedback.Status : null,
+                        QueuedAt = s.AiFeedback != null ? s.AiFeedback.QueuedAt : null }).FirstOrDefault(),
             }).ToListAsync();
 
         var now = clock.Now;
         var rows = recipients
             .Select(r => new ResultRowDto(r.StudentId, r.PersonCode, r.FullName, r.Sub?.SubmittedAt != null, r.Sub?.SubmittedAt, r.Sub?.Score,
-                r.Sub?.CorrectCount, r.Sub?.SubmittedAt is { } at ? StaleAware(r.Sub.Analysis, at, now) : null))
+                r.Sub?.CorrectCount, r.Sub?.SubmittedAt is { } at ? StaleAware(r.Sub.Analysis, r.Sub.QueuedAt, at, now) : null))
             .OrderBy(r => r.StudentName, StringComparer.CurrentCultureIgnoreCase).ToList();
         var scores = rows.Where(r => r.Submitted && r.Score is not null).Select(r => r.Score!.Value).ToList();
         return new ClassResultDto(detail.Assignment, rows.Count, scores.Count,
             scores.Count == 0 ? null : Math.Round(scores.Average(), 2, MidpointRounding.AwayFromZero), rows);
     }
 
-    /// <summary>Kết quả chi tiết của một học sinh cho giáo viên phụ trách hoặc tổ trưởng.</summary>
+    /// <summary>Kết quả chi tiết của một học sinh cho giáo viên phụ trách.</summary>
     public async Task<PracticeResultDto> StudentResultForTeacherAsync(int assignmentId, int studentId)
     {
         var a = await access.LoadForViewAsync(assignmentId);
@@ -200,16 +201,23 @@ public sealed class ResultService(
             .Select(x => new StudyRefDto(x.Lesson.LessonId, x.Lesson.Book.Title, x.Lesson.Title, x.Lesson.StartPage, x.Lesson.EndPage, x.Nos))
             .ToList();
 
-    private static string? StaleAware(string? status, DateTime submittedAt, DateTime now) =>
-        status == AnalysisStatuses.Pending && now - submittedAt > AnalysisService.StaleAfter ? AnalysisStatuses.Failed : status;
+    private static string? StaleAware(string? status, DateTime? queuedAt, DateTime? submittedAt, DateTime now) =>
+        IsStale(status, queuedAt, submittedAt, now) ? AnalysisStatuses.Failed : status;
 
-    /// <summary>Phân tích kẹt ở Pending quá <see cref="AnalysisService.StaleAfter"/> (tiến trình dừng giữa chừng) thì coi là Lỗi.</summary>
+    /// <summary>
+    /// Phân tích còn Pending quá <see cref="AnalysisService.StaleAfter"/> kể từ lúc gửi thì coi là kẹt. Mốc là giờ gửi phân tích, không phải giờ nộp:
+    /// bài tự nộp ghi giờ nộp lùi về hạn nộp nên có thể đã ở quá khứ xa. Dữ liệu cũ chưa có giờ gửi thì dùng giờ nộp.
+    /// </summary>
+    internal static bool IsStale(string? status, DateTime? queuedAt, DateTime? submittedAt, DateTime now) =>
+        status == AnalysisStatuses.Pending && (queuedAt ?? submittedAt) is { } since && now - since > AnalysisService.StaleAfter;
+
+    /// <summary>Phân tích kẹt ở Pending quá <see cref="AnalysisService.StaleAfter"/> kể từ lúc gửi (tiến trình dừng giữa chừng) thì coi là Lỗi.</summary>
     private async Task<AnalysisDto?> ResolveAnalysisAsync(Submission submission)
     {
         var f = submission.AiFeedback;
         if (f is null) return null;
         var status = f.Status;
-        if (status == AnalysisStatuses.Pending && submission.SubmittedAt is { } at && clock.Now - at > AnalysisService.StaleAfter)
+        if (IsStale(status, f.QueuedAt, submission.SubmittedAt, clock.Now))
         {
             await db.AiFeedback.Where(x => x.FeedbackId == f.FeedbackId && x.Status == AnalysisStatuses.Pending)
                 .ExecuteUpdateAsync(s => s.SetProperty(x => x.Status, AnalysisStatuses.Failed)

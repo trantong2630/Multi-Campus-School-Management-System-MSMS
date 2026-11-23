@@ -35,7 +35,7 @@ export function AiDots() {
 interface BubbleProps {
   tone?: AiTone;
   /** Đuôi bong bóng chỉ về phía avatar. */
-  tail?: 'left' | 'bottom-right' | 'none';
+  tail?: 'left' | 'right' | 'bottom-right' | 'none';
   children: ReactNode;
   className?: string;
 }

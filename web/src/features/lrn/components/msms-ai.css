@@ -152,6 +152,7 @@
 }
 
 .ai-bubble--tail-left::before,
+.ai-bubble--tail-right::before,
 .ai-bubble--tail-bottom-right::before {
   content: '';
   position: absolute;
@@ -167,6 +168,16 @@
   margin-top: -6px;
   border-right: none;
   border-top: none;
+  transform: rotate(45deg);
+}
+
+/* Đuôi chỉ sang phải: bong bóng nằm ngang bên trái avatar. */
+.ai-bubble--tail-right::before {
+  right: -7px;
+  top: 50%;
+  margin-top: -6px;
+  border-left: none;
+  border-bottom: none;
   transform: rotate(45deg);
 }
 

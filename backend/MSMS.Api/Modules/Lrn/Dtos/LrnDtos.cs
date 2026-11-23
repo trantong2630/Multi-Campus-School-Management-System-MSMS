@@ -150,26 +150,4 @@ public record PracticeResultDto(
     bool Submitted, DateTime? SubmittedAt, decimal? Score, short? CorrectCount,
     IReadOnlyList<ResultQuestionDto> Questions, AnalysisDto? Analysis);
 
-// ---- LRN-05: Tiến độ giao bài của tổ ----
-
 public record SubjectOptionDto(int SubjectId, string Name);
-
-public record TeacherProgressDto(int PersonId, string Name, int CampusId, string CampusName, int AssignmentCount, int OpenCount);
-
-public record DepartmentItemDto(
-    int AssignmentId, string Title, int CampusId, string CampusName, int ClassId, string ClassName, int SubjectId, string SubjectName,
-    string AssignedByName, DateTime OpenAt, DateTime DueAt, bool IsClosed, int RecipientCount, int SubmittedCount);
-
-/// <summary>Một môn của tổ mà thầy cô đang dạy, kèm các lớp (phụ trách chuyên môn suy từ thời khóa biểu đã phát hành, BR-14).</summary>
-public record DepartmentTeachingDto(int SubjectId, string SubjectName, IReadOnlyList<string> ClassNames);
-
-/// <summary>
-/// Thành viên của tổ: cán bộ thuộc tổ, cộng giáo viên tổ khác đang dạy môn của tổ (InDepartment = false).
-/// Chỉ đọc, phạm vi các tổ người gọi đang làm tổ trưởng.
-/// </summary>
-public record DepartmentMemberDto(int PersonId, string Name, string? CampusName, bool InDepartment, int PeriodsPerWeek,
-    IReadOnlyList<DepartmentTeachingDto> Teaching);
-
-public record DepartmentOverviewDto(
-    bool IsHead, IReadOnlyList<SubjectOptionDto> Subjects, IReadOnlyList<TeacherProgressDto> Teachers, IReadOnlyList<DepartmentItemDto> Items,
-    string? SemesterName, IReadOnlyList<DepartmentMemberDto> Members);

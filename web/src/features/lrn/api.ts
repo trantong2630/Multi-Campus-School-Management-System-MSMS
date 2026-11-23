@@ -1,7 +1,7 @@
 import { apiClient } from '@/app/apiClient';
 import type {
   AnswerInput, AssignmentDetail, AssignmentItem, Attempt, Child, ChildResultItem, ClassResult, ClassSubjectOption,
-  ConfirmDraftsResult, CreateAssignmentInput, DepartmentOverview, Difficulty, GenerateQuestionsInput, GenerateQuestionsResult, MatrixCell, MatrixRow, MyAssignmentItem, PagedResult,
+  ConfirmDraftsResult, CreateAssignmentInput, Difficulty, GenerateQuestionsInput, GenerateQuestionsResult, MatrixCell, MatrixRow, MyAssignmentItem, PagedResult,
   PickResult, PracticeResult, QuestionDetail, QuestionItem, QuestionQuery, SaveQuestionInput, TextbookLesson,
 } from './types';
 
@@ -59,8 +59,5 @@ export const lrnApi = {
     children: () => get<Child[]>('/lrn/results/children'),
     childList: (studentId: number) => get<ChildResultItem[]>(`/lrn/results/children/${studentId}`),
     detail: (assignmentId: number, studentId?: number) => get<PracticeResult>(`/lrn/results/${assignmentId}`, { studentId }),
-  },
-  department: {
-    overview: (subjectId?: number) => get<DepartmentOverview>('/lrn/department/assignments', { subjectId }),
   },
 };
