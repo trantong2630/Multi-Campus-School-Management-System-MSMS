@@ -159,7 +159,7 @@ Shared skeleton: **gradient header → highlight card → quick-action grid**, p
 
 | Block | Content |
 | --- | --- |
-| Header | `"Chào, {tên}"` · class · weekday + date · two pills: **Sổ liên lạc** · **Chuyên cần** |
+| Header | `"Chào, {tên}"` · class · weekday + date · two pills: **Báo cáo tuần** · **Chuyên cần** |
 | Highlight card | Current or next session; none left: MSMS AI line |
 | 2×2 grid | Bài chưa nộp (coral) · Sắp hết hạn (amber, due within 48 h) · Điểm mới (violet, submitted in the last 7 days) · Chuyên cần tuần (teal, % present) |
 
@@ -168,7 +168,7 @@ Shared skeleton: **gradient header → highlight card → quick-action grid**, p
 | Block | Content |
 | --- | --- |
 | Header | Child chip (in place of the wordmark) · `"Hôm nay của {tên con}"` · child's class + date · two pills: **Lịch học** · **Chuyên cần** |
-| Highlight card | This week's contact book — 4 figures: có mặt / muộn / vắng có phép / vắng không phép, plus a homework line; opens Sổ liên lạc |
+| Highlight card | This week's report — 4 figures: có mặt / muộn / vắng có phép / vắng không phép, plus a homework line; opens Báo cáo tuần |
 | 2×2 grid | Xin nghỉ (green action tile, opens form) · Đơn đang chờ (amber, opens Đơn xin nghỉ) · Điểm mới (violet, opens Kết quả của con) · Nhắn giáo viên (sky, unread count) |
 
 ---
@@ -203,9 +203,9 @@ Session card: 4px left border colored by status · subject 15/600 · class + roo
 - **Đã hủy:** strikethrough text, grey background, not tappable.
 - **Chờ xử lý:** amber tint, with the line `"Chờ phân công giáo viên"`.
 
-### 5.3 Weekly contact book (PAR-02)
+### 5.3 Weekly report (PAR-02)
 
-Week chosen with left/right arrows in the header. Three stacked cards: **Chuyên cần** (4 figures + a ratio ring) · **Bài tập** (assigned / submitted / not submitted) · **Điểm và phân tích đã công bố** (list).
+Week chosen with left/right arrows in the header. Three stacked cards: **Chuyên cần** (4 figures + a ratio ring) · **Bài tập** (assigned / submitted / not submitted) · **Điểm** (list).
 
 Sections with no data render empty with one grey line. **Do not render `0`** — it reads as a real measurement.
 
@@ -246,7 +246,7 @@ The mobile counterpart of Web §6.0, with the same identity, stacked vertically 
 | Chuyên cần (student, parent) | Range chips Tuần này / Tháng này / 3 tháng; ring of present ratio, four stat tiles (muộn, vắng có phép, vắng không phép, chưa điểm danh), then only the sessions that were not "Có mặt" |
 | Chuyên cần lớp chủ nhiệm | Day stepper (no future days); one card per session with marked count and a pill per student who was not present; tap opens the read-only sheet |
 | Học sinh lớp | Homeroom student list (search above 12 students) → the student's profile |
-| Hồ sơ học sinh (homeroom, read-only) | Header tinted with the avatar's pastel: 60px avatar, name, code · age · gender, a white pill "Lớp 6A · phân hiệu" and the status pill. The note sits right below as an amber banner. A full-width **Sổ liên lạc** button opens the student's weekly book (§5.3). Then Phụ huynh (name, relationship, phone large and copyable), Chuyên cần of the current school year (presence ring, four stat tiles Có mặt · Muộn · Vắng có phép · Vắng không phép, the latest late or absent lessons), Thông tin cá nhân rows and Lịch sử lớp as a vertical timeline with the current class as a filled green dot |
+| Hồ sơ học sinh (homeroom, read-only) | Header tinted with the avatar's pastel: 60px avatar, name, code · age · gender, a white pill "Lớp 6A · phân hiệu" and the status pill. The note sits right below as an amber banner. A full-width **Báo cáo tuần** button opens the student's weekly book (§5.3). Then Phụ huynh (name, relationship, phone large and copyable), Chuyên cần of the current school year (presence ring, four stat tiles Có mặt · Muộn · Vắng có phép · Vắng không phép, the latest late or absent lessons), Thông tin cá nhân rows and Lịch sử lớp as a vertical timeline with the current class as a filled green dot |
 | Thông báo | Pale-green unread cards with a type icon; tap re-checks permission on the server and opens the matching mobile screen, or says the content is on web |
 | Bảng tin (tab) | Cover-image cards (16:9, image count badge), "Nội bộ" pill for internal posts, bell in the app bar; detail has a swipeable image strip, then title, author, content. |
 | Cá nhân | Identity card (tap avatar to change or remove it), active responsibilities, contact info with "Sửa", then Đổi mật khẩu · Đăng xuất |

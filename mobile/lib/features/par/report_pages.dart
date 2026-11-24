@@ -12,7 +12,7 @@ import '../../core/widgets/states.dart';
 import 'children.dart';
 import 'par_api.dart';
 
-/// Sổ liên lạc tuần (PAR-02): chuyên cần, bài tập, điểm và phân tích — chỉ đọc.
+/// Báo cáo tuần (PAR-02): chuyên cần, bài tập và điểm — chỉ đọc.
 /// Học sinh xem của mình, phụ huynh xem của con đang chọn, chủ nhiệm mở từ danh sách lớp ([studentId]).
 class WeeklyReportPage extends ConsumerStatefulWidget {
   const WeeklyReportPage({super.key, this.studentId});
@@ -30,7 +30,7 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
     final user = ref.watch(currentUserProvider);
     final int? sid = widget.studentId ?? (user.isStudent ? user.personId : ref.watch(currentChildProvider).value?.studentId);
     return PageScaffold(
-      title: 'Sổ liên lạc',
+      title: 'Báo cáo tuần',
       body: sid == null
           ? (user.isParent && ref.watch(currentChildProvider).isLoading
                 ? const SkeletonList(count: 3, height: 140)
@@ -253,7 +253,7 @@ class _ScoresCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _CardTitle(LucideIcons.sparkles, 'Điểm và phân tích', Accent.violet),
+          const _CardTitle(LucideIcons.award, 'Điểm', Accent.violet),
           if (scored.isEmpty)
             const _NoData('Chưa có bài nào được chấm trong tuần.')
           else
@@ -271,11 +271,6 @@ class _ScoresCard extends StatelessWidget {
                         children: [
                           Text(a.title, style: const TextStyle(fontWeight: FontWeight.w600)),
                           Text(a.subjectName, style: const TextStyle(fontSize: 12.5, color: AppColor.text3)),
-                          if ((a.aiFeedback ?? '').isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Text(a.aiFeedback!, style: const TextStyle(fontSize: 13, color: AppColor.text2, height: 1.4)),
-                            ),
                         ],
                       ),
                     ),
@@ -293,7 +288,7 @@ class _ScoresCard extends StatelessWidget {
   }
 }
 
-/// Học sinh lớp chủ nhiệm, bấm để mở hồ sơ từng em; sổ liên lạc mở từ nút trong hồ sơ (Design_Mobile §5.8).
+/// Học sinh lớp chủ nhiệm, bấm để mở hồ sơ từng em; báo cáo tuần mở từ nút trong hồ sơ (Design_Mobile §5.8).
 class HomeroomStudentsPage extends ConsumerStatefulWidget {
   const HomeroomStudentsPage({super.key});
 

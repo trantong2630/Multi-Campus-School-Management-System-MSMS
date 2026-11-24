@@ -229,7 +229,7 @@ export function StudentProfilePage() {
         extra={(
           <>
             {backButton}
-            {fromHomeroom && <Button type="primary" onClick={() => navigate(`/par/weekly-reports?studentId=${s.studentId}`)}>Sổ liên lạc</Button>}
+            {fromHomeroom && <Button type="primary" onClick={() => navigate(`/par/weekly-reports?studentId=${s.studentId}`)}>Báo cáo tuần</Button>}
           </>
         )}
       />

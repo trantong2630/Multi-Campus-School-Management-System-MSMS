@@ -151,7 +151,7 @@ class TeacherHome extends ConsumerWidget {
                 ActionTile(
                   icon: LucideIcons.users,
                   label: 'Học sinh lớp',
-                  hint: 'Hồ sơ, sổ liên lạc',
+                  hint: 'Hồ sơ, báo cáo tuần',
                   accent: Accent.violet,
                   onTap: () => context.push('/homeroom-students'),
                 ),
@@ -261,7 +261,7 @@ class StudentHome extends ConsumerWidget {
         title: 'Chào, ${user.givenName}',
         subtitle: [if (klass != null) 'Lớp $klass', Fmt.longDate(now)].join(' · '),
         actions: [
-          HeaderPill(label: 'Sổ liên lạc', icon: LucideIcons.notebookText, onTap: () => context.push('/report')),
+          HeaderPill(label: 'Báo cáo tuần', icon: LucideIcons.chartColumn, onTap: () => context.push('/report')),
           HeaderPill(label: 'Chuyên cần', icon: LucideIcons.userCheck, onTap: () => context.push('/attendance-me')),
         ],
       ),
@@ -434,7 +434,7 @@ class ParentHome extends ConsumerWidget {
   }
 }
 
-/// Sổ liên lạc tuần này: bốn con số chuyên cần, bấm để mở sổ (Design_Mobile §4.3).
+/// Báo cáo tuần này: bốn con số chuyên cần, bấm để mở báo cáo (Design_Mobile §4.3).
 class _WeekBookCard extends StatelessWidget {
   const _WeekBookCard(this.report);
   final AsyncValue<WeeklyReport>? report;
@@ -467,10 +467,10 @@ class _WeekBookCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(LucideIcons.notebookText, size: 18, color: AppColor.green700),
+              const Icon(LucideIcons.chartColumn, size: 18, color: AppColor.green700),
               const SizedBox(width: 8),
               const Expanded(
-                child: Text('Sổ liên lạc tuần này', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                child: Text('Báo cáo tuần này', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
               ),
               Text(
                 '${Fmt.shortDate(w.weekStart)} – ${Fmt.shortDate(w.weekEnd)}',
