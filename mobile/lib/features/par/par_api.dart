@@ -69,15 +69,13 @@ class WeeklyAssignment {
       subjectName = j.str('subjectName'),
       dueAt = j.date('dueAt'),
       status = j.str('status'),
-      score = j.dbl('score'),
-      aiFeedback = j.strOrNull('aiFeedback');
+      score = j.dbl('score');
   final int id;
   final String title;
   final String subjectName;
   final DateTime dueAt;
   final String status;
   final double? score;
-  final String? aiFeedback;
 }
 
 class WeeklyReport {

@@ -3,16 +3,32 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { Card, Select, Space, Spin } from 'antd';
-import { AlertCircle } from 'lucide-react';
+import { Button, Empty, Select, Spin } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/app/AuthProvider';
 import { parApi } from '../api';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { DataTable } from '@/shared/components/DataTable';
-import type { ColumnsType } from 'antd/es/table';
 import { formatDateTime } from '@/shared/lib/format';
-import type { WeeklyAssignmentItem } from '../types';
+import type { AttendanceSummary, WeeklyAssignmentItem, WeeklyReportData } from '../types';
 import './weekly-report.css';
+
+type AssignmentStatus = WeeklyAssignmentItem['status'];
+
+const attendanceParts = [
+  { key: 'presentCount', label: 'Có mặt', color: '#2f9e5b' },
+  { key: 'lateCount', label: 'Đi muộn', color: '#f2a93b' },
+  { key: 'excusedCount', label: 'Vắng có phép', color: '#4c8bf5' },
+  { key: 'unexcusedCount', label: 'Vắng không phép', color: '#e5584f' },
+  { key: 'unmarkedCount', label: 'Chưa điểm danh', color: '#b4bcc6' },
+] as const;
+
+const assignmentParts: { key: AssignmentStatus; label: string; color: string }[] = [
+  { key: 'Submitted', label: 'Đã nộp', color: '#2f9e5b' },
+  { key: 'Unsubmitted', label: 'Chưa nộp', color: '#f2a93b' },
+  { key: 'Missed', label: 'Không nộp', color: '#e5584f' },
+];
 
 export function WeeklyReportPage() {
   const { user } = useAuth();
@@ -21,6 +37,7 @@ export function WeeklyReportPage() {
   const requestedId = Number(params.get('studentId')) || null;
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [selectedWeekStart, setSelectedWeekStart] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<AssignmentStatus | null>(null);
 
   const { data: children, isLoading: childrenLoading } = useQuery({
     queryKey: ['par-my-children'],
@@ -53,10 +70,13 @@ export function WeeklyReportPage() {
 
   useEffect(() => {
     if (weeks && weeks.length > 0) {
-      const currentWeek = weeks.find(w => w.isCurrent);
+      const currentWeek = weeks.find((w) => w.isCurrent);
       setSelectedWeekStart(currentWeek?.weekStart || weeks[0].weekStart);
     }
   }, [weeks]);
+
+  // Đổi học sinh hoặc đổi tuần thì bỏ bộ lọc trạng thái của danh sách bài tập.
+  useEffect(() => setStatusFilter(null), [selectedStudentId, selectedWeekStart]);
 
   const { data: report, isLoading: reportLoading } = useQuery({
     queryKey: ['par-report-data', selectedStudentId, selectedWeekStart],
@@ -69,20 +89,20 @@ export function WeeklyReportPage() {
   const isTeacher = user?.accountType === 'Teacher';
 
   const studentOptions = useMemo(() => {
-    if (isStudent) return [];
     if (isParent && children) {
-      return children.map(child => ({ label: `${child.fullName} (${child.className || 'N/A'})`, value: child.studentId }));
+      return children.map((child) => ({ label: `${child.fullName} (${child.className || 'N/A'})`, value: child.studentId }));
     }
     if (isTeacher && homeroomStudents) {
-      return homeroomStudents.map(s => ({ label: `${s.fullName} - ${s.className}`, value: s.studentId }));
+      return homeroomStudents.map((s) => ({ label: `${s.fullName} - ${s.className}`, value: s.studentId }));
     }
     return [];
-  }, [isStudent, isParent, isTeacher, children, homeroomStudents]);
+  }, [isParent, isTeacher, children, homeroomStudents]);
 
-  const weekOptions = useMemo(() => {
-    if (!weeks) return [];
-    return weeks.map(w => ({ label: w.label, value: w.weekStart }));
-  }, [weeks]);
+  const weekIndex = weeks?.findIndex((w) => w.weekStart === selectedWeekStart) ?? -1;
+  const currentWeek = weeks?.find((w) => w.isCurrent);
+  const goToWeek = (index: number) => {
+    if (weeks && weeks[index]) setSelectedWeekStart(weeks[index].weekStart);
+  };
 
   // Thoát sớm sau mọi hook để số hook không đổi giữa các lần render.
   if (!user) {
@@ -91,36 +111,31 @@ export function WeeklyReportPage() {
 
   return (
     <div className="weekly-report-page">
-      <PageHeader title="Sổ liên lạc điện tử" />
+      <PageHeader title="Báo cáo tuần" />
       <div className="weekly-report__controls">
-        <Space size="large" wrap>
-          {!isStudent && (
-            <div>
-              <label className="weekly-report__label">Chọn học sinh:</label>
-              <Select
-                placeholder="Chọn học sinh"
-                value={selectedStudentId}
-                onChange={setSelectedStudentId}
-                options={studentOptions}
-                loading={childrenLoading || homeroomStudentsLoading}
-                style={{ width: 300 }}
-              />
-            </div>
-          )}
-          {selectedStudentId && (
-            <div>
-              <label className="weekly-report__label">Chọn tuần:</label>
-              <Select
-                placeholder="Chọn tuần"
-                value={selectedWeekStart}
-                onChange={setSelectedWeekStart}
-                options={weekOptions}
-                loading={weeksLoading}
-                style={{ width: 300 }}
-              />
-            </div>
-          )}
-        </Space>
+        {!isStudent && (
+          <Select
+            placeholder="Chọn học sinh"
+            value={selectedStudentId}
+            onChange={setSelectedStudentId}
+            options={studentOptions}
+            loading={childrenLoading || homeroomStudentsLoading}
+            showSearch
+            optionFilterProp="label"
+            style={{ width: 300 }}
+          />
+        )}
+        {weeks && weeks.length > 0 && weekIndex >= 0 && (
+          <div className="week-nav">
+            <Button aria-label="Tuần trước" icon={<ChevronLeft size={16} />} disabled={weekIndex <= 0} onClick={() => goToWeek(weekIndex - 1)} />
+            <div className="week-nav__label">{weeks[weekIndex].label}</div>
+            <Button aria-label="Tuần sau" icon={<ChevronRight size={16} />} disabled={weekIndex >= weeks.length - 1} onClick={() => goToWeek(weekIndex + 1)} />
+            {currentWeek && currentWeek.weekStart !== selectedWeekStart && (
+              <Button type="link" onClick={() => setSelectedWeekStart(currentWeek.weekStart)}>Về tuần này</Button>
+            )}
+          </div>
+        )}
+        {weeksLoading && <Spin size="small" />}
       </div>
       {reportLoading && (
         <div className="weekly-report__loading">
@@ -129,86 +144,149 @@ export function WeeklyReportPage() {
       )}
       {report && !reportLoading && (
         <div className="weekly-report__content">
-          <div className="weekly-report__student-info">
-            <h2>{report.studentName} ({report.studentCode}) - {report.className}</h2>
-            <p>Tuần từ {formatDate(report.weekStart)} đến {formatDate(report.weekEnd)}</p>
-          </div>
-          <Card className="weekly-report__card">
-            <h3 className="weekly-report__section-title">Chuyên cần trong tuần</h3>
-            <div className="weekly-report__metrics">
-              <MetricCard label="Có mặt" value={report.attendance.presentCount} total={report.attendance.totalSessions} variant="success" />
-              <MetricCard label="Đi muộn" value={report.attendance.lateCount} total={report.attendance.totalSessions} variant="warning" />
-              <MetricCard label="Vắng có phép" value={report.attendance.excusedCount} total={report.attendance.totalSessions} variant="info" />
-              <MetricCard label="Vắng không phép" value={report.attendance.unexcusedCount} total={report.attendance.totalSessions} variant="danger" />
-              <MetricCard label="Chưa điểm danh" value={report.attendance.unmarkedCount} total={report.attendance.totalSessions} variant="default" />
-            </div>
-          </Card>
-          <Card className="weekly-report__card">
-            <h3 className="weekly-report__section-title">Bài tập rèn luyện trong tuần</h3>
-            <div className="weekly-report__assignment-summary">
-              <SummaryCard label="Được giao" value={report.assignments.assignedCount} variant="default" />
-              <SummaryCard label="Đã nộp" value={report.assignments.submittedCount} variant="success" />
-              <SummaryCard label="Chưa nộp" value={report.assignments.unsubmittedCount} variant="warning" />
-              <SummaryCard label="Không nộp" value={report.assignments.missedCount} variant="danger" />
-            </div>
-            {report.assignments.items.length > 0 ? (
-              <AssignmentsTable items={report.assignments.items} />
-            ) : (
-              <div className="weekly-report__empty">
-                <AlertCircle size={32} />
-                <p>Không có bài tập trong tuần này.</p>
-              </div>
-            )}
-          </Card>
-
+          <ReportHero report={report} />
+          <AttendanceCard attendance={report.attendance} />
+          <AssignmentsCard
+            report={report}
+            statusFilter={statusFilter}
+            onFilter={(status) => setStatusFilter((cur) => (cur === status ? null : status))}
+          />
         </div>
       )}
     </div>
   );
 }
 
-function MetricCard({ label, value, total, variant }: any) {
-  const colors: Record<string, string> = { success: '#52c41a', warning: '#faad14', info: '#1890ff', danger: '#ff4d4f', default: '#8c8c8c' };
+/** Một câu tóm tắt tuần để người xem nắm ngay việc cần chú ý. */
+function summarize(report: WeeklyReportData): string {
+  const { attendance: a, assignments: s } = report;
+  const notes: string[] = [];
+  if (a.totalSessions === 0) notes.push('Tuần này chưa có tiết nào diễn ra');
+  else if (a.unexcusedCount > 0) notes.push(`Vắng ${a.unexcusedCount} tiết không phép`);
+  else if (a.excusedCount > 0 || a.lateCount > 0) notes.push('Có tiết vắng có phép hoặc đi muộn');
+  else notes.push('Đi học đầy đủ');
+  if (s.assignedCount === 0) notes.push('không có bài tập đến hạn');
+  else if (s.missedCount > 0) notes.push(`${s.missedCount} bài không nộp`);
+  else if (s.unsubmittedCount > 0) notes.push(`còn ${s.unsubmittedCount} bài chưa nộp`);
+  else notes.push('đã nộp đủ bài tập');
+  return `${notes.join(', ')}.`;
+}
+
+function ReportHero({ report }: { report: WeeklyReportData }) {
   return (
-    <div className="metric-card" style={{ borderLeftColor: colors[variant] }}>
-      <div className="metric-card__label">{label}</div>
-      <div className="metric-card__value">{value}</div>
-      <div className="metric-card__total">Trên tổng {total} tiết</div>
+    <div className="report-hero">
+      <div>
+        <h2 className="report-hero__name">{report.studentName}</h2>
+        <div className="report-hero__meta">{report.studentCode} · Lớp {report.className} · {formatDate(report.weekStart)} – {formatDate(report.weekEnd)}</div>
+      </div>
+      <div className="report-hero__summary">{summarize(report)}</div>
     </div>
   );
 }
 
-function SummaryCard({ label, value, variant }: any) {
-  const colors: Record<string, { bg: string; fg: string }> = {
-    success: { bg: '#f6ffed', fg: '#52c41a' },
-    warning: { bg: '#fffbe6', fg: '#faad14' },
-    danger: { bg: '#fff1f0', fg: '#ff4d4f' },
-    default: { bg: '#fafafa', fg: '#8c8c8c' },
-  };
-  const c = colors[variant];
+function AttendanceCard({ attendance }: { attendance: AttendanceSummary }) {
+  const total = attendance.totalSessions;
   return (
-    <div className="summary-card" style={{ backgroundColor: c.bg }}>
-      <div className="summary-card__label" style={{ color: c.fg }}>{label}</div>
-      <div className="summary-card__value" style={{ color: c.fg }}>{value}</div>
+    <section className="report-card">
+      <h3 className="report-card__title">Chuyên cần</h3>
+      {total === 0 ? (
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Tuần này chưa có tiết nào diễn ra" />
+      ) : (
+        <div className="attendance">
+          <div className="attendance__figure">
+            <span className="attendance__big">{attendance.presentCount}</span>
+            <span className="attendance__of">/ {total} tiết có mặt</span>
+          </div>
+          <div className="attendance__main">
+            <StackedBar parts={attendanceParts.map((p) => ({ label: p.label, color: p.color, value: attendance[p.key] }))} total={total} />
+            <ul className="legend">
+              {attendanceParts.map((p) => (
+                <li key={p.key} className={attendance[p.key] === 0 ? 'legend__item legend__item--zero' : 'legend__item'}>
+                  <span className="legend__dot" style={{ background: p.color }} />
+                  <span className="legend__label">{p.label}</span>
+                  <b className="legend__value">{attendance[p.key]}</b>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function AssignmentsCard({ report, statusFilter, onFilter }: {
+  report: WeeklyReportData;
+  statusFilter: AssignmentStatus | null;
+  onFilter: (status: AssignmentStatus) => void;
+}) {
+  const { assignments } = report;
+  const count: Record<AssignmentStatus, number> = {
+    Submitted: assignments.submittedCount,
+    Unsubmitted: assignments.unsubmittedCount,
+    Missed: assignments.missedCount,
+  };
+  const items = statusFilter ? assignments.items.filter((i) => i.status === statusFilter) : assignments.items;
+  return (
+    <section className="report-card">
+      <h3 className="report-card__title">Bài tập rèn luyện <span className="report-card__sub">{assignments.assignedCount} bài đến hạn trong tuần</span></h3>
+      {assignments.assignedCount === 0 ? (
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Không có bài tập đến hạn trong tuần này" />
+      ) : (
+        <>
+          <StackedBar parts={assignmentParts.map((p) => ({ label: p.label, color: p.color, value: count[p.key] }))} total={assignments.assignedCount} />
+          <div className="status-chips" role="group" aria-label="Lọc bài tập theo trạng thái">
+            {assignmentParts.map((p) => (
+              <button
+                key={p.key}
+                type="button"
+                className={`status-chip${statusFilter === p.key ? ' status-chip--active' : ''}`}
+                style={{ ['--chip-color' as string]: p.color }}
+                aria-pressed={statusFilter === p.key}
+                onClick={() => onFilter(p.key)}
+              >
+                <span className="status-chip__value">{count[p.key]}</span>
+                <span className="status-chip__label">{p.label}</span>
+              </button>
+            ))}
+          </div>
+          <AssignmentsTable items={items} />
+        </>
+      )}
+    </section>
+  );
+}
+
+function StackedBar({ parts, total }: { parts: { label: string; color: string; value: number }[]; total: number }) {
+  return (
+    <div className="stacked-bar" role="img" aria-label={parts.map((p) => `${p.label} ${p.value}`).join(', ')}>
+      {parts.filter((p) => p.value > 0).map((p) => (
+        <div key={p.label} className="stacked-bar__part" style={{ width: `${(p.value / total) * 100}%`, background: p.color }} title={`${p.label}: ${p.value}`} />
+      ))}
     </div>
   );
 }
 
 function AssignmentsTable({ items }: { items: WeeklyAssignmentItem[] }) {
-  const statusColor: Record<string, string> = { Submitted: '#52c41a', Unsubmitted: '#faad14', Missed: '#ff4d4f' };
-  const columns: ColumnsType<any> = [
-    { title: 'Tên bài tập', dataIndex: 'title', key: 'title', width: 250 },
-    { title: 'Môn học', dataIndex: 'subjectName', key: 'subjectName', width: 100 },
-    { title: 'Hạn nộp', dataIndex: 'dueAt', key: 'dueAt', width: 150, render: (text: string) => formatDateTime(text) },
-    { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 100, render: (status: string) => (<span style={{ display: 'inline-block', padding: '4px 8px', borderRadius: '4px', backgroundColor: statusColor[status] + '20', color: statusColor[status], fontSize: '12px', fontWeight: 500 }}>{status === 'Submitted' && 'Đã nộp'}{status === 'Unsubmitted' && 'Chưa nộp'}{status === 'Missed' && 'Không nộp'}</span>) },
-    { title: 'Điểm số', dataIndex: 'score', key: 'score', width: 80, render: (score: number) => (score !== null && score !== undefined ? `${score}/10` : '—') },
-    { title: 'Nhận xét AI', dataIndex: 'aiFeedback', key: 'aiFeedback', width: 200, render: (feedback: string) => (feedback ? <span title={feedback} style={{ overflow: 'hidden', textOverflow: 'ellipsis', display: 'block', whiteSpace: 'nowrap' }}>{feedback}</span> : '—') },
+  const status: Record<AssignmentStatus, { label: string; color: string }> = {
+    Submitted: { label: 'Đã nộp', color: '#2f9e5b' },
+    Unsubmitted: { label: 'Chưa nộp', color: '#c98312' },
+    Missed: { label: 'Không nộp', color: '#e5584f' },
+  };
+  const columns: ColumnsType<WeeklyAssignmentItem> = [
+    { title: 'Tên bài tập', dataIndex: 'title', key: 'title' },
+    { title: 'Môn học', dataIndex: 'subjectName', key: 'subjectName', width: 140 },
+    { title: 'Hạn nộp', dataIndex: 'dueAt', key: 'dueAt', width: 170, render: (text: string) => formatDateTime(text) },
+    {
+      title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 120,
+      render: (value: AssignmentStatus) => <span className="status-tag" style={{ color: status[value].color, background: `${status[value].color}1f` }}>{status[value].label}</span>,
+    },
+    { title: 'Điểm', dataIndex: 'score', key: 'score', width: 90, align: 'right', render: (score?: number | null) => (score !== null && score !== undefined ? `${score}/10` : '—') },
   ];
-  return <DataTable columns={columns} dataSource={items} pagination={false} />;
+  return <DataTable columns={columns} dataSource={items} rowKey="assignmentId" pagination={false} />;
 }
 
 function formatDate(value?: string | null) {
   if (!value) return '—';
-  const date = new Date(value);
-  return date.toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  return new Date(value).toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' });
 }

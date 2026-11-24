@@ -57,7 +57,7 @@ public class WeeklyReportsController(
         return false;
     }
 
-    /// <summary>Danh sách tuần (Thứ 2 - CN) hợp lệ để xem sổ của học sinh.</summary>
+    /// <summary>Danh sách tuần (Thứ 2 - CN) hợp lệ để xem báo cáo của học sinh.</summary>
     [HttpGet("weeks"), Authorize(Policy = Policies.ReportViewer)]
     public async Task<IActionResult> GetWeeks([FromQuery] int studentId)
     {
@@ -68,7 +68,7 @@ public class WeeklyReportsController(
         return Ok(weeks);
     }
 
-    /// <summary>Sổ liên lạc của học sinh cho một tuần (mặc định tuần chứa hôm nay).</summary>
+    /// <summary>Báo cáo tuần của học sinh cho một tuần (mặc định tuần chứa hôm nay).</summary>
     [HttpGet("student/{studentId:int}"), Authorize(Policy = Policies.ReportViewer)]
     public async Task<IActionResult> GetReport(int studentId, [FromQuery] DateOnly? weekStart)
     {
@@ -79,7 +79,7 @@ public class WeeklyReportsController(
         return Ok(report);
     }
 
-    /// <summary>Danh sách học sinh lớp GVCN đang chủ nhiệm (dành cho giáo viên chọn học sinh xem sổ).</summary>
+    /// <summary>Danh sách học sinh lớp GVCN đang chủ nhiệm (dành cho giáo viên chọn học sinh xem báo cáo).</summary>
     [HttpGet("homeroom-students"), Authorize(Policy = Policies.Teacher)]
     public async Task<IActionResult> GetHomeroomStudents()
     {

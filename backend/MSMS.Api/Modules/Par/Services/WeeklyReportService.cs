@@ -10,8 +10,8 @@ using MSMS.Api.Modules.Par.Dtos;
 namespace MSMS.Api.Modules.Par.Services;
 
 /// <summary>
-/// Sổ liên lạc điện tử (BR-24): mọi chỉ số chuyên cần và bài tập tính trực tiếp khi mở, không lưu bảng,
-/// không có job nền. Một sổ = 1 học sinh + 1 tuần (Thứ 2 - Chủ nhật) trong năm học hiện hành học sinh có ghi danh.
+/// Báo cáo tuần (BR-24): mọi chỉ số chuyên cần và bài tập tính trực tiếp khi mở, không lưu bảng,
+/// không có job nền. Một báo cáo = 1 học sinh + 1 tuần (Thứ 2 - Chủ nhật) trong năm học hiện hành học sinh có ghi danh.
 /// </summary>
 public sealed class WeeklyReportService(MsmsDbContext db, IClock clock, CurrentUser user)
 {
@@ -53,7 +53,7 @@ public sealed class WeeklyReportService(MsmsDbContext db, IClock clock, CurrentU
         return weeks;
     }
 
-    /// <summary>Tính sổ liên lạc của một học sinh cho một tuần (mặc định tuần chứa hôm nay).</summary>
+    /// <summary>Tính báo cáo tuần của một học sinh cho một tuần (mặc định tuần chứa hôm nay).</summary>
     public async Task<WeeklyReportDto> ComputeWeeklyReportAsync(int studentId, DateOnly? weekStart)
     {
         var start = weekStart ?? StartOfWeek(clock.Today);
@@ -217,7 +217,7 @@ public sealed class WeeklyReportService(MsmsDbContext db, IClock clock, CurrentU
         return new AttendanceSummaryDto(occurred.Count, present, late, excused, unexcused, unmarked);
     }
 
-    /// <summary>BR-21, BR-22, BR-23: 4 chỉ số bài tập theo hạn nộp trong tuần và danh sách được giao đã chốt.</summary>
+    /// <summary>BR-21, BR-22: 4 chỉ số bài tập theo hạn nộp trong tuần và danh sách được giao đã chốt.</summary>
     private async Task<AssignmentSummaryDto> ComputeAssignmentsAsync(int studentId, DateOnly weekStart, DateOnly weekEnd)
     {
         var rangeStart = weekStart.ToDateTime(TimeOnly.MinValue);
@@ -235,12 +235,7 @@ public sealed class WeeklyReportService(MsmsDbContext db, IClock clock, CurrentU
                 r.Assignment.DueAt,
                 Submission = r.Assignment.Submission
                     .Where(sb => sb.StudentId == studentId)
-                    .Select(sb => new
-                    {
-                        sb.SubmittedAt,
-                        sb.Score,
-                        AiFeedback = sb.AiFeedback != null && sb.AiFeedback.Status == MSMS.Api.Modules.Lrn.Services.AnalysisStatuses.Done ? sb.AiFeedback.AiContent : null,
-                    })
+                    .Select(sb => new { sb.SubmittedAt, sb.Score })
                     .FirstOrDefault(),
             })
             .OrderBy(r => r.DueAt)
@@ -257,14 +252,10 @@ public sealed class WeeklyReportService(MsmsDbContext db, IClock clock, CurrentU
             else
                 status = "Missed";
 
-            // BR-22, BR-23: chưa nộp thì điểm và nhận xét AI để trống.
+            // BR-22: chưa nộp thì điểm để trống. Phân tích AI xem ở màn Kết quả bài tập, không đưa vào báo cáo tuần.
             decimal? score = submittedAt != null ? r.Submission!.Score : null;
-            // AiContent lưu JSON phân tích (LRN-04); sổ liên lạc chỉ hiện phần tóm tắt.
-            string? aiFeedback = submittedAt != null && r.Submission!.AiFeedback is { } content
-                ? MSMS.Api.Modules.Lrn.Services.AnalysisService.ToDto(MSMS.Api.Modules.Lrn.Services.AnalysisStatuses.Done, content).Summary
-                : null;
 
-            return new WeeklyAssignmentItemDto(r.AssignmentId, r.Title, r.SubjectName, r.DueAt, status, score, aiFeedback);
+            return new WeeklyAssignmentItemDto(r.AssignmentId, r.Title, r.SubjectName, r.DueAt, status, score);
         }).ToList();
 
         var submitted = items.Count(i => i.Status == "Submitted");

@@ -1,5 +1,5 @@
 import {
-  BookOpen, BookUser, CalendarDays, ClipboardCheck, FileText, HeartHandshake, House, LayoutDashboard, Mail, Newspaper, Settings2, ShieldCheck, Users,
+  BookOpen, BookUser, CalendarDays, ChartColumn, ClipboardCheck, FileText, HeartHandshake, House, LayoutDashboard, Mail, Newspaper, Settings2, ShieldCheck, Users,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { AccountType } from '@/shared/lib/labels';
@@ -65,6 +65,11 @@ export const menu: MenuGroup[] = [
       { key: 'com-feed', label: 'Bảng tin', path: '/com/feed', roles: ALL, ready: true },
     ],
   },
+  // Báo cáo tuần: chuyên cần, bài tập, điểm và phân tích của một học sinh trong tuần; cụm Tổng quan, ngay dưới Bảng tin.
+  {
+    key: 'par-report', label: 'Báo cáo tuần', icon: ChartColumn, section: 'overview', path: '/par/weekly-reports',
+    roles: ['Teacher', 'Student', 'Parent'], requires: { Teacher: 'homeroom' }, ready: true,
+  },
   // Danh sách học sinh lớp chủ nhiệm, chỉ xem. SA, HT, HP xem lớp ở Lớp & Ghi danh.
   {
     key: 'homeroom-students', label: 'Danh sách học sinh', icon: BookUser, section: 'manage', path: '/sch/homeroom-students',
@@ -120,7 +125,6 @@ export const menu: MenuGroup[] = [
     key: 'par', label: 'Phụ huynh', icon: HeartHandshake, section: 'manage',
     children: [
       { key: 'par-leave', label: 'Đơn xin nghỉ', path: '/par/leave-requests', roles: ['Teacher', 'Parent'], requires: { Teacher: 'homeroom' }, ready: true, icon: FileText },
-      { key: 'par-report', label: 'Sổ liên lạc', path: '/par/weekly-reports', roles: ['Teacher', 'Student', 'Parent'], requires: { Teacher: 'homeroom' }, ready: true, icon: HeartHandshake },
       { key: 'par-inbox', label: 'Hộp thư', path: '/par/inbox', roles: ['Teacher', 'Parent'], ready: true, icon: Mail },
     ],
   },

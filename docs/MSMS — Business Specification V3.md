@@ -19,7 +19,7 @@ MSMS là hệ thống độc lập, tự quản lý dữ liệu của mình; kh�
 | Trách nhiệm | Trách nhiệm (phân hiệu, tổ, lớp chủ nhiệm) |
 | Vận hành | Thời khóa biểu, phụ trách chuyên môn (tính từ thời khóa biểu), lịch dạy thực tế, xử lý giáo viên vắng, điểm danh theo tiết |
 | Học tập | Ngân hàng câu hỏi, bài tập rèn luyện trắc nghiệm, chấm tự động, phân tích bằng AI (MSMS AI) |
-| Dịch vụ phụ huynh | Đơn xin nghỉ, sổ liên lạc tuần, hộp thư phụ huynh – giáo viên |
+| Dịch vụ phụ huynh | Đơn xin nghỉ, báo cáo tuần, hộp thư phụ huynh – giáo viên |
 | Truyền thông | Thông báo trong ứng dụng, bảng tin |
 | Giám sát | Bảng điều khiển, hỏi đáp số liệu với MSMS AI, Audit Log, xuất Excel |
 
@@ -75,8 +75,8 @@ Có **6 loại tài khoản; một tài khoản mang đúng một loại** (BR-0
 | **School Admin** | Mọi dữ liệu vận hành toàn trường, trừ điểm và phân tích bài tập. **Không** đọc hội thoại phụ huynh – giáo viên | Mọi danh mục (kể cả thông tin trường), hồ sơ, tài khoản, trách nhiệm, ngày nghỉ cấp trường hoặc phân hiệu, **nhập bù và sửa điểm danh**. Đọc bảng tin nhưng **không** đăng hay ẩn bài (BR-27). **Không** có Dashboard học vụ (chỉ có Thống kê hệ thống), **không** xuất Excel, **không** làm thời khóa biểu, **không** làm việc đứng tên người khác (mục 2.4) |
 | **Principal** | Toàn trường: lịch dạy, điểm danh, Bảng điều khiển, bảng tin; qua MSMS AI thêm chuyên cần, tỷ lệ nộp và điểm trung bình bài tập theo từng học sinh (BR-29). **Không** đọc đơn nghỉ | Trách nhiệm (mục 2.2), bài đăng bảng tin (ẩn được bài của người khác kèm lý do, BR-27). Xuất Excel mọi lớp, mọi phân hiệu và danh sách trách nhiệm |
 | **Vice Principal** | Phân hiệu mình: lịch dạy, điểm danh, Bảng điều khiển, MSMS AI như Principal (BR-29). Màn hình Lịch dạy chỉ cho xem phân hiệu mình; riêng khi chọn giáo viên cho tiết hoặc dạy thay thì **danh sách giáo viên là toàn trường**, kèm trạng thái rảnh hoặc bận, kiểm trùng lịch cũng toàn trường (BR-13); màn hình Phụ trách chuyên môn cũng xem **toàn trường** | Thời khóa biểu, điều chỉnh lịch, giáo viên vắng — cho phân hiệu mình. Bài đăng bảng tin. Xuất Excel phân hiệu mình (kể cả danh sách trách nhiệm). **Không** sửa điểm danh |
-| **Teacher** | Tiết mình dạy; lớp + môn mình phụ trách. Nếu chủ nhiệm: hồ sơ, chuyên cần, đơn nghỉ, sổ liên lạc của lớp chủ nhiệm. Nếu tổ trưởng: số liệu tổng hợp của tổ ở Tình hình tổ chuyên môn (chỉ đọc), không xem bài làm hay điểm từng học sinh | Điểm danh tiết mình dạy **trong ngày của tiết**; soạn câu hỏi của mình; giao bài cho lớp + môn mình phụ trách; trả lời tin nhắn; bài đăng bảng tin. Nếu chủ nhiệm: duyệt đơn nghỉ, xuất Excel điểm danh lớp mình |
-| **Student** | Lịch học, bài tập, điểm, đáp án và phân tích AI của bài mình đã nộp, chuyên cần, sổ liên lạc của chính mình; bài đăng Toàn trường | Làm và nộp bài |
+| **Teacher** | Tiết mình dạy; lớp + môn mình phụ trách. Nếu chủ nhiệm: hồ sơ, chuyên cần, đơn nghỉ, báo cáo tuần của lớp chủ nhiệm. Nếu tổ trưởng: số liệu tổng hợp của tổ ở Tình hình tổ chuyên môn (chỉ đọc), không xem bài làm hay điểm từng học sinh | Điểm danh tiết mình dạy **trong ngày của tiết**; soạn câu hỏi của mình; giao bài cho lớp + môn mình phụ trách; trả lời tin nhắn; bài đăng bảng tin. Nếu chủ nhiệm: duyệt đơn nghỉ, xuất Excel điểm danh lớp mình |
+| **Student** | Lịch học, bài tập, điểm, đáp án và phân tích AI của bài mình đã nộp, chuyên cần, báo cáo tuần của chính mình; bài đăng Toàn trường | Làm và nộp bài |
 | **Parent** | Như Student, cho từng con được liên kết | Gửi và rút đơn nghỉ, tạo hội thoại và nhắn tin |
 
 Người vừa là cán bộ vừa là phụ huynh dùng **hai hồ sơ và hai tài khoản riêng** (BR-03).
@@ -168,7 +168,7 @@ Mọi tính năng phục vụ một trong bốn luồng. Tính năng không nằ
 ### Luồng C — Dịch vụ phụ huynh và truyền thông
 
 1. **Parent** gửi đơn xin nghỉ; **chủ nhiệm** duyệt hoặc từ chối (BR-19). Đơn duyệt không tự sinh vắng — nó quyết định nhãn có phép khi học sinh bị ghi vắng (BR-18).
-2. **Parent** và **Student** xem **sổ liên lạc tuần**, tính trực tiếp từ dữ liệu (BR-24).
+2. **Parent** và **Student** xem **báo cáo tuần**, tính trực tiếp từ dữ liệu (BR-24).
 3. **Parent** nhắn tin 1–1 với chủ nhiệm hoặc giáo viên đang dạy con (BR-25).
 4. Mọi sự kiện đáng chú ý tạo **thông báo trong ứng dụng** (BR-26).
 5. **Principal, Vice Principal, Teacher** đăng bài bảng tin, chọn phạm vi Nội bộ hoặc Toàn trường; School Admin chỉ đọc (BR-27).
@@ -259,7 +259,7 @@ SA là người duy nhất ghi. HT có các màn hình xem Thông tin trường,
 | ID | Feature | Nội dung chính | Ghi | Đọc | BR |
 | --- | --- | --- | --- | --- | --- |
 | PAR-01 | Đơn xin nghỉ | Gửi (cả ngày, buổi hoặc tiết lẻ), rút, duyệt, từ chối | PH 📱, CN 📱 | PH 📱, CN 📱 | BR-19 |
-| PAR-02 | Sổ liên lạc tuần | Chuyên cần, bài tập có hạn trong tuần, điểm và phân tích — tính trực tiếp, chỉ đọc | — | HS 📱, PH 📱, CN 📱 | BR-24 |
+| PAR-02 | Báo cáo tuần | Chuyên cần, bài tập có hạn trong tuần và điểm — tính trực tiếp, chỉ đọc | — | HS 📱, PH 📱, CN 📱 | BR-24 |
 | PAR-03 | Hộp thư phụ huynh – giáo viên | Hội thoại 1–1 về một học sinh, chỉ văn bản | PH 📱, GV 📱 tạo và gửi | — | BR-25 |
 
 ### COM — Communication (2)
@@ -291,7 +291,7 @@ SA là người duy nhất ghi. HT có các màn hình xem Thông tin trường,
 
 Giáo viên không giữ trách nhiệm nào không có Bảng điều khiển; giáo viên vừa là tổ trưởng vừa chủ nhiệm thấy cả hai màn. Một tiết, đơn hay bài thuộc phân hiệu nào là theo **phân hiệu của lớp** liên quan; cán bộ tính theo **phân hiệu chính**. Mọi số liệu tính lúc đọc, không lưu số liệu suy ra; chỉ màn lớp chủ nhiệm có tên học sinh, các màn khác chỉ có số tổng hợp. Số liệu theo từng lớp, học sinh, giáo viên của Principal và Vice Principal nằm ở MSMS AI (BR-29).
 
-**Trang chủ không phải Bảng điều khiển.** Trang chủ là màn đầu tiên của mọi loại tài khoản, mang tính chào đón. Trên web **mọi loại tài khoản thấy cùng một nội dung**: lời chào theo buổi kèm logo trường (tên trường hiện ở thanh đường dẫn đầu trang), một đồng hồ của ngày, **Hôm nay** (khung giờ tiết của trường, đánh dấu tiết đang diễn ra theo giờ thực; giáo viên có tiết thấy thêm lớp và môn mình dạy ở từng tiết; ngày nghỉ cấp trường hoặc Chủ nhật thì báo trường nghỉ), **Năm học** (học kỳ hiện tại, đang ở tuần thứ mấy) và **Ngày nghỉ sắp tới** (ba ngày gần nhất, ngày đầu có đếm ngược và lịch tháng). Trang chủ web không có số liệu thống kê, lối tắt hay bảng tin; số liệu chỉ nằm ở Bảng điều khiển. Trên mobile, Trang chủ là điểm vào các việc trong ngày nên khác theo loại tài khoản: tiết sắp tới hoặc sổ liên lạc tuần này, bốn ô đếm việc của chính người dùng (tiết chưa điểm danh, đơn chờ duyệt, bài chưa nộp, tin nhắn chưa đọc…) và lối vào các màn hình mobile; đó là việc cần làm của người dùng, không phải số liệu tổng hợp (MSMS_Design_Mobile §4).
+**Trang chủ không phải Bảng điều khiển.** Trang chủ là màn đầu tiên của mọi loại tài khoản, mang tính chào đón. Trên web **mọi loại tài khoản thấy cùng một nội dung**: lời chào theo buổi kèm logo trường (tên trường hiện ở thanh đường dẫn đầu trang), một đồng hồ của ngày, **Hôm nay** (khung giờ tiết của trường, đánh dấu tiết đang diễn ra theo giờ thực; giáo viên có tiết thấy thêm lớp và môn mình dạy ở từng tiết; ngày nghỉ cấp trường hoặc Chủ nhật thì báo trường nghỉ), **Năm học** (học kỳ hiện tại, đang ở tuần thứ mấy) và **Ngày nghỉ sắp tới** (ba ngày gần nhất, ngày đầu có đếm ngược và lịch tháng). Trang chủ web không có số liệu thống kê, lối tắt hay bảng tin; số liệu chỉ nằm ở Bảng điều khiển. Trên mobile, Trang chủ là điểm vào các việc trong ngày nên khác theo loại tài khoản: tiết sắp tới hoặc báo cáo tuần này, bốn ô đếm việc của chính người dùng (tiết chưa điểm danh, đơn chờ duyệt, bài chưa nộp, tin nhắn chưa đọc…) và lối vào các màn hình mobile; đó là việc cần làm của người dùng, không phải số liệu tổng hợp (MSMS_Design_Mobile §4).
 
 **Cách tính dùng chung.** Mọi chỉ số so **4 tuần gần nhất** (28 ngày tính tới hôm nay) với **4 tuần liền trước**, kèm đường 8 tuần (tuần bắt đầu thứ Hai, ghi theo tuần của năm học: "Tuần 12"). Chưa có dữ liệu thì nói rõ, không hiện 0%.
 
@@ -512,7 +512,7 @@ Ngân hàng câu hỏi **dùng chung toàn trường**: mọi Teacher xem và d�
 
 **BR-21 — Giao bài và làm bài.** Teacher **đang phụ trách chuyên môn** ở (lớp, môn) giao bài cho lớp đó: đặt tên bài (bắt buộc) và lời dặn tùy chọn, chọn các câu Sẵn dùng **cùng môn** từ ngân hàng (chọn tay hoặc dựng theo **ma trận đề** bài × độ khó), thứ tự các câu, **thang điểm theo phần**, thời điểm mở (mặc định ngay), hạn nộp (> hiện tại và sau thời điểm mở) và **thời lượng làm bài** (1 đến 600 phút, tùy chọn — để trống là không giới hạn). Bài **giao ngay**, không có bước nháp: hệ thống kiểm bài có từ 1 đến 50 câu và lớp có học sinh đang học, lưu danh sách được giao, tạo thông báo cho học sinh của lớp; từ đó bài **không sửa, không xóa, không gia hạn được nữa**.
 
-**Danh sách được giao:** lúc giao, hệ thống lưu lại danh sách học sinh có ghi danh hiệu lực ở lớp tại thời điểm đó. Danh sách này không đổi về sau: học sinh chuyển lớp hoặc vào lớp sau thời điểm giao không làm đổi người nhận bài, mẫu số tỉ lệ nộp, nhãn "Không nộp" và số liệu sổ liên lạc (BR-24). Học sinh vào lớp sau khi giao không được giao bài đó.
+**Danh sách được giao:** lúc giao, hệ thống lưu lại danh sách học sinh có ghi danh hiệu lực ở lớp tại thời điểm đó. Danh sách này không đổi về sau: học sinh chuyển lớp hoặc vào lớp sau thời điểm giao không làm đổi người nhận bài, mẫu số tỉ lệ nộp, nhãn "Không nộp" và số liệu báo cáo tuần (BR-24). Học sinh vào lớp sau khi giao không được giao bài đó.
 
 Học sinh trong danh sách được giao mở bài từ thời điểm mở tới hạn nộp; bài tự lưu nháp. **Bài có thời lượng:** học sinh bấm **Bắt đầu**, đồng hồ tính từ lúc đó theo giờ Backend và vẫn chạy khi học sinh thoát ra rồi vào lại. **Hạn thực tế** của học sinh là mốc sớm hơn giữa hạn nộp và (giờ bắt đầu + thời lượng); bài không có thời lượng thì hạn thực tế là hạn nộp. **Tối đa một lần nộp**; Backend từ chối lưu nháp hoặc nộp sau hạn thực tế, và từ chối nộp lại; bài gửi lên trong **10 giây** sau hạn thực tế vẫn được nhận để bù độ trễ mạng. **Hết hạn thực tế mà học sinh chưa nộp:** nếu bản nháp đã có ít nhất một câu trả lời thì Backend **tự nộp và chấm bản nháp đó**, lúc bài được mở sau hạn thực tế hoặc ở lượt quét định kỳ kế tiếp (mặc định 2 phút một lần), tùy việc nào tới trước; bài nộp ghi giờ là hạn thực tế; bản nháp rỗng hoặc chưa từng mở bài thì không phải 0 điểm — hiển thị "Không nộp".
 
@@ -525,13 +525,13 @@ Chấm ngay khi nộp: một câu chỉ được điểm khi học sinh chọn *
 
 ### 7.7. Dịch vụ phụ huynh, truyền thông, giám sát
 
-**BR-24 — Sổ liên lạc tuần.** **Tính trực tiếp khi mở, không lưu, không có job sinh sổ, không ai viết tay.** Một sổ = một học sinh + một tuần (thứ Hai – Chủ nhật), xem được cho mọi tuần của năm học hiện hành mà học sinh có ghi danh. Gồm:
+**BR-24 — Báo cáo tuần.** **Tính trực tiếp khi mở, không lưu, không có job sinh báo cáo, không ai viết tay.** Một báo cáo = một học sinh + một tuần (thứ Hai – Chủ nhật), xem được cho mọi tuần của năm học hiện hành mà học sinh có ghi danh. Gồm:
 
 - **Chuyên cần:** số tiết có mặt, muộn, vắng có phép, vắng không phép, chưa điểm danh — chỉ tiết Đã xếp lịch đã diễn ra.
 - **Bài tập có hạn nộp trong tuần:** số được giao, đã nộp, chưa nộp (còn hạn), không nộp (đã quá hạn mà chưa nộp).
-- **Điểm và phân tích** của các bài đó.
+- **Điểm** của các bài đó. Phân tích AI của từng bài xem ở màn Kết quả bài tập (BR-23), không nằm trong báo cáo tuần.
 
-Student xem sổ của chính mình, Parent xem sổ của từng con được liên kết, chủ nhiệm xem sổ của học sinh lớp mình đang chủ nhiệm; School Admin không xem sổ. Không xếp hạng, không điểm trung bình lớp, không hạnh kiểm. Mục không có dữ liệu để trống. Số liệu luôn theo dữ liệu hiện tại — nhập bù điểm danh hay đơn duyệt muộn đều được phản ánh ngay lần mở sau.
+Student xem báo cáo của chính mình, Parent xem báo cáo của từng con được liên kết, chủ nhiệm xem báo cáo của học sinh lớp mình đang chủ nhiệm; School Admin không xem báo cáo. Không xếp hạng, không điểm trung bình lớp, không hạnh kiểm. Mục không có dữ liệu để trống. Số liệu luôn theo dữ liệu hiện tại — nhập bù điểm danh hay đơn duyệt muộn đều được phản ánh ngay lần mở sau.
 
 **BR-25 — Hộp thư.** Cả Parent và Teacher đều có thể **tạo** hội thoại về một học sinh: Phụ huynh tạo với **chủ nhiệm** lớp con đang học hoặc **giáo viên đang phụ trách chuyên môn** ở lớp đó; Giáo viên (chủ nhiệm hoặc đang phụ trách chuyên môn) tạo với phụ huynh của học sinh thuộc lớp mình đang dạy. Mỗi bộ (phụ huynh, cán bộ, học sinh) có đúng một hội thoại. Hai bên nhắn văn bản tối đa 2.000 ký tự; không file, không gọi, không nhóm. Quan hệ được kiểm **mỗi lần gửi**: quan hệ đã kết thúc thì hội thoại thành **chỉ đọc**, lịch sử giữ nguyên. School Admin **không đọc và không nhắn** trong hội thoại. Tin nhắn mới hiện ngay ở bên nhận đang mở ứng dụng (web và mobile, qua SignalR), kèm chỉ báo **đang nhập**, **đã xem** (khi người nhận mở hội thoại) và **online/offline** của bên kia trong cùng hội thoại; School Admin không tham gia hội thoại nên không có trạng thái này. Realtime chỉ là kênh đẩy: việc gửi và kiểm quan hệ vẫn qua Backend như trên, mất kết nối thì tải lại phần đã lỡ.
 
@@ -596,7 +596,7 @@ Mỗi điều dưới đây nếu thêm vào sẽ làm lược đồ khó thiế
 | --- | --- |
 | **Parent** | Toàn bộ chức năng của mình |
 | **Student** | Toàn bộ chức năng của mình trừ làm bài tập rèn luyện: trên mobile xem bài được giao và hạn nộp, kết quả và phân tích AI; làm bài trên web |
-| **Teacher** | Trang chủ · lịch dạy của mình · điểm danh và sửa trong ngày · hộp thư · thông báo · bảng tin (đọc) · hồ sơ cá nhân · nếu chủ nhiệm: chuyên cần lớp, danh sách và hồ sơ học sinh lớp mình, hộp đơn nghỉ, duyệt và từ chối, sổ liên lạc lớp mình |
+| **Teacher** | Trang chủ · lịch dạy của mình · điểm danh và sửa trong ngày · hộp thư · thông báo · bảng tin (đọc) · hồ sơ cá nhân · nếu chủ nhiệm: chuyên cần lớp, danh sách và hồ sơ học sinh lớp mình, hộp đơn nghỉ, duyệt và từ chối, báo cáo tuần lớp mình |
 | **School Admin, Principal, Vice Principal** | Không có mobile, dùng web |
 
 Chỉ có trên web: soạn câu hỏi, giao bài, dựng đề và bản in đề, làm bài tập rèn luyện, xem kết quả bài tập theo lớp, soạn bài đăng; toàn bộ SCH và PPL (trừ danh sách và hồ sơ học sinh lớp chủ nhiệm), SCD (trừ màn hình xem lịch cá nhân) và ADM.

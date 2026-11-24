@@ -1,6 +1,6 @@
 namespace MSMS.Api.Modules.Par.Dtos;
 
-/// <summary>Một tuần (Thứ 2 - Chủ nhật) hợp lệ để xem sổ liên lạc của học sinh (BR-24).</summary>
+/// <summary>Một tuần (Thứ 2 - Chủ nhật) hợp lệ để xem báo cáo tuần của học sinh (BR-24).</summary>
 public record ReportWeekDto(DateOnly WeekStart, DateOnly WeekEnd, int WeekNumber, string Label, bool IsCurrent);
 
 /// <summary>5 chỉ số chuyên cần trong tuần, tính on-read từ tiết đã diễn ra (BR-24).</summary>
@@ -12,15 +12,14 @@ public record AttendanceSummaryDto(
     int UnexcusedCount,
     int UnmarkedCount);
 
-/// <summary>Một bài tập có hạn nộp trong tuần, cùng trạng thái và kết quả (BR-21, BR-22, BR-23).</summary>
+/// <summary>Một bài tập có hạn nộp trong tuần, cùng trạng thái và điểm (BR-21, BR-22).</summary>
 public record WeeklyAssignmentItemDto(
     int AssignmentId,
     string Title,
     string SubjectName,
     DateTime DueAt,
     string Status,
-    decimal? Score,
-    string? AiFeedback);
+    decimal? Score);
 
 /// <summary>4 chỉ số thống kê bài tập trong tuần và danh sách chi tiết.</summary>
 public record AssignmentSummaryDto(
@@ -30,7 +29,7 @@ public record AssignmentSummaryDto(
     int MissedCount,
     IReadOnlyList<WeeklyAssignmentItemDto> Items);
 
-/// <summary>Sổ liên lạc điện tử của một học sinh trong một tuần, tính trực tiếp khi mở (BR-24).</summary>
+/// <summary>Báo cáo tuần của một học sinh trong một tuần, tính trực tiếp khi mở (BR-24).</summary>
 public record WeeklyReportDto(
     int StudentId,
     string StudentName,
@@ -41,5 +40,5 @@ public record WeeklyReportDto(
     AttendanceSummaryDto Attendance,
     AssignmentSummaryDto Assignments);
 
-/// <summary>Học sinh thuộc lớp GVCN đang chủ nhiệm hiệu lực, dùng để chọn học sinh xem sổ liên lạc.</summary>
+/// <summary>Học sinh thuộc lớp GVCN đang chủ nhiệm hiệu lực, dùng để chọn học sinh xem báo cáo tuần.</summary>
 public record HomeroomStudentItemDto(int StudentId, string StudentCode, string FullName, string ClassName);

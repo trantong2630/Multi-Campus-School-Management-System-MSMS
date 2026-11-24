@@ -19,7 +19,7 @@ public static class Policies
     public const string Student = nameof(Student);
     public const string Parent = nameof(Parent);
     public const string StudentOrParent = nameof(StudentOrParent);   // xem điểm và phân tích đã công bố (LRN-03, LRN-04)
-    public const string ReportViewer = nameof(ReportViewer);   // sổ liên lạc: Teacher (service giới hạn ở chủ nhiệm), Student, Parent; SchoolAdmin không xem
+    public const string ReportViewer = nameof(ReportViewer);   // báo cáo tuần: Teacher (service giới hạn ở chủ nhiệm), Student, Parent; SchoolAdmin không xem
     public const string ConversationParticipant = nameof(ConversationParticipant); // hộp thư chỉ dành cho Teacher và Parent
     public const string AttendanceWriter = nameof(AttendanceWriter);   // ghi điểm danh: Teacher (tiết mình, trong ngày), SchoolAdmin (nhập bù, sửa) — BR-17
     public const string PostAuthor = nameof(PostAuthor);   // đăng, sửa, ẩn, xóa bài bảng tin (COM-02): Principal, VicePrincipal, Teacher; School Admin chỉ đọc
