@@ -993,11 +993,11 @@ Dùng `signalr_netcore` trong dịch vụ Riverpod; chỉ giữ kết nối khi 
 
 **4.8.11 — Xem bảng tin theo phạm vi người đọc / View News Feed**  
 `BE + Web + Mobile` · 2 MD · dep: 4.1.4  
-Bài Nội bộ chỉ cán bộ đọc; bài Toàn trường mọi người đọc, gồm học sinh và phụ huynh. Danh sách phân trang, lọc theo phạm vi; cán bộ xem thêm bài Đã ẩn (chỉ tác giả, người ẩn, School Admin và Principal thấy bài đã ẩn). Ảnh đầu là ảnh bìa hiện trên danh sách (BR-27).
+Bài Nội bộ chỉ cán bộ đọc; bài Toàn trường mọi người đọc, gồm học sinh và phụ huynh. Danh sách phân trang, lọc theo phạm vi; cán bộ xem thêm bài Đã ẩn (chỉ tác giả, người ẩn và Principal thấy bài đã ẩn). Ảnh đầu là ảnh bìa hiện trên danh sách (BR-27).
 
 **4.8.12 — Soạn bài đăng và chọn phạm vi / Create Post with Scope**  
 `BE + Web` · 1.5 MD · dep: 4.8.11  
-MỌI CÁN BỘ đăng được — School Admin, Principal, Vice Principal, Teacher — và chọn một trong hai phạm vi Nội bộ hoặc Toàn trường. Soạn bài chỉ có trên web (BR-27, mục 8.1).
+Principal, Vice Principal và Teacher đăng được, School Admin chỉ đọc, và chọn một trong hai phạm vi Nội bộ hoặc Toàn trường. Soạn bài chỉ có trên web (BR-27, mục 8.1).
 
 **4.8.13 — Đính kèm ảnh cho bài đăng / Attach Post Images**  
 `BE + Web` · 2 MD · dep: 4.8.12  
@@ -1009,7 +1009,7 @@ Người đăng sửa tiêu đề (tối đa 200 ký tự), nội dung (tối đ
 
 **4.8.15 — Ẩn và hiện lại bài / Hide and Unhide Post**  
 `BE + Web` · 1 MD · dep: 4.8.12  
-Trạng thái Đã đăng ↔ Đã ẩn, không có trạng thái nháp. Người đăng ẩn bài của mình; School Admin và Principal ẩn bài của người khác, bắt buộc nhập lý do, lưu người ẩn, thời điểm, lý do; tác giả và nội dung giữ nguyên. Chỉ người đã ẩn bài mới hiện lại được bài đó. Ẩn bài giữ ảnh (BR-27).
+Trạng thái Đã đăng ↔ Đã ẩn, không có trạng thái nháp. Người đăng ẩn bài của mình; Chỉ Principal ẩn bài của người khác (kể cả bài cũ của School Admin), bắt buộc nhập lý do, lưu người ẩn, thời điểm, lý do; tác giả và nội dung giữ nguyên. Chỉ người đã ẩn bài mới hiện lại được bài đó. Ẩn bài giữ ảnh (BR-27).
 
 **4.8.16 — Xóa bài và xóa file ảnh kèm theo / Delete Post and Its Images**  
 `BE + Web` · 0.5 MD · dep: 4.8.15  
@@ -1017,7 +1017,7 @@ Người đăng xóa bài của mình; xóa bài thì xóa luôn file ảnh, kh�
 
 **4.8.17 — Kiểm thử phạm vi bảng tin / News Feed Scope Tests**  
 `QA` · 1 MD · dep: 4.8.11, 4.8.12  
-Học sinh và phụ huynh không thấy bài Nội bộ; giáo viên đăng được không cần trách nhiệm; School Admin và Principal ẩn được bài của người khác nhưng phải nhập lý do, Teacher và Vice Principal thì không; bảng tin không tạo thông báo.
+Học sinh và phụ huynh không thấy bài Nội bộ; giáo viên đăng được không cần trách nhiệm; School Admin không đăng và không ẩn được bài; chỉ Principal ẩn được bài của người khác và phải nhập lý do, Vice Principal và Teacher chỉ ẩn bài của mình; bảng tin không tạo thông báo.
 
 ---
 

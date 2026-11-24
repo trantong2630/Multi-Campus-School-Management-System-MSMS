@@ -22,9 +22,10 @@ public static class PostStatuses
 }
 
 /// <summary>
-/// Bảng tin (COM-02, BR-27). Mọi cán bộ đăng và chọn phạm vi; học sinh, phụ huynh chỉ đọc bài Toàn trường đang đăng.
-/// Tác giả sửa, ẩn, xóa bài của mình. Ẩn bài người khác (bắt buộc lý do) theo thứ bậc: School Admin ẩn bài của mọi người,
-/// Principal ẩn bài của Vice Principal và Teacher, Vice Principal ẩn bài của Teacher; Teacher chỉ ẩn bài của mình.
+/// Bảng tin (COM-02, BR-27). Principal, Vice Principal và Teacher đăng và chọn phạm vi; School Admin chỉ đọc (như mọi cán bộ);
+/// học sinh, phụ huynh chỉ đọc bài Toàn trường đang đăng.
+/// Tác giả sửa, ẩn, xóa bài của mình. Chỉ Principal ẩn được bài của người khác (bắt buộc lý do), kể cả bài cũ của School Admin;
+/// Vice Principal và Teacher chỉ ẩn bài của mình.
 /// Bảng tin không tạo thông báo nên không gọi NotificationSender.
 /// </summary>
 public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock, PostImageStorage storage)
@@ -37,18 +38,18 @@ public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock
     private const int ExcerptLength = 200;
 
     private bool IsStaff => user.AccountType is AccountTypes.SchoolAdmin or AccountTypes.Principal or AccountTypes.VicePrincipal or AccountTypes.Teacher;
-    private bool ModeratesAll => user.AccountType == AccountTypes.SchoolAdmin;
+    /// <summary>Người được đăng, sửa, ẩn, xóa bài: School Admin chỉ đọc bảng tin.</summary>
+    private bool IsAuthor => user.AccountType is AccountTypes.Principal or AccountTypes.VicePrincipal or AccountTypes.Teacher;
 
-    /// <summary>Loại tài khoản tác giả mà người dùng hiện tại được ẩn bài (ngoài bài của chính mình).</summary>
+    /// <summary>Loại tài khoản tác giả mà người dùng hiện tại được ẩn bài (ngoài bài của chính mình): chỉ Principal.</summary>
     private string[] ModeratedAuthorTypes => user.AccountType switch
     {
-        AccountTypes.Principal => [AccountTypes.VicePrincipal, AccountTypes.Teacher],
-        AccountTypes.VicePrincipal => [AccountTypes.Teacher],
+        AccountTypes.Principal => [AccountTypes.VicePrincipal, AccountTypes.Teacher, AccountTypes.SchoolAdmin],   // bài cũ của School Admin còn trong bảng tin
         _ => [],
     };
 
     private bool CanModerate(string? authorType) =>
-        ModeratesAll || (authorType != null && ModeratedAuthorTypes.Contains(authorType));
+        IsAuthor && authorType != null && ModeratedAuthorTypes.Contains(authorType);
 
     /// <summary>Bài người đọc được thấy. Bài đã ẩn chỉ hiện cho tác giả, người ẩn và người có quyền ẩn bài của tác giả đó.</summary>
     private IQueryable<Post> VisibleToMe()
@@ -56,9 +57,8 @@ public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock
         var q = db.Post.AsNoTracking();
         if (!IsStaff) return q.Where(p => p.Status == PostStatuses.Posted && p.Visibility == PostVisibilities.School);
         var me = user.PersonId;
-        var all = ModeratesAll;
         var types = ModeratedAuthorTypes;
-        return q.Where(p => p.Status == PostStatuses.Posted || all || p.AuthorPersonId == me || p.HiddenByPersonId == me
+        return q.Where(p => p.Status == PostStatuses.Posted || p.AuthorPersonId == me || p.HiddenByPersonId == me
             || (p.AuthorPerson.Account != null && types.Contains(p.AuthorPerson.Account.AccountType)));
     }
 
@@ -67,7 +67,7 @@ public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock
     public async Task<PagedResult<PostListItemDto>> ListAsync(PostQueryDto q)
     {
         var posts = VisibleToMe();
-        var wantHidden = IsStaff && q.Status == PostStatuses.Hidden;
+        var wantHidden = IsAuthor && q.Status == PostStatuses.Hidden;
         posts = posts.Where(p => p.Status == (wantHidden ? PostStatuses.Hidden : PostStatuses.Posted));
         if (q.Visibility is PostVisibilities.Internal or PostVisibilities.School)
             posts = posts.Where(p => p.Visibility == q.Visibility);
@@ -110,7 +110,7 @@ public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock
 
     public async Task<PostDetailDto> CreateAsync(PostForm form)
     {
-        RequireStaff();
+        RequireAuthor();
         var title = Guard.Required(form.Title, "Tiêu đề", MaxTitle);
         var content = Guard.RequiredMultiline(form.Content, "Nội dung", MaxContent);
         var visibility = ParseVisibility(form.Visibility);
@@ -192,7 +192,7 @@ public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock
 
     public async Task<PostDetailDto> HideAsync(int id, HidePostRequest r)
     {
-        RequireStaff();
+        RequireAuthor();
         var post = await db.Post.Include(p => p.AuthorPerson).ThenInclude(a => a.Account)
             .FirstOrDefaultAsync(p => p.PostId == id) ?? throw NotFound();
         if (post.Status == PostStatuses.Hidden) throw ApiException.Conflict("Bài đăng này đã được ẩn.");
@@ -212,7 +212,7 @@ public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock
 
     public async Task<PostDetailDto> UnhideAsync(int id)
     {
-        RequireStaff();
+        RequireAuthor();
         var post = await db.Post.FirstOrDefaultAsync(p => p.PostId == id) ?? throw NotFound();
         if (post.Status != PostStatuses.Hidden) throw ApiException.Conflict("Bài đăng này đang hiển thị.");
         if (post.HiddenByPersonId != user.PersonId)
@@ -240,24 +240,24 @@ public sealed class PostService(MsmsDbContext db, CurrentUser user, IClock clock
 
     // ---- helpers ----
 
-    private void RequireStaff()
+    private void RequireAuthor()
     {
-        if (!IsStaff) throw ApiException.Forbidden("Chỉ cán bộ mới thao tác được với bài đăng.");
+        if (!IsAuthor) throw ApiException.Forbidden("Chỉ Hiệu trưởng, Hiệu phó và giáo viên mới thao tác được với bài đăng.");
     }
 
     /// <summary>Bài của chính mình (kể cả đã ẩn), kèm danh sách ảnh để theo dõi thay đổi.</summary>
     private async Task<Post> FindOwnAsync(int id)
     {
-        RequireStaff();
+        RequireAuthor();
         var post = await db.Post.Include(p => p.PostImage).FirstOrDefaultAsync(p => p.PostId == id && p.AuthorPersonId == user.PersonId);
         return post ?? throw ApiException.NotFound("Bài đăng không tồn tại hoặc không phải bài của bạn.");
     }
 
-    private bool CanEdit(int authorId) => IsStaff && authorId == user.PersonId;
+    private bool CanEdit(int authorId) => IsAuthor && authorId == user.PersonId;
     private bool CanDelete(int authorId) => CanEdit(authorId);
     private bool CanHide(string status, int authorId, string? authorType) =>
-        IsStaff && status == PostStatuses.Posted && (authorId == user.PersonId || CanModerate(authorType));
-    private bool CanUnhide(string status, int? hiddenBy) => IsStaff && status == PostStatuses.Hidden && hiddenBy == user.PersonId;
+        IsAuthor && status == PostStatuses.Posted && (authorId == user.PersonId || CanModerate(authorType));
+    private bool CanUnhide(string status, int? hiddenBy) => IsAuthor && status == PostStatuses.Hidden && hiddenBy == user.PersonId;
 
     private static string ParseVisibility(string? v) => v switch
     {

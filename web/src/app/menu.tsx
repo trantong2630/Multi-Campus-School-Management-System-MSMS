@@ -61,7 +61,7 @@ export const menu: MenuGroup[] = [
     // Cán bộ thấy cả Đăng tin lẫn Bảng tin; học sinh, phụ huynh chỉ còn Bảng tin nên nhóm tự thu về một mục (xem visibleMenu).
     key: 'com', label: 'Bảng tin', icon: Newspaper, section: 'overview',
     children: [
-      { key: 'com-manage', label: 'Đăng tin', path: '/com/posts', roles: STAFF, ready: true },
+      { key: 'com-manage', label: 'Đăng tin', path: '/com/posts', roles: ['Principal', 'VicePrincipal', 'Teacher'], ready: true },
       { key: 'com-feed', label: 'Bảng tin', path: '/com/feed', roles: ALL, ready: true },
     ],
   },

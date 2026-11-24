@@ -25,12 +25,13 @@ const PAGE_SIZE = 10;
 interface HideValues { reason?: string }
 
 /**
- * COM-02: bảng tin. Mọi cán bộ đăng bài và chọn phạm vi Nội bộ hoặc Toàn trường; học sinh, phụ huynh chỉ đọc bài Toàn trường.
+ * COM-02: bảng tin. Hiệu trưởng, Hiệu phó và giáo viên đăng bài và chọn phạm vi Nội bộ hoặc Toàn trường; School Admin chỉ đọc; học sinh, phụ huynh chỉ đọc bài Toàn trường.
  * Bảng tin không tạo thông báo (BR-27).
  */
 export function PostsPage() {
   const { user } = useAuth();
-  const isStaff = user?.accountType !== 'Student' && user?.accountType !== 'Parent';
+  // School Admin chỉ đọc bảng tin; Hiệu trưởng, Hiệu phó và giáo viên mới đăng, ẩn, xóa bài.
+  const isStaff = user?.accountType === 'Principal' || user?.accountType === 'VicePrincipal' || user?.accountType === 'Teacher';
   const qc = useQueryClient();
   const [status, setStatus] = useState<'Posted' | 'Hidden'>('Posted');
   const [visibility, setVisibility] = useState<string | undefined>();

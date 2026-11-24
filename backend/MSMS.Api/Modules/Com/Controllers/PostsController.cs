@@ -27,24 +27,24 @@ public class PostsController(PostService service) : ControllerBase
         return File(image.Content, image.ContentType);
     }
 
-    [HttpPost, Authorize(Policy = Policies.Staff), RequestSizeLimit(UploadLimit)]
+    [HttpPost, Authorize(Policy = Policies.PostAuthor), RequestSizeLimit(UploadLimit)]
     public Task<PostDetailDto> Create([FromForm] PostForm form) => service.CreateAsync(form);
 
-    [HttpPut("{id:int}"), Authorize(Policy = Policies.Staff)]
+    [HttpPut("{id:int}"), Authorize(Policy = Policies.PostAuthor)]
     public Task<PostDetailDto> Update(int id, PostUpdateRequest r) => service.UpdateAsync(id, r);
 
-    [HttpPost("{id:int}/images"), Authorize(Policy = Policies.Staff), RequestSizeLimit(UploadLimit)]
+    [HttpPost("{id:int}/images"), Authorize(Policy = Policies.PostAuthor), RequestSizeLimit(UploadLimit)]
     public Task<PostDetailDto> AddImages(int id, [FromForm] PostImagesForm form) => service.AddImagesAsync(id, form.Files);
 
-    [HttpDelete("{id:int}/images/{imageId:int}"), Authorize(Policy = Policies.Staff)]
+    [HttpDelete("{id:int}/images/{imageId:int}"), Authorize(Policy = Policies.PostAuthor)]
     public Task<PostDetailDto> RemoveImage(int id, int imageId) => service.RemoveImageAsync(id, imageId);
 
-    [HttpPost("{id:int}/hide"), Authorize(Policy = Policies.Staff)]
+    [HttpPost("{id:int}/hide"), Authorize(Policy = Policies.PostAuthor)]
     public Task<PostDetailDto> Hide(int id, HidePostRequest r) => service.HideAsync(id, r);
 
-    [HttpPost("{id:int}/unhide"), Authorize(Policy = Policies.Staff)]
+    [HttpPost("{id:int}/unhide"), Authorize(Policy = Policies.PostAuthor)]
     public Task<PostDetailDto> Unhide(int id) => service.UnhideAsync(id);
 
-    [HttpDelete("{id:int}"), Authorize(Policy = Policies.Staff)]
+    [HttpDelete("{id:int}"), Authorize(Policy = Policies.PostAuthor)]
     public async Task<IActionResult> Delete(int id) { await service.DeleteAsync(id); return NoContent(); }
 }

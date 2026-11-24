@@ -72,7 +72,7 @@ Có **6 loại tài khoản; một tài khoản mang đúng một loại** (BR-0
 
 | Actor | Đọc | Ghi |
 | --- | --- | --- |
-| **School Admin** | Mọi dữ liệu vận hành toàn trường, trừ điểm và phân tích bài tập. **Không** đọc hội thoại phụ huynh – giáo viên | Mọi danh mục (kể cả thông tin trường), hồ sơ, tài khoản, trách nhiệm, ngày nghỉ cấp trường hoặc phân hiệu, **nhập bù và sửa điểm danh**, bài đăng bảng tin (ẩn được bài của người khác kèm lý do, BR-27). **Không** có Dashboard học vụ (chỉ có Thống kê hệ thống), **không** xuất Excel, **không** làm thời khóa biểu, **không** làm việc đứng tên người khác (mục 2.4) |
+| **School Admin** | Mọi dữ liệu vận hành toàn trường, trừ điểm và phân tích bài tập. **Không** đọc hội thoại phụ huynh – giáo viên | Mọi danh mục (kể cả thông tin trường), hồ sơ, tài khoản, trách nhiệm, ngày nghỉ cấp trường hoặc phân hiệu, **nhập bù và sửa điểm danh**. Đọc bảng tin nhưng **không** đăng hay ẩn bài (BR-27). **Không** có Dashboard học vụ (chỉ có Thống kê hệ thống), **không** xuất Excel, **không** làm thời khóa biểu, **không** làm việc đứng tên người khác (mục 2.4) |
 | **Principal** | Toàn trường: lịch dạy, điểm danh, Bảng điều khiển, bảng tin; qua MSMS AI thêm chuyên cần, tỷ lệ nộp và điểm trung bình bài tập theo từng học sinh (BR-29). **Không** đọc đơn nghỉ | Trách nhiệm (mục 2.2), bài đăng bảng tin (ẩn được bài của người khác kèm lý do, BR-27). Xuất Excel mọi lớp, mọi phân hiệu và danh sách trách nhiệm |
 | **Vice Principal** | Phân hiệu mình: lịch dạy, điểm danh, Bảng điều khiển, MSMS AI như Principal (BR-29). Màn hình Lịch dạy chỉ cho xem phân hiệu mình; riêng khi chọn giáo viên cho tiết hoặc dạy thay thì **danh sách giáo viên là toàn trường**, kèm trạng thái rảnh hoặc bận, kiểm trùng lịch cũng toàn trường (BR-13); màn hình Phụ trách chuyên môn cũng xem **toàn trường** | Thời khóa biểu, điều chỉnh lịch, giáo viên vắng — cho phân hiệu mình. Bài đăng bảng tin. Xuất Excel phân hiệu mình (kể cả danh sách trách nhiệm). **Không** sửa điểm danh |
 | **Teacher** | Tiết mình dạy; lớp + môn mình phụ trách. Nếu chủ nhiệm: hồ sơ, chuyên cần, đơn nghỉ, sổ liên lạc của lớp chủ nhiệm. Nếu tổ trưởng: số liệu tổng hợp của tổ ở Tình hình tổ chuyên môn (chỉ đọc), không xem bài làm hay điểm từng học sinh | Điểm danh tiết mình dạy **trong ngày của tiết**; soạn câu hỏi của mình; giao bài cho lớp + môn mình phụ trách; trả lời tin nhắn; bài đăng bảng tin. Nếu chủ nhiệm: duyệt đơn nghỉ, xuất Excel điểm danh lớp mình |
@@ -171,7 +171,7 @@ Mọi tính năng phục vụ một trong bốn luồng. Tính năng không nằ
 2. **Parent** và **Student** xem **sổ liên lạc tuần**, tính trực tiếp từ dữ liệu (BR-24).
 3. **Parent** nhắn tin 1–1 với chủ nhiệm hoặc giáo viên đang dạy con (BR-25).
 4. Mọi sự kiện đáng chú ý tạo **thông báo trong ứng dụng** (BR-26).
-5. **Mọi cán bộ** đăng bài bảng tin, chọn phạm vi Nội bộ hoặc Toàn trường (BR-27).
+5. **Principal, Vice Principal, Teacher** đăng bài bảng tin, chọn phạm vi Nội bộ hoặc Toàn trường; School Admin chỉ đọc (BR-27).
 6. **Principal**, **Vice Principal** theo dõi Bảng điều khiển và hỏi MSMS AI để báo cáo, so sánh, xếp hạng số liệu (BR-29); **School Admin** tra Audit Log (BR-28, ADM-01, ADM-02).
 
 ---
@@ -267,7 +267,7 @@ SA là người duy nhất ghi. HT có các màn hình xem Thông tin trường,
 | ID | Feature | Nội dung chính | Ghi | Đọc | BR |
 | --- | --- | --- | --- | --- | --- |
 | COM-01 | Trung tâm thông báo | Thông báo trong ứng dụng, đã đọc / chưa đọc, kiểm quyền khi mở | hệ thống | mọi loại 📱 | BR-26 |
-| COM-02 | Bảng tin | Bài đăng phạm vi Nội bộ hoặc Toàn trường, kèm tối đa 5 ảnh | mọi cán bộ (web) | Nội bộ: cán bộ 📱 · Toàn trường: mọi người 📱 | BR-27 |
+| COM-02 | Bảng tin | Bài đăng phạm vi Nội bộ hoặc Toàn trường, kèm tối đa 5 ảnh | HT, HP, GV (web) | Nội bộ: cán bộ 📱 · Toàn trường: mọi người 📱 | BR-27 |
 
 ### ADM — Administration & Oversight (3)
 
@@ -372,7 +372,7 @@ Nhãn cuối của điểm danh có bốn giá trị: **Có mặt / Muộn / V�
 
 **BR-01 — Loại tài khoản.** Sáu loại ở mục 2.1, mỗi tài khoản mang đúng một loại. **Một hồ sơ có đúng một tài khoản.** Cấp sai loại thì đổi loại tài khoản — một thao tác, ghi Audit, cấp lại mật khẩu tạm và đưa tài khoản về Chờ đổi mật khẩu; hồ sơ và mọi lịch sử nghiệp vụ giữ nguyên vì chúng gắn với hồ sơ, không gắn với tài khoản. Quyền = loại tài khoản + trách nhiệm hoặc phụ trách chuyên môn đang hiệu lực + đối tượng + trạng thái đối tượng. Không có bảng quyền động, không đa vai trò, không chọn vai trò sau đăng nhập.
 
-**BR-02 — School Admin.** Vượt phạm vi: thao tác mọi phân hiệu, lớp, môn mà không cần phụ trách chuyên môn. Không làm việc đứng tên người khác: không làm hành vi ở mục 2.4, không giả đăng nhập, không duyệt đơn nghỉ, không đọc hội thoại, không làm thời khóa biểu. Riêng bảng tin, School Admin (cùng Principal) ẩn được bài của người khác kèm lý do (BR-27). Không vượt điều kiện nghiệp vụ: vẫn bị chặn khi sửa tiết bị khóa, khi dữ liệu sai mẫu.
+**BR-02 — School Admin.** Vượt phạm vi: thao tác mọi phân hiệu, lớp, môn mà không cần phụ trách chuyên môn. Không làm việc đứng tên người khác: không làm hành vi ở mục 2.4, không giả đăng nhập, không duyệt đơn nghỉ, không đọc hội thoại, không làm thời khóa biểu. Riêng bảng tin, School Admin chỉ đọc, không đăng hay ẩn bài (BR-27). Không vượt điều kiện nghiệp vụ: vẫn bị chặn khi sửa tiết bị khóa, khi dữ liệu sai mẫu.
 
 **BR-03 — Mã hồ sơ và tên đăng nhập.** Hệ thống sinh **mã hồ sơ** khi tạo hồ sơ, không nhập tay, không sửa: tiền tố `HS` / `CB` / `PH` + 6 chữ số lấy từ **một bộ đếm chung cho cả ba loại**, nên không có hai hồ sơ nào trùng phần số. **Tên đăng nhập** = tên + chữ cái đầu họ và đệm + tiền tố + phần số, bỏ dấu, chữ thường — Trần Đức Kiên mã `HS186194` → `kientdhs186194`. Phần số duy nhất nên tên đăng nhập không trùng, không có cơ chế hậu tố. Người vừa là cán bộ vừa là phụ huynh có hai hồ sơ, hai mã, hai tên đăng nhập.
 
@@ -545,14 +545,14 @@ Student xem sổ của chính mình, Parent xem sổ của từng con được l
 | Bài mới được giao | Học sinh của lớp |
 | Tin nhắn mới | Người nhận trong hội thoại — hiện ở hộp thư (số tin chưa đọc), không liệt kê ở chuông thông báo |
 
-**BR-27 — Bảng tin.** **Mọi cán bộ đăng được** — School Admin, Principal, Vice Principal, Teacher, kể cả khi đang giữ trách nhiệm chủ nhiệm hay tổ trưởng. Khi đăng, chọn một trong hai phạm vi:
+**BR-27 — Bảng tin.** **Principal, Vice Principal và Teacher đăng được**, kể cả khi đang giữ trách nhiệm chủ nhiệm hay tổ trưởng; **School Admin chỉ đọc**, không đăng và không ẩn bài. Khi đăng, chọn một trong hai phạm vi:
 
 | Phạm vi | Ai đọc |
 | --- | --- |
 | **Nội bộ** | Chỉ cán bộ |
 | **Toàn trường** | Mọi người, gồm học sinh và phụ huynh |
 
-Bài kèm tối đa **5 ảnh** (JPG hoặc PNG, mỗi ảnh ≤ 2 MB); ảnh đầu là ảnh bìa hiện trên danh sách. Trạng thái **Đã đăng ↔ Đã ẩn**, không có nháp. Người đăng sửa và ẩn bài của mình. **School Admin và Principal ẩn được bài của người khác**, bắt buộc nhập lý do; bài giữ nguyên tác giả và nội dung, ghi lại người ẩn, thời điểm và lý do để truy vết. Người ẩn (hoặc tác giả, với bài tự ẩn) hiện lại được bài. Ẩn bài giữ ảnh; xóa bài xóa luôn file. Bảng tin **không tạo thông báo**.
+Bài kèm tối đa **5 ảnh** (JPG hoặc PNG, mỗi ảnh ≤ 2 MB); ảnh đầu là ảnh bìa hiện trên danh sách. Trạng thái **Đã đăng ↔ Đã ẩn**, không có nháp. Người đăng sửa và ẩn bài của mình. **Chỉ Principal ẩn được bài của người khác** (kể cả bài cũ của School Admin), Vice Principal và Teacher chỉ ẩn bài của mình; bắt buộc nhập lý do; bài giữ nguyên tác giả và nội dung, ghi lại người ẩn, thời điểm và lý do để truy vết. Người ẩn (hoặc tác giả, với bài tự ẩn) hiện lại được bài. Ẩn bài giữ ảnh; xóa bài xóa luôn file. Bảng tin **không tạo thông báo**.
 
 Ảnh đại diện người dùng (IAM-04) dùng chung cách lưu này. **Logo trường** (SCH-07) cũng dùng chung cách lưu: một ảnh duy nhất, JPG hoặc PNG, ≤ 2 MB, kiểm theo nội dung file; đổi logo thì file cũ bị xóa.
 

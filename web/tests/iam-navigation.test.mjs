@@ -32,10 +32,11 @@ test('School Admin sees account management and its own dashboard, never schedule
   const person = user('SchoolAdmin');
   assert.ok(paths(person).includes('/adm/accounts'));
   assert.equal(isPathAllowed('/dashboard', person), true);
-  for (const path of ['/homeroom', '/scd/timetable', '/scd/schedule', '/adm/exports', '/lrn/assign', '/lrn/todo', '/par/inbox', '/par/leave-requests']) {
+  for (const path of ['/homeroom', '/scd/timetable', '/scd/schedule', '/adm/exports', '/lrn/assign', '/lrn/todo', '/par/inbox', '/par/leave-requests', '/com/posts']) {
     assert.ok(!paths(person).includes(path), path);
     assert.equal(isPathAllowed(path, person), false, path);
   }
+  assert.ok(paths(person).includes('/com/feed'));
 });
 
 test('Principal reads the dashboard and schedule without inheriting account management or timetable writes', () => {
