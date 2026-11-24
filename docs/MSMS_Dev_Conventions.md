@@ -386,6 +386,7 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Mục | Ai thấy |
 | --- | --- |
 | Trang chủ · Bảng tin | Mọi loại |
+| Bảng tin › Đăng tin | HT, HP, GV |
 | Bảng điều khiển › Tình hình toàn trường | HT |
 | Bảng điều khiển › Tình hình phân hiệu | HP |
 | Bảng điều khiển › Tình hình tổ chuyên môn | GV (chỉ tổ trưởng) |
