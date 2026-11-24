@@ -18,5 +18,8 @@ public partial class AiFeedback
 
     public DateTime? GeneratedAt { get; set; }
 
+    /// <summary>Giờ bài được gửi đi phân tích (lúc chốt bài). Mốc tính "kẹt"; null với dữ liệu cũ thì tính theo giờ nộp.</summary>
+    public DateTime? QueuedAt { get; set; }
+
     public virtual Submission Submission { get; set; } = null!;
 }

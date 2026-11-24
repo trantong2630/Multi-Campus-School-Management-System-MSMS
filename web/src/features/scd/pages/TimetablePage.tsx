@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Modal, Select } from 'antd';
 import { InlineAlert } from '@/shared/components/InlineAlert';
 import { message } from '@/shared/lib/antdStatic';
-import { Eye, FileDown, FileUp, Pencil, Rocket } from 'lucide-react';
+import { Eye, FileDown, FileUp, Pencil, Rocket, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getErrorMessage } from '@/app/apiClient';
 import { useCurrentYear, useYears } from '@/features/sch/hooks/useCatalogs';
@@ -14,7 +14,7 @@ import { PageHeader } from '@/shared/components/PageHeader';
 import { RowActions } from '@/shared/components/RowActions';
 import { StatusBadge } from '@/shared/components/StatusBadge';
 import { blobErrorMessage, downloadFile } from '@/shared/lib/download';
-import { showError } from '@/shared/lib/feedback';
+import { confirmAction, showError } from '@/shared/lib/feedback';
 import { formatDateTime } from '@/shared/lib/format';
 import dayjs from 'dayjs';
 import { scdApi } from '../api';
@@ -87,6 +87,22 @@ export function TimetablePage() {
     }
   };
 
+  const removeDraft = (v: TimetableVersion) => confirmAction({
+    title: `Xóa bản Nháp #${v.versionId}?`,
+    content: `${v.entryCount} ô của bản Nháp này sẽ bị xóa hẳn, không khôi phục được. Lịch dạy đang chạy không bị ảnh hưởng.`,
+    okText: 'Xóa bản Nháp',
+    danger: true,
+    onOk: async () => {
+      try {
+        await scdApi.deleteDraft(v.versionId);
+        await qc.invalidateQueries({ queryKey: ['scd', 'versions'] });
+        message.success(`Đã xóa bản Nháp #${v.versionId}.`);
+      } catch (e) {
+        showError(e, 'Không xóa được bản Nháp');
+      }
+    },
+  });
+
   const noCampus = campuses.isSuccess && campuses.data.length === 0;
 
   return (
@@ -142,12 +158,13 @@ export function TimetablePage() {
             { title: 'Phát hành lúc', dataIndex: 'publishedAt', width: 150, className: 'tabular', render: (v: string | null) => formatDateTime(v) },
             { title: 'Xóa / tạo', key: 'counts', width: 110, align: 'right', className: 'tabular', render: (_: unknown, v: TimetableVersion) => v.status === 'Published' ? `${v.deletedSessionCount} / ${v.createdSessionCount}` : '—' },
             {
-              title: 'Thao tác', key: 'actions', width: 110, align: 'center', fixed: 'right',
+              title: 'Thao tác', key: 'actions', width: 140, align: 'center', fixed: 'right',
               render: (_: unknown, v: TimetableVersion) => (
                 <RowActions actions={[
                   { key: 'grid', label: 'Xem lưới', icon: <Eye size={16} />, hidden: v.status === 'Draft', onClick: () => setGridOf(v) },
                   { key: 'edit', label: 'Sửa bản Nháp', icon: <Pencil size={16} />, hidden: v.status !== 'Draft' || !canManage, onClick: () => setDraftOf(v) },
                   { key: 'publish', label: 'Xem trước và phát hành', icon: <Rocket size={16} />, hidden: v.status !== 'Draft' || !canManage, onClick: () => setPreviewId(v.versionId) },
+                  { key: 'delete', label: 'Xóa bản Nháp', icon: <Trash2 size={16} />, danger: true, hidden: v.status !== 'Draft' || !canManage, onClick: () => removeDraft(v) },
                 ]} />
               ),
             },

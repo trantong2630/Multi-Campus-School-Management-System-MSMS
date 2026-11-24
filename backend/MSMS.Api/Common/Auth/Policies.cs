@@ -21,10 +21,8 @@ public static class Policies
     public const string StudentOrParent = nameof(StudentOrParent);   // xem điểm và phân tích đã công bố (LRN-03, LRN-04)
     public const string ReportViewer = nameof(ReportViewer);   // sổ liên lạc: Teacher (service giới hạn ở chủ nhiệm), Student, Parent; SchoolAdmin không xem
     public const string ConversationParticipant = nameof(ConversationParticipant); // hộp thư chỉ dành cho Teacher và Parent
-    public const string AssignmentOversight = nameof(AssignmentOversight);   // theo dõi tiến độ bài tập: Principal, VicePrincipal, Teacher (service giới hạn ở chủ nhiệm)
     public const string AttendanceWriter = nameof(AttendanceWriter);   // ghi điểm danh: Teacher (tiết mình, trong ngày), SchoolAdmin (nhập bù, sửa) — BR-17
     public const string DataExporter = nameof(DataExporter);   // xuất Excel (ADM-03): Principal, VicePrincipal, Teacher; service giới hạn ở phân hiệu phụ trách và lớp chủ nhiệm, Principal xuất toàn trường
-    public const string SchoolReport = nameof(SchoolReport);   // Báo cáo toàn trường (ADM-01): chỉ Principal
 
 
     public static void Register(AuthorizationOptions o)
@@ -61,11 +59,8 @@ public static class Policies
         o.AddPolicy(ReportViewer, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim,
             AccountTypes.Teacher, AccountTypes.Student, AccountTypes.Parent));
         o.AddPolicy(ConversationParticipant, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.Teacher, AccountTypes.Parent));
-        o.AddPolicy(AssignmentOversight, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim,
-            AccountTypes.Principal, AccountTypes.VicePrincipal, AccountTypes.Teacher));
         o.AddPolicy(AttendanceWriter, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.Teacher, AccountTypes.SchoolAdmin));
         o.AddPolicy(DataExporter, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim,
             AccountTypes.Principal, AccountTypes.VicePrincipal, AccountTypes.Teacher));
-        o.AddPolicy(SchoolReport, p => p.RequireAuthenticatedUser().RequireClaim(CurrentUser.TypeClaim, AccountTypes.Principal));
     }
 }

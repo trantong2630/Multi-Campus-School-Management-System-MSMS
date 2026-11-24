@@ -83,6 +83,21 @@ public sealed class ClassService(MsmsDbContext db, IClock clock)
             var open = await db.Enrollment.Where(EnrollmentRules.OpenOrUpcoming(today)).CountAsync(e => e.ClassId == id);
             if (open > 0)
                 throw ApiException.BadRequest($"Lớp còn {open} học sinh có ghi danh đang mở hoặc sắp bắt đầu. Chuyển hoặc kết thúc ghi danh trước.");
+
+            // Lớp ngừng hoạt động không được để lại tiết sắp tới (chiếm lịch giáo viên) hay chủ nhiệm (chặn giáo viên nhận lớp khác cùng năm).
+            var todo = new List<string>();
+            var sessions = await db.TeachingSession.Where(SessionLockRules.NotEnded(clock))
+                .CountAsync(s => s.ClassId == id && (s.Status == "Scheduled" || s.Status == "Pending"));
+            if (sessions > 0)
+                todo.Add($"{sessions} tiết chưa diễn ra (hiệu phó phân hiệu hủy ở Thời khóa biểu › Điều chỉnh lịch dạy)");
+            var homeroom = await db.HomeroomAssignment.Where(h => h.ClassId == id && (h.EndDate == null || h.EndDate > today))
+                .OrderBy(h => h.StartDate).Select(h => new { h.Staff.Staff.FullName, h.StartDate }).FirstOrDefaultAsync();
+            if (homeroom is not null)
+                todo.Add(homeroom.StartDate > today
+                    ? $"lịch hẹn chủ nhiệm của {homeroom.FullName} (hủy lịch hẹn ở Hồ sơ › Trách nhiệm)"
+                    : $"chủ nhiệm {homeroom.FullName} (kết thúc trách nhiệm ở Hồ sơ › Trách nhiệm)");
+            if (todo.Count > 0)
+                throw ApiException.BadRequest($"Lớp còn {string.Join("; ", todo)}. Dọn xong rồi ngừng hoạt động lớp.");
         }
         cls.IsActive = isActive;
         await db.SaveChangesAsync();

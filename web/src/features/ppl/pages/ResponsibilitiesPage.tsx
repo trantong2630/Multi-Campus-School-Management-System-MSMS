@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, Card, DatePicker, Drawer, Form, Input, Select, Switch, Tabs } from 'antd';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import { CircleOff, FileDown, History, Plus, Search, UserPlus, UserRoundCog } from 'lucide-react';
+import { CalendarX2, CircleOff, History, Plus, Search, UserPlus, UserRoundCog } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/app/AuthProvider';
 import { useCurrentYear, useYears } from '@/features/sch/hooks/useCatalogs';
@@ -15,7 +15,7 @@ import { PersonCell } from '@/shared/components/PersonCell';
 import { RowActions } from '@/shared/components/RowActions';
 import { StatusBadge } from '@/shared/components/StatusBadge';
 import { message } from '@/shared/lib/antdStatic';
-import { blobErrorMessage, downloadFile } from '@/shared/lib/download';
+import { confirmAction, showError } from '@/shared/lib/feedback';
 import { formatDate, formatDateTime, toDateString } from '@/shared/lib/format';
 import { pplApi } from '../api';
 import { HandoverPopover, hasHandover } from '../components/HandoverPopover';
@@ -167,10 +167,21 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
     await refresh();
     message.success('Đã kết thúc trách nhiệm.');
   };
-  const exportFile = async () => {
-    try { await downloadFile('/ppl/responsibilities/export', { kind, yearId: kind === 'homeroom' ? yearId : undefined }); }
-    catch (e) { message.error(await blobErrorMessage(e) ?? 'Không xuất được danh sách.'); }
-  };
+  const cancelUpcoming = (r: ResponsibilityRow) => confirmAction({
+    title: 'Hủy lịch hẹn?',
+    content: `${r.nextStaffName} sẽ không nhận ${meta.label.toLowerCase()} ${r.targetName} từ ${formatDate(r.nextStartDate)} nữa. Lịch hẹn chưa bắt đầu nên hủy không ảnh hưởng gì đã diễn ra.`,
+    okText: 'Hủy lịch hẹn',
+    danger: true,
+    onOk: async () => {
+      try {
+        await pplApi.responsibilities.cancel({ kind, recordId: r.nextRecordId! });
+        await refresh();
+        message.success('Đã hủy lịch hẹn.');
+      } catch (e) {
+        showError(e, 'Không hủy được lịch hẹn');
+      }
+    },
+  });
 
   // Đích chưa có người đảm nhiệm và chưa có ai được hẹn (4.3.34 cho lớp; tương tự cho phân hiệu và tổ chuyên môn).
   const missing = rows?.filter((r) => !r.staffId && !r.nextStaffName) ?? [];
@@ -209,7 +220,6 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
           />
         )}
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-          <Button icon={<FileDown size={16} />} onClick={exportFile}>Xuất danh sách</Button>
           {canWrite && <Button type="primary" icon={<Plus size={16} />} onClick={() => setAssigning('new')}>Phân công</Button>}
         </div>
       </FilterBar>
@@ -275,6 +285,7 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
                     onClick: () => setAssigning(r),
                   },
                   { key: 'end', label: 'Kết thúc trách nhiệm', icon: <CircleOff size={16} />, danger: true, hidden: !canWrite || !r.staffId, onClick: () => setEnding(r) },
+                  { key: 'cancel', label: 'Hủy lịch hẹn', icon: <CalendarX2 size={16} />, danger: true, hidden: !canWrite || !r.nextRecordId, onClick: () => cancelUpcoming(r) },
                   { key: 'history', label: 'Lịch sử', icon: <History size={16} />, onClick: () => setHistory(r) },
 
                 ]} />

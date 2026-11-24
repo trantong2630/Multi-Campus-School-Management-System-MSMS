@@ -47,7 +47,8 @@ public sealed class ProfileService(MsmsDbContext db, CurrentUser user, IClock cl
         if (person.PersonType == ParentType && (phone ?? "") != TextNormalizer.Normalize(person.PhoneNumber))
             throw ApiException.BadRequest("Số điện thoại là khóa nhận diện của phụ huynh nên không tự sửa được. Liên hệ nhà trường để đổi.");
 
-        if (person.PersonType != ParentType) person.PhoneNumber = phone;
+        // Cùng quy tắc với School Admin sửa hồ sơ và import: số di động 10 chữ số (để trống được).
+        if (person.PersonType != ParentType) person.PhoneNumber = Guard.MobilePhone(phone);
         person.Email = email;
         person.Address = address;
         person.UpdatedAt = clock.Now;

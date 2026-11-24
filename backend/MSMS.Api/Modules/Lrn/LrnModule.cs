@@ -8,6 +8,8 @@ public static class LrnModule
     public static IServiceCollection AddLrnModule(this IServiceCollection s, IConfiguration config)
     {
         s.Configure<AiOptions>(config.GetSection("Ai"));
+        s.Configure<LrnOptions>(config.GetSection("Lrn"));
+        s.AddHostedService<ExpiredDraftJob>();
         // Thời gian chờ thật do GeminiClient tự đặt theo AiOptions; HttpClient chỉ cần rộng hơn.
         s.AddHttpClient<IAiClient, GeminiClient>(c => c.Timeout = TimeSpan.FromMinutes(3));
         return s.AddSingleton<AnalysisJob>()
@@ -21,7 +23,6 @@ public static class LrnModule
             .AddScoped<AttemptGrader>()
             .AddScoped<AttemptService>()
             .AddScoped<ResultService>()
-            .AddScoped<AnalysisService>()
-            .AddScoped<DepartmentService>();
+            .AddScoped<AnalysisService>();
     }
 }

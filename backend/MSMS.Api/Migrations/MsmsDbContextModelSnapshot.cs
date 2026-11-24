@@ -182,6 +182,10 @@ namespace MSMS.Api.Migrations
                         .HasPrecision(0)
                         .HasColumnType("datetime2(0)");
 
+                    b.Property<DateTime?>("QueuedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()

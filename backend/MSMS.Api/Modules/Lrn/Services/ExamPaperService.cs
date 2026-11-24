@@ -16,7 +16,7 @@ namespace MSMS.Api.Modules.Lrn.Services;
 /// <summary>
 /// Tạo bản in đề (PDF A4) của một bài đã giao để giáo viên tải về và in: đề gồm các câu theo thứ tự kèm điểm từng câu, đáp án và
 /// giải thích ở trang riêng cuối file khi chọn kèm đáp án. Chỉ đọc bài đã giao; quyền như xem kết quả (BR-22): giáo viên đang
-/// phụ trách chuyên môn ở (lớp, môn) hoặc tổ trưởng của môn.
+/// phụ trách chuyên môn ở (lớp, môn).
 /// </summary>
 public sealed class ExamPaperService(MsmsDbContext db, LrnAccess access, SubjectResponsibilityService responsibility, CurrentUser user)
 {

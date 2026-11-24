@@ -198,7 +198,8 @@ public sealed class TeacherAbsenceService(
             await support.NotifyAsync(restorable.Select(s => s.ClassId), restorable.Min(s => s.SessionDate), [absence.TeacherId],
                 "Tiết được trả lại giáo viên",
                 $"{teacherName}: khai báo vắng {Range(absence.FromDate, absence.ToDate)} đã xóa, {restorable.Count} tiết trở lại lịch của giáo viên.",
-                "TeacherAbsence", absenceId);
+                // Trỏ vào tiết sớm nhất được trả lại: khai báo vắng bị xóa ngay sau đây nên không trỏ vào nó được.
+                "TeachingSession", restorable.OrderBy(s => s.SessionDate).ThenBy(s => s.PeriodSlot.StartTime).First().SessionId);
         }
         audit.Add(AuditCategories.ScheduleAdjust, "DeleteTeacherAbsence", [absenceId],
             new { teacherId = absence.TeacherId, from = absence.FromDate, to = absence.ToDate, restored = restorable.Select(s => s.SessionId) });

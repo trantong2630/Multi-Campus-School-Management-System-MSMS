@@ -133,6 +133,36 @@ public class ClassServiceTests
         Assert.Single(await svc.ListAsync(Campus1, Year1, includeInactive: false));
     }
 
+    [Fact(DisplayName = "SCH | Ngừng hoạt động lớp | Còn tiết sắp tới và chủ nhiệm | bị chặn, nêu rõ phải dọn gì; tiết đã qua và tiết đã hủy không chặn")]
+    public async Task Deactivate_WithUpcomingSessionsOrHomeroom_IsRejected_UntilCleaned()
+    {
+        var (db, svc) = Create();
+        var cls = await svc.CreateAsync(Req(Campus1, Year1, "6E"));
+        AddStaff(db, 50, "Nguyễn Văn Chủ Nhiệm");
+        db.Subject.Add(new Subject { SubjectId = 1, DepartmentId = 1, Name = "Toán", Abbreviation = "TO", IsActive = true });
+        db.PeriodSlot.Add(new PeriodSlot { PeriodSlotId = 1, SessionOfDay = "Morning", PeriodNo = 1, StartTime = new(7, 0), EndTime = new(7, 45), IsActive = true });
+        TeachingSession Lesson(int days, string status) => new()
+        {
+            ClassId = cls.ClassId, SubjectId = 1, TeacherId = 50, SessionDate = Today.AddDays(days), PeriodSlotId = 1,
+            Status = status, Source = "Generated", CreatedAt = DateTime.UtcNow,
+        };
+        var upcoming = Lesson(3, "Scheduled");
+        db.TeachingSession.AddRange(upcoming, Lesson(-3, "Scheduled"), Lesson(4, "Cancelled"));
+        var homeroom = new HomeroomAssignment { ClassId = cls.ClassId, StaffId = 50, StartDate = Today.AddDays(-10), CreatedAt = DateTime.UtcNow };
+        db.HomeroomAssignment.Add(homeroom);
+        await db.SaveChangesAsync();
+
+        var ex = await Assert.ThrowsAsync<ApiException>(() => svc.SetActiveAsync(cls.ClassId, false));
+        Assert.Contains("1 tiết chưa diễn ra", ex.Message);
+        Assert.Contains("chủ nhiệm Nguyễn Văn Chủ Nhiệm", ex.Message);
+
+        upcoming.Status = "Cancelled";
+        homeroom.EndDate = Today;
+        await db.SaveChangesAsync();
+        await svc.SetActiveAsync(cls.ClassId, false);
+        Assert.Empty(await svc.ListAsync(Campus1, Year1, includeInactive: false));
+    }
+
     [Fact]
     public async Task List_FiltersByCampusYearAndActive_AndCountsOnlyStudentsEffectiveToday()
     {

@@ -24,6 +24,7 @@ export const scdApi = {
   removeEntry: (id: number, params: { classId: number; dayOfWeek: number; periodSlotId: number }) =>
     apiClient.delete<VersionGrid>(`/scd/timetable/versions/${id}/entries`, { params }).then((r) => r.data),
   resetDraft: (id: number) => apiClient.post<VersionGrid>(`/scd/timetable/versions/${id}/reset`).then((r) => r.data),
+  deleteDraft: (id: number) => apiClient.delete(`/scd/timetable/versions/${id}`),
   import: (file: File) => {
     const fd = new FormData();
     fd.append('file', file);

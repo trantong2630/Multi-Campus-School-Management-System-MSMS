@@ -169,6 +169,7 @@ public partial class MsmsDbContext : DbContext
 
             entity.Property(e => e.ErrorMessage).HasMaxLength(500);
             entity.Property(e => e.GeneratedAt).HasPrecision(0);
+            entity.Property(e => e.QueuedAt).HasPrecision(0);
             entity.Property(e => e.Status)
                 .HasMaxLength(10)
                 .HasDefaultValue("Pending");

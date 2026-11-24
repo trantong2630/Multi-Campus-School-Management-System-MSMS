@@ -87,6 +87,9 @@ public sealed class CatalogService(MsmsDbContext db, IClock clock)
     public async Task SetSubjectActiveAsync(int id, bool isActive)
     {
         var subject = await db.Subject.FindAsync(id) ?? throw ApiException.NotFound("Không tìm thấy môn học.");
+        // BR-07: môn đang hoạt động phải thuộc một tổ đang hoạt động.
+        if (isActive && !await db.SubjectDepartment.AnyAsync(d => d.DepartmentId == subject.DepartmentId && d.IsActive))
+            throw ApiException.BadRequest("Tổ chuyên môn của môn này đã ngừng hoạt động. Bật lại tổ trước, hoặc chuyển môn sang tổ khác rồi bật lại môn.");
         subject.IsActive = isActive;
         await db.SaveChangesAsync();
     }

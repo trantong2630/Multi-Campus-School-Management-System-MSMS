@@ -1,11 +1,87 @@
+/* Mỗi mục xuất là một thẻ phẳng: tên và mô tả ở trên, nút tải ở góc phải, các trường chọn xếp một hàng bên dưới. */
 .exports-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 20px;
-  align-items: start;
 }
 
-.exports-hint {
-  margin: 0 0 16px;
+.export-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'info btn'
+    'fields fields';
+  gap: 20px 24px;
+  align-items: start;
+  padding: 28px 32px;
+  background: var(--c-surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+
+.export-row__info { grid-area: info; }
+.export-row__fields { grid-area: fields; }
+.export-row__btn { grid-area: btn; }
+
+.export-row__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--c-ink);
+}
+
+.export-row__hint {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
   color: var(--c-text2);
+}
+
+/* Các trường chia đều chiều ngang; hẹp thì xuống từng dòng. */
+.export-row__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0 20px;
+}
+
+.export-row__fields .ant-form-item {
+  margin-bottom: 0;
+}
+
+.export-row__fields .ant-select,
+.export-row__fields .ant-picker {
+  height: 44px;
+}
+
+.export-row__fields .ant-segmented {
+  padding: 4px;
+}
+
+.export-row__fields .ant-segmented-item-label {
+  line-height: 36px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+.export-row__note {
+  align-self: end;
+  margin: 0;
+  padding-bottom: 12px;
+  font-size: 14px;
+  color: var(--c-text2);
+}
+
+.export-row__btn {
+  min-width: 150px;
+  height: 46px;
+}
+
+@media (max-width: 640px) {
+  .export-row {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'info' 'fields' 'btn';
+    padding: 22px 20px;
+  }
+  .export-row__fields { gap: 16px; }
+  .export-row__btn { width: 100%; }
 }

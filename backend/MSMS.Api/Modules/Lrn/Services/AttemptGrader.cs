@@ -46,7 +46,8 @@ public sealed class AttemptGrader(MsmsDbContext db, IClock clock, AnalysisJob an
 
         if (answers is not null) await ReplaceAnswersAsync(submissionId, answers);
         await GradeAsync(submissionId, lines);
-        db.AiFeedback.Add(new AiFeedback { SubmissionId = submissionId, Status = AnalysisStatuses.Pending });
+        // Mốc tính "kẹt" là lúc gửi phân tích, không phải giờ nộp: bài tự nộp ghi giờ nộp lùi về hạn nộp nên có thể đã ở quá khứ xa.
+        db.AiFeedback.Add(new AiFeedback { SubmissionId = submissionId, Status = AnalysisStatuses.Pending, QueuedAt = clock.Now });
         await db.SaveChangesAsync();
         await tx.CommitAsync();
         db.ChangeTracker.Clear();
@@ -56,7 +57,8 @@ public sealed class AttemptGrader(MsmsDbContext db, IClock clock, AnalysisJob an
     }
 
     /// <summary>
-    /// Tự nộp bản nháp đã quá hạn thực tế (BR-21). Không có job nền: chạy lúc bài được truy cập sau hạn. Chỉ nháp có ít nhất một
+    /// Tự nộp bản nháp đã quá hạn thực tế (BR-21). Chạy lúc bài được truy cập sau hạn, và định kỳ cho mọi bài qua
+    /// <see cref="ExpiredDraftJob"/> (cả hai tham số null). Chỉ nháp có ít nhất một
     /// câu trả lời mới được nộp và chấm; nháp rỗng thì để là Không nộp. Bài nộp lúc hạn thực tế.
     /// </summary>
     public async Task FinalizeExpiredAsync(int? assignmentId, int? studentId)

@@ -6,18 +6,18 @@ import { useAuth } from '@/app/AuthProvider';
 import { isPathAllowed } from '@/app/menu';
 import { scdApi } from '@/features/scd/api';
 import { admApi } from '../api';
-import { Columns, Count, Donut, Empty, Seg, Tile, Trend } from '../components/BoardKit';
-import type { DonutSegment } from '../components/BoardKit';
-import { fmt } from '../components/dashboardFormat';
+import { AiAssistant } from '../components/AiAssistant';
+import { aiPrompts } from '../components/aiPrompts';
+import { Section } from '../components/BoardKit';
+import { ATTENDANCE_ALERT, SUBMISSION_ALERT } from '../components/dashboardFormat';
+import { AssignmentPanel, CountTile, MixPanel, RatePanel, RateTile, TrendPanel, WeekdayPanel } from '../components/leadership';
 import '../components/board.css';
-import './views.css';
 
 const ALL = 0;
-const GRADE_TONES: DonutSegment['tone'][] = ['good', 'mint', 'warn', 'ink', 'soft', 'low'];
 
 /**
- * Tình hình toàn trường (Hiệu trưởng): bốn thẻ số, xu hướng chuyên cần và chuyên cần theo phân hiệu,
- * cơ cấu học sinh theo khối cạnh những việc cần chú ý. So sánh chi tiết phân hiệu và lớp nằm ở Báo cáo toàn trường.
+ * Tình hình toàn trường (Hiệu trưởng): bốn thẻ số (việc tồn đọng gắn trên thẻ liên quan), nhóm Chuyên cần và nhóm Rèn luyện.
+ * Biểu đồ đường chỉ một đường; so sánh nhiều phân hiệu, khối dùng thanh ngang một màu. Phân tích sâu để MSMS AI.
  */
 export function PrincipalBoardPage() {
   const { user } = useAuth();
@@ -36,74 +36,53 @@ export function PrincipalBoardPage() {
 
   if (!d) return <Skeleton active paragraph={{ rows: 10 }} />;
 
-  const a = d.attendance;
-  const att = d.attention;
-  const marked = a.present + a.late + a.absentExcused + a.absentUnexcused;
-  const trend = d.weeks.map((w) => ({ weekStart: w.weekStart, count: 0, rate: w.rate }));
-  const gradeSegments: DonutSegment[] = d.byGrade.map((g, i) => ({ key: String(g.gradeLevel), label: `Khối ${g.gradeLevel}`, value: g.studentCount, tone: GRADE_TONES[i % GRADE_TONES.length] }));
-  const todo = [
-    { key: 'unmarked', n: a.unmarkedSessions, text: 'Tiết đã qua chưa điểm danh', to: go('/att') },
-    { key: 'pending', n: att.pendingSessions, text: 'Tiết chờ xử lý do giáo viên vắng', to: go('/scd/absences') },
-    { key: 'homeroom', n: att.classesWithoutHomeroom, text: 'Lớp chưa có chủ nhiệm', to: go('/ppl/responsibilities') },
-  ].filter((r) => r.n > 0);
+  const al = d.alerts;
 
   return (
-    <div className="bd">
+    <div className="bd bd--ai">
       <header className="bd-head">
-        <div>
-          <h1>Tình hình toàn trường</h1>
-          <p>{[d.academicYearName && `Năm học ${d.academicYearName}`, d.semesterName].filter(Boolean).join(' · ')}</p>
-        </div>
+        <h1>Tình hình toàn trường</h1>
         <div className="bd-head__tools">
           {list.length > 1 && (
-            <Seg label="Chọn phân hiệu" value={campusId} onChange={setCampusId}
+            <Select value={campusId} onChange={setCampusId} style={{ width: 200 }} aria-label="Chọn phân hiệu" popupMatchSelectWidth={false}
               options={[{ value: ALL, label: 'Cả trường' }, ...list.map((c) => ({ value: c.campusId, label: c.name }))]} />
           )}
           {d.gradeOptions.length > 1 && (
-            <Select value={grade} onChange={setGrade} style={{ width: 120 }}
+            <Select value={grade} onChange={setGrade} style={{ width: 120 }} aria-label="Chọn khối"
               options={[{ value: ALL, label: 'Mọi khối' }, ...d.gradeOptions.map((g) => ({ value: g, label: `Khối ${g}` }))]} />
           )}
         </div>
       </header>
 
-      <div className="v-tiles4">
-        <Tile hue="mint" label="Vắng không phép" value={<Count value={a.absentUnexcused} />} tone={a.absentUnexcused ? 'warn' : undefined} hint={marked ? `${fmt(a.absentExcused)} vắng có phép · 4 tuần` : 'chưa có điểm danh'} />
-        <Tile hue="sky" label="Học sinh" value={<Count value={d.studentCount} />} hint={`${d.campusCount} phân hiệu · ${d.classCount} lớp`} onClick={go('/ppl/students')} />
-        <Tile hue="sun" label="Cán bộ" value={<Count value={d.staffCount} />} onClick={go('/ppl/staff')} />
-        <Tile hue="lilac" label="Giáo viên vắng hôm nay" value={<Count value={att.teacherAbsencesToday} />} tone={att.teacherAbsencesToday ? 'warn' : undefined}
-          hint={a.todaySessions ? `${a.todayMarkedSessions}/${a.todaySessions} tiết đã điểm danh` : 'không có tiết hôm nay'} onClick={go('/scd/absences')} />
+      <div className="bd-tiles">
+        <RateTile hue="sky" label="Chuyên cần" k={d.attendance} higherIsBetter empty="chưa có điểm danh"
+          alert={al.streakStudents ? { text: `${al.streakStudents} học sinh vắng liền`, onClick: go('/att') } : null} />
+        <RateTile hue="peach" label="Vắng không phép" k={d.unexcused} higherIsBetter={false} empty="chưa có điểm danh" />
+        <CountTile hue="lilac" label="Tiết bị ảnh hưởng" k={d.affected} unit=" tiết" onClick={go('/scd/absences')}
+          alert={al.uncoveredSessions ? { text: `${al.uncoveredSessions} tiết chưa có người dạy`, onClick: go('/scd/absences') } : null} />
+        <RateTile hue="aqua" label="Nộp bài rèn luyện" k={d.submission} higherIsBetter empty="chưa có bài hết hạn" />
       </div>
 
-      <div className="bd-split">
-        <section className="bd-panel" aria-label="Xu hướng">
-          <div className="bd-panel__title"><h2>Chuyên cần theo tuần</h2></div>
-          {d.weeks.some((w) => w.rate !== null) ? <Trend points={trend} rate2Label="Chuyên cần theo tuần" quiet height={210} /> : <Empty>Chưa có điểm danh trong 8 tuần qua.</Empty>}
-        </section>
-        <section className="bd-panel" aria-label="Theo phân hiệu">
-          <div className="bd-panel__title"><h2>Chuyên cần theo phân hiệu</h2></div>
-          {d.campuses.some((c) => c.attendanceRate !== null)
-            ? <Columns height={170} items={d.campuses.map((c) => ({ key: String(c.campusId), label: c.name, value: c.attendanceRate, sub: `${fmt(c.studentCount)} học sinh` }))} />
-            : <Empty>Chưa có điểm danh để so sánh.</Empty>}
-        </section>
+      <Section title="Chuyên cần" />
+      <div className="bd-row bd-row--21">
+        <TrendPanel title="Chuyên cần 8 tuần" weekStarts={d.weekStarts} weekNo={d.weekNo} values={d.attendance.weeks}
+          name={campusId ? (list.find((c) => c.campusId === campusId)?.name ?? 'Phân hiệu') : 'Toàn trường'} threshold={ATTENDANCE_ALERT} />
+        <MixPanel mix={d.mix} />
+      </div>
+      <div className="bd-row bd-row--auto">
+        {d.campuses.length > 1 && <RatePanel title="Theo phân hiệu" rows={d.campuses} threshold={ATTENDANCE_ALERT} empty="" />}
+        <RatePanel title="Theo khối" rows={d.grades} threshold={ATTENDANCE_ALERT} empty="Chưa có khối nào có học sinh." />
+        <WeekdayPanel values={d.weekdays} />
       </div>
 
-      <div className="bd-split">
-        <section className="bd-panel" aria-label="Học sinh theo khối">
-          <div className="bd-panel__title"><h2>Học sinh theo khối</h2></div>
-          {gradeSegments.length === 0 ? <Empty>Chưa có khối nào.</Empty> : <Donut segments={gradeSegments} total={d.studentCount} caption="học sinh" />}
-        </section>
-        <section className="bd-panel" aria-label="Cần chú ý">
-          <div className="bd-panel__title"><h2>Cần chú ý</h2></div>
-          {todo.length === 0 ? <p className="v-calm">Không có việc nào tồn đọng.</p> : (
-            <ul className="v-todo">
-              {todo.map((r) => {
-                const inner = (<><span className="v-todo__n tabular">{r.n}</span><span>{r.text}</span>{r.to ? <span className="v-todo__go">→</span> : <span />}</>);
-                return <li key={r.key}>{r.to ? <button type="button" onClick={r.to}>{inner}</button> : <div>{inner}</div>}</li>;
-              })}
-            </ul>
-          )}
-        </section>
+      <Section title="Rèn luyện" />
+      <div className="bd-row bd-row--21">
+        <TrendPanel title="Tỷ lệ nộp bài 8 tuần" meta="theo tuần hết hạn" weekStarts={d.weekStarts} weekNo={d.weekNo}
+          values={d.submission.weeks} name="Tỷ lệ nộp" threshold={SUBMISSION_ALERT} />
+        <AssignmentPanel a={d.assignments} groupLabel="khối" rows={d.submissionGrades.map((g) => ({ key: String(g.id), label: g.name, value: g.rate }))} />
       </div>
+
+      <AiAssistant {...aiPrompts('school')} />
     </div>
   );
 }

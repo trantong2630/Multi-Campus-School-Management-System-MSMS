@@ -1,15 +1,13 @@
 import { apiClient } from '@/app/apiClient';
 import { downloadFile } from '@/shared/lib/download';
-import type { SchoolReport } from './reportTypes';
-import type { AdminDashboard, AuditActor, AuditLogDetail, AuditLogFilters, AuditLogItem, Dashboard, DepartmentBoard, HomeroomOverview, Progress } from './types';
+import type {
+  AdminDashboard, AiChatAnswer, AiChatTurn, AiPerson, AuditActor, AuditLogDetail, AuditLogFilters, AuditLogItem, Dashboard, DepartmentBoard, HomeroomOverview,
+} from './types';
 
 export const admApi = {
   dashboard: (campusId?: number, gradeLevel?: number) => apiClient.get<Dashboard>('/adm/dashboard', { params: { campusId, gradeLevel } }).then((r) => r.data),
-  schoolReport: (params: { from?: string; to?: string; campusId?: number; gradeLevel?: number }) =>
-    apiClient.get<SchoolReport>('/adm/report', { params }).then((r) => r.data),
   adminDashboard: () => apiClient.get<AdminDashboard>('/adm/dashboard/admin').then((r) => r.data),
   departmentBoard: () => apiClient.get<DepartmentBoard>('/adm/dashboard/department').then((r) => r.data),
-  progress: (campusId?: number) => apiClient.get<Progress>('/adm/progress', { params: { campusId } }).then((r) => r.data),
   homeroom: (classId?: number) => apiClient.get<HomeroomOverview>('/adm/homeroom', { params: { classId } }).then((r) => r.data),
   auditLog: (params: AuditLogFilters & { page: number; pageSize: number }) =>
     apiClient.get<{ items: AuditLogItem[]; total: number }>('/adm/audit-log', { params }).then((r) => r.data),
@@ -18,4 +16,8 @@ export const admApi = {
   /** ADM-03: tải file Excel; lỗi trả dạng Blob, đọc bằng blobErrorMessage. */
   exportAttendance: (classId: number, from: string, to: string) => downloadFile('/adm/exports/attendance', { classId, from, to }),
   exportTimetable: (campusId: number, from: string, to: string) => downloadFile('/adm/exports/timetable', { campusId, from, to }),
+  exportResponsibilities: (kind: string, yearId?: number) => downloadFile('/adm/exports/responsibilities', { kind, yearId }),
+  /** MSMS AI: hội thoại chỉ nằm ở trình duyệt, mỗi lần gửi kèm các lượt gần nhất. */
+  aiChat: (question: string, history: AiChatTurn[]) => apiClient.post<AiChatAnswer>('/adm/ai/chat', { question, history }).then((r) => r.data),
+  aiPeople: (q: string) => apiClient.get<AiPerson[]>('/adm/ai/people', { params: { q } }).then((r) => r.data),
 };
