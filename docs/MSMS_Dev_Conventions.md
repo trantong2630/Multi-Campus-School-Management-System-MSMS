@@ -283,7 +283,7 @@ Chốt chữ nào hiện trên màn hình. Mọi màn hình, mọi file xuất E
 | PeriodSlot | Khung giờ tiết |
 | Class | Lớp |
 | Staff | Cán bộ |
-| Enrollment | Ghi danh |
+| Enrollment | Xếp lớp |
 | AccountSession | Phiên đăng nhập (theo thiết bị) |
 | **Responsibility** | **Trách nhiệm** |
 | TimetableVersion | Phiên bản thời khóa biểu |
@@ -368,7 +368,7 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Trang chủ | — |
 | Bảng điều khiển | Tình hình toàn trường · Tình hình phân hiệu · Tình hình tổ chuyên môn · Tình hình lớp chủ nhiệm · Thống kê hệ thống |
 | Danh sách học sinh | — |
-| Cơ cấu nhà trường | Thông tin trường · Phân hiệu · Tổ chuyên môn & Môn học · Năm học & Học kỳ · Ngày nghỉ · Khung giờ tiết · Lớp & Ghi danh · Kết chuyển năm học |
+| Cơ cấu nhà trường | Thông tin trường · Phân hiệu · Tổ chuyên môn & Môn học · Năm học & Học kỳ · Ngày nghỉ · Khung giờ tiết · Lớp · Xếp lớp · Kết chuyển năm học |
 | Hồ sơ | Cán bộ · Học sinh · Phụ huynh · Trách nhiệm |
 | Thời khóa biểu | Thời khóa biểu · Phụ trách chuyên môn · Lịch dạy · Giáo viên vắng |
 | Điểm danh | — |
@@ -385,7 +385,7 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 - **Ẩn hẳn mục không có quyền**, không hiện rồi khóa.
 - Thông báo, hồ sơ cá nhân, đổi mật khẩu, đăng xuất nằm ở **góc phải header**, không vào sidebar.
 
-**Ai thấy mục nào.** Một mục chỉ hiện cho loại tài khoản **có việc làm trên màn hình đó**. Quyền đọc dữ liệu (cột Đọc của Business Spec §5) không tự sinh ra màn hình: Hiệu phó và giáo viên đọc môn học, khung giờ tiết, lớp, ngày nghỉ ngay trong lưới thời khóa biểu, lịch dạy và trang chủ, nên giáo viên không có màn hình Cơ cấu nhà trường; Hiệu phó xem Thông tin trường, Tổ chuyên môn & Môn học, Năm học & Học kỳ và Lớp & Ghi danh ở chế độ chỉ đọc như Hiệu trưởng, trừ Phân hiệu (Lớp & Ghi danh chỉ có lớp của phân hiệu mình phụ trách); chủ nhiệm xem học sinh lớp mình ở mục cấp 1 **Danh sách học sinh**, mục đầu tiên của cụm Quản lý; Hiệu trưởng xem các màn này ở chế độ chỉ đọc, mọi thao tác sửa thuộc School Admin. Gõ thẳng đường dẫn của mục không được thấy thì hiện trang 403. Nguồn duy nhất ở web là `app/menu.tsx`.
+**Ai thấy mục nào.** Một mục chỉ hiện cho loại tài khoản **có việc làm trên màn hình đó**. Quyền đọc dữ liệu (cột Đọc của Business Spec §5) không tự sinh ra màn hình: Hiệu phó và giáo viên đọc môn học, khung giờ tiết, lớp, ngày nghỉ ngay trong lưới thời khóa biểu, lịch dạy và trang chủ, nên giáo viên không có màn hình Cơ cấu nhà trường; Hiệu phó xem Thông tin trường, Tổ chuyên môn & Môn học, Năm học & Học kỳ, Lớp và Xếp lớp ở chế độ chỉ đọc như Hiệu trưởng, trừ Phân hiệu (Lớp và Xếp lớp chỉ có lớp của phân hiệu mình phụ trách); chủ nhiệm xem học sinh lớp mình ở mục cấp 1 **Danh sách học sinh**, mục đầu tiên của cụm Quản lý; Hiệu trưởng xem các màn này ở chế độ chỉ đọc, mọi thao tác sửa thuộc School Admin. Gõ thẳng đường dẫn của mục không được thấy thì hiện trang 403. Nguồn duy nhất ở web là `app/menu.tsx`.
 
 | Mục | Ai thấy |
 | --- | --- |
@@ -399,7 +399,7 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Bảng điều khiển › Thống kê hệ thống | SA |
 | Danh sách học sinh | GV (chỉ chủ nhiệm) |
 | Cơ cấu nhà trường › Phân hiệu | SA (sửa), HT (chỉ xem) |
-| Cơ cấu nhà trường › Thông tin trường · Tổ chuyên môn & Môn học · Năm học & Học kỳ · Lớp & Ghi danh | SA (sửa), HT, HP (chỉ xem; Lớp & Ghi danh của HP chỉ có lớp thuộc phân hiệu mình phụ trách) |
+| Cơ cấu nhà trường › Thông tin trường · Tổ chuyên môn & Môn học · Năm học & Học kỳ · Lớp · Xếp lớp | SA (sửa), HT, HP (chỉ xem; Lớp và Xếp lớp của HP chỉ có lớp thuộc phân hiệu mình phụ trách) |
 | Cơ cấu nhà trường › Ngày nghỉ · Khung giờ tiết · Kết chuyển năm học | SA |
 | Hồ sơ › Cán bộ · Học sinh · Phụ huynh | SA, HT, HP |
 | Hồ sơ › Trách nhiệm | SA, HT |

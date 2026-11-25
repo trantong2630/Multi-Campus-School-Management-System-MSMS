@@ -18,9 +18,8 @@ import type { RosterItem, SchoolClass, StudentCandidate } from '../types';
 import { defaultRosterDate, genderText, rosterColumns } from './rosterColumns';
 
 interface Props {
-  cls: SchoolClass | null;
+  cls: SchoolClass;
   canWrite: boolean;
-  onClose: () => void;
 }
 
 interface TransferValues { toClassId: number; effectiveDate: Dayjs }
@@ -33,10 +32,11 @@ const CLOSE_REASONS = [
 ];
 
 /**
- * SCH-05: danh sách học sinh của lớp tại một ngày, kèm ghi danh, chuyển lớp, kết thúc ghi danh (4.2.29–4.2.32).
- * Ghi danh chọn nhiều em từ bảng; chuyển lớp và kết thúc ghi danh làm được cho cả nhóm đã tích hoặc từng em ở cột thao tác.
+ * SCH-05: danh sách học sinh của một lớp tại một ngày, kèm xếp lớp, chuyển lớp, rời lớp (4.2.29–4.2.32).
+ * Xếp lớp chọn nhiều em từ bảng; chuyển lớp và rời lớp làm được cho cả nhóm đã tích hoặc từng em ở cột thao tác.
+ * Chuyển lớp chỉ sang lớp cùng khối, cùng năm học. Đổi lớp thì màn cha đặt lại `key` để bỏ trạng thái cũ.
  */
-export function ClassRosterDrawer({ cls, canWrite, onClose }: Props) {
+export function ClassRosterPanel({ cls, canWrite }: Props) {
   const qc = useQueryClient();
   const years = useYears();
   const [picked, setPicked] = useState<Dayjs | null>(null);
@@ -51,26 +51,27 @@ export function ClassRosterDrawer({ cls, canWrite, onClose }: Props) {
   const [transferForm] = Form.useForm<TransferValues>();
   const [closeForm] = Form.useForm<CloseValues>();
 
-  const year = years.data?.find((y) => y.academicYearId === cls?.academicYearId);
+  const year = years.data?.find((y) => y.academicYearId === cls.academicYearId);
   const outOfYear = (d: Dayjs) => !year || d.isBefore(year.startDate, 'day') || d.isAfter(year.endDate, 'day');
   const defaultStart = () => defaultRosterDate(year?.startDate);
   const date = picked ?? defaultStart();
   const dateKey = toDateString(date);
   const roster = useQuery({
-    queryKey: ['sch', 'roster', cls?.classId, dateKey],
-    queryFn: () => schApi.enrollments.roster(cls!.classId, dateKey),
-    enabled: cls !== null,
+    queryKey: ['sch', 'roster', cls.classId, dateKey],
+    queryFn: () => schApi.enrollments.roster(cls.classId, dateKey),
   });
   const candidates = useQuery({
-    queryKey: ['sch', 'candidates', cls?.academicYearId, candidateSearch],
-    queryFn: () => schApi.enrollments.candidates(cls!.academicYearId, candidateSearch, 200),
-    enabled: enrolling && cls !== null,
+    queryKey: ['sch', 'candidates', cls.academicYearId, candidateSearch],
+    queryFn: () => schApi.enrollments.candidates(cls.academicYearId, candidateSearch, 200),
+    enabled: enrolling,
   });
   const otherClasses = useQuery({
-    queryKey: ['sch', 'classes', cls?.academicYearId, undefined, false],
-    queryFn: () => schApi.classes.list({ yearId: cls!.academicYearId }),
-    enabled: transferring !== null && cls !== null,
+    queryKey: ['sch', 'classes', cls.academicYearId, undefined, false],
+    queryFn: () => schApi.classes.list({ yearId: cls.academicYearId }),
+    enabled: transferring !== null,
   });
+  // Chuyển lớp chỉ trong cùng khối: lên hay xuống khối khác là lên lớp hoặc ở lại lớp, làm bằng Kết chuyển năm học.
+  const sameGradeClasses = otherClasses.data?.filter((c) => c.isActive && c.classId !== cls.classId && c.gradeLevel === cls.gradeLevel);
 
   const refresh = async () => {
     await Promise.all([
@@ -84,9 +85,9 @@ export function ClassRosterDrawer({ cls, canWrite, onClose }: Props) {
   const enrollMany = async () => {
     setEnrollSaving(true);
     try {
-      await schApi.enrollments.enrollMany(cls!.classId, { studentIds: chosen, startDate: toDateString(enrollDate ?? defaultStart()) });
+      await schApi.enrollments.enrollMany(cls.classId, { studentIds: chosen, startDate: toDateString(enrollDate ?? defaultStart()) });
       await refresh();
-      message.success(`Đã ghi danh ${chosen.length} học sinh vào lớp.`);
+      message.success(`Đã xếp ${chosen.length} học sinh vào lớp.`);
       closeEnroll();
     } catch (e) {
       showError(e);
@@ -104,7 +105,7 @@ export function ClassRosterDrawer({ cls, canWrite, onClose }: Props) {
     await schApi.enrollments.closeMany({ enrollmentIds: closing!.map((r) => r.enrollmentId), reason: v.reason });
     await refresh();
     setSelected([]);
-    message.success(`Đã kết thúc ghi danh của ${closing!.length} học sinh.`);
+    message.success(`Đã cho ${closing!.length} học sinh rời lớp.`);
   };
 
   const reason = Form.useWatch('reason', closeForm);
@@ -114,52 +115,46 @@ export function ClassRosterDrawer({ cls, canWrite, onClose }: Props) {
 
   return (
     <>
-      <Modal
-        open={cls !== null} width={880} onCancel={onClose} destroyOnHidden mask={{ closable: false }}
-        title={cls ? `Lớp ${cls.name} · ${cls.campusName} · Năm học ${cls.academicYearName}` : ''}
-        footer={<Button onClick={onClose}>Đóng</Button>}
-      >
-        <div className="roster-toolbar">
-          <label htmlFor="roster-date">Xem tại ngày</label>
-          <DatePicker id="roster-date" format="DD/MM/YYYY" allowClear={false} value={date} onChange={(d) => { if (d) { setPicked(d); setSelected([]); } }} />
-          <span className="muted tabular">{roster.data ? `${roster.data.students.length} học sinh` : ''}</span>
-          {canWrite && cls?.isActive && (
-            <Button type="primary" icon={<UserPlus size={16} />} onClick={() => setEnrolling(true)}>Ghi danh học sinh</Button>
-          )}
-        </div>
-        {canWrite && openRows.length > 0 && (
-          <div className="roster-bulkbar">
-            <span><b>{openRows.length}</b> học sinh được chọn</span>
-            <Button icon={<ArrowRightLeft size={16} />} onClick={() => setTransferring(openRows)}>Chuyển lớp</Button>
-            <Button danger icon={<LogOut size={16} />} onClick={() => setClosing(openRows)}>Kết thúc ghi danh</Button>
-            <Button type="link" onClick={() => setSelected([])}>Bỏ chọn</Button>
-          </div>
+      <div className="roster-toolbar">
+        <label htmlFor="roster-date">Xem tại ngày</label>
+        <DatePicker id="roster-date" format="DD/MM/YYYY" allowClear={false} value={date} onChange={(d) => { if (d) { setPicked(d); setSelected([]); } }} />
+        <span className="muted tabular">{roster.data ? `${roster.data.students.length} học sinh` : ''}</span>
+        {canWrite && cls.isActive && (
+          <Button type="primary" icon={<UserPlus size={16} />} onClick={() => setEnrolling(true)}>Xếp học sinh vào lớp</Button>
         )}
-        <DataTable<RosterItem>
-          rowKey="enrollmentId" loading={roster.isLoading} dataSource={roster.data?.students} scroll={{}}
-          emptyText="Lớp chưa có học sinh nào có ghi danh hiệu lực tại ngày này."
-          rowSelection={canWrite ? {
-            selectedRowKeys: selected,
-            onChange: (k) => setSelected(k as number[]),
-            getCheckboxProps: (r) => ({ disabled: r.endDate !== null }),
-          } : undefined}
-          columns={[
-            ...rosterColumns,
-            ...(canWrite ? [{
-              title: 'Thao tác', key: 'actions', width: 84, align: 'center' as const,
-              render: (_: unknown, r: RosterItem) => (
-                <RowActions actions={[
-                  { key: 'transfer', label: 'Chuyển lớp', icon: <ArrowRightLeft size={16} />, hidden: r.endDate !== null, onClick: () => setTransferring([r]) },
-                  { key: 'close', label: 'Kết thúc ghi danh', icon: <LogOut size={16} />, danger: true, hidden: r.endDate !== null, onClick: () => setClosing([r]) },
-                ]} />
-              ),
-            }] : []),
-          ]}
-        />
-      </Modal>
+      </div>
+      {canWrite && openRows.length > 0 && (
+        <div className="roster-bulkbar">
+          <span><b>{openRows.length}</b> học sinh được chọn</span>
+          <Button icon={<ArrowRightLeft size={16} />} onClick={() => setTransferring(openRows)}>Chuyển lớp</Button>
+          <Button danger icon={<LogOut size={16} />} onClick={() => setClosing(openRows)}>Rời lớp</Button>
+          <Button type="link" onClick={() => setSelected([])}>Bỏ chọn</Button>
+        </div>
+      )}
+      <DataTable<RosterItem>
+        rowKey="enrollmentId" loading={roster.isLoading} dataSource={roster.data?.students} scroll={{}}
+        emptyText="Lớp chưa có học sinh nào tại ngày này."
+        rowSelection={canWrite ? {
+          selectedRowKeys: selected,
+          onChange: (k) => setSelected(k as number[]),
+          getCheckboxProps: (r) => ({ disabled: r.endDate !== null }),
+        } : undefined}
+        columns={[
+          ...rosterColumns,
+          ...(canWrite ? [{
+            title: 'Thao tác', key: 'actions', width: 84, align: 'center' as const,
+            render: (_: unknown, r: RosterItem) => (
+              <RowActions actions={[
+                { key: 'transfer', label: 'Chuyển lớp', icon: <ArrowRightLeft size={16} />, hidden: r.endDate !== null, onClick: () => setTransferring([r]) },
+                { key: 'close', label: 'Rời lớp', icon: <LogOut size={16} />, danger: true, hidden: r.endDate !== null, onClick: () => setClosing([r]) },
+              ]} />
+            ),
+          }] : []),
+        ]}
+      />
 
       <Modal
-        open={enrolling} width={720} title="Ghi danh học sinh" onCancel={closeEnroll} destroyOnHidden mask={{ closable: false }}
+        open={enrolling} width={720} title="Xếp lớp học sinh" onCancel={closeEnroll} destroyOnHidden mask={{ closable: false }}
         footer={(
           <>
             <Button onClick={closeEnroll}>Hủy</Button>
@@ -181,7 +176,7 @@ export function ClassRosterDrawer({ cls, canWrite, onClose }: Props) {
           />
         </div>
         <p className="muted">
-          Chỉ hiện học sinh đang học và chưa có ghi danh còn hiệu lực trong năm học {year?.name}. Tích nhiều em rồi bấm Thêm; ghi danh kéo dài tới hết năm học.
+          Chỉ hiện học sinh đang học và chưa thuộc lớp nào trong năm học {year?.name}. Tích nhiều em rồi bấm Thêm; học sinh ở lớp tới hết năm học.
         </p>
         <Table<StudentCandidate>
           className="data-table" size="small" rowKey="studentId" loading={candidates.isFetching} dataSource={candidates.data ?? []}
@@ -209,13 +204,16 @@ export function ClassRosterDrawer({ cls, canWrite, onClose }: Props) {
       >
         <InlineAlert
           type="info"
-          title="Ghi danh ở lớp hiện tại kết thúc vào ngày liền trước ngày hiệu lực. Điểm danh và dữ liệu đã có ở lớp cũ được giữ nguyên."
+          title="Học sinh rời lớp hiện tại vào ngày liền trước ngày hiệu lực. Điểm danh và dữ liệu đã có ở lớp cũ được giữ nguyên."
         />
-        <Form.Item label="Chuyển đến lớp" name="toClassId" rules={[{ required: true, message: 'Chọn lớp chuyển đến.' }]}>
+        <Form.Item
+          label="Chuyển đến lớp" name="toClassId" rules={[{ required: true, message: 'Chọn lớp chuyển đến.' }]}
+          extra={`Chỉ chuyển được sang lớp cùng khối (khối ${cls.gradeLevel}) trong năm học này.`}
+        >
           <Select
             showSearch optionFilterProp="label" placeholder="Chọn lớp" loading={otherClasses.isLoading}
-            options={otherClasses.data?.filter((c) => c.isActive && c.classId !== cls?.classId)
-              .map((c) => ({ value: c.classId, label: `${c.name} · ${c.campusName}` }))}
+            notFoundContent={`Chưa có lớp nào khác thuộc khối ${cls.gradeLevel}.`}
+            options={sameGradeClasses?.map((c) => ({ value: c.classId, label: `${c.name} · ${c.campusName}` }))}
           />
         </Form.Item>
         <Form.Item
@@ -227,21 +225,21 @@ export function ClassRosterDrawer({ cls, canWrite, onClose }: Props) {
 
       <FormModal<CloseValues>
         open={closing !== null}
-        title={closing?.length === 1 ? `Kết thúc ghi danh: ${closing[0].fullName}` : `Kết thúc ghi danh của ${closing?.length ?? 0} học sinh`}
-        form={closeForm} okText="Kết thúc ghi danh"
+        title={closing?.length === 1 ? `Rời lớp: ${closing[0].fullName}` : `Cho ${closing?.length ?? 0} học sinh rời lớp`}
+        form={closeForm} okText="Rời lớp"
         onClose={() => setClosing(null)} onSubmit={closeEnrollment}
         initialValues={{ reason: 'ClassTransfer' }}
       >
-        <Form.Item label="Lý do" name="reason" rules={[{ required: true, message: 'Chọn lý do kết thúc ghi danh.' }]}>
+        <Form.Item label="Lý do" name="reason" rules={[{ required: true, message: 'Chọn lý do rời lớp.' }]}>
           <Radio.Group options={CLOSE_REASONS} className="roster-reasons" />
         </Form.Item>
         <InlineAlert
           type="warning"
           title={reason === 'SchoolTransfer' || reason === 'Graduated'
-            ? `Sẽ kết thúc ${closeCount} ghi danh ở lớp ${cls?.name} và khóa ${closeCount} tài khoản học sinh ngay lập tức. Học sinh chuyển sang trạng thái không còn học.`
-            : `Sẽ kết thúc ${closeCount} ghi danh ở lớp ${cls?.name}. Học sinh chưa thuộc lớp nào cho tới khi được ghi danh hoặc chuyển vào lớp mới.`}
+            ? `Sẽ cho ${closeCount} học sinh rời lớp ${cls.name} và khóa ${closeCount} tài khoản học sinh ngay lập tức. Học sinh chuyển sang trạng thái không còn học.`
+            : `Sẽ cho ${closeCount} học sinh rời lớp ${cls.name}. Học sinh chưa thuộc lớp nào cho tới khi được xếp lớp hoặc chuyển vào lớp mới.`}
         />
-        <p className="muted">Ngày kết thúc là hôm nay ({dayjs().format('DD/MM/YYYY')}).</p>
+        <p className="muted">Ngày rời lớp là hôm nay ({dayjs().format('DD/MM/YYYY')}).</p>
       </FormModal>
     </>
   );

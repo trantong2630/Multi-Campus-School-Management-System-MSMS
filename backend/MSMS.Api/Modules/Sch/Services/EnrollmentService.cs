@@ -56,11 +56,11 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
     {
         var cls = await db.Class.Include(c => c.AcademicYear).FirstOrDefaultAsync(c => c.ClassId == classId)
                   ?? throw ApiException.NotFound("Không tìm thấy lớp.");
-        if (!cls.IsActive) throw ApiException.BadRequest("Lớp đã ngừng hoạt động. Kích hoạt lại lớp trước khi ghi danh.");
+        if (!cls.IsActive) throw ApiException.BadRequest("Lớp đã ngừng hoạt động. Kích hoạt lại lớp trước khi xếp lớp.");
         var student = await db.StudentProfile.Include(s => s.Student).FirstOrDefaultAsync(s => s.StudentId == r.StudentId)
                       ?? throw ApiException.BadRequest("Không tìm thấy học sinh. Chọn lại học sinh từ danh sách.");
         if (student.Status != Studying)
-            throw ApiException.BadRequest($"{student.Student.FullName} không còn ở trạng thái Đang học nên không ghi danh được.");
+            throw ApiException.BadRequest($"{student.Student.FullName} không còn ở trạng thái Đang học nên không xếp lớp được.");
 
         EnsureInYear(cls.AcademicYear, r.StartDate);
         await EnsureNoOverlapAsync(student, cls.AcademicYear, r.StartDate);
@@ -70,7 +70,7 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
     }
 
     /// <summary>
-    /// 4.2.31: chuyển lớp giữa năm trong một transaction. Ghi danh cũ kết thúc vào ngày liền trước ngày hiệu lực,
+    /// 4.2.31: chuyển lớp giữa năm trong một transaction, chỉ trong cùng khối và cùng năm học. Ghi danh cũ kết thúc vào ngày liền trước ngày hiệu lực,
     /// ghi danh mới mở từ ngày hiệu lực; dữ liệu đã phát sinh ở lớp cũ giữ nguyên (BR-09).
     /// </summary>
     public async Task TransferAsync(int enrollmentId, TransferRequest r)
@@ -106,10 +106,12 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
     private void TransferCore(Enrollment old, Class target, DateOnly effectiveDate)
     {
         if (old.EndDate != null)
-            throw ApiException.BadRequest("Ghi danh này đã kết thúc hoặc đã có lịch chuyển lớp. Chỉ chuyển được ghi danh đang mở.");
+            throw ApiException.BadRequest("Học sinh này đã rời lớp hoặc đã có lịch chuyển lớp. Chỉ chuyển lớp được học sinh đang ở lớp.");
         if (target.ClassId == old.ClassId) throw ApiException.BadRequest("Lớp chuyển đến trùng lớp hiện tại. Chọn lớp khác.");
         if (target.AcademicYearId != old.Class.AcademicYearId)
             throw ApiException.BadRequest("Chỉ chuyển lớp trong cùng năm học. Sang năm mới dùng Kết chuyển năm học.");
+        if (target.GradeLevel != old.Class.GradeLevel)
+            throw ApiException.BadRequest($"Chỉ chuyển lớp trong cùng khối. Lớp {target.Name} thuộc khối {target.GradeLevel}, học sinh đang học khối {old.Class.GradeLevel}.");
         if (!target.IsActive) throw ApiException.BadRequest("Lớp chuyển đến đã ngừng hoạt động. Chọn lớp khác.");
         EnsureInYear(target.AcademicYear, effectiveDate);
 
@@ -123,7 +125,7 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
         var ids = enrollmentIds.Distinct().ToList();
         var items = await db.Enrollment.Include(e => e.Class).ThenInclude(c => c.AcademicYear).Include(e => e.Student).ThenInclude(s => s.Student)
             .Where(e => ids.Contains(e.EnrollmentId)).ToListAsync();
-        if (items.Count != ids.Count) throw ApiException.NotFound("Không tìm thấy ghi danh. Tải lại danh sách rồi chọn lại.");
+        if (items.Count != ids.Count) throw ApiException.NotFound("Không tìm thấy học sinh trong lớp. Tải lại danh sách rồi chọn lại.");
         return items;
     }
 
@@ -133,10 +135,10 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
     /// </summary>
     public async Task EnrollManyAsync(int classId, EnrollManyRequest r)
     {
-        if (r.StudentIds is not { Count: > 0 }) throw ApiException.BadRequest("Chọn ít nhất một học sinh để ghi danh.");
+        if (r.StudentIds is not { Count: > 0 }) throw ApiException.BadRequest("Chọn ít nhất một học sinh để xếp lớp.");
         var cls = await db.Class.Include(c => c.AcademicYear).FirstOrDefaultAsync(c => c.ClassId == classId)
                   ?? throw ApiException.NotFound("Không tìm thấy lớp.");
-        if (!cls.IsActive) throw ApiException.BadRequest("Lớp đã ngừng hoạt động. Kích hoạt lại lớp trước khi ghi danh.");
+        if (!cls.IsActive) throw ApiException.BadRequest("Lớp đã ngừng hoạt động. Kích hoạt lại lớp trước khi xếp lớp.");
         EnsureInYear(cls.AcademicYear, r.StartDate);
 
         var ids = r.StudentIds.Distinct().ToList();
@@ -145,7 +147,7 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
         foreach (var s in students)
         {
             if (s.Status != Studying)
-                throw ApiException.BadRequest($"{s.Student.FullName} không còn ở trạng thái Đang học nên không ghi danh được.");
+                throw ApiException.BadRequest($"{s.Student.FullName} không còn ở trạng thái Đang học nên không xếp lớp được.");
             await EnsureNoOverlapAsync(s, cls.AcademicYear, r.StartDate);
         }
 
@@ -161,9 +163,9 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
     public async Task CloseAsync(int enrollmentId, CloseEnrollmentRequest r)
     {
         if (!EnrollmentCloseReasons.All.Contains(r.Reason))
-            throw ApiException.BadRequest("Chọn lý do kết thúc ghi danh: chuyển lớp, chuyển trường hoặc tốt nghiệp.");
+            throw ApiException.BadRequest("Chọn lý do rời lớp: chuyển lớp, chuyển trường hoặc tốt nghiệp.");
         var e = await FindEnrollmentAsync(enrollmentId);
-        if (e.EndDate != null) throw ApiException.BadRequest("Ghi danh này đã kết thúc từ trước.");
+        if (e.EndDate != null) throw ApiException.BadRequest("Học sinh này đã rời lớp từ trước.");
 
         await using var tx = await db.Database.BeginTransactionAsync();
         var lockedAccountId = await CloseCoreAsync(e, r.Reason, clock.Today);
@@ -177,11 +179,11 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
     public async Task CloseManyAsync(CloseManyRequest r)
     {
         if (!EnrollmentCloseReasons.All.Contains(r.Reason))
-            throw ApiException.BadRequest("Chọn lý do kết thúc ghi danh: chuyển lớp, chuyển trường hoặc tốt nghiệp.");
-        if (r.EnrollmentIds is not { Count: > 0 }) throw ApiException.BadRequest("Chọn ít nhất một học sinh để kết thúc ghi danh.");
+            throw ApiException.BadRequest("Chọn lý do rời lớp: chuyển lớp, chuyển trường hoặc tốt nghiệp.");
+        if (r.EnrollmentIds is not { Count: > 0 }) throw ApiException.BadRequest("Chọn ít nhất một học sinh để cho rời lớp.");
         var items = await LoadManyAsync(r.EnrollmentIds);
         var bad = items.FirstOrDefault(e => e.EndDate != null);
-        if (bad is not null) throw ApiException.BadRequest($"{bad.Student.Student.FullName}: ghi danh này đã kết thúc từ trước.");
+        if (bad is not null) throw ApiException.BadRequest($"{bad.Student.Student.FullName}: đã rời lớp từ trước.");
 
         var today = clock.Today;
         var locked = new List<int>();
@@ -302,7 +304,7 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
 
     private async Task<Enrollment> FindEnrollmentAsync(int id) =>
         await db.Enrollment.Include(e => e.Class).ThenInclude(c => c.AcademicYear).Include(e => e.Student).FirstOrDefaultAsync(e => e.EnrollmentId == id)
-        ?? throw ApiException.NotFound("Không tìm thấy ghi danh.");
+        ?? throw ApiException.NotFound("Không tìm thấy học sinh trong lớp.");
 
     private static void EnsureInYear(AcademicYear year, DateOnly date)
     {
@@ -322,8 +324,8 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
             EnrollmentRules.Overlaps(start, year.EndDate, e.StartDate, EnrollmentRules.EffectiveEnd(e.EndDate, year.EndDate)));
         if (clash is not null)
             throw ApiException.BadRequest(
-                $"{student.Student.FullName} đã có ghi danh ở lớp {clash.ClassName} trong năm học {year.Name}. " +
-                "Dùng Chuyển lớp, hoặc kết thúc ghi danh cũ trước khi ghi danh lớp mới.");
+                $"{student.Student.FullName} đã được xếp vào lớp {clash.ClassName} trong năm học {year.Name}. " +
+                "Dùng Chuyển lớp, hoặc cho rời lớp cũ trước khi xếp lớp mới.");
     }
 
     /// <summary>Quản lý và hiệu phó phân hiệu đọc được; giáo viên chỉ đọc lớp mình đang chủ nhiệm.</summary>

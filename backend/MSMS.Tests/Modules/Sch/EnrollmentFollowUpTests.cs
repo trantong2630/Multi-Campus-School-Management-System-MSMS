@@ -132,7 +132,7 @@ public class EnrollmentFollowUpTests
         var ex = await Assert.ThrowsAsync<ApiException>(() => classes.SetActiveAsync(ClassB, false));
 
         Assert.Contains("3 học sinh", ex.Message);
-        Assert.Contains("sắp bắt đầu", ex.Message);
+        Assert.Contains("sắp vào lớp", ex.Message);
         Assert.True((await db.Class.FindAsync(ClassB))!.IsActive);
     }
 

@@ -1,6 +1,7 @@
 import type { RouteObject } from 'react-router-dom';
 import { StudentProfilePage } from '@/features/ppl/pages/StudentProfilePage';
 import { CampusPage } from './pages/CampusPage';
+import { ClassPlacementPage } from './pages/ClassPlacementPage';
 import { ClassesPage } from './pages/ClassesPage';
 import { HolidaysPage } from './pages/HolidaysPage';
 import { HomeroomStudentsPage } from './pages/HomeroomStudentsPage';
@@ -18,6 +19,7 @@ export const schRoutes: RouteObject[] = [
   { path: 'sch/holidays', element: <HolidaysPage /> },
   { path: 'sch/period-slots', element: <PeriodSlotsPage /> },
   { path: 'sch/classes', element: <ClassesPage /> },
+  { path: 'sch/class-placement', element: <ClassPlacementPage /> },
   { path: 'sch/rollover', element: <RolloverPage /> },
   { path: 'sch/homeroom-students', element: <HomeroomStudentsPage /> },
   // Chủ nhiệm mở hồ sơ học sinh lớp mình: cùng trang với danh bạ, quyền theo mục Danh sách học sinh.

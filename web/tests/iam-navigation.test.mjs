@@ -53,7 +53,7 @@ test('Principal reads the dashboard and schedule without inheriting account mana
 });
 
 test('Structure screens with statistics: School Admin edits, Principal and campus-leading Vice Principal only read', () => {
-  const structure = ['/sch/subjects', '/sch/years', '/sch/classes'];
+  const structure = ['/sch/subjects', '/sch/years', '/sch/classes', '/sch/class-placement'];
   const adminOnly = ['/sch/holidays', '/sch/period-slots', '/sch/rollover'];
   for (const path of structure) {
     assert.equal(isPathAllowed(path, user('SchoolAdmin')), true, path);
