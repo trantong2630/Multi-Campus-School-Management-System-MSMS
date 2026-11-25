@@ -14,7 +14,7 @@ interface Props {
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Giá trị còn ở dạng mã thì đổi sang nhãn: ngày, lý do kết thúc ghi danh, loại tài khoản (đổi loại lưu ở from và to). */
+/** Giá trị còn ở dạng mã thì đổi sang nhãn: ngày, lý do rời lớp, loại tài khoản (đổi loại lưu ở from và to). */
 function showValue(key: string, value: string) {
   if (ISO_DATE.test(value)) return formatDate(value);
   if (key === 'reason') return enrollmentCloseReasonLabel[value] ?? value;

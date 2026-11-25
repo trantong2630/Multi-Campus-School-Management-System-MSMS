@@ -34,8 +34,8 @@ export const auditTargetKindLabel: Record<string, string> = {
 export const auditFieldLabel: Record<string, string> = {
   count: 'Số tài khoản',
   reason: 'Lý do',
-  enrollmentId: 'Mã ghi danh',
-  enrollmentIds: 'Mã ghi danh',
+  enrollmentId: 'Mã xếp lớp',
+  enrollmentIds: 'Mã xếp lớp',
   pendingSessions: 'Số tiết chuyển Chờ xử lý',
   closedDuties: 'Số trách nhiệm đã kết thúc',
   from: 'Từ',
