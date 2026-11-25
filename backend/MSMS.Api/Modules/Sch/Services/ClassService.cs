@@ -82,7 +82,7 @@ public sealed class ClassService(MsmsDbContext db, IClock clock)
             var today = clock.Today;
             var open = await db.Enrollment.Where(EnrollmentRules.OpenOrUpcoming(today)).CountAsync(e => e.ClassId == id);
             if (open > 0)
-                throw ApiException.BadRequest($"Lớp còn {open} học sinh có ghi danh đang mở hoặc sắp bắt đầu. Chuyển hoặc kết thúc ghi danh trước.");
+                throw ApiException.BadRequest($"Lớp còn {open} học sinh đang học hoặc sắp vào lớp. Chuyển lớp hoặc cho rời lớp trước.");
 
             // Lớp ngừng hoạt động không được để lại tiết sắp tới (chiếm lịch giáo viên) hay chủ nhiệm (chặn giáo viên nhận lớp khác cùng năm).
             var todo = new List<string>();

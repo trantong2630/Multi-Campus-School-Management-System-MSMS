@@ -21,7 +21,7 @@ interface Props {
 
 /**
  * Import học sinh một bước (BR-11): gửi file, validate toàn bộ rồi mới ghi. Có một lỗi là không ghi gì.
- * Một dòng là một học sinh kèm phụ huynh đại diện; cột Tên lớp có giá trị thì ghi danh luôn.
+ * Một dòng là một học sinh kèm phụ huynh đại diện; cột Tên lớp có giá trị thì xếp lớp luôn.
  */
 export function StudentImportModal({ open, onClose, yearId, campusId }: Props) {
   const qc = useQueryClient();
@@ -44,7 +44,7 @@ export function StudentImportModal({ open, onClose, yearId, campusId }: Props) {
       const res = await pplApi.students.import(file);
       setResult(res);
       if (res.accepted) {
-        // Sĩ số, danh sách lớp và ô tìm học sinh để ghi danh đều đổi theo.
+        // Sĩ số, danh sách lớp và ô tìm học sinh để xếp lớp đều đổi theo.
         void qc.invalidateQueries({ queryKey: ['sch'] });
         void qc.invalidateQueries({ queryKey: ['ppl'] });
         if (res.students > 0) message.success(`Đã tạo ${res.students} học sinh.`);
@@ -63,7 +63,7 @@ export function StudentImportModal({ open, onClose, yearId, campusId }: Props) {
     >
       <p className="import-modal__hint">
         Tải file mẫu, điền rồi tải lên. Mỗi dòng là một học sinh mới kèm phụ huynh đại diện; mỗi file một phân hiệu và một năm học.
-        Cột Tên lớp có giá trị thì ghi danh luôn từ ngày bắt đầu năm học (lớp phải tạo trước). Học sinh đã có (trùng số định danh) bị bỏ qua
+        Cột Tên lớp có giá trị thì xếp lớp luôn từ ngày bắt đầu năm học (lớp phải tạo trước). Học sinh đã có (trùng số định danh) bị bỏ qua
         cả dòng; import chỉ tạo hồ sơ, không tạo tài khoản.
       </p>
       <div className="import-modal__actions">
@@ -76,7 +76,7 @@ export function StudentImportModal({ open, onClose, yearId, campusId }: Props) {
         <InlineAlert
           type="success"
           title={
-            `Đã tạo ${result.students} học sinh, ${result.enrollments} ghi danh và ${result.parents} phụ huynh mới`
+            `Đã tạo ${result.students} học sinh, xếp lớp cho ${result.enrollments} em và tạo ${result.parents} phụ huynh mới`
             + (result.skipped.length ? `, bỏ qua ${result.skipped.length} học sinh đã có.` : '.')
           }
         />

@@ -70,7 +70,7 @@ export const menu: MenuGroup[] = [
     key: 'par-report', label: 'Báo cáo tuần', icon: ChartColumn, section: 'overview', path: '/par/weekly-reports',
     roles: ['Teacher', 'Student', 'Parent'], requires: { Teacher: 'homeroom' }, ready: true,
   },
-  // Danh sách học sinh lớp chủ nhiệm, chỉ xem. SA, HT, HP xem lớp ở Lớp & Ghi danh.
+  // Danh sách học sinh lớp chủ nhiệm, chỉ xem. SA, HT, HP xem lớp ở màn Xếp lớp.
   {
     key: 'homeroom-students', label: 'Danh sách học sinh', icon: BookUser, section: 'manage', path: '/sch/homeroom-students',
     roles: ['Teacher'], requires: { Teacher: 'homeroom' }, ready: true,
@@ -86,7 +86,8 @@ export const menu: MenuGroup[] = [
       { key: 'sch-holiday', label: 'Ngày nghỉ', path: '/sch/holidays', roles: ['SchoolAdmin'], ready: true },
       { key: 'sch-slot', label: 'Khung giờ tiết', path: '/sch/period-slots', roles: ['SchoolAdmin'], ready: true },
       // Hiệu phó chỉ thấy lớp của phân hiệu mình phụ trách.
-      { key: 'sch-class', label: 'Lớp & Ghi danh', path: '/sch/classes', roles: ['SchoolAdmin', 'Principal', 'VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
+      { key: 'sch-class', label: 'Lớp', path: '/sch/classes', roles: ['SchoolAdmin', 'Principal', 'VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
+      { key: 'sch-placement', label: 'Xếp lớp', path: '/sch/class-placement', roles: ['SchoolAdmin', 'Principal', 'VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
       { key: 'sch-rollover', label: 'Kết chuyển năm học', path: '/sch/rollover', roles: ['SchoolAdmin'], ready: true },
     ],
   },

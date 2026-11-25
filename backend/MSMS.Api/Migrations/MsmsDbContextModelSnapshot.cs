@@ -299,11 +299,12 @@ namespace MSMS.Api.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("StudentId")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("PupilId");
 
                     b.HasKey("AssignmentId", "StudentId");
 
-                    b.HasIndex(new[] { "StudentId" }, "IX_AssignmentRecipient_Student");
+                    b.HasIndex(new[] { "StudentId" }, "IX_AssignmentRecipient_Pupil");
 
                     b.ToTable("AssignmentRecipient");
                 });
@@ -341,7 +342,8 @@ namespace MSMS.Api.Migrations
                         .HasColumnType("nvarchar(10)");
 
                     b.Property<int>("StudentId")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("PupilId");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasPrecision(0)
@@ -357,7 +359,7 @@ namespace MSMS.Api.Migrations
 
                     b.HasIndex("UpdatedByPersonId");
 
-                    b.HasIndex(new[] { "StudentId", "RecordedAt" }, "IX_Attendance_Student");
+                    b.HasIndex(new[] { "StudentId", "RecordedAt" }, "IX_Attendance_Pupil");
 
                     b.HasIndex(new[] { "SessionId", "StudentId" }, "UQ_Attendance")
                         .IsUnique();
@@ -578,7 +580,8 @@ namespace MSMS.Api.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("StudentId")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("PupilId");
 
                     b.HasKey("ConversationId")
                         .HasName("PK__Conversa__C050D877AD622E4F");
@@ -667,14 +670,15 @@ namespace MSMS.Api.Migrations
                         .HasColumnType("date");
 
                     b.Property<int>("StudentId")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("PupilId");
 
                     b.HasKey("EnrollmentId")
                         .HasName("PK__Enrollme__7F68771B3F3CD5D5");
 
                     b.HasIndex(new[] { "ClassId", "StartDate" }, "IX_Enrollment_Class");
 
-                    b.HasIndex(new[] { "StudentId", "StartDate" }, "IX_Enrollment_Student");
+                    b.HasIndex(new[] { "StudentId", "StartDate" }, "IX_Enrollment_Pupil");
 
                     b.ToTable("Enrollment");
                 });
@@ -823,7 +827,8 @@ namespace MSMS.Api.Migrations
                         .HasDefaultValue("Pending");
 
                     b.Property<int>("StudentId")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("PupilId");
 
                     b.Property<DateOnly>("ToDate")
                         .HasColumnType("date");
@@ -837,7 +842,7 @@ namespace MSMS.Api.Migrations
 
                     b.HasIndex(new[] { "ClassId", "Status" }, "IX_Leave_Class");
 
-                    b.HasIndex(new[] { "StudentId", "Status", "FromDate", "ToDate" }, "IX_Leave_Student");
+                    b.HasIndex(new[] { "StudentId", "Status", "FromDate", "ToDate" }, "IX_Leave_Pupil");
 
                     b.ToTable("LeaveRequest");
                 });
@@ -963,17 +968,18 @@ namespace MSMS.Api.Migrations
                         .HasColumnType("nvarchar(30)");
 
                     b.Property<int>("StudentId")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("PupilId");
 
                     b.HasKey("LinkId")
                         .HasName("PK__ParentSt__2D122135D4896914");
 
-                    b.HasIndex(new[] { "StudentId" }, "IX_Link_Student");
+                    b.HasIndex(new[] { "StudentId" }, "IX_Link_Pupil");
 
-                    b.HasIndex(new[] { "ParentId", "StudentId" }, "UQ_ParentStudentLink")
+                    b.HasIndex(new[] { "ParentId", "StudentId" }, "UQ_ParentPupilLink")
                         .IsUnique();
 
-                    b.ToTable("ParentStudentLink");
+                    b.ToTable("ParentPupilLink", (string)null);
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.PasswordResetOtp", b =>
@@ -1468,7 +1474,8 @@ namespace MSMS.Api.Migrations
             modelBuilder.Entity("MSMS.Api.Data.Entities.StudentProfile", b =>
                 {
                     b.Property<int>("StudentId")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("PupilId");
 
                     b.Property<DateOnly?>("AdmissionDate")
                         .HasColumnType("date");
@@ -1490,7 +1497,7 @@ namespace MSMS.Api.Migrations
                     b.HasKey("StudentId")
                         .HasName("PK__StudentP__32C52B996A753723");
 
-                    b.ToTable("StudentProfile");
+                    b.ToTable("PupilProfile", (string)null);
                 });
 
             modelBuilder.Entity("MSMS.Api.Data.Entities.Subject", b =>
@@ -1592,7 +1599,8 @@ namespace MSMS.Api.Migrations
                         .HasDefaultValueSql("(CONVERT([datetime2](0),(sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time')))");
 
                     b.Property<int>("StudentId")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("PupilId");
 
                     b.Property<DateTime?>("SubmittedAt")
                         .HasPrecision(0)
@@ -1601,7 +1609,7 @@ namespace MSMS.Api.Migrations
                     b.HasKey("SubmissionId")
                         .HasName("PK__Submissi__449EE1252F0D5C2F");
 
-                    b.HasIndex(new[] { "StudentId", "SubmittedAt" }, "IX_Submission_Student");
+                    b.HasIndex(new[] { "StudentId", "SubmittedAt" }, "IX_Submission_Pupil");
 
                     b.HasIndex(new[] { "AssignmentId", "StudentId" }, "UQ_Submission")
                         .IsUnique();

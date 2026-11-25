@@ -321,7 +321,7 @@ class _History extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (rows.isEmpty) return const EmptyState('Chưa có ghi danh nào.', compact: true);
+    if (rows.isEmpty) return const EmptyState('Chưa xếp lớp lần nào.', compact: true);
     return AppCard(
       child: Column(
         children: [

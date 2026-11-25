@@ -125,7 +125,7 @@ public sealed class ConversationService(
             .FirstOrDefaultAsync();
 
         if (enrollment is null)
-            throw ApiException.BadRequest("Học sinh không có ghi danh hiệu lực.");
+            throw ApiException.BadRequest("Học sinh hiện không thuộc lớp nào.");
 
         var isTeaching = await IsTeacherOfClassAsync(staffPersonId, enrollment.ClassId, today);
         if (!isTeaching)

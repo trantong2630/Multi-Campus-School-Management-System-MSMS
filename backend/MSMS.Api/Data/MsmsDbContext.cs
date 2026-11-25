@@ -231,9 +231,10 @@ public partial class MsmsDbContext : DbContext
 
         modelBuilder.Entity<AttendanceRecord>(entity =>
         {
+            entity.Property(e => e.StudentId).HasColumnName("PupilId");
             entity.HasKey(e => e.AttendanceId).HasName("PK__Attendan__8B69261CA0EC7B5F");
 
-            entity.HasIndex(e => new { e.StudentId, e.RecordedAt }, "IX_Attendance_Student");
+            entity.HasIndex(e => new { e.StudentId, e.RecordedAt }, "IX_Attendance_Pupil");
 
             entity.HasIndex(e => new { e.SessionId, e.StudentId }, "UQ_Attendance").IsUnique();
 
@@ -358,6 +359,7 @@ public partial class MsmsDbContext : DbContext
 
         modelBuilder.Entity<Conversation>(entity =>
         {
+            entity.Property(e => e.StudentId).HasColumnName("PupilId");
             entity.HasKey(e => e.ConversationId).HasName("PK__Conversa__C050D877AD622E4F");
 
             entity.HasIndex(e => new { e.StaffId, e.LastMessageAt }, "IX_Conversation_Staff").IsDescending(false, true);
@@ -414,11 +416,12 @@ public partial class MsmsDbContext : DbContext
 
         modelBuilder.Entity<Enrollment>(entity =>
         {
+            entity.Property(e => e.StudentId).HasColumnName("PupilId");
             entity.HasKey(e => e.EnrollmentId).HasName("PK__Enrollme__7F68771B3F3CD5D5");
 
             entity.HasIndex(e => new { e.ClassId, e.StartDate }, "IX_Enrollment_Class");
 
-            entity.HasIndex(e => new { e.StudentId, e.StartDate }, "IX_Enrollment_Student");
+            entity.HasIndex(e => new { e.StudentId, e.StartDate }, "IX_Enrollment_Pupil");
 
             entity.Property(e => e.CreatedAt)
                 .HasPrecision(0)
@@ -492,11 +495,12 @@ public partial class MsmsDbContext : DbContext
 
         modelBuilder.Entity<LeaveRequest>(entity =>
         {
+            entity.Property(e => e.StudentId).HasColumnName("PupilId");
             entity.HasKey(e => e.LeaveRequestId).HasName("PK__LeaveReq__609421EEE1310F83");
 
             entity.HasIndex(e => new { e.ClassId, e.Status }, "IX_Leave_Class");
 
-            entity.HasIndex(e => new { e.StudentId, e.Status, e.FromDate, e.ToDate }, "IX_Leave_Student");
+            entity.HasIndex(e => new { e.StudentId, e.Status, e.FromDate, e.ToDate }, "IX_Leave_Pupil");
 
             entity.Property(e => e.CreatedAt)
                 .HasPrecision(0)
@@ -576,11 +580,13 @@ public partial class MsmsDbContext : DbContext
 
         modelBuilder.Entity<ParentStudentLink>(entity =>
         {
+            entity.ToTable("ParentPupilLink");
+            entity.Property(e => e.StudentId).HasColumnName("PupilId");
             entity.HasKey(e => e.LinkId).HasName("PK__ParentSt__2D122135D4896914");
 
-            entity.HasIndex(e => e.StudentId, "IX_Link_Student");
+            entity.HasIndex(e => e.StudentId, "IX_Link_Pupil");
 
-            entity.HasIndex(e => new { e.ParentId, e.StudentId }, "UQ_ParentStudentLink").IsUnique();
+            entity.HasIndex(e => new { e.ParentId, e.StudentId }, "UQ_ParentPupilLink").IsUnique();
 
             entity.Property(e => e.CreatedAt)
                 .HasPrecision(0)
@@ -846,6 +852,8 @@ public partial class MsmsDbContext : DbContext
 
         modelBuilder.Entity<StudentProfile>(entity =>
         {
+            entity.ToTable("PupilProfile");
+            entity.Property(e => e.StudentId).HasColumnName("PupilId");
             entity.HasKey(e => e.StudentId).HasName("PK__StudentP__32C52B996A753723");
 
             entity.Property(e => e.StudentId).ValueGeneratedNever();
@@ -891,9 +899,10 @@ public partial class MsmsDbContext : DbContext
 
         modelBuilder.Entity<AssignmentRecipient>(entity =>
         {
+            entity.Property(e => e.StudentId).HasColumnName("PupilId");
             entity.HasKey(e => new { e.AssignmentId, e.StudentId });
 
-            entity.HasIndex(e => e.StudentId, "IX_AssignmentRecipient_Student");
+            entity.HasIndex(e => e.StudentId, "IX_AssignmentRecipient_Pupil");
 
             entity.HasOne(d => d.Assignment).WithMany(p => p.AssignmentRecipient)
                 .HasForeignKey(d => d.AssignmentId)
@@ -906,9 +915,10 @@ public partial class MsmsDbContext : DbContext
 
         modelBuilder.Entity<Submission>(entity =>
         {
+            entity.Property(e => e.StudentId).HasColumnName("PupilId");
             entity.HasKey(e => e.SubmissionId).HasName("PK__Submissi__449EE1252F0D5C2F");
 
-            entity.HasIndex(e => new { e.StudentId, e.SubmittedAt }, "IX_Submission_Student");
+            entity.HasIndex(e => new { e.StudentId, e.SubmittedAt }, "IX_Submission_Pupil");
 
             entity.HasIndex(e => new { e.AssignmentId, e.StudentId }, "UQ_Submission").IsUnique();
 

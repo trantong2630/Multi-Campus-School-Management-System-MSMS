@@ -35,7 +35,7 @@ function ClassStudents({ cls, year }: { cls: SchoolClass; year: AcademicYear }) 
     .sort((a, b) => dayjs(a.dateOfBirth).date() - dayjs(b.dateOfBirth).date());
   const anyEnded = students.some((s) => s.endDate !== null);
 
-  // Cột Kết thúc chỉ có ý nghĩa khi có em đã kết thúc ghi danh; còn lại em nào cũng học tới hết năm.
+  // Cột Kết thúc chỉ có ý nghĩa khi có em đã rời lớp; còn lại em nào cũng học tới hết năm.
   const columns: ColumnsType<RosterItem> = [
     { title: 'STT', key: 'no', width: 64, align: 'center', className: 'tabular', render: (_: unknown, __: RosterItem, i: number) => i + 1 },
     ...rosterColumns
@@ -109,7 +109,7 @@ function ClassStudents({ cls, year }: { cls: SchoolClass; year: AcademicYear }) 
       <Card className="table-card">
         <DataTable<RosterItem>
           rowKey="enrollmentId" loading={roster.isLoading} dataSource={roster.data?.students} pagination={false}
-          emptyText="Lớp chưa có học sinh nào có ghi danh hiệu lực tại ngày này."
+          emptyText="Lớp chưa có học sinh nào tại ngày này."
           columns={columns}
         />
       </Card>
@@ -119,7 +119,7 @@ function ClassStudents({ cls, year }: { cls: SchoolClass; year: AcademicYear }) 
 
 /**
  * SCH-05 Danh sách học sinh (UC-SCH-09): giáo viên chủ nhiệm xem học sinh của lớp mình chủ nhiệm, bấm tên mở Hồ sơ học sinh.
- * Chỉ xem; School Admin, Hiệu trưởng, Hiệu phó xem ở màn Lớp & Ghi danh.
+ * Chỉ xem; School Admin, Hiệu trưởng, Hiệu phó xem ở màn Xếp lớp.
  */
 export function HomeroomStudentsPage() {
   const { user } = useAuth();

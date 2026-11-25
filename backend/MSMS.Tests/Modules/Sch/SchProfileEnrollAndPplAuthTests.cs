@@ -80,7 +80,7 @@ public class SchEnrollmentFieldTests
 {
     private static readonly DateOnly YStart = new(2026, 9, 5), YEnd = new(2027, 5, 31);
 
-    [Fact(DisplayName = "SCH | Ghi danh | Ngày bắt đầu | đúng ngày đầu và ngày cuối năm học được chấp nhận")]
+    [Fact(DisplayName = "SCH | Xếp lớp | Ngày bắt đầu | đúng ngày đầu và ngày cuối năm học được chấp nhận")]
     public async Task StartDate_YearBoundaries()
     {
         using var e = new PplEnv();
@@ -90,7 +90,7 @@ public class SchEnrollmentFieldTests
         Assert.Equal(2, await e.Db.Enrollment.CountAsync(x => x.StudentId >= 120));
     }
 
-    [Theory(DisplayName = "SCH | Ghi danh | Ngày bắt đầu | trước ngày đầu hoặc sau ngày cuối năm học bị từ chối")]
+    [Theory(DisplayName = "SCH | Xếp lớp | Ngày bắt đầu | trước ngày đầu hoặc sau ngày cuối năm học bị từ chối")]
     [InlineData(-1)] [InlineData(1)]
     public async Task StartDate_OutsideYear_Rejected(int sign)
     {
@@ -99,16 +99,16 @@ public class SchEnrollmentFieldTests
         await PplEnv.Rejects(() => e.Enrollments.EnrollAsync(PplEnv.Class6A, new EnrollRequest(PplEnv.StudentNoClass, date)), "nằm trong năm học");
     }
 
-    [Fact(DisplayName = "SCH | Ghi danh | Học sinh | không tồn tại, đã tốt nghiệp hoặc đã có ghi danh trong năm bị từ chối")]
+    [Fact(DisplayName = "SCH | Xếp lớp | Học sinh | không tồn tại, đã tốt nghiệp hoặc đã được xếp lớp trong năm bị từ chối")]
     public async Task Student_Invalid()
     {
         using var e = new PplEnv();
         await PplEnv.Rejects(() => e.Enrollments.EnrollAsync(PplEnv.Class6A, new EnrollRequest(9999, YStart)), "học sinh");
         await PplEnv.Rejects(() => e.Enrollments.EnrollAsync(PplEnv.Class6A, new EnrollRequest(PplEnv.StudentGraduated, YStart)), "Đang học");
-        await PplEnv.Rejects(() => e.Enrollments.EnrollAsync(PplEnv.Class9A, new EnrollRequest(PplEnv.StudentA, YStart.AddDays(10))), "đã có ghi danh");
+        await PplEnv.Rejects(() => e.Enrollments.EnrollAsync(PplEnv.Class9A, new EnrollRequest(PplEnv.StudentA, YStart.AddDays(10))), "đã được xếp vào lớp");
     }
 
-    [Fact(DisplayName = "SCH | Ghi danh | Lớp | không tồn tại trả 404, lớp đã ngừng hoạt động bị từ chối")]
+    [Fact(DisplayName = "SCH | Xếp lớp | Lớp | không tồn tại trả 404, lớp đã ngừng hoạt động bị từ chối")]
     public async Task Class_Invalid()
     {
         using var e = new PplEnv();
@@ -119,7 +119,7 @@ public class SchEnrollmentFieldTests
         await PplEnv.Rejects(() => e.Enrollments.EnrollAsync(55, new EnrollRequest(PplEnv.StudentNoClass, YStart)), "ngừng hoạt động");
     }
 
-    [Fact(DisplayName = "SCH | Ghi danh | Ghi danh nhiều học sinh | danh sách trống, học sinh không tồn tại hoặc ngày ngoài năm học bị từ chối; hợp lệ thì ghi tất cả")]
+    [Fact(DisplayName = "SCH | Xếp lớp | Xếp nhiều học sinh | danh sách trống, học sinh không tồn tại hoặc ngày ngoài năm học bị từ chối; hợp lệ thì ghi tất cả")]
     public async Task EnrollMany_Validation()
     {
         using var e = new PplEnv();
@@ -132,34 +132,38 @@ public class SchEnrollmentFieldTests
         Assert.Equal(2, await e.Db.Enrollment.CountAsync(x => x.StudentId >= 130));
     }
 
-    [Fact(DisplayName = "SCH | Ghi danh | Chuyển lớp | lớp đích không chọn, trùng lớp hiện tại, đã ngừng hoạt động hoặc khác năm học bị từ chối")]
+    [Fact(DisplayName = "SCH | Xếp lớp | Chuyển lớp | lớp đích không chọn, trùng lớp hiện tại, khác khối, đã ngừng hoạt động hoặc khác năm học bị từ chối")]
     public async Task Transfer_Validation()
     {
         using var e = new PplEnv();
         SchTestSupport.AddYear(e.Db, 2, "2027-2028", new(2027, 9, 5), new(2028, 5, 31));
         SchTestSupport.AddClass(e.Db, 80, PplEnv.Campus1, 2, "7A", 7);
         SchTestSupport.AddClass(e.Db, 81, PplEnv.Campus1, PplEnv.Year1, "6B", 6, active: false);
+        SchTestSupport.AddClass(e.Db, 82, PplEnv.Campus1, PplEnv.Year1, "5A", 5);
         var id = (await e.Db.Enrollment.SingleAsync(x => x.StudentId == PplEnv.StudentA)).EnrollmentId;
         var eff = new DateOnly(2026, 10, 27);
         await PplEnv.Rejects(() => e.Enrollments.TransferAsync(id, new TransferRequest(0, eff)), "Chọn lớp");
         await PplEnv.Rejects(() => e.Enrollments.TransferAsync(id, new TransferRequest(PplEnv.Class6A, eff)), "trùng lớp hiện tại");
+        await PplEnv.Rejects(() => e.Enrollments.TransferAsync(id, new TransferRequest(PplEnv.Class9A, eff)), "cùng khối");   // lên khối trên
+        await PplEnv.Rejects(() => e.Enrollments.TransferAsync(id, new TransferRequest(82, eff)), "cùng khối");   // xuống khối dưới
         await PplEnv.Rejects(() => e.Enrollments.TransferAsync(id, new TransferRequest(81, eff)), "ngừng hoạt động");
         await PplEnv.Rejects(() => e.Enrollments.TransferAsync(id, new TransferRequest(80, eff)), "cùng năm học");
     }
 
-    [Fact(DisplayName = "SCH | Ghi danh | Chuyển lớp | hợp lệ: ghi danh cũ kết thúc ngày liền trước ngày hiệu lực, ghi danh mới mở từ ngày hiệu lực")]
+    [Fact(DisplayName = "SCH | Xếp lớp | Chuyển lớp | hợp lệ: lượt xếp lớp cũ kết thúc ngày liền trước ngày hiệu lực, lượt mới mở từ ngày hiệu lực")]
     public async Task Transfer_Valid()
     {
         using var e = new PplEnv();
+        SchTestSupport.AddClass(e.Db, 83, PplEnv.Campus1, PplEnv.Year1, "6B", 6);
         var id = (await e.Db.Enrollment.SingleAsync(x => x.StudentId == PplEnv.StudentA)).EnrollmentId;
-        await e.Enrollments.TransferAsync(id, new TransferRequest(PplEnv.Class9A, new DateOnly(2026, 10, 27)));
+        await e.Enrollments.TransferAsync(id, new TransferRequest(83, new DateOnly(2026, 10, 27)));
         var all = await e.Db.Enrollment.Where(x => x.StudentId == PplEnv.StudentA).OrderBy(x => x.StartDate).ToListAsync();
         Assert.Equal(2, all.Count);
         Assert.Equal(new DateOnly(2026, 10, 26), all[0].EndDate);
         Assert.Equal(new DateOnly(2026, 10, 27), all[1].StartDate);
     }
 
-    [Theory(DisplayName = "SCH | Ghi danh | Kết thúc ghi danh | lý do không hợp lệ hoặc danh sách trống bị từ chối")]
+    [Theory(DisplayName = "SCH | Xếp lớp | Rời lớp | lý do không hợp lệ hoặc danh sách trống bị từ chối")]
     [InlineData("")] [InlineData("Other")] [InlineData(null)]
     public async Task Close_InvalidReason(string? reason)
     {
@@ -169,13 +173,13 @@ public class SchEnrollmentFieldTests
         await PplEnv.Rejects(() => e.Enrollments.CloseManyAsync(new CloseManyRequest([], "SchoolTransfer")), "ít nhất");
     }
 
-    [Fact(DisplayName = "SCH | Ghi danh | Kết thúc ghi danh | kết thúc hai lần bị từ chối; ghi danh không tồn tại trả 404")]
+    [Fact(DisplayName = "SCH | Xếp lớp | Rời lớp | cho rời lớp hai lần bị từ chối; học sinh không có trong lớp trả 404")]
     public async Task Close_Twice_AndUnknown()
     {
         using var e = new PplEnv();
         var id = (await e.Db.Enrollment.SingleAsync(x => x.StudentId == PplEnv.StudentA)).EnrollmentId;
         await e.Enrollments.CloseAsync(id, new CloseEnrollmentRequest("ClassTransfer"));
-        await PplEnv.Rejects(() => e.Enrollments.CloseAsync(id, new CloseEnrollmentRequest("ClassTransfer")), "đã kết thúc");
+        await PplEnv.Rejects(() => e.Enrollments.CloseAsync(id, new CloseEnrollmentRequest("ClassTransfer")), "rời lớp");
         var ex = await Assert.ThrowsAsync<ApiException>(() => e.Enrollments.CloseAsync(9999, new CloseEnrollmentRequest("ClassTransfer")));
         Assert.Equal(404, ex.StatusCode);
     }
