@@ -77,7 +77,7 @@ public sealed class AssignmentService(
 
         var roster = await db.Enrollment.AsNoTracking().RosterAt(cls.ClassId, clock.Today).Select(e => e.StudentId).Distinct().ToListAsync();
         if (roster.Count == 0)
-            throw ApiException.BadRequest("Lớp chưa có học sinh đang học. Ghi danh học sinh vào lớp trước khi giao bài.");
+            throw ApiException.BadRequest("Lớp chưa có học sinh đang học. Xếp học sinh vào lớp trước khi giao bài.");
 
         await using var tx = await db.Database.BeginTransactionAsync();
         var ids = items.Select(i => i.QuestionId).ToList();
