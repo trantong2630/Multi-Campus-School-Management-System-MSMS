@@ -43,10 +43,10 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
         ws.ShowGridLines = false;
         var last = Headers.Length;
 
-        ws.WriteTitle("MSMS — MẪU IMPORT HỌC SINH (GỒM GHI DANH VÀ PHỤ HUYNH)", last);
+        ws.WriteTitle("MSMS — MẪU IMPORT HỌC SINH (GỒM XẾP LỚP VÀ PHỤ HUYNH)", last);
         ws.WriteNote(2,
             "Mỗi dòng là một học sinh MỚI kèm phụ huynh đại diện. Khai Năm học và Phân hiệu ở hai ô meta bên dưới — mỗi file một phân hiệu. "
-            + "KHÔNG có cột mã: hệ thống tự sinh mã HS, mã PH và tên đăng nhập. Cột Tên lớp có giá trị thì ghi danh luôn, hiệu lực từ ngày bắt đầu năm học; "
+            + "KHÔNG có cột mã: hệ thống tự sinh mã HS, mã PH và tên đăng nhập. Cột Tên lớp có giá trị thì xếp lớp luôn, hiệu lực từ ngày bắt đầu năm học; "
             + "lớp phải được tạo trước. Phụ huynh nhận diện theo số điện thoại — cùng số thì dùng chung một hồ sơ và liên kết nhiều con. "
             + "Học sinh nhận diện theo Số định danh (12 chữ số, duy nhất toàn trường, cột định dạng Text để giữ số 0 đầu); đã có thì bỏ qua cả dòng. Ô tô cam là cột bắt buộc.",
             last, 40);
@@ -182,8 +182,8 @@ public sealed class StudentImportService(MsmsDbContext db, IClock clock)
                 if (className.Length > 0 && year is not null && campus is not null)
                 {
                     if (!classes.TryGetValue(className, out var cls))
-                        Err(ColClass, $"Lớp \"{className}\" không có ở {campus.Name}, năm học {year.Name}. Tạo lớp ở Lớp & Ghi danh trước, hoặc sửa lại tên lớp cho đúng.");
-                    else if (!cls.IsActive) Err(ColClass, $"Lớp \"{className}\" đã ngừng hoạt động nên không ghi danh được.");
+                        Err(ColClass, $"Lớp \"{className}\" không có ở {campus.Name}, năm học {year.Name}. Tạo lớp ở màn Lớp trước, hoặc sửa lại tên lớp cho đúng.");
+                    else if (!cls.IsActive) Err(ColClass, $"Lớp \"{className}\" đã ngừng hoạt động nên không xếp lớp được.");
                     else classId = cls.ClassId;
                 }
 

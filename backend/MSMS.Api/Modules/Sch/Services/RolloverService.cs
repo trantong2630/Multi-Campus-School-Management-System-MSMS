@@ -228,16 +228,16 @@ public sealed class RolloverService(MsmsDbContext db, IClock clock)
         var ids = r.EnrollmentIds.Distinct().ToList();
         var items = await db.Enrollment.Include(e => e.Class).ThenInclude(c => c.AcademicYear)
             .Where(e => ids.Contains(e.EnrollmentId)).ToListAsync();
-        if (items.Count != ids.Count) throw ApiException.NotFound("Không tìm thấy ghi danh. Tải lại danh sách rồi chọn lại.");
+        if (items.Count != ids.Count) throw ApiException.NotFound("Không tìm thấy học sinh trong lớp. Tải lại danh sách rồi chọn lại.");
 
         var today = clock.Today;
         foreach (var e in items)
         {
             var year = e.Class.AcademicYear;
             if (e.EndDate != null || e.StartDate != year.StartDate)
-                throw ApiException.BadRequest("Chỉ gỡ được ghi danh do kết chuyển tạo ra (mở từ ngày đầu năm học).");
+                throw ApiException.BadRequest("Chỉ gỡ được việc xếp lớp do kết chuyển tạo ra (từ ngày đầu năm học).");
             if (year.StartDate <= today)
-                throw ApiException.BadRequest($"Năm học {year.Name} đã bắt đầu nên không gỡ được. Dùng Chuyển lớp hoặc Kết thúc ghi danh ở màn Lớp & Ghi danh.");
+                throw ApiException.BadRequest($"Năm học {year.Name} đã bắt đầu nên không gỡ được. Dùng Chuyển lớp hoặc Rời lớp ở màn Xếp lớp.");
         }
         db.Enrollment.RemoveRange(items);
         await db.SaveChangesAsync();

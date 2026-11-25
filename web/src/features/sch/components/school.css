@@ -671,3 +671,22 @@ button.hol-chip {
   background: var(--c-green600);
   color: var(--c-surface);
 }
+
+/* Màn Xếp lớp: cột trái là danh sách lớp nhóm theo khối, cột phải là học sinh của lớp đang chọn. */
+.placement { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 16px; align-items: start; }
+.placement-side { position: sticky; top: 16px; max-height: calc(100vh - 140px); overflow: auto; }
+.placement-side .ant-card-body { padding: 8px; }
+.placement-group + .placement-group { margin-top: 12px; }
+.placement-group__title { display: flex; justify-content: space-between; margin: 0; padding: 4px 8px; font-size: 12px; font-weight: 600; color: var(--c-text3); }
+.placement-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 8px 10px; border: 1px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--c-text1); text-align: left; cursor: pointer; font: inherit; }
+.placement-item:hover { background: var(--c-green50); }
+.placement-item.is-active { background: var(--c-green100); border-color: var(--c-green300); color: var(--c-green800); }
+.placement-item.is-muted { opacity: .6; }
+.placement-item__name { display: block; font-weight: 600; }
+.placement-item__sub { display: block; font-size: 12px; font-weight: 400; color: var(--c-text2); }
+.placement-item__count { font-size: 13px; font-variant-numeric: tabular-nums; color: var(--c-text2); }
+.placement-title { margin: 0 0 12px; font-size: 15px; }
+@media (max-width: 1100px) {
+  .placement { grid-template-columns: 1fr; }
+  .placement-side { position: static; max-height: 280px; }
+}

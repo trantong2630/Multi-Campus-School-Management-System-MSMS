@@ -15,7 +15,7 @@ export function defaultRosterDate(yearStart?: string): Dayjs {
   return yearStart && today.isBefore(yearStart, 'day') ? dayjs(yearStart) : today;
 }
 
-/** Cột chung của danh sách lớp (SCH-05): màn Lớp & Ghi danh và màn Danh sách lớp. */
+/** Cột chung của danh sách lớp (SCH-05): màn Xếp lớp và màn Danh sách lớp. */
 export const rosterColumns: ColumnsType<RosterItem> = [
   { title: 'Học sinh', dataIndex: 'fullName', width: 240, render: (v: string, r: RosterItem) => <PersonCell name={v} sub={r.personCode} /> },
   { title: 'Ngày sinh', dataIndex: 'dateOfBirth', width: 104, className: 'tabular', render: (v: string | null) => formatDate(v) },

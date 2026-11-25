@@ -76,7 +76,7 @@ public class EnrollmentTests
 
         var ex = await Assert.ThrowsAsync<ApiException>(() => svc.EnrollAsync(ClassB, new EnrollRequest(Student, Today)));
 
-        Assert.Contains("đã có ghi danh", ex.Message);
+        Assert.Contains("đã được xếp vào lớp", ex.Message);
         Assert.Equal(1, await db.Enrollment.CountAsync());
     }
 

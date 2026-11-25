@@ -84,7 +84,7 @@ export function StudentsPage() {
     const graduating = reason === 'Graduated';
     confirmAction({
       title: `${graduating ? 'Cho tốt nghiệp' : 'Chuyển trường cho'} ${selected.length} học sinh?`,
-      content: 'Hệ thống đóng ghi danh đang mở, đổi trạng thái hồ sơ và khóa tài khoản học sinh trong cùng thao tác. '
+      content: 'Hệ thống cho học sinh rời lớp đang học, đổi trạng thái hồ sơ và khóa tài khoản học sinh trong cùng thao tác. '
         + (graduating ? 'Chỉ áp dụng cho học sinh khối cuối cấp.' : 'Không hoàn tác từ màn hình này.'),
       okText: graduating ? 'Tốt nghiệp' : 'Chuyển trường', danger: !graduating,
       onOk: async () => {

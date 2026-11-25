@@ -129,6 +129,16 @@ if (app.Environment.IsDevelopment())
         scope.ServiceProvider.GetRequiredService<ILogger<Program>>());
 }
 
+// School Admin đầu tiên cho môi trường thật; bỏ qua khi đã có tài khoản (kể cả dữ liệu mẫu ở trên) hoặc chưa đặt cấu hình.
+using (var scope = app.Services.CreateScope())
+{
+    await AdminSeeder.RunAsync(
+        scope.ServiceProvider.GetRequiredService<MsmsDbContext>(),
+        app.Configuration,
+        scope.ServiceProvider.GetRequiredService<IClock>(),
+        scope.ServiceProvider.GetRequiredService<ILogger<Program>>());
+}
+
 // Mục lục sách giáo khoa cần có ở mọi môi trường (khác dữ liệu mẫu chỉ dành cho Development).
 using (var scope = app.Services.CreateScope())
 {

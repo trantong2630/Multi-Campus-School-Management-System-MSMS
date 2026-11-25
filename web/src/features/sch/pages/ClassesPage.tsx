@@ -1,12 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Form, Input, Select, Switch } from 'antd';
 import { message } from '@/shared/lib/antdStatic';
-import { Pencil, Plus, Power, Upload, Users } from 'lucide-react';
+import { Pencil, Plus, Power } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/app/AuthProvider';
 import { isPathAllowed } from '@/app/menu';
-import { StudentImportModal } from '@/features/ppl/components/StudentImportModal';
 import { DataTable } from '@/shared/components/DataTable';
 import { FilterBar } from '@/shared/components/FilterBar';
 import { FormModal } from '@/shared/components/FormModal';
@@ -18,7 +17,6 @@ import { StatusBadge } from '@/shared/components/StatusBadge';
 import { confirmAction, showError } from '@/shared/lib/feedback';
 import { formatNumber as fmt } from '@/shared/lib/format';
 import { schApi } from '../api';
-import { ClassRosterDrawer } from '../components/ClassRosterDrawer';
 import { useCampuses, useCurrentYear, useYears } from '../hooks/useCatalogs';
 import '../components/school.css';
 import type { SchoolClass } from '../types';
@@ -38,8 +36,6 @@ export function ClassesPage() {
   const [campusId, setCampusId] = useState<number | undefined>();
   const [includeInactive, setIncludeInactive] = useState(false);
   const [editing, setEditing] = useState<SchoolClass | 'new' | null>(null);
-  const [rosterOf, setRosterOf] = useState<SchoolClass | null>(null);
-  const [importOpen, setImportOpen] = useState(false);
   const [form] = Form.useForm<FormValues>();
 
   const effectiveYear = yearId ?? current?.academicYearId;
@@ -84,12 +80,9 @@ export function ClassesPage() {
   return (
     <>
       <PageHeader
-        title="Lớp & Ghi danh"
+        title="Lớp"
         extra={canWrite && (
-          <>
-            <Button icon={<Upload size={16} />} onClick={() => setImportOpen(true)}>Import học sinh</Button>
-            <Button type="primary" icon={<Plus size={16} />} onClick={() => setEditing('new')}>Thêm lớp</Button>
-          </>
+          <Button type="primary" icon={<Plus size={16} />} onClick={() => setEditing('new')}>Thêm lớp</Button>
         )}
       />
       <FilterBar>
@@ -142,14 +135,13 @@ export function ClassesPage() {
               title: 'Thao tác', key: 'actions', width: 140, align: 'center' as const, fixed: 'right' as const,
               render: (_: unknown, c: SchoolClass) => (
                 <RowActions actions={[
-                  { key: 'roster', label: 'Danh sách học sinh', icon: <Users size={16} />, onClick: () => setRosterOf(c) },
                   { key: 'edit', label: 'Sửa', icon: <Pencil size={16} />, hidden: !canWrite, onClick: () => setEditing(c) },
                   {
                     key: 'toggle', label: c.isActive ? 'Ngừng hoạt động' : 'Kích hoạt lại', icon: <Power size={16} />, danger: c.isActive, hidden: !canWrite,
                     onClick: () => c.isActive
                       ? confirmAction({
                         title: `Ngừng hoạt động lớp ${c.name}?`,
-                        content: c.studentCount > 0 ? `Lớp còn ${c.studentCount} học sinh có ghi danh đang mở nên hệ thống sẽ từ chối.` : 'Lớp sẽ không còn xuất hiện trong file thời khóa biểu mới. Dữ liệu đã phát sinh được giữ nguyên.',
+                        content: c.studentCount > 0 ? `Lớp còn ${c.studentCount} học sinh đang học nên hệ thống sẽ từ chối.` : 'Lớp sẽ không còn xuất hiện trong file thời khóa biểu mới. Dữ liệu đã phát sinh được giữ nguyên.',
                         okText: 'Ngừng hoạt động', danger: true, onOk: () => toggle.mutateAsync(c).catch(() => undefined),
                       })
                       : toggle.mutate(c),
@@ -160,10 +152,6 @@ export function ClassesPage() {
           ]}
         />
       </Card>
-
-      <StudentImportModal open={importOpen} onClose={() => setImportOpen(false)} yearId={effectiveYear} campusId={campusId} />
-
-      <ClassRosterDrawer key={rosterOf?.classId} cls={rosterOf} canWrite={canWrite} onClose={() => setRosterOf(null)} />
 
       <FormModal<FormValues>
         variant="drawer" width={640}

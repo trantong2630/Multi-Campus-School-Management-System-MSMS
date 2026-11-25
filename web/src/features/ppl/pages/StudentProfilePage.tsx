@@ -165,7 +165,7 @@ function HistoryCard({ rows }: { rows: StudentEnrollment[] }) {
     <section className="sp-card">
       <h3 className="sp-card__title">Lịch sử lớp</h3>
       {rows.length === 0 ? (
-        <p className="sp-empty">Chưa có ghi danh nào.</p>
+        <p className="sp-empty">Chưa xếp lớp lần nào.</p>
       ) : (
         <ol className="sp-timeline">
           {rows.map((e) => (

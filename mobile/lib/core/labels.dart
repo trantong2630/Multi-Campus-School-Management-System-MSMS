@@ -66,7 +66,7 @@ String genderLabel(String v) => switch (v) {
   _ => v,
 };
 
-/// Lý do kết thúc ghi danh (SCH-05), như `labels/enrollment.ts` trên web.
+/// Lý do rời lớp (SCH-05), như `labels/enrollment.ts` trên web.
 const enrollmentCloseReasonLabel = {'ClassTransfer': 'Chuyển lớp', 'SchoolTransfer': 'Chuyển trường', 'Graduated': 'Tốt nghiệp'};
 
 /// Phạm vi trong ngày của đơn xin nghỉ.

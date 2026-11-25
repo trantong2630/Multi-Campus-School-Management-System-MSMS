@@ -304,7 +304,7 @@ public class StudentFunctionTests
     public async Task Leave_WithoutOpenEnrollment_Rejected(int studentId)
     {
         using var e = new PplEnv();
-        await PplEnv.Rejects(() => e.Students.LeaveAsync(new StudentLeaveRequest([studentId], "SchoolTransfer")), "ghi danh");
+        await PplEnv.Rejects(() => e.Students.LeaveAsync(new StudentLeaveRequest([studentId], "SchoolTransfer")), "thuộc lớp");
     }
 
     [Fact(DisplayName = "PPL | Học sinh | Chuyển trường/Tốt nghiệp | một em không hợp lệ thì không em nào bị đổi (toàn vẹn)")]

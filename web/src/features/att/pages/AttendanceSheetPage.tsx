@@ -161,7 +161,7 @@ export function AttendanceSheetPage() {
       )}
 
       {data.students.length === 0 ? (
-        <div className="empty-state"><p className="empty-state__title">Lớp không có học sinh nào có ghi danh vào ngày của tiết.</p></div>
+        <div className="empty-state"><p className="empty-state__title">Lớp không có học sinh nào vào ngày của tiết.</p></div>
       ) : (
         <div className="att-rows">
           {data.students.map((row, index) => {

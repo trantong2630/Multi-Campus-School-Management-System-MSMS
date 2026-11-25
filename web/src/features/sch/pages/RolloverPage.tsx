@@ -212,7 +212,7 @@ export function RolloverPage() {
     title: `Cho ${picked.length} học sinh lớp ${source?.name} tốt nghiệp?`,
     content: (
       <>
-        <p>Hồ sơ học sinh chuyển sang <b>Đã tốt nghiệp</b>, ghi danh kết thúc vào cuối năm học {fromYear?.name} và <b>tài khoản học sinh bị khóa</b>.</p>
+        <p>Hồ sơ học sinh chuyển sang <b>Đã tốt nghiệp</b>, rời lớp vào cuối năm học {fromYear?.name} và <b>tài khoản học sinh bị khóa</b>.</p>
         <p>Thao tác này không hoàn tác được từ màn kết chuyển.</p>
       </>
     ),
@@ -276,7 +276,7 @@ export function RolloverPage() {
             tone="retain" icon={<ArrowLeft size={18} />} title="Lưu ban" yearName={toYear.name} grade={source?.gradeLevel}
             options={retainOptions} classId={retainId} onClassChange={setRetainPick}
             roster={retainRoster.data?.students ?? []} loading={retainRoster.isFetching} onRemove={askUndo}
-            disabledHint={source && retainOptions.length === 0 ? `Chưa có lớp khối ${source.gradeLevel} ở năm học ${toYear.name}. Tạo lớp ở màn Lớp & Ghi danh trước.` : undefined}
+            disabledHint={source && retainOptions.length === 0 ? `Chưa có lớp khối ${source.gradeLevel} ở năm học ${toYear.name}. Tạo lớp ở màn Lớp trước.` : undefined}
           />
           <div className="rollover-arrows">
             <Button

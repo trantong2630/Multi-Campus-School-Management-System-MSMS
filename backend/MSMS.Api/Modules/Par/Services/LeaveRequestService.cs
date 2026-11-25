@@ -187,7 +187,7 @@ public sealed class LeaveRequestService(MsmsDbContext db, IClock clock, CurrentU
         var enrollment = await db.Enrollment.Where(EnrollmentRules.ActiveAt(clock.Today))
             .FirstOrDefaultAsync(e => e.StudentId == studentId);
         if (enrollment is null)
-            throw ApiException.BadRequest("Học sinh không có ghi danh mở. Không thể tạo đơn xin nghỉ.");
+            throw ApiException.BadRequest("Học sinh hiện không thuộc lớp nào. Không thể tạo đơn xin nghỉ.");
 
         return enrollment.ClassId;
     }
