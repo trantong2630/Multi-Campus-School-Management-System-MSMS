@@ -72,7 +72,7 @@ public sealed class WeeklyReportService(MsmsDbContext db, IClock clock, CurrentU
 
         if (enrollments.Count == 0 || !enrollments.Any(e =>
                 EnrollmentRules.Overlaps(start, end, e.StartDate, e.EndDate ?? year.EndDate)))
-            throw ApiException.BadRequest("Học sinh không có ghi danh trong tuần này.");
+            throw ApiException.BadRequest("Học sinh không thuộc lớp nào trong tuần này.");
 
         var student = await db.StudentProfile
             .AsNoTracking()
