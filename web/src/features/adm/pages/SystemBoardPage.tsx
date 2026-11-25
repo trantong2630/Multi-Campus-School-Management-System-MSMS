@@ -14,7 +14,7 @@ import './system-board.css';
 /** Thiếu sót dữ liệu: nhãn và màn hình School Admin mở ra để sửa. */
 const gapMeta: Record<string, { label: string; to: string }> = {
   ClassesWithoutHomeroom: { label: 'Lớp chưa có giáo viên chủ nhiệm', to: '/ppl/responsibilities' },
-  StudentsWithoutClass: { label: 'Học sinh đang học chưa ghi danh vào lớp', to: '/sch/classes' },
+  StudentsWithoutClass: { label: 'Học sinh đang học chưa xếp lớp', to: '/sch/class-placement' },
   StudentsWithoutParent: { label: 'Học sinh chưa liên kết phụ huynh', to: '/ppl/students' },
   StaffWithoutAccount: { label: 'Cán bộ chưa có tài khoản', to: '/adm/accounts' },
   TeachersWithoutDepartment: { label: 'Giáo viên chưa thuộc tổ chuyên môn', to: '/ppl/staff' },
