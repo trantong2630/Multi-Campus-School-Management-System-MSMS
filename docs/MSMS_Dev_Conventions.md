@@ -97,7 +97,7 @@ MSMS.Api/
     Time/            IClock — "hôm nay" theo giờ VN
     Rules/           SessionLockRules, AttendanceRules, AssignmentRules,
                      EnrollmentRules, LeaveRequestRules, SchoolCalendarRules,
-                     SemesterRules, RolloverRules, QuizRules, ExportRules,
+                     SemesterRules, RolloverRules, QuizRules,
                      EffectivePeriod, PublishedTimetable
     Audit/           AuditWriter
     Excel/           ExcelHelpers (đọc và ghi file Excel)
@@ -194,7 +194,7 @@ MSMS.Tests/
 | --- | --- | --- |
 | Tên file | trùng tên kiểu chính trong file, PascalCase | `TimetablePublishService.cs` |
 | Entity | danh từ số ít, một file một entity | `TeachingSession.cs` |
-| Tên bảng, cột | trùng tên entity và thuộc tính; riêng học sinh dùng chữ Pupil trong cơ sở dữ liệu: bảng `PupilProfile`, `ParentPupilLink` và cột `PupilId` (code vẫn là `StudentProfile`, `ParentStudentLink`, `StudentId`, ánh xạ trong `MsmsDbContext`) | `PupilProfile` ↔ `StudentProfile.cs` |
+| Tên bảng, cột | trùng tên entity và thuộc tính; riêng học sinh dùng chữ Pupil trong cơ sở dữ liệu: bảng `PupilProfile`, `ParentPupilLink` và cột `PupilId` (code vẫn là `StudentProfile`, `ParentStudentLink`, `StudentId`, ánh xạ trong `MsmsDbContext`). Spec và WBS gọi vai trò là Pupil, còn giá trị loại tài khoản trong code, JWT và dữ liệu vẫn là `Student` | `PupilProfile` ↔ `StudentProfile.cs` |
 | Service | `<Việc>Service`, hàm async hậu tố `Async` | `ScheduleAdjustmentService.ChangeTeacherAsync` |
 | Controller | `<Việc>Controller`, route `api/<module>/<việc>` | `AdjustmentController` → `api/scd/adjust` |
 | DTO | `record`, hậu tố `Dto`; request hậu tố `Request`; kết quả thao tác hậu tố `Result`. Mỗi module gom vào một file `<Module>Dtos.cs` | `GridCellDto`, `ChangeSessionTeacherRequest`, `TimetableImportResult` |
@@ -268,7 +268,7 @@ Chốt chữ nào hiện trên màn hình. Mọi màn hình, mọi file xuất E
 | LRN | Bài tập rèn luyện |
 | PAR | Phụ huynh |
 | COM | Thông báo · Bảng tin |
-| ADM | Bảng điều khiển · Quản trị (Tài khoản · Nhật ký · Xuất dữ liệu) |
+| ADM | Bảng điều khiển · Quản trị (Tài khoản · Nhật ký) |
 | IAM | Tài khoản (góc phải) |
 
 ### 4.2. Tên thực thể
@@ -321,7 +321,7 @@ Dòng in đậm là quy ước riêng của MSMS, không dịch sát nghĩa:
 | **Tiết học** | Một buổi dạy cụ thể |
 | **Khung giờ tiết** | Tiết 1, Tiết 2… trong ngày |
 
-Hai cặp đầu nếu để lẫn thì cả màn hình SCD lẫn file xuất Excel sẽ hiểu sai.
+Hai cặp đầu nếu để lẫn thì cả màn hình SCD lẫn file Excel thời khóa biểu sẽ hiểu sai.
 
 ### 4.4. Nhãn trạng thái
 
@@ -347,7 +347,7 @@ Màu badge: xanh lá = đang hiệu lực · vàng = chờ · xám = nháp hoặ
 
 ### 4.5. Nhãn nút
 
-**Chung:** Lưu · Đóng · Thêm · Sửa · Xóa · Tìm kiếm · Tải file mẫu · Tải lên · Xuất Excel
+**Chung:** Lưu · Đóng · Thêm · Sửa · Xóa · Tìm kiếm · Tải file mẫu · Tải lên
 
 **Nghiệp vụ:** Phát hành · Xem trước · Đổi giáo viên · Hủy tiết · Thêm tiết bù · Gửi đơn · Rút đơn · Duyệt · Từ chối · Giao bài · Công bố điểm · Công bố phân tích · Nhân bản · Ẩn bài · Khóa tài khoản · Cấp lại mật khẩu · Thêm câu hỏi · Ẩn khỏi ngân hàng · Sinh câu hỏi nháp · Xác nhận câu hỏi · Lưu nháp · Nộp bài · Chạy phân tích · Tạo lại
 
@@ -377,9 +377,9 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Phụ huynh | Đơn xin nghỉ · Hộp thư |
 | Bảng tin | Đăng tin · Bảng tin |
 | Báo cáo tuần | — |
-| Quản trị | Tài khoản · Nhật ký · Xuất dữ liệu |
+| Quản trị | Tài khoản · Nhật ký |
 
-- Nhóm chỉ có một màn hình thì không có cấp 2. Áp dụng cả sau khi lọc theo quyền: nhóm chỉ còn một mục con hiển thị cho loại tài khoản đó thì hiện thẳng thành mục cấp 1 (ví dụ giáo viên chỉ thấy **Lịch dạy**; chủ nhiệm chỉ có quyền xuất điểm danh thì nhóm Quản trị hiện thẳng thành **Xuất dữ liệu**). School Admin không thấy Thời khóa biểu và Xuất dữ liệu; nhóm Quản trị của School Admin gồm **Tài khoản** và **Nhật ký**. **Bảng điều khiển** là ngoại lệ có chủ ý: luôn giữ nhóm cha dù chỉ còn một mục con (School Admin chỉ có **Thống kê hệ thống**), cờ `keepGroup` trong `app/menu.tsx`.
+- Nhóm chỉ có một màn hình thì không có cấp 2. Áp dụng cả sau khi lọc theo quyền: nhóm chỉ còn một mục con hiển thị cho loại tài khoản đó thì hiện thẳng thành mục cấp 1 (ví dụ giáo viên chỉ thấy **Lịch dạy**). School Admin không thấy Thời khóa biểu và Trách nhiệm; nhóm Quản trị của School Admin gồm **Tài khoản** và **Nhật ký**. **Bảng điều khiển** là ngoại lệ có chủ ý: luôn giữ nhóm cha dù chỉ còn một mục con (School Admin chỉ có **Thống kê hệ thống**), cờ `keepGroup` trong `app/menu.tsx`.
 - **Trang chủ** là mục cấp 1 đầu tiên, mọi loại tài khoản đều thấy; ngay dưới là **Bảng điều khiển** (cùng cụm Tổng quan) cho mọi cán bộ có việc theo dõi. Giáo viên không giữ trách nhiệm nào thì không có Bảng điều khiển; lịch dạy hôm nay đã nằm ở Trang chủ. Trang chủ chỉ chào và hiện thông tin chung (hôm nay, năm học, ngày nghỉ sắp tới, lịch dạy của giáo viên — Business Spec §5.1); không đặt số liệu thống kê, lối tắt hay bảng tin ở Trang chủ (số liệu ở **Bảng điều khiển**). `/dashboard` không phải màn hình, chuyển tới mục đầu tiên người dùng được mở.
 - Mục cha **không điều hướng**, chỉ xổ ra; vào trang con thì cha tự xổ và sáng lên.
 - Icon chỉ ở cấp 1; mục con thụt vào, không icon, không chấm đầu dòng.
@@ -403,7 +403,7 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Cơ cấu nhà trường › Thông tin trường · Tổ chuyên môn & Môn học · Năm học & Học kỳ · Lớp · Xếp lớp | SA (sửa), HT, HP (chỉ xem; Lớp và Xếp lớp của HP chỉ có lớp thuộc phân hiệu mình phụ trách) |
 | Cơ cấu nhà trường › Ngày nghỉ · Khung giờ tiết · Kết chuyển năm học | SA |
 | Hồ sơ › Cán bộ · Học sinh · Phụ huynh | SA, HT, HP |
-| Hồ sơ › Trách nhiệm | SA, HT |
+| Hồ sơ › Trách nhiệm | HT |
 | Thời khóa biểu › Thời khóa biểu · Phụ trách chuyên môn | HT (chỉ xem), HP |
 | Thời khóa biểu › Giáo viên vắng | HT (chỉ xem), HP |
 | Thời khóa biểu › Lịch dạy | HT, HP, GV |
@@ -414,6 +414,5 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Phụ huynh › Đơn xin nghỉ | GV (chỉ chủ nhiệm), PH |
 | Phụ huynh › Hộp thư | GV, PH |
 | Quản trị › Tài khoản · Nhật ký | SA |
-| Quản trị › Xuất dữ liệu | HT, HP, GV |
 
-Ký hiệu như Business Spec §5. Kết quả với các màn đã có: **SA** Trang chủ · Bảng điều khiển (Thống kê hệ thống) · Cơ cấu nhà trường (đủ 8 mục) · Hồ sơ (Cán bộ, Trách nhiệm) · Tài khoản — **HT** Trang chủ · Bảng điều khiển (Tình hình toàn trường) · Cơ cấu nhà trường (5 mục chỉ xem) · Hồ sơ (Cán bộ, Trách nhiệm) · Lịch dạy · Quản trị (Xuất dữ liệu) — **HP** Trang chủ · Bảng điều khiển (Tình hình phân hiệu) · Cơ cấu nhà trường (4 mục chỉ xem, không có Phân hiệu) · Cán bộ · Thời khóa biểu (Thời khóa biểu, Lịch dạy) — **GV** Trang chủ · Lịch dạy (chủ nhiệm thêm Danh sách học sinh; chủ nhiệm hoặc tổ trưởng thêm Bảng điều khiển) — **HS, PH** Trang chủ.
+Ký hiệu như Business Spec §5. Kết quả với các màn đã có: **SA** Trang chủ · Bảng điều khiển (Thống kê hệ thống) · Cơ cấu nhà trường (đủ 8 mục) · Hồ sơ (Cán bộ) · Tài khoản · Nhật ký — **HT** Trang chủ · Bảng điều khiển (Tình hình toàn trường) · Cơ cấu nhà trường (5 mục chỉ xem) · Hồ sơ (Cán bộ, Trách nhiệm) · Lịch dạy — **HP** Trang chủ · Bảng điều khiển (Tình hình phân hiệu) · Cơ cấu nhà trường (4 mục chỉ xem, không có Phân hiệu) · Cán bộ · Thời khóa biểu (Thời khóa biểu, Lịch dạy) — **GV** Trang chủ · Lịch dạy (chủ nhiệm thêm Danh sách học sinh; chủ nhiệm hoặc tổ trưởng thêm Bảng điều khiển) — **HS, PH** Trang chủ.

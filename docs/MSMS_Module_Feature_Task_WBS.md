@@ -47,7 +47,7 @@ Backend đọc trạng thái tài khoản và kiểm phiên (chưa đăng xuất
 
 **4.1.7 — Hiển thị menu theo loại tài khoản và trách nhiệm / Render Role-based Navigation**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.1.3  
-Menu dựng theo loại tài khoản cộng trách nhiệm đang hiệu lực. Giáo viên chỉ thấy chức năng của lớp và môn mình phụ trách; thêm mục chủ nhiệm hoặc tổ trưởng khi đang giữ trách nhiệm đó. School Admin chỉ thấy Thống kê hệ thống trong Bảng điều khiển; không thấy Thời khóa biểu, Xuất dữ liệu và các chức năng làm việc đứng tên người khác.
+Menu dựng theo loại tài khoản cộng trách nhiệm đang hiệu lực. Giáo viên chỉ thấy chức năng của lớp và môn mình phụ trách; thêm mục chủ nhiệm hoặc tổ trưởng khi đang giữ trách nhiệm đó. School Admin chỉ thấy Thống kê hệ thống trong Bảng điều khiển; không thấy Thời khóa biểu, Trách nhiệm và các chức năng làm việc đứng tên người khác.
 
 **4.1.8 — Kiểm thử phạm vi theo loại tài khoản và trách nhiệm / Scope Tests per Role**  
 `QA` · 2.5 MD · dep: 4.1.4, 4.1.5  
@@ -65,11 +65,11 @@ Thu hẹp danh sách theo tên, mã hồ sơ, tên đăng nhập, loại tài kh
 
 **4.1.11 — Tạo tài khoản cho một hồ sơ / Create Single Account**  
 `BE + Web` · 1.5 MD · dep: 4.1.9  
-Chọn một hồ sơ chưa có tài khoản, chọn loại tài khoản phù hợp với loại hồ sơ; hệ thống sinh tên đăng nhập và mật khẩu tạm (BR-03, BR-04).
+Chọn một hồ sơ chưa có tài khoản, chọn loại tài khoản phù hợp với loại hồ sơ; hệ thống sinh tên đăng nhập và mật khẩu tạm (BR-03, BR-04). School Admin đầu tiên không tạo qua màn này: khi ứng dụng khởi động mà chưa có tài khoản nào, hệ thống tạo một School Admin từ cấu hình `Seed:AdminUsername` và `Seed:AdminPassword` (mật khẩu từ 8 ký tự), ở trạng thái Chờ đổi mật khẩu; đã có tài khoản hoặc chưa đặt cấu hình thì bỏ qua.
 
 **4.1.12 — Tạo tài khoản hàng loạt từ danh bạ / Bulk Create Accounts from Directory**  
 `BE + Web` · 2 MD · dep: 4.1.11  
-Chọn nhiều dòng trên danh bạ rồi tạo một lượt, tối đa 200 hồ sơ mỗi lần. Danh bạ học sinh ra Student, danh bạ phụ huynh ra Parent, danh bạ cán bộ chọn một loại cho cả lô. Hồ sơ đã có tài khoản thì bỏ qua (BR-04).
+Chọn nhiều dòng trên danh bạ rồi tạo một lượt, tối đa 200 hồ sơ mỗi lần. Danh bạ học sinh ra Pupil, danh bạ phụ huynh ra Parent, danh bạ cán bộ chọn một loại cho cả lô. Hồ sơ đã có tài khoản thì bỏ qua (BR-04).
 
 **4.1.13 — Nhận danh sách mật khẩu tạm sau khi tạo / Receive Temporary Password List**  
 `BE + Web` · 1 MD · dep: 4.1.12  
@@ -257,7 +257,7 @@ Sửa giờ bắt đầu và kết thúc của khung giờ.
 `BE + Web` · 0.5 MD · dep: 4.2.22  
 Không bỏ được khung đang có tiết học hoặc thời khóa biểu tham chiếu; mọi tiết kể cả tiết bù phải nằm đúng một khung. Bật dùng lại một khung cũng kiểm giờ không chồng như khi tạo (BR-07).
 
-### SCH-05 Class & Class Placement (Lớp & Xếp lớp)
+### SCH-05 Class & Enrollment (Lớp & Xếp lớp)
 
 **4.2.25 — Xem danh sách lớp theo năm và phân hiệu / View Class List**  
 `BE + Web` · 1 MD · dep: 4.2.2, 4.2.13  
@@ -279,15 +279,15 @@ Ngừng dùng lớp mà giữ nguyên dữ liệu đã phát sinh. Bị chặn n
 `BE + Web + Mobile` · 1 MD · dep: 4.2.26  
 Xem học sinh đang thuộc lớp tại ngày đang xem, kèm ngày bắt đầu xếp lớp. Đọc được: School Admin, Principal, Vice Principal của phân hiệu đó và giáo viên chủ nhiệm lớp. School Admin, Principal và Vice Principal mở từ màn Xếp lớp: cột trái là danh sách lớp của năm học và phân hiệu đang lọc, nhóm theo khối kèm sĩ số và chủ nhiệm (lớp ngừng hoạt động ẩn sau công tắc), bấm một lớp thì cột phải hiện học sinh của lớp đó; giáo viên chủ nhiệm mở từ màn Danh sách học sinh (chỉ xem): đầu màn có khung gồm tên lớp, phân hiệu, năm học, ngày xem, sĩ số, tỉ lệ nam nữ và học sinh có sinh nhật trong tháng; bảng đánh số thứ tự, không chia trang, cột Kết thúc chỉ hiện khi có em đã rời lớp; chủ nhiệm nhiều lớp thì chuyển lớp bằng các nút ở đầu trang; bấm tên một em mở Hồ sơ học sinh (4.3.12). Trên mobile chủ nhiệm có danh sách gọn Học sinh lớp (họ tên, mã, lớp; tìm theo tên hoặc mã, dùng chung danh sách học sinh lớp chủ nhiệm của báo cáo tuần 4.7.13), mở từ Trang chủ; bấm một em mở Hồ sơ học sinh.
 
-**4.2.30 — Xếp học sinh vào lớp / Place Student into Class**  
+**4.2.30 — Xếp học sinh vào lớp / Enroll Pupil into Class**  
 `BE + Web` · 1.5 MD · dep: 4.2.29  
 Thêm một hoặc nhiều học sinh Đang học vào lớp với ngày hiệu lực chọn tay, nằm trong năm học; chọn từ danh sách học sinh chưa thuộc lớp nào trong năm đó. Mỗi học sinh chỉ có MỘT lượt xếp lớp đang mở trong một năm học; để trống ngày kết thúc nghĩa là tới hết năm học. Một em không hợp lệ thì không xếp lớp em nào (BR-09).
 
-**4.2.31 — Chuyển lớp giữa năm học / Transfer Student Between Classes**  
+**4.2.31 — Chuyển lớp giữa năm học / Transfer Pupil Between Classes**  
 `BE + Web` · 2 MD · dep: 4.2.30  
 Một thao tác, một transaction, cho một hoặc nhiều học sinh tới cùng một lớp đích đang hoạt động, CÙNG KHỐI và cùng năm học (lên lớp hay lưu ban làm bằng Kết chuyển năm học): đặt ngày kết thúc của lượt xếp lớp cũ là NGÀY LIỀN TRƯỚC ngày hiệu lực của lượt mới rồi mở lượt mới. Hai khoảng không chạm nhau ngày nào; dữ liệu đã phát sinh ở lớp cũ giữ nguyên; một em sai thì không chuyển em nào (BR-09).
 
-**4.2.32 — Cho học sinh rời lớp / Remove Student from Class**  
+**4.2.32 — Cho học sinh rời lớp / Close Pupil Enrollment**  
 `BE + Web` · 1 MD · dep: 4.2.30  
 Cho một hoặc nhiều học sinh đang ở lớp rời lớp kèm lý do chuyển lớp, chuyển trường hoặc tốt nghiệp, ngày rời lớp là ngày thao tác. Chuyển trường hoặc tốt nghiệp còn đổi trạng thái hồ sơ, khóa tài khoản học sinh (BR-05) và cho em rời mọi lớp còn lại (lượt xếp lớp chưa bắt đầu thì bỏ hẳn).
 
@@ -295,7 +295,7 @@ Cho một hoặc nhiều học sinh đang ở lớp rời lớp kèm lý do chuy
 `BE` · 1 MD · dep: 4.2.30  
 Quy tắc dùng chung trả về học sinh đang học của lớp tại một ngày cụ thể: ngày bắt đầu ≤ D và ngày kết thúc ≥ D (ngày kết thúc để trống nghĩa là tới hết năm học). Dùng cho điểm danh, giao bài và báo cáo tuần (mục 6.2).
 
-**4.2.34 — Kiểm thử khoảng hiệu lực xếp lớp / Class Placement Validity Tests**  
+**4.2.34 — Kiểm thử khoảng hiệu lực xếp lớp / Enrollment Validity Tests**  
 `QA` · 1.5 MD · dep: 4.2.30, 4.2.31  
 Không có hai lượt xếp lớp mở cùng lúc; chuyển lớp không để hở hay chồng ngày; chuyển sang lớp khác khối bị từ chối; điểm danh và báo cáo tuần của ngày cũ vẫn đọc đúng lớp cũ.
 
@@ -391,47 +391,47 @@ Bảng lỗi kèm số dòng, cột và giá trị gốc; mục Đã có, bỏ q
 `QA` · 1.5 MD · dep: 4.3.9  
 Một ô sai là không ghi gì; thiếu hoặc sai định dạng số định danh là lỗi; hai dòng trùng số định danh là lỗi; hai người trùng họ tên và ngày sinh nhưng khác số định danh vẫn thành hai hồ sơ; chạy lại cùng một file không tạo bản trùng; viết tắt trùng bị chặn.
 
-### PPL-02 Student Directory (Danh bạ học sinh)
+### PPL-02 Pupil Directory (Danh bạ học sinh)
 
-**4.3.12 — Xem danh bạ học sinh / View Student Directory**  
+**4.3.12 — Xem danh bạ học sinh / View Pupil Directory**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.1.4  
 Xem hồ sơ học sinh cùng lớp đang học, phân hiệu, phụ huynh đại diện và trạng thái Đang học / Đã chuyển trường / Đã tốt nghiệp. Principal xem toàn trường, Vice Principal chỉ học sinh của phân hiệu mình phụ trách.
 
 Bấm tên một học sinh mở trang **Hồ sơ học sinh** (chỉ xem): thông tin cá nhân (ngày sinh, giới tính, số định danh, điện thoại, địa chỉ, ngày nhập học, ngày rời trường), ghi chú đặt nổi bật, lớp và phân hiệu hiện tại, phụ huynh đại diện kèm quan hệ và số điện thoại, chuyên cần năm học hiện hành (tỷ lệ có mặt = Có mặt + Muộn trên số lượt đã điểm danh, số lượt theo bốn nhãn của BR-18, năm lần muộn hoặc vắng gần nhất; chưa có lượt nào thì báo chưa có dữ liệu) và lịch sử lớp qua các năm kèm lý do rời lớp. Không có kết quả bài tập. School Admin, Principal và Vice Principal mở từ danh bạ; giáo viên chủ nhiệm mở từ Danh sách học sinh (4.2.29) và chỉ mở được học sinh từng học ở lớp đang chủ nhiệm. Chuyên cần chỉ tính trong phạm vi người xem: Vice Principal theo phân hiệu phụ trách, chủ nhiệm theo lớp chủ nhiệm. Học sinh ngoài phạm vi báo không tìm thấy. Sửa hồ sơ và đổi phụ huynh vẫn làm ở danh bạ. Danh bạ chỉ có trên web; mobile chỉ có trang Hồ sơ học sinh cho chủ nhiệm, kèm nút mở Báo cáo tuần của em (4.7.13).
 
-**4.3.13 — Tìm kiếm và lọc học sinh / Search and Filter Students**  
+**4.3.13 — Tìm kiếm và lọc học sinh / Search and Filter Pupils**  
 `BE + Web` · 1 MD · dep: 4.3.12  
 Lọc theo năm học, phân hiệu, lớp và trạng thái; tìm theo tên hoặc mã hồ sơ.
 
-**4.3.14 — Tạo hồ sơ học sinh / Create Student Profile**  
+**4.3.14 — Tạo hồ sơ học sinh / Create Pupil Profile**  
 `BE + Web` · 1.5 MD · dep: 4.3.12  
 Khai hồ sơ học sinh trên giao diện với Họ tên, Ngày sinh (không ở tương lai) và Số định danh cá nhân (12 chữ số, duy nhất toàn trường, không sửa sau khi tạo) bắt buộc; giới tính, điện thoại, địa chỉ và ghi chú không bắt buộc; hệ thống sinh mã hồ sơ (BR-03, BR-10).
 
-**4.3.15 — Cập nhật hồ sơ học sinh / Update Student Profile**  
+**4.3.15 — Cập nhật hồ sơ học sinh / Update Pupil Profile**  
 `BE + Web` · 1 MD · dep: 4.3.14  
 Sửa thông tin học sinh trên giao diện; số định danh không sửa được. Import không bao giờ cập nhật hồ sơ đã có (BR-10, BR-11).
 
-**4.3.16 — Tải file mẫu import học sinh / Download Student Import Template**  
+**4.3.16 — Tải file mẫu import học sinh / Download Pupil Import Template**  
 `BE + Web` · 0.5 MD  
 Tải mẫu Excel cố định của danh bạ học sinh, gồm hai ô meta Năm học và Phân hiệu (mở từ màn Học sinh thì điền sẵn theo năm học và phân hiệu đang lọc) và cột bắt buộc Số định danh (BR-11).
 
-**4.3.17 — Import học sinh kèm xếp lớp và phụ huynh / Import Students with Class Placement and Parents**  
+**4.3.17 — Import học sinh kèm xếp lớp và phụ huynh / Import Pupils with Enrollment and Parents**  
 `BE + Web` · 2.5 MD · dep: 4.3.14, 4.3.16, 4.2.30, 4.3.23  
 Một dòng = một học sinh kèm phụ huynh đại diện (họ tên, quan hệ với học sinh và số điện thoại bắt buộc), nhận diện học sinh theo Số định danh (cột bắt buộc), tạo tối đa bốn thứ trong một transaction: hồ sơ học sinh, xếp lớp (chỉ khi cột Tên lớp có giá trị, hiệu lực từ ngày bắt đầu năm học), hồ sơ phụ huynh và liên kết. Các dòng cùng số điện thoại dùng chung một hồ sơ phụ huynh. Hệ thống không tự tạo lớp (BR-11).
 
-**4.3.18 — Xem bảng lỗi và kết quả import học sinh / View Student Import Result**  
+**4.3.18 — Xem bảng lỗi và kết quả import học sinh / View Pupil Import Result**  
 `BE + Web` · 1.5 MD · dep: 4.3.17  
 Bảng lỗi kèm số dòng, cột, giá trị gốc — tên lớp không khớp, cùng số điện thoại mà họ tên phụ huynh khác nhau, thiếu hoặc trùng số định danh trong file; mục Đã có, bỏ qua kèm mã hồ sơ đã tồn tại; số học sinh, lượt xếp lớp và phụ huynh đã tạo (BR-11).
 
-**4.3.19 — Chuyển trường cho học sinh / Transfer Student Out**  
+**4.3.19 — Chuyển trường cho học sinh / Transfer Pupil Out**  
 `BE + Web` · 1.5 MD · dep: 4.3.14  
 Cho học sinh rời lớp, đổi trạng thái sang Đã chuyển trường và khóa tài khoản học sinh trong cùng thao tác; làm được cho một hoặc nhiều học sinh đang ở lớp, một em không hợp lệ thì không em nào bị đổi (BR-05).
 
-**4.3.20 — Tốt nghiệp học sinh / Graduate Student**  
+**4.3.20 — Tốt nghiệp học sinh / Graduate Pupil**  
 `BE + Web` · 1 MD · dep: 4.3.19  
 Giống chuyển trường nhưng đổi trạng thái sang Đã tốt nghiệp; chỉ cho học sinh khối cuối cấp (khối 9), chọn nhiều học sinh một lượt (BR-05).
 
-**4.3.21 — Kiểm thử import học sinh / Student Import Tests**  
+**4.3.21 — Kiểm thử import học sinh / Pupil Import Tests**  
 `QA` · 2 MD · dep: 4.3.17  
 Lớp không tồn tại là lỗi; thiếu hoặc trùng số định danh là lỗi; học sinh đã có (trùng số định danh) bị bỏ qua cả dòng kể cả khi đổi lớp; hai học sinh trùng họ tên và ngày sinh nhưng khác số định danh thành hai hồ sơ; nhiều con cùng một số điện thoại ra một hồ sơ phụ huynh; chạy lại cùng file không tạo trùng.
 
@@ -449,7 +449,7 @@ Khai hồ sơ phụ huynh trên giao diện. Số điện thoại bắt buộc, 
 `BE + Web` · 1 MD · dep: 4.3.23  
 Sửa họ tên, nghề nghiệp, địa chỉ và số điện thoại; số mới vẫn phải duy nhất.
 
-**4.3.25 — Xem các con được liên kết / View Linked Students**  
+**4.3.25 — Xem các con được liên kết / View Linked Pupils**  
 `BE + Web` · 0.5 MD · dep: 4.3.23  
 Từ một phụ huynh xem danh sách con, lớp và phân hiệu của từng con. Một phụ huynh liên kết được nhiều học sinh (BR-10).
 
@@ -473,11 +473,11 @@ Bảng lỗi kèm số dòng, cột và giá trị gốc; mục Đã có, bỏ q
 
 **4.3.27 — Xem trách nhiệm đang hiệu lực / View Active Responsibilities**  
 `BE + Web` · 1.5 MD · dep: 4.1.4  
-Ba nhóm: phụ trách phân hiệu, tổ trưởng và chủ nhiệm lớp (lớp đang hoạt động của năm hiện hành), kèm người sắp nhận nếu đã gán trước. Mỗi đích tối đa một bản đang hiệu lực (BR-09). Màn hình chỉ có cho School Admin và Principal — hai loại được gán; Vice Principal đọc được dữ liệu trong phạm vi phân hiệu mình phụ trách.
+Ba nhóm: phụ trách phân hiệu, tổ trưởng và chủ nhiệm lớp (lớp đang hoạt động của năm hiện hành), kèm người sắp nhận nếu đã gán trước. Mỗi đích tối đa một bản đang hiệu lực (BR-09). Màn hình chỉ có cho Principal — loại tài khoản duy nhất được gán; Vice Principal đọc được dữ liệu trong phạm vi phân hiệu mình phụ trách.
 
 **4.3.28 — Gán phụ trách phân hiệu / Assign Campus Responsibility**  
 `BE + Web` · 1 MD · dep: 4.3.27  
-Principal hoặc School Admin gán một Vice Principal phụ trách một phân hiệu, kèm ngày bắt đầu (có thể là ngày sắp tới). Chỉ gán được cho cán bộ đang hoạt động có tài khoản loại Vice Principal chưa bị khóa (BR-09).
+Principal gán một Vice Principal phụ trách một phân hiệu, kèm ngày bắt đầu (có thể là ngày sắp tới). Chỉ gán được cho cán bộ đang hoạt động có tài khoản loại Vice Principal chưa bị khóa. Mỗi lần gán, thay người, kết thúc hay hủy lịch hẹn của cả ba loại trách nhiệm đều ghi Audit (BR-09, BR-28).
 
 **4.3.29 — Gán tổ trưởng / Assign Department Head**  
 `BE + Web` · 1 MD · dep: 4.3.27  
@@ -485,7 +485,7 @@ Gán một Teacher làm tổ trưởng của một tổ chuyên môn đang hoạ
 
 **4.3.30 — Gán chủ nhiệm lớp / Assign Homeroom Teacher**  
 `BE + Web` · 1 MD · dep: 4.3.27  
-Gán một Teacher làm chủ nhiệm của một lớp đang hoạt động, kèm ngày bắt đầu (BR-09).
+Gán một Teacher làm chủ nhiệm của một lớp đang hoạt động, kèm ngày bắt đầu không sau ngày cuối năm học của lớp. Ngày kết thúc được đặt sẵn là ngày cuối năm học của lớp, nên hết năm học thì chủ nhiệm tự hết hiệu lực; lớp năm sau được gán lại (BR-09).
 
 **4.3.31 — Thay người đảm nhiệm trách nhiệm / Replace Responsibility Holder**  
 `BE + Web` · 1.5 MD · dep: 4.3.28  
@@ -505,7 +505,7 @@ Liệt kê lớp của năm hiện hành không có trách nhiệm chủ nhiệm
 
 **4.3.35 — Kiểm thử phạm vi theo trách nhiệm / Responsibility Scope Tests**  
 `QA` · 1.5 MD · dep: 4.3.28, 4.3.30  
-Hết chủ nhiệm thì mất quyền duyệt đơn và xem báo cáo lớp ngay; chủ nhiệm mới thấy đơn đang chờ; gán trách nhiệm cho sai loại tài khoản bị chặn.
+Hết chủ nhiệm thì mất quyền duyệt đơn và xem báo cáo lớp ngay; chủ nhiệm mới thấy đơn đang chờ; gán trách nhiệm cho sai loại tài khoản bị chặn; chủ nhiệm tự hết vào ngày cuối năm học của lớp, phụ trách phân hiệu và tổ trưởng không có ngày kết thúc.
 
 ---
 
@@ -613,31 +613,31 @@ Không thao tác được trên tiết bị khóa; tiết bù trùng khung giờ
 
 ### SCD-03 Teacher Absence (Xử lý giáo viên vắng)
 
-Principal có menu Giáo viên vắng chỉ xem: hai danh sách Tiết chờ xử lý và Khai báo vắng của phân hiệu đã chọn (mọi phân hiệu), ẩn các nút Khai báo vắng, Xóa khai báo và Xử lý tiết. Mọi thao tác ghi vẫn chỉ Vice Principal phụ trách phân hiệu.
+Tổ trưởng có menu Giáo viên vắng của tổ: một danh sách khai báo của tổ (mọi phân hiệu) kèm tiến độ "đã quyết định x/y tiết"; bấm một khai báo thì dòng mở rộng, hiện các tiết của khai báo đó, mỗi tiết quyết định trong ngăn kéo bên phải bằng một đề xuất (dạy thay hoặc hủy). Vice Principal có menu Giáo viên vắng với hai tab Khai báo vắng (có nút Duyệt) và Tiết chờ xử lý (xử lý tay), không khai báo hay xóa khai báo. Principal có cùng menu chỉ xem: hai danh sách của phân hiệu đã chọn (mọi phân hiệu), ẩn các nút Duyệt và Xử lý tay. Mọi thao tác ghi lên lịch dạy vẫn chỉ Vice Principal phụ trách phân hiệu.
 
 **4.4.25 — Khai báo giáo viên vắng / Declare Teacher Absence**  
 `BE + Web` · 2 MD  
-Vice Principal khai giáo viên có tiết ở phân hiệu mình theo một trong hai cách: theo ngày (từ ngày – đến ngày, vắng cả ngày) hoặc theo tiết (một ngày, chọn các tiết vắng, liền hay rời đều được), kèm lý do (tùy chọn). Chỉ khai cho tiết chưa kết thúc (từ hôm nay trở đi, tiết hôm nay đã quá giờ kết thúc thì bỏ qua), một khai báo tối đa 90 ngày, và giáo viên phải có tiết ở phân hiệu của người khai trong phạm vi đó. Đây KHÔNG phải đơn xin nghỉ của cán bộ — MSMS chỉ ghi nhận hệ quả lên lịch dạy (BR-16).
+Tổ trưởng khai giáo viên thuộc tổ mình (theo tổ ghi trong hồ sơ) vắng theo một trong hai cách: theo ngày (từ ngày – đến ngày, vắng cả ngày) hoặc theo tiết (một ngày, chọn các tiết vắng, liền hay rời đều được), kèm lý do (tùy chọn). Chỉ khai cho tiết chưa kết thúc (từ hôm nay trở đi, tiết hôm nay đã quá giờ kết thúc thì bỏ qua), một khai báo tối đa 90 ngày, và giáo viên phải có tiết trong phạm vi đó. Vice Principal không khai báo. Đây KHÔNG phải đơn xin nghỉ của cán bộ — MSMS chỉ ghi nhận hệ quả lên lịch dạy (BR-16).
 
 **4.4.26 — Đưa tiết bị ảnh hưởng về Chờ xử lý / Move Affected Lessons to Pending**  
 `BE` · 1.5 MD · dep: 4.4.25  
-Khai báo không tự đổi lịch và chỉ tác động tiết ở phân hiệu của người khai: mọi tiết Đã xếp lịch chưa bị khóa của giáo viên đó trong phạm vi khai báo, ở phân hiệu mình phụ trách, chuyển sang Chờ xử lý (Chỉnh tay) và để trống giáo viên; giáo viên dạy nhiều phân hiệu thì Vice Principal mỗi phân hiệu khai phần của mình. Tiết trống không chiếm chỗ của giáo viên nào khi kiểm xung đột. Mỗi tiết ghi lại khai báo đã đưa nó về Chờ xử lý. Khóa hoặc đổi loại tài khoản Teacher (4.1.15, 4.1.17) cũng đưa tiết về Chờ xử lý và để trống giáo viên theo cách này, nhưng không gắn với khai báo nào; Vice Principal của phân hiệu chứa tiết nhận thông báo (BR-05, BR-13, BR-16, BR-26).
+Khai báo không tự đổi lịch dạy: mọi tiết Đã xếp lịch chưa bị khóa của giáo viên đó trong phạm vi khai báo, ở mọi phân hiệu, chuyển sang Chờ xử lý (Chỉnh tay) và để trống giáo viên. Tiết trống không chiếm chỗ của giáo viên nào khi kiểm xung đột. Mỗi tiết ghi lại khai báo đã đưa nó về Chờ xử lý. Khóa hoặc đổi loại tài khoản Teacher (4.1.15, 4.1.17) cũng đưa tiết về Chờ xử lý và để trống giáo viên theo cách này, nhưng không gắn với khai báo nào; Vice Principal của phân hiệu chứa tiết nhận thông báo (BR-05, BR-13, BR-16, BR-26).
 
 **4.4.27 — Xem danh sách tiết Chờ xử lý / View Pending Lessons**  
 `BE + Web` · 1.5 MD · dep: 4.4.26  
-Danh sách tiết Chờ xử lý chưa kết thúc theo phân hiệu (tối đa 500 tiết), lọc theo khoảng ngày và lớp, mỗi dòng ghi nguyên nhân (giáo viên vắng nào) và mở được màn hình quyết định từng tiết. Màn hình Giáo viên vắng có hai tab: Tiết chờ xử lý và Khai báo vắng. Tab Khai báo vắng ghi trạng thái mỗi khai báo: Đang hiệu lực (còn tiết chưa kết thúc) hoặc Đã qua (mọi tiết đã kết thúc, chỉ để tra cứu, không xóa được); mặc định chỉ hiện khai báo đang hiệu lực, có công tắc hiện cả khai báo đã qua. "Còn chờ xử lý" chỉ đếm tiết chưa kết thúc, tiết Chờ xử lý đã kết thúc mà không ai xử lý đếm ở cột "Bỏ lỡ".
+Danh sách tiết Chờ xử lý chưa kết thúc theo phân hiệu (tối đa 500 tiết), lọc theo khoảng ngày và lớp, mỗi dòng ghi nguyên nhân (giáo viên vắng nào), quyết định của tổ trưởng (dạy thay, hủy hoặc chưa quyết định) và mở được màn hình xử lý tay từng tiết. Màn hình Giáo viên vắng của Vice Principal có hai tab: Khai báo vắng (mở đầu, ghi tiến độ "tổ trưởng đã quyết định x/y tiết" và có nút Duyệt) và Tiết chờ xử lý. Tab Khai báo vắng ghi trạng thái mỗi khai báo: Đang hiệu lực (còn tiết chưa kết thúc) hoặc Đã qua (mọi tiết đã kết thúc, chỉ để tra cứu, không xóa được); mặc định chỉ hiện khai báo đang hiệu lực, có công tắc hiện cả khai báo đã qua. "Còn chờ xử lý" chỉ đếm tiết chưa kết thúc, tiết Chờ xử lý đã kết thúc mà không ai xử lý đếm ở cột "Bỏ lỡ".
 
 **4.4.28 — Xem gợi ý giáo viên rảnh / View Free Teacher Suggestions**  
 `BE + Web` · 2 MD · dep: 4.4.27  
-Teacher đủ điều kiện dạy, cùng tổ chuyên môn với môn của tiết, không có tiết Đã xếp lịch tại (ngày, khung giờ) đó ở bất kỳ phân hiệu nào và không có khai báo vắng phủ ngày và tiết đó. Danh sách sắp theo tên, tối đa 10 người, KHÔNG xếp hạng ưu tiên — Vice Principal tự chọn (BR-06, BR-13, BR-16).
+Teacher đủ điều kiện dạy, cùng tổ chuyên môn với môn của tiết, không có tiết Đã xếp lịch tại (ngày, khung giờ) đó ở bất kỳ phân hiệu nào và không có khai báo vắng phủ ngày và tiết đó. Danh sách sắp theo tên, tối đa 10 người, kèm số tiết Đã xếp lịch của giáo viên trong ngày đó, KHÔNG xếp hạng ưu tiên — người chọn tự quyết. Vice Principal xem gợi ý cho tiết ở phân hiệu mình phụ trách, tổ trưởng cho tiết của môn thuộc tổ mình (BR-06, BR-13, BR-16).
 
 **4.4.29 — Xử lý tiết chờ bằng cách chọn giáo viên dạy thay / Resolve by Substitute Teacher**  
 `BE + Web` · 1.5 MD · dep: 4.4.28  
-Lựa chọn 1: gán giáo viên được chọn, tiết quay lại Đã xếp lịch. Backend kiểm lại điều kiện dạy và xung đột lịch toàn trường lúc lưu; giáo viên dạy thay nhận email phân công (4.4.23) (BR-06, BR-13, BR-16).
+Vice Principal xử lý tay một tiết (kể cả tiết lỗi lúc duyệt và tiết môn của tổ khác). Lựa chọn 1: gán giáo viên được chọn, tiết quay lại Đã xếp lịch, xóa đề xuất của tổ trưởng. Backend kiểm lại điều kiện dạy và xung đột lịch toàn trường lúc lưu; giáo viên dạy thay nhận email phân công (4.4.23) (BR-06, BR-13, BR-16).
 
 **4.4.30 — Xử lý tiết chờ bằng cách hủy / Resolve by Cancelling**  
 `BE + Web` · 0.5 MD · dep: 4.4.27  
-Lựa chọn 2: tiết chuyển sang Đã hủy.
+Lựa chọn 2: tiết chuyển sang Đã hủy, xóa đề xuất của tổ trưởng.
 
 **4.4.31 — Khóa tiết chờ đã kết thúc / Lock Ended Pending Lesson**  
 `BE + Web` · 0.5 MD · dep: 4.4.27, 4.4.29  
@@ -645,7 +645,7 @@ Tiết Chờ xử lý đã kết thúc bị khóa (mục 6.2): không còn trong
 
 **4.4.32 — Xóa khai báo giáo viên vắng / Delete Teacher Absence**  
 `BE + Web` · 1.5 MD · dep: 4.4.26  
-Xóa khai báo theo kiểu tất cả hoặc không: không xóa được khai báo đã qua; chỉ xóa được khi chưa có tiết nào của khai báo bị xử lý (dạy thay, hủy), giáo viên vẫn đủ điều kiện dạy (tài khoản Teacher không bị khóa, BR-06) và không trùng lịch ở tiết nào (BR-13). Khi đó mọi tiết của khai báo từ hôm nay trở đi trở về giáo viên, trạng thái Đã xếp lịch, tiết đã qua ngày giữ nguyên; không đạt thì báo lỗi nêu nguyên nhân và không xóa gì. Tiết trống do khóa hoặc đổi loại tài khoản không tự khôi phục. Ghi Audit, thông báo giáo viên và học sinh của lớp (BR-06, BR-13, BR-16, BR-26, BR-28).
+Chỉ tổ trưởng đã khai (cho giáo viên thuộc tổ mình) xóa được. Xóa khai báo theo kiểu tất cả hoặc không: không xóa được khai báo đã qua; chỉ xóa được khi chưa có tiết nào của khai báo bị xử lý (dạy thay, hủy), giáo viên vẫn đủ điều kiện dạy (tài khoản Teacher không bị khóa, BR-06) và không trùng lịch ở tiết nào (BR-13). Khi đó mọi tiết của khai báo từ hôm nay trở đi trở về giáo viên, trạng thái Đã xếp lịch, các đề xuất bị bỏ, tiết đã qua ngày giữ nguyên; không đạt thì báo lỗi nêu nguyên nhân và không xóa gì. Tiết trống do khóa hoặc đổi loại tài khoản không tự khôi phục. Ghi Audit, thông báo giáo viên và học sinh của lớp (BR-06, BR-13, BR-16, BR-26, BR-28).
 
 **4.4.33 — Chọn giáo viên toàn trường kèm trạng thái rảnh hoặc bận / Pick School-wide Teacher with Availability**  
 `BE + Web` · 1.5 MD · dep: 4.4.14  
@@ -653,7 +653,19 @@ Màn hình Lịch dạy của Vice Principal chỉ xem phân hiệu mình. Khi c
 
 **4.4.34 — Kiểm thử xử lý giáo viên vắng / Absence Tests**  
 `QA` · 2 MD · dep: 4.4.26, 4.4.29, 4.4.32  
-Tiết Chờ xử lý để trống giáo viên và không điểm danh được; khai báo chỉ đưa về Chờ xử lý tiết ở phân hiệu của người khai; khai theo ngày và khai theo tiết (tiết liền và tiết rời); gợi ý không trả về người đã có tiết hoặc đang vắng; hai cách xử lý ghi đúng Audit; tiết trống không chiếm chỗ giáo viên khi kiểm xung đột; xóa khai báo trả mọi tiết về đúng giáo viên, không xóa khi đã có tiết được xử lý hoặc có tiết trùng lịch, không khôi phục tiết trống do khóa tài khoản.
+Tiết Chờ xử lý để trống giáo viên và không điểm danh được; tổ trưởng khai cho giáo viên của tổ và đưa về Chờ xử lý tiết ở mọi phân hiệu, giáo viên không phải tổ trưởng, tổ trưởng tổ khác và Vice Principal đều bị từ chối khai; khai theo ngày và khai theo tiết (tiết liền và tiết rời); gợi ý không trả về người đã có tiết hoặc đang vắng; hai cách xử lý ghi đúng Audit; tiết trống không chiếm chỗ giáo viên khi kiểm xung đột; xóa khai báo trả mọi tiết về đúng giáo viên, không xóa khi đã có tiết được xử lý hoặc có tiết trùng lịch, không khôi phục tiết trống do khóa tài khoản.
+
+**4.4.38 — Tổ trưởng quyết định tiết bằng đề xuất / Department Head Proposes Resolution**
+`BE + Web` · 2 MD · dep: 4.4.26, 4.4.28
+Tổ trưởng quyết định từng tiết Chờ xử lý của khai báo, thuộc môn của tổ mình, ở mọi phân hiệu: đề xuất giáo viên dạy thay (cùng tổ, đủ điều kiện dạy, rảnh, không có khai báo vắng phủ tiết) hoặc đề xuất hủy tiết; đổi hoặc bỏ đề xuất được. Đề xuất chưa đổi lịch: tiết vẫn Chờ xử lý, để trống giáo viên. Tiết Chờ xử lý không thuộc khai báo nào (khóa hoặc đổi loại tài khoản) tổ trưởng không thấy và không quyết định. Khi quyết định xong tiết cuối của khai báo, Vice Principal của mỗi phân hiệu có tiết chờ duyệt nhận thông báo; đổi quyết định sau đó không báo lại. Ghi Audit mỗi đề xuất (BR-06, BR-13, BR-16, BR-26, BR-28).
+
+**4.4.39 — Vice Principal duyệt khai báo giáo viên vắng / Approve Teacher Absence**
+`BE + Web` · 2.5 MD · dep: 4.4.38, 4.4.29, 4.4.30
+Chỉ duyệt được khi tổ trưởng đã quyết định mọi tiết còn chờ của khai báo (ở mọi phân hiệu); chưa đủ thì báo đã quyết định bao nhiêu trên tổng số tiết. Vice Principal mỗi phân hiệu duyệt một lần cho phần của mình: mọi đề xuất cho tiết ở phân hiệu mình được áp cùng lúc (Đã xếp lịch với giáo viên dạy thay, hoặc Đã hủy), kèm thông báo cho giáo viên dạy thay và học sinh của lớp, email phân công dạy thay (4.4.23) và một bản ghi Audit kèm danh sách mã tiết. Tất cả hoặc không: đề xuất không còn hợp lệ (giáo viên đã bận, đang vắng, không còn đủ điều kiện dạy, hoặc được đề xuất dạy hai lớp cùng khung giờ) thì không áp tiết nào và nêu tiết lỗi; Vice Principal xử lý tay tiết đó (4.4.29, 4.4.30) rồi duyệt lại. Tiết ở phân hiệu khác do Vice Principal phân hiệu đó duyệt (BR-06, BR-13, BR-15, BR-16, BR-26, BR-28).
+
+**4.4.40 — Kiểm thử tổ trưởng khai báo và Vice Principal duyệt / Department Head and Approval Tests**
+`QA` · 2 MD · dep: 4.4.38, 4.4.39
+Tổ trưởng chỉ khai và đề xuất cho giáo viên và môn thuộc tổ mình, giáo viên khác và Vice Principal bị từ chối; không duyệt được khi còn tiết chưa quyết định; duyệt áp đúng dạy thay và hủy ở phân hiệu mình, phân hiệu khác do hiệu phó đó duyệt; duyệt thất bại thì không áp tiết nào và không gửi email; xử lý tay xóa đề xuất và cho duyệt phần còn lại; email dạy thay đúng người, hủy tiết không có email; tiết sau duyệt giống hệt tiết xử lý tay; xóa khai báo chỉ tổ trưởng đã khai, trả tiết và bỏ đề xuất.
 
 ### SCD-04 Teaching Responsibility View (Phụ trách chuyên môn)
 
@@ -709,7 +721,7 @@ Sửa bản ghi đã có của tiết đã qua. Vice Principal thấy số liệ
 
 **4.5.9 — Lưu người nhập, thời điểm và cờ nhập bù / Record Attendance Trail**  
 `BE` · 1 MD · dep: 4.5.7  
-Mỗi bản ghi lưu người nhập, thời điểm và cờ nhập bù ngay trên bản ghi nghiệp vụ. Điểm danh không vào Audit Log (BR-17, BR-28).
+Mỗi bản ghi lưu người nhập, thời điểm và cờ nhập bù ngay trên bản ghi nghiệp vụ. Điểm danh của giáo viên trong ngày của tiết không vào Audit Log; School Admin nhập bù và sửa được ghi Audit kèm số bản ghi nhập bù, số bản ghi sửa và từng thay đổi trước → sau, vì bản ghi bị ghi đè khi sửa (BR-17, BR-28).
 
 **4.5.10 — Suy nhãn có phép và không phép / Derive Excused Label**  
 `BE` · 1.5 MD · dep: 4.5.3  
@@ -821,7 +833,7 @@ Mỗi bài nộp (kể cả bị tự nộp) được gửi AI MỘT LẦN, tự
 
 **4.6.20 — Xem phân tích bài làm / View Analysis**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.6.19  
-Khung phân tích AI nằm dưới kết quả từng bài, hiện cho Student, Parent và Teacher đang phụ trách chuyên môn. Khi phân tích xong, Backend ghép thêm mục "Xem lại trong sách" từ bài nguồn của các câu sai (tên bài, trang theo số in, số thứ tự các câu sai), không do AI sinh và không gửi thêm gì cho AI; câu không có bài nguồn (soạn tay) thì không có dòng nào. Mỗi dòng có nút xem ảnh các trang của bài: giáo viên xem qua đường của giáo viên, Student và Parent (của con được liên kết) chỉ xem được trang của bài là nguồn của các câu trong bài mình đã nộp; chưa nộp hoặc bài không thuộc bài đã nộp thì báo không tìm thấy, để không duyệt được cả cuốn sách. Kiểm thử: học sinh chưa nộp, học sinh khác, bài ngoài bài đã nộp đều bị từ chối. Đang phân tích hiện avatar MSMS AI chờ; Lỗi để trống. Phân tích kẹt ở trạng thái đang chạy quá 5 phút kể từ lúc gửi phân tích (tiến trình dừng giữa chừng) được coi là Lỗi; bài tự nộp sau hạn không bị coi là kẹt chỉ vì giờ nộp đã lùi về hạn.
+Khung phân tích AI nằm dưới kết quả từng bài, hiện cho Pupil, Parent và Teacher đang phụ trách chuyên môn. Khi phân tích xong, Backend ghép thêm mục "Xem lại trong sách" từ bài nguồn của các câu sai (tên bài, trang theo số in, số thứ tự các câu sai), không do AI sinh và không gửi thêm gì cho AI; câu không có bài nguồn (soạn tay) thì không có dòng nào. Mỗi dòng có nút xem ảnh các trang của bài: giáo viên xem qua đường của giáo viên, Pupil và Parent (của con được liên kết) chỉ xem được trang của bài là nguồn của các câu trong bài mình đã nộp; chưa nộp hoặc bài không thuộc bài đã nộp thì báo không tìm thấy, để không duyệt được cả cuốn sách. Kiểm thử: học sinh chưa nộp, học sinh khác, bài ngoài bài đã nộp đều bị từ chối. Đang phân tích hiện avatar MSMS AI chờ; Lỗi để trống. Phân tích kẹt ở trạng thái đang chạy quá 5 phút kể từ lúc gửi phân tích (tiến trình dừng giữa chừng) được coi là Lỗi; bài tự nộp sau hạn không bị coi là kẹt chỉ vì giờ nộp đã lùi về hạn.
 
 **4.6.21 — Giao diện MSMS AI / MSMS AI Presence**  
 `Web + Mobile` · 2 MD · dep: 4.6.5, 4.6.12, 4.6.20  
@@ -887,7 +899,7 @@ Từ chối bắt buộc kèm lý do, lý do hiện cho phụ huynh; bị từ c
 `QA` · 2 MD · dep: 4.7.2, 4.7.6  
 Ngày bắt đầu trong quá khứ bị chặn; hai đơn chồng ngày và chồng buổi bị chặn còn sáng/chiều riêng thì không; đổi chủ nhiệm giữa chừng vẫn đúng một người duyệt; đơn duyệt muộn đổi nhãn vắng đã ghi.
 
-### PAR-02 Weekly Student Report (Báo cáo tuần)
+### PAR-02 Weekly Pupil Report (Báo cáo tuần)
 
 **4.7.9 — Tính báo cáo tuần khi mở / Compute Weekly Report on Read**  
 `BE` · 2.5 MD · dep: 4.5.10, 4.6.15  
@@ -1039,11 +1051,11 @@ Principal, Vice Principal hỏi bằng câu tự do để báo cáo, so sánh, x
 
 **4.9.4 — Thống kê hệ thống / System Statistics**  
 `BE + Web` · 2 MD · dep: —  
-School Admin xem quy mô trường, tài khoản theo loại, dữ liệu cần bổ sung (lớp chưa có chủ nhiệm, học sinh chưa xếp lớp, học sinh chưa liên kết phụ huynh, cán bộ chưa có tài khoản, giáo viên chưa thuộc tổ chuyên môn, tổ chuyên môn chưa có tổ trưởng, phân hiệu chưa có hiệu phó phụ trách; chỉ hiện mục lớn hơn 0 và mỗi dòng mở màn hình sửa), hoạt động nhật ký 7 ngày gần nhất và tiến độ phát hành thời khóa biểu theo phân hiệu.
+School Admin xem quy mô trường, tài khoản theo loại, dữ liệu cần bổ sung (học sinh chưa xếp lớp, học sinh chưa liên kết phụ huynh, cán bộ chưa có tài khoản, giáo viên chưa thuộc tổ chuyên môn; chỉ hiện mục lớn hơn 0 và mỗi dòng mở màn hình sửa; không có mục về trách nhiệm vì School Admin không gán trách nhiệm), hoạt động nhật ký 7 ngày gần nhất và tiến độ phát hành thời khóa biểu theo phân hiệu.
 
 **4.9.5 — Trang chủ / Home**  
 `Web + Mobile` · 2 MD · dep: 4.2.15, 4.2.17, 4.2.21, 4.2.42, 4.4.15  
-Màn đầu tiên của mọi loại tài khoản. Trên web cùng một nội dung cho mọi loại; chỉ chào và hiện thông tin chung, không có số liệu thống kê, lối tắt hay bảng tin (mục 5.1). Lời chào theo buổi kèm logo trường và đồng hồ của ngày; **Hôm nay**: khung giờ tiết của trường, đánh dấu tiết đang diễn ra theo giờ thực, giáo viên thấy thêm lớp và môn mình dạy ở từng tiết, ngày nghỉ cấp trường hoặc Chủ nhật thì báo trường nghỉ; **Năm học**: học kỳ hiện tại và tuần thứ mấy; **Ngày nghỉ sắp tới**: ba ngày gần nhất, ngày đầu có đếm ngược và lịch tháng. Trên mobile Trang chủ là điểm vào các việc trong ngày nên khác theo loại tài khoản (Design_Mobile §4): Teacher có tiết sắp tới kèm nút Điểm danh, bốn ô số (tiết hôm nay, chưa điểm danh, đơn nghỉ chờ duyệt hoặc tiết tuần này, tin nhắn chưa đọc), lối vào Chuyên cần lớp và Học sinh lớp khi chủ nhiệm, và các tiết hôm nay; Student có tiết đang hoặc sắp học và bốn ô bài chưa nộp, sắp hết hạn, điểm mới, chuyên cần tuần; Parent có bộ chọn con, báo cáo tuần này và bốn ô xin nghỉ, đơn đang chờ, điểm mới, nhắn giáo viên. Các con số chỉ là việc cần làm của chính người dùng, không phải số liệu của Bảng điều khiển. Dùng lại dữ liệu đã có của SCH, lịch, điểm danh, bài tập, đơn nghỉ và hộp thư, không có API riêng.
+Màn đầu tiên của mọi loại tài khoản. Trên web cùng một nội dung cho mọi loại; chỉ chào và hiện thông tin chung, không có số liệu thống kê, lối tắt hay bảng tin (mục 5.1). Lời chào theo buổi kèm logo trường và đồng hồ của ngày; **Hôm nay**: khung giờ tiết của trường, đánh dấu tiết đang diễn ra theo giờ thực, giáo viên thấy thêm lớp và môn mình dạy ở từng tiết, ngày nghỉ cấp trường hoặc Chủ nhật thì báo trường nghỉ; **Năm học**: học kỳ hiện tại và tuần thứ mấy; **Ngày nghỉ sắp tới**: ba ngày gần nhất, ngày đầu có đếm ngược và lịch tháng. Trên mobile Trang chủ là điểm vào các việc trong ngày nên khác theo loại tài khoản (Design_Mobile §4): Teacher có tiết sắp tới kèm nút Điểm danh, bốn ô số (tiết hôm nay, chưa điểm danh, đơn nghỉ chờ duyệt hoặc tiết tuần này, tin nhắn chưa đọc), lối vào Chuyên cần lớp và Học sinh lớp khi chủ nhiệm, và các tiết hôm nay; Pupil có tiết đang hoặc sắp học và bốn ô bài chưa nộp, sắp hết hạn, điểm mới, chuyên cần tuần; Parent có bộ chọn con, báo cáo tuần này và bốn ô xin nghỉ, đơn đang chờ, điểm mới, nhắn giáo viên. Các con số chỉ là việc cần làm của chính người dùng, không phải số liệu của Bảng điều khiển. Dùng lại dữ liệu đã có của SCH, lịch, điểm danh, bài tập, đơn nghỉ và hộp thư, không có API riêng.
 
 **4.9.6 — Kiểm thử phạm vi Bảng điều khiển / Board Scope Tests**  
 `QA` · 1.5 MD · dep: 4.9.2, 4.9.3  
@@ -1051,9 +1063,9 @@ Vice Principal không xem được số liệu phân hiệu khác (gọi kèm ph
 
 ### ADM-02 Audit Log (Nhật ký kiểm toán)
 
-**4.9.7 — Ghi nhật ký cho ba nhóm sự kiện / Record Audit Entry**  
-`BE` · 2 MD · dep: 4.1.12, 4.4.11  
-Đúng ba nhóm: tài khoản (tạo đơn lẻ và hàng loạt, khóa, mở, đổi loại tài khoản, School Admin reset mật khẩu — không ghi mật khẩu); phát hành thời khóa biểu (phiên bản, số tiết xóa và tạo); điều chỉnh lịch (đổi giáo viên, hủy, tiết bù, khai báo, xóa khai báo, xử lý giáo viên vắng và hủy tiết do khai ngày nghỉ). Thao tác hàng loạt ghi MỘT bản ghi kèm danh sách ID (BR-28).
+**4.9.7 — Ghi nhật ký cho năm nhóm sự kiện / Record Audit Entry**  
+`BE` · 2 MD · dep: 4.1.12, 4.3.28, 4.4.11, 4.5.7  
+Đúng năm nhóm: tài khoản (tạo đơn lẻ và hàng loạt, khóa, mở, đổi loại tài khoản, School Admin reset mật khẩu — không ghi mật khẩu); phát hành thời khóa biểu (phiên bản, số tiết xóa và tạo); điều chỉnh lịch (đổi giáo viên, hủy, tiết bù, khai báo, xóa khai báo, xử lý giáo viên vắng và hủy tiết do khai ngày nghỉ); trách nhiệm (gán, thay người, kết thúc, hủy lịch hẹn kèm loại, đối tượng, người đảm nhiệm và ngày hiệu lực); điểm danh (chỉ khi School Admin nhập bù hoặc sửa, kèm giá trị trước và sau). Nhóm, hành động, tên trường nội dung và giá trị đều ghi bằng tiếng Việt. Thao tác hàng loạt ghi MỘT bản ghi kèm danh sách ID (BR-28).
 
 **4.9.8 — Tra cứu nhật ký kiểm toán / Browse Audit Log**  
 `BE + Web` · 1.5 MD · dep: 4.9.7  
@@ -1061,7 +1073,7 @@ School Admin xem nhật ký theo thứ tự thời gian.
 
 **4.9.9 — Lọc nhật ký theo nhóm, người và thời gian / Filter Audit Log**  
 `BE + Web` · 1 MD · dep: 4.9.8  
-Lọc theo ba nhóm sự kiện, người thực hiện và khoảng thời gian (BR-28).
+Lọc theo năm nhóm sự kiện, người thực hiện và khoảng thời gian (BR-28).
 
 **4.9.10 — Xem chi tiết một bản ghi nhật ký / View Audit Entry Detail**  
 `BE + Web` · 1 MD · dep: 4.9.8  
@@ -1069,26 +1081,8 @@ Xem nội dung đầy đủ của một bản ghi, gồm danh sách ID của tha
 
 **4.9.11 — Kiểm thử tính chỉ ghi thêm / Append-only Tests**  
 `QA` · 1 MD · dep: 4.9.7  
-Không có API sửa hay xóa nhật ký; quyền CSDL chặn UPDATE và DELETE; việc ngoài ba nhóm (đăng nhập, nộp bài, điểm danh, trách nhiệm, kết chuyển) không vào nhật ký.
-
-### ADM-03 Data Export (Xuất dữ liệu)
-
-**4.9.12 — Xuất điểm danh theo lớp và khoảng ngày / Export Class Attendance**  
-`BE + Web` · 1.5 MD · dep: 4.5.3  
-Nguồn là bản ghi điểm danh, kèm nhãn cuối suy ra. Chủ nhiệm xuất lớp mình, Vice Principal xuất lớp thuộc phân hiệu mình, Principal xuất mọi lớp (BR-18, mục 5.2).
-
-**4.9.13 — Xuất thời khóa biểu hiện hành / Export Current Timetable**  
-`BE + Web` · 1.5 MD · dep: 4.4.11  
-Nguồn là LỊCH DẠY chứ không phải phiên bản thời khóa biểu, để phản ánh cả các điều chỉnh tay. Vice Principal xuất phân hiệu mình, Principal xuất mọi phân hiệu (BR-14, mục 5.2).
-
-**4.9.15 — Xuất danh sách trách nhiệm / Export Responsibilities**  
-`BE + Web` · 1 MD · dep: 4.3.27  
-Chọn một trong ba nhóm (phụ trách phân hiệu, tổ trưởng, chủ nhiệm lớp; nhóm chủ nhiệm chọn thêm năm học, mặc định năm hiện hành) rồi tải Excel: đích, người phụ trách, mã hồ sơ, từ ngày, đến ngày và trạng thái (Đã phân công, Sắp hiệu lực, Đã kết thúc, Chưa phân công). Principal xuất toàn trường, Vice Principal chỉ phân hiệu mình phụ trách; School Admin và Teacher không xuất. Nút nằm ở màn Xuất dữ liệu, không nằm ở màn Trách nhiệm.
-
-**4.9.14 — Kiểm thử phạm vi xuất dữ liệu / Export Scope Tests**  
-`QA` · 1 MD · dep: 4.9.12, 4.9.13, 4.9.15  
-Mỗi mục chỉ xuất đúng phạm vi của người gọi (Principal xuất mọi lớp, mọi phân hiệu và mọi nhóm trách nhiệm, School Admin không xuất); danh sách tài khoản kèm mật khẩu tạm KHÔNG phải một mục xuất và không xuất lại được (BR-04).
+Không có API sửa hay xóa nhật ký; quyền CSDL chặn UPDATE và DELETE; việc ngoài năm nhóm (đăng nhập, nộp bài, điểm danh của giáo viên, kết chuyển) không vào nhật ký.
 
 ---
 
-**Tổng:** 241 task · 345.5 MD
+**Tổng:** 240 task · 347 MD
