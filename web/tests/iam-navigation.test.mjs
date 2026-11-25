@@ -104,14 +104,22 @@ test('Teacher gains only the navigation attached to each current responsibility'
   assert.equal(isPathAllowed('/lrn/assign', head), false);
 });
 
-test('Data export opens for the Principal, homeroom teachers and campus-leading Vice Principals (ADM-03)', () => {
-  assert.equal(isPathAllowed('/adm/exports', user('Principal')), true);
-  assert.equal(isPathAllowed('/adm/exports', user('Teacher', { homeroomClassIds: [1] })), true);
-  assert.equal(isPathAllowed('/adm/exports', user('VicePrincipal', { ledCampusIds: [1] })), true);
-  assert.equal(isPathAllowed('/adm/exports', user('VicePrincipal')), false);
-  // Không có mục kết quả bài tập: giáo viên chỉ phụ trách chuyên môn hoặc tổ trưởng không có màn xuất.
-  assert.equal(isPathAllowed('/adm/exports', user('Teacher', { subjectResponsibilities: [{ classId: 1, subjectId: 2, semesterId: 1 }], headDepartmentIds: [1] })), false);
-  for (const role of ['SchoolAdmin', 'Student', 'Parent']) assert.equal(isPathAllowed('/adm/exports', user(role, { ledCampusIds: [1], homeroomClassIds: [1] })), false, role);
+test('Data export page is gone: no role can open /adm/exports', () => {
+  for (const role of ['SchoolAdmin', 'Principal', 'VicePrincipal', 'Teacher', 'Student', 'Parent']) {
+    assert.equal(isPathAllowed('/adm/exports', user(role, { ledCampusIds: [1], homeroomClassIds: [1], headDepartmentIds: [1] })), false, role);
+  }
+});
+
+test('Only the Principal opens the responsibilities page; School Admin no longer assigns responsibilities', () => {
+  assert.equal(isPathAllowed('/ppl/responsibilities', user('Principal')), true);
+  assert.equal(isPathAllowed('/ppl/responsibilities', user('SchoolAdmin')), false);
+});
+
+test('Department head sees the department absence page, other teachers and Vice Principals do not (SCD-03)', () => {
+  assert.equal(isPathAllowed('/scd/department-absences', user('Teacher', { headDepartmentIds: [2] })), true);
+  assert.equal(isPathAllowed('/scd/department-absences', user('Teacher', { homeroomClassIds: [1] })), false);
+  assert.equal(isPathAllowed('/scd/department-absences', user('VicePrincipal', { ledCampusIds: [1] })), false);
+  assert.equal(isPathAllowed('/scd/absences', user('Teacher', { headDepartmentIds: [2] })), false);
 });
 
 test('School report page is gone: no role can open /adm/report (ADM-01)', () => {

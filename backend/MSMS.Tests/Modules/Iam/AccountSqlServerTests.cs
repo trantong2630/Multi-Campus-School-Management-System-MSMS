@@ -117,7 +117,7 @@ public class AccountSqlServerTests
         Assert.Null(saved.TeacherId);
         Assert.Equal(f.Clock.Today, (await f.Db.HomeroomAssignment.SingleAsync()).EndDate);
         Assert.Equal(vice.PersonId, (await f.Db.Notification.SingleAsync()).RecipientPersonId);
-        Assert.Equal("LockAccount", (await f.Db.AuditLog.SingleAsync()).Action);
+        Assert.Equal(AuditActions.LockAccount, (await f.Db.AuditLog.SingleAsync()).Action);
     }
 
     [SqlServerFact]

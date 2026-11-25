@@ -238,6 +238,8 @@ export interface TeacherAvailability {
   busy: boolean;
   busyNote: string | null;
   absent: boolean;
+  /** Số tiết Đã xếp lịch của giáo viên trong ngày của tiết, để tránh dồn tiết cho một người. */
+  daySessionCount: number;
 }
 
 export interface MakeUpBody {
@@ -274,6 +276,11 @@ export interface Absence {
   missedCount: number;
   /** Mọi tiết đã kết thúc: chỉ để tra cứu. */
   isPast: boolean;
+  /** Tiết còn chờ ở mọi phân hiệu của khai báo, và số tiết tổ trưởng đã quyết định (đề xuất dạy thay hoặc hủy). */
+  awaitingCount: number;
+  decidedCount: number;
+  /** Chỉ hiệu phó, khi tổ trưởng đã quyết định hết mọi tiết và có tiết ở phân hiệu của mình. */
+  canApprove: boolean;
 }
 
 export interface DeclareAbsenceBody {
@@ -300,6 +307,29 @@ export interface PendingSession {
   absenceId: number | null;
   absentTeacherName: string | null;
   note: string | null;
+  campusName: string;
+  /** Quyết định của tổ trưởng cho tiết: dạy thay hoặc hủy; trống là chưa quyết định. Hiệu phó duyệt (BR-16). */
+  proposedAction: 'Substitute' | 'Cancel' | null;
+  proposedTeacherId: number | null;
+  proposedTeacherName: string | null;
+  /** Khai báo vắng chứa tiết: lý do và khoảng ngày, để tổ trưởng biết bối cảnh khi quyết định. */
+  absenceReason: string | null;
+  absenceFrom: string | null;
+  absenceTo: string | null;
+}
+
+export interface ProposeBody {
+  /** Clear là bỏ đề xuất. */
+  action: 'Substitute' | 'Cancel' | 'Clear';
+  teacherId?: number | null;
+}
+
+export interface ApproveResult {
+  absenceId: number;
+  substitutedCount: number;
+  cancelledCount: number;
+  /** Tiết còn chờ hiệu phó phân hiệu khác duyệt. */
+  otherCampusPendingCount: number;
 }
 
 export type ResolveAction = 'Substitute' | 'Cancel';

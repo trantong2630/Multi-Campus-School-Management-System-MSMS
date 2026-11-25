@@ -23,7 +23,7 @@ public class HomeroomResponsibilityTests
         f.Db.Class.Add(new Class { ClassId = 3, CampusId = 1, AcademicYearId = 2, Name = "7A", IsActive = true });
         f.Db.SaveChanges();
         var user = AccountTestFixture.User(AccountTypes.SchoolAdmin, 900);
-        return (f, new ResponsibilityService(f.Db, user, f.Clock, new ScopeResolver(f.Db, user, f.Clock)));
+        return (f, new ResponsibilityService(f.Db, user, f.Clock, new ScopeResolver(f.Db, user, f.Clock), new MSMS.Api.Common.Audit.AuditWriter(f.Db, user, f.Clock)));
     }
 
     private static ResponsibilityAssignRequest Assign(int classId, int staffId, DateOnly start) =>

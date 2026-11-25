@@ -21,14 +21,13 @@ public class ResponsibilityFieldTests
         await PplEnv.Rejects(() => e.Resp.AssignAsync(Assign("principal", 1, PplEnv.Teacher)), "Loại trách nhiệm");
     }
 
-    [Fact(DisplayName = "PPL | Trách nhiệm | Loại | loại không hợp lệ bị từ chối khi xem danh sách, lịch sử, kết thúc và xuất Excel")]
+    [Fact(DisplayName = "PPL | Trách nhiệm | Loại | loại không hợp lệ bị từ chối khi xem danh sách, lịch sử và kết thúc")]
     public async Task Kind_Invalid_Everywhere()
     {
         using var e = new PplEnv();
         await PplEnv.Rejects(() => e.Resp.ListCurrentAsync("x", null), "Loại trách nhiệm");
         await PplEnv.Rejects(() => e.Resp.HistoryAsync("x", 1), "Loại trách nhiệm");
         await PplEnv.Rejects(() => e.Resp.EndAsync(new ResponsibilityEndRequest("x", 1, T)), "Loại trách nhiệm");
-        await PplEnv.Rejects(() => e.Resp.ExportAsync("x", null), "Loại trách nhiệm");
     }
 
     // ---------- Đích ----------
@@ -148,6 +147,26 @@ public class ResponsibilityFieldTests
         using var e = new PplEnv();
         await e.Resp.AssignAsync(Assign("homeroom", PplEnv.Class6A, PplEnv.OtherTeacher, T.AddDays(offsetDays)));
         Assert.Single(await e.Db.HomeroomAssignment.ToListAsync());
+    }
+
+    [Fact(DisplayName = "PPL | Trách nhiệm | Chủ nhiệm | gán xong tự hết hiệu lực vào ngày cuối năm học của lớp, phụ trách phân hiệu và tổ trưởng không có ngày kết thúc")]
+    public async Task Homeroom_EndsWithSchoolYear_OthersOpenEnded()
+    {
+        using var e = new PplEnv();
+        await e.Resp.AssignAsync(Assign("homeroom", PplEnv.Class6A, PplEnv.Teacher, T));
+        await e.Resp.AssignAsync(Assign("campus", PplEnv.Campus1, PplEnv.ViceP, T));
+        await e.Resp.AssignAsync(Assign("department", PplEnv.Dept1, PplEnv.OtherTeacher, T));
+        Assert.Equal(PplEnv.YearEnd, (await e.Db.HomeroomAssignment.SingleAsync()).EndDate);
+        Assert.Null((await e.Db.CampusLeadership.SingleAsync()).EndDate);
+        Assert.Null((await e.Db.DepartmentHead.SingleAsync()).EndDate);
+    }
+
+    [Fact(DisplayName = "PPL | Trách nhiệm | Chủ nhiệm | ngày hiệu lực sau ngày cuối năm học của lớp bị từ chối")]
+    public async Task Homeroom_StartAfterYearEnd_Rejected()
+    {
+        using var e = new PplEnv();
+        await PplEnv.Rejects(() => e.Resp.AssignAsync(Assign("homeroom", PplEnv.Class6A, PplEnv.Teacher, PplEnv.YearEnd.AddDays(1))), "Năm học của lớp đã kết thúc");
+        Assert.Empty(e.Db.HomeroomAssignment);
     }
 
     [Theory(DisplayName = "PPL | Trách nhiệm | Ngày hiệu lực | ngày trong quá khứ bị từ chối khi gán hoặc thay người, hôm nay và ngày sau được chấp nhận")]
@@ -357,15 +376,5 @@ public class ResponsibilityFieldTests
         Assert.Single(await e.Resp.HistoryAsync("campus", PplEnv.Campus1));   // phân hiệu mình phụ trách: xem được
         var ex = await Assert.ThrowsAsync<ApiException>(() => e.Resp.HistoryAsync("campus", 999));
         Assert.Equal(403, ex.StatusCode);
-    }
-
-    [Theory(DisplayName = "PPL | Trách nhiệm | Xuất Excel | tạo được file .xlsx cho từng loại")]
-    [InlineData("campus")] [InlineData("department")] [InlineData("homeroom")]
-    public async Task Export_ReturnsXlsx(string kind)
-    {
-        using var e = new PplEnv();
-        var file = await e.Resp.ExportAsync(kind, null);
-        Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", file.ContentType);
-        Assert.True(file.FileContents.Length > 1000);
     }
 }

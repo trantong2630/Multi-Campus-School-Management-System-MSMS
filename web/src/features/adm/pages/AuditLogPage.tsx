@@ -7,7 +7,7 @@ import { FilterBar } from '@/shared/components/FilterBar';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { PersonCell } from '@/shared/components/PersonCell';
 import { formatDateTime } from '@/shared/lib/format';
-import { auditActionLabel, auditCategoryLabel } from '@/shared/lib/labels';
+import { auditActionLabel, auditCategories, auditCategoryLabel } from '@/shared/lib/labels';
 import { admApi } from '../api';
 import { AuditDetailDrawer } from '../components/AuditDetailDrawer';
 import type { AuditLogItem } from '../types';
@@ -37,7 +37,7 @@ export function AuditLogPage() {
       <FilterBar>
         <Select
           allowClear placeholder="Nhóm" value={category} onChange={(v) => { setCategory(v); setPage(1); }}
-          options={Object.entries(auditCategoryLabel).map(([value, label]) => ({ value, label }))}
+          options={auditCategories.map((value) => ({ value, label: value }))}
         />
         <Select
           allowClear showSearch optionFilterProp="label" placeholder="Người thực hiện" loading={actors.isLoading}

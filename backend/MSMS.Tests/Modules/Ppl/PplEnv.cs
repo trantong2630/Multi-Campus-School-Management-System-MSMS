@@ -20,6 +20,7 @@ namespace MSMS.Tests.Modules.Ppl;
 internal sealed class PplEnv : IDisposable
 {
     public static readonly DateOnly Today = new(2026, 10, 27);
+    public static readonly DateOnly YearEnd = new(2027, 5, 31);   // ngày cuối của năm học Year1
     public const int Campus1 = 1, CampusInactive = 2, Year1 = 1, Class6A = 11, Class9A = 12, Dept1 = 1, DeptInactive = 2;
     public const int Teacher = 10, ViceP = 11, LockedTeacher = 12, NoAccountStaff = 13, InactiveStaff = 14, PrincipalId = 15, OtherTeacher = 16;
     public const int StudentA = 101, StudentGrade9 = 102, StudentNoClass = 103, StudentGraduated = 104, Parent1 = 201, Parent2 = 202, Admin = 900;
@@ -32,9 +33,9 @@ internal sealed class PplEnv : IDisposable
 
     public StaffService Staff => new(Db, Clock, User, Scope);
     public GuardianService Guardians => new(Db, Clock, Scope);
-    public ResponsibilityService Resp => new(Db, User, Clock, Scope);
+    public ResponsibilityService Resp => new(Db, User, Clock, Scope, new MSMS.Api.Common.Audit.AuditWriter(Db, User, Clock));
     public EnrollmentService Enrollments => new(Db, Clock, User, Scope, new AuditWriter(Db, User, Clock), new SessionService(Db, Clock, Options.Create(new JwtOptions())));
-    public AttendanceService Attendance => new(Db, User, Scope, new AccountScopeResolver(Db, Clock), Clock);
+    public AttendanceService Attendance => new(Db, User, Scope, new AccountScopeResolver(Db, Clock), Clock, new MSMS.Api.Common.Audit.AuditWriter(Db, User, Clock));
     public StudentService Students => new(Db, Clock, User, Scope, Enrollments, Attendance);
 
     public PplEnv(string accountType = AccountTypes.SchoolAdmin, int personId = Admin)

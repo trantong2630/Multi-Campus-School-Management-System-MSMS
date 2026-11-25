@@ -26,7 +26,7 @@ public class AuditLogSqlServerTests
             var person = new Person { PersonType = "Staff", PersonCode = "CB1", FullName = "An Quản Trị", CreatedAt = now };
             db.Person.Add(person);
             await db.SaveChangesAsync();
-            var entry = new AuditLog { Category = AuditCategories.Account, Action = "LockAccount", ActorPersonId = person.PersonId, TargetIds = "[1]", CreatedAt = now };
+            var entry = new AuditLog { Category = AuditCategories.Account, Action = AuditActions.LockAccount, ActorPersonId = person.PersonId, TargetIds = "[1]", CreatedAt = now };
             db.AuditLog.Add(entry);
             await db.SaveChangesAsync();   // trigger không được cản INSERT của EF (có OUTPUT)
             await test(db, entry);
@@ -49,7 +49,7 @@ public class AuditLogSqlServerTests
     {
         var error = await Assert.ThrowsAsync<SqlException>(() => db.Database.ExecuteSqlRawAsync("UPDATE AuditLog SET Action = 'Tampered'"));
         Assert.Equal(50028, error.Number);
-        Assert.Equal("LockAccount", await db.AuditLog.AsNoTracking().Select(a => a.Action).SingleAsync());
+        Assert.Equal(AuditActions.LockAccount, await db.AuditLog.AsNoTracking().Select(a => a.Action).SingleAsync());
     });
 
     [SqlServerFact]

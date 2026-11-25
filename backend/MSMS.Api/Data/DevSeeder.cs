@@ -239,7 +239,7 @@ public static class DevSeeder
         {
             db.HomeroomAssignment.Add(new HomeroomAssignment
             {
-                ClassId = classes[ci].ClassId, StaffId = teachers[ci].Person.PersonId, StartDate = yearStart, CreatedAt = now,
+                ClassId = classes[ci].ClassId, StaffId = teachers[ci].Person.PersonId, StartDate = yearStart, EndDate = year.EndDate, CreatedAt = now,
             });
         }
         foreach (var (person, ci) in students.Where(s => s.ClassIdx < classes.Length))   // nhóm cuối chưa xếp lớp

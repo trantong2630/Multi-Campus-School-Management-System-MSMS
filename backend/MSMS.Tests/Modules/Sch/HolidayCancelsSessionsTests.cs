@@ -152,7 +152,7 @@ public class HolidayCancelsSessionsTests
 
         var audit = Assert.Single(db.AuditLog);
         Assert.Equal(AuditCategories.ScheduleAdjust, audit.Category);
-        Assert.Equal("CancelSessionsForHoliday", audit.Action);
+        Assert.Equal(AuditActions.CancelSessionsForHoliday, audit.Action);
         Assert.Contains(a.SessionId.ToString(), audit.TargetIds);
         Assert.Contains(b.SessionId.ToString(), audit.TargetIds);
     }

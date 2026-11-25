@@ -452,3 +452,15 @@
 .tt-adjust-toggle {
   margin-left: auto;
 }
+
+/* Quyết định tiết cho tổ trưởng: thẻ thông tin tiết và tiến độ trong ngăn kéo bên phải. */
+.dc-card { display: grid; gap: 10px; padding: 14px 16px; margin-bottom: 14px; border: 1px solid var(--c-border); border-radius: var(--radius-md, 12px); background: var(--c-sunken, var(--c-surface)); }
+.dc-card__title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; font-size: 16px; font-weight: 700; color: var(--c-ink); }
+.dc-card__title small { font-size: 13px; font-weight: 500; color: var(--c-text2); }
+.dc-card__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; margin: 0; }
+.dc-card__grid div { display: grid; gap: 1px; }
+.dc-card__grid dt { font-size: 12px; color: var(--c-text2); }
+.dc-card__grid dd { margin: 0; font-size: 14px; color: var(--c-ink); }
+.dc-card__wide { grid-column: 1 / -1; }
+.dc-progress { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; font-size: 13px; color: var(--c-text2); }
+.dc-progress .ant-progress { flex: 1; margin: 0; }
