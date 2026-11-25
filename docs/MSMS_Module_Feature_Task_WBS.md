@@ -277,7 +277,7 @@ Ngừng dùng lớp mà giữ nguyên dữ liệu đã phát sinh. Bị chặn n
 
 **4.2.29 — Xem danh sách học sinh của lớp / View Class Roster**  
 `BE + Web + Mobile` · 1 MD · dep: 4.2.26  
-Xem học sinh có ghi danh hiệu lực của lớp tại ngày đang xem, kèm ngày bắt đầu ghi danh. Đọc được: School Admin, Principal, Vice Principal của phân hiệu đó và giáo viên chủ nhiệm lớp. School Admin, Principal và Vice Principal mở từ màn Lớp & Ghi danh; giáo viên chủ nhiệm mở từ màn Danh sách học sinh (chỉ xem): đầu màn có khung gồm tên lớp, phân hiệu, năm học, ngày xem, sĩ số, tỉ lệ nam nữ và học sinh có sinh nhật trong tháng; bảng đánh số thứ tự, không chia trang, cột Kết thúc chỉ hiện khi có em đã kết thúc ghi danh; chủ nhiệm nhiều lớp thì chuyển lớp bằng các nút ở đầu trang; bấm tên một em mở Hồ sơ học sinh (4.3.12). Trên mobile chủ nhiệm có danh sách gọn Học sinh lớp (họ tên, mã, lớp; tìm theo tên hoặc mã, dùng chung danh sách học sinh lớp chủ nhiệm của sổ liên lạc 4.7.13), mở từ Trang chủ; bấm một em mở Hồ sơ học sinh.
+Xem học sinh có ghi danh hiệu lực của lớp tại ngày đang xem, kèm ngày bắt đầu ghi danh. Đọc được: School Admin, Principal, Vice Principal của phân hiệu đó và giáo viên chủ nhiệm lớp. School Admin, Principal và Vice Principal mở từ màn Lớp & Ghi danh; giáo viên chủ nhiệm mở từ màn Danh sách học sinh (chỉ xem): đầu màn có khung gồm tên lớp, phân hiệu, năm học, ngày xem, sĩ số, tỉ lệ nam nữ và học sinh có sinh nhật trong tháng; bảng đánh số thứ tự, không chia trang, cột Kết thúc chỉ hiện khi có em đã kết thúc ghi danh; chủ nhiệm nhiều lớp thì chuyển lớp bằng các nút ở đầu trang; bấm tên một em mở Hồ sơ học sinh (4.3.12). Trên mobile chủ nhiệm có danh sách gọn Học sinh lớp (họ tên, mã, lớp; tìm theo tên hoặc mã, dùng chung danh sách học sinh lớp chủ nhiệm của báo cáo tuần 4.7.13), mở từ Trang chủ; bấm một em mở Hồ sơ học sinh.
 
 **4.2.30 — Ghi danh học sinh vào lớp / Enroll Student into Class**  
 `BE + Web` · 1.5 MD · dep: 4.2.29  
@@ -293,11 +293,11 @@ Một thao tác, một transaction, cho một hoặc nhiều học sinh tới c�
 
 **4.2.33 — Lấy danh sách học sinh hiệu lực tại một ngày / Resolve Roster at Date**  
 `BE` · 1 MD · dep: 4.2.30  
-Quy tắc dùng chung trả về học sinh đang học của lớp tại một ngày cụ thể: ngày bắt đầu ≤ D và ngày kết thúc ≥ D (ngày kết thúc để trống nghĩa là tới hết năm học). Dùng cho điểm danh, giao bài và sổ liên lạc (mục 6.2).
+Quy tắc dùng chung trả về học sinh đang học của lớp tại một ngày cụ thể: ngày bắt đầu ≤ D và ngày kết thúc ≥ D (ngày kết thúc để trống nghĩa là tới hết năm học). Dùng cho điểm danh, giao bài và báo cáo tuần (mục 6.2).
 
 **4.2.34 — Kiểm thử khoảng hiệu lực ghi danh / Enrollment Validity Tests**  
 `QA` · 1.5 MD · dep: 4.2.30, 4.2.31  
-Không có hai ghi danh mở cùng lúc; chuyển lớp không để hở hay chồng ngày; điểm danh và sổ liên lạc của ngày cũ vẫn đọc đúng lớp cũ.
+Không có hai ghi danh mở cùng lúc; chuyển lớp không để hở hay chồng ngày; điểm danh và báo cáo tuần của ngày cũ vẫn đọc đúng lớp cũ.
 
 ### SCH-06 Year Rollover (Kết chuyển năm học)
 
@@ -397,7 +397,7 @@ Một ô sai là không ghi gì; thiếu hoặc sai định dạng số định 
 `BE + Web + Mobile` · 1.5 MD · dep: 4.1.4  
 Xem hồ sơ học sinh cùng lớp đang học, phân hiệu, phụ huynh đại diện và trạng thái Đang học / Đã chuyển trường / Đã tốt nghiệp. Principal xem toàn trường, Vice Principal chỉ học sinh của phân hiệu mình phụ trách.
 
-Bấm tên một học sinh mở trang **Hồ sơ học sinh** (chỉ xem): thông tin cá nhân (ngày sinh, giới tính, số định danh, điện thoại, địa chỉ, ngày nhập học, ngày rời trường), ghi chú đặt nổi bật, lớp và phân hiệu hiện tại, phụ huynh đại diện kèm quan hệ và số điện thoại, chuyên cần năm học hiện hành (tỷ lệ có mặt = Có mặt + Muộn trên số lượt đã điểm danh, số lượt theo bốn nhãn của BR-18, năm lần muộn hoặc vắng gần nhất; chưa có lượt nào thì báo chưa có dữ liệu) và lịch sử lớp qua các năm kèm lý do kết thúc ghi danh. Không có kết quả bài tập. School Admin, Principal và Vice Principal mở từ danh bạ; giáo viên chủ nhiệm mở từ Danh sách học sinh (4.2.29) và chỉ mở được học sinh từng ghi danh ở lớp đang chủ nhiệm. Chuyên cần chỉ tính trong phạm vi người xem: Vice Principal theo phân hiệu phụ trách, chủ nhiệm theo lớp chủ nhiệm. Học sinh ngoài phạm vi báo không tìm thấy. Sửa hồ sơ và đổi phụ huynh vẫn làm ở danh bạ. Danh bạ chỉ có trên web; mobile chỉ có trang Hồ sơ học sinh cho chủ nhiệm, kèm nút mở Sổ liên lạc của em (4.7.13).
+Bấm tên một học sinh mở trang **Hồ sơ học sinh** (chỉ xem): thông tin cá nhân (ngày sinh, giới tính, số định danh, điện thoại, địa chỉ, ngày nhập học, ngày rời trường), ghi chú đặt nổi bật, lớp và phân hiệu hiện tại, phụ huynh đại diện kèm quan hệ và số điện thoại, chuyên cần năm học hiện hành (tỷ lệ có mặt = Có mặt + Muộn trên số lượt đã điểm danh, số lượt theo bốn nhãn của BR-18, năm lần muộn hoặc vắng gần nhất; chưa có lượt nào thì báo chưa có dữ liệu) và lịch sử lớp qua các năm kèm lý do kết thúc ghi danh. Không có kết quả bài tập. School Admin, Principal và Vice Principal mở từ danh bạ; giáo viên chủ nhiệm mở từ Danh sách học sinh (4.2.29) và chỉ mở được học sinh từng ghi danh ở lớp đang chủ nhiệm. Chuyên cần chỉ tính trong phạm vi người xem: Vice Principal theo phân hiệu phụ trách, chủ nhiệm theo lớp chủ nhiệm. Học sinh ngoài phạm vi báo không tìm thấy. Sửa hồ sơ và đổi phụ huynh vẫn làm ở danh bạ. Danh bạ chỉ có trên web; mobile chỉ có trang Hồ sơ học sinh cho chủ nhiệm, kèm nút mở Báo cáo tuần của em (4.7.13).
 
 **4.3.13 — Tìm kiếm và lọc học sinh / Search and Filter Students**  
 `BE + Web` · 1 MD · dep: 4.3.12  
@@ -505,7 +505,7 @@ Liệt kê lớp của năm hiện hành không có trách nhiệm chủ nhiệm
 
 **4.3.35 — Kiểm thử phạm vi theo trách nhiệm / Responsibility Scope Tests**  
 `QA` · 1.5 MD · dep: 4.3.28, 4.3.30  
-Hết chủ nhiệm thì mất quyền duyệt đơn và xem sổ lớp ngay; chủ nhiệm mới thấy đơn đang chờ; gán trách nhiệm cho sai loại tài khoản bị chặn.
+Hết chủ nhiệm thì mất quyền duyệt đơn và xem báo cáo lớp ngay; chủ nhiệm mới thấy đơn đang chờ; gán trách nhiệm cho sai loại tài khoản bị chặn.
 
 ---
 
@@ -887,29 +887,29 @@ Từ chối bắt buộc kèm lý do, lý do hiện cho phụ huynh; bị từ c
 `QA` · 2 MD · dep: 4.7.2, 4.7.6  
 Ngày bắt đầu trong quá khứ bị chặn; hai đơn chồng ngày và chồng buổi bị chặn còn sáng/chiều riêng thì không; đổi chủ nhiệm giữa chừng vẫn đúng một người duyệt; đơn duyệt muộn đổi nhãn vắng đã ghi.
 
-### PAR-02 Weekly Student Report (Sổ liên lạc tuần)
+### PAR-02 Weekly Student Report (Báo cáo tuần)
 
-**4.7.9 — Tính sổ liên lạc tuần khi mở / Compute Weekly Report on Read**  
+**4.7.9 — Tính báo cáo tuần khi mở / Compute Weekly Report on Read**  
 `BE` · 2.5 MD · dep: 4.5.10, 4.6.15  
-TÍNH TRỰC TIẾP khi mở, không lưu, không có job sinh sổ, không ai viết tay. Một sổ = một học sinh + một tuần (thứ Hai – Chủ nhật) của năm học hiện hành mà học sinh có ghi danh (BR-24).
+TÍNH TRỰC TIẾP khi mở, không lưu, không có job sinh báo cáo, không ai viết tay. Một báo cáo = một học sinh + một tuần (thứ Hai – Chủ nhật) của năm học hiện hành mà học sinh có ghi danh (BR-24).
 
-**4.7.10 — Xem sổ liên lạc tuần của con / View Child's Weekly Report**  
+**4.7.10 — Xem báo cáo tuần của con / View Child's Weekly Report**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.7.9  
-Gồm chuyên cần theo tiết Đã xếp lịch đã diễn ra; bài tập có hạn nộp trong tuần với số được giao, đã nộp, chưa nộp (còn hạn), không nộp (đã quá hạn mà chưa nộp); điểm và phân tích của các bài đó. Không xếp hạng, không điểm trung bình lớp, không hạnh kiểm. School Admin không xem sổ (BR-24).
+Gồm chuyên cần theo tiết Đã xếp lịch đã diễn ra; bài tập có hạn nộp trong tuần với số được giao, đã nộp, chưa nộp (còn hạn), không nộp (đã quá hạn mà chưa nộp); điểm của các bài đó (phân tích AI xem ở kết quả bài tập, không nằm trong báo cáo tuần). Không xếp hạng, không điểm trung bình lớp, không hạnh kiểm. School Admin không xem báo cáo (BR-24).
 
-**4.7.11 — Xem sổ liên lạc tuần của mình / View Own Weekly Report**  
+**4.7.11 — Xem báo cáo tuần của mình / View Own Weekly Report**  
 `BE + Web + Mobile` · 1 MD · dep: 4.7.9  
-Học sinh xem sổ của chính mình, cùng nội dung như phụ huynh xem.
+Học sinh xem báo cáo của chính mình, cùng nội dung như phụ huynh xem.
 
 **4.7.12 — Chọn tuần để xem / Select Report Week**  
 `BE + Web + Mobile` · 1 MD · dep: 4.7.9  
 Xem được mọi tuần của năm học hiện hành mà học sinh có ghi danh; mục không có dữ liệu để trống.
 
-**4.7.13 — Chủ nhiệm xem sổ của học sinh lớp mình / View Class Weekly Reports**  
+**4.7.13 — Chủ nhiệm xem báo cáo của học sinh lớp mình / View Class Weekly Reports**  
 `BE + Web + Mobile` · 1.5 MD · dep: 4.7.9  
-Chủ nhiệm mở sổ của từng học sinh trong lớp chủ nhiệm.
+Chủ nhiệm mở báo cáo của từng học sinh trong lớp chủ nhiệm.
 
-**4.7.14 — Kiểm thử sổ liên lạc / Weekly Report Tests**  
+**4.7.14 — Kiểm thử báo cáo tuần / Weekly Report Tests**  
 `QA` · 1 MD · dep: 4.7.9  
 Nhập bù điểm danh và đơn duyệt muộn được phản ánh ngay lần mở sau; tiết Đã hủy không vào thống kê; bài chưa nộp không hiện điểm.
 
@@ -993,11 +993,11 @@ Dùng `signalr_netcore` trong dịch vụ Riverpod; chỉ giữ kết nối khi 
 
 **4.8.11 — Xem bảng tin theo phạm vi người đọc / View News Feed**  
 `BE + Web + Mobile` · 2 MD · dep: 4.1.4  
-Bài Nội bộ chỉ cán bộ đọc; bài Toàn trường mọi người đọc, gồm học sinh và phụ huynh. Danh sách phân trang, lọc theo phạm vi; cán bộ xem thêm bài Đã ẩn (chỉ tác giả, người ẩn, School Admin và Principal thấy bài đã ẩn). Ảnh đầu là ảnh bìa hiện trên danh sách (BR-27).
+Bài Nội bộ chỉ cán bộ đọc; bài Toàn trường mọi người đọc, gồm học sinh và phụ huynh. Danh sách phân trang, lọc theo phạm vi; cán bộ xem thêm bài Đã ẩn (chỉ tác giả, người ẩn và Principal thấy bài đã ẩn). Ảnh đầu là ảnh bìa hiện trên danh sách (BR-27).
 
 **4.8.12 — Soạn bài đăng và chọn phạm vi / Create Post with Scope**  
 `BE + Web` · 1.5 MD · dep: 4.8.11  
-MỌI CÁN BỘ đăng được — School Admin, Principal, Vice Principal, Teacher — và chọn một trong hai phạm vi Nội bộ hoặc Toàn trường. Soạn bài chỉ có trên web (BR-27, mục 8.1).
+Principal, Vice Principal và Teacher đăng được, School Admin chỉ đọc, và chọn một trong hai phạm vi Nội bộ hoặc Toàn trường. Soạn bài chỉ có trên web (BR-27, mục 8.1).
 
 **4.8.13 — Đính kèm ảnh cho bài đăng / Attach Post Images**  
 `BE + Web` · 2 MD · dep: 4.8.12  
@@ -1009,7 +1009,7 @@ Người đăng sửa tiêu đề (tối đa 200 ký tự), nội dung (tối đ
 
 **4.8.15 — Ẩn và hiện lại bài / Hide and Unhide Post**  
 `BE + Web` · 1 MD · dep: 4.8.12  
-Trạng thái Đã đăng ↔ Đã ẩn, không có trạng thái nháp. Người đăng ẩn bài của mình; School Admin và Principal ẩn bài của người khác, bắt buộc nhập lý do, lưu người ẩn, thời điểm, lý do; tác giả và nội dung giữ nguyên. Chỉ người đã ẩn bài mới hiện lại được bài đó. Ẩn bài giữ ảnh (BR-27).
+Trạng thái Đã đăng ↔ Đã ẩn, không có trạng thái nháp. Người đăng ẩn bài của mình; Chỉ Principal ẩn bài của người khác (kể cả bài cũ của School Admin), bắt buộc nhập lý do, lưu người ẩn, thời điểm, lý do; tác giả và nội dung giữ nguyên. Chỉ người đã ẩn bài mới hiện lại được bài đó. Ẩn bài giữ ảnh (BR-27).
 
 **4.8.16 — Xóa bài và xóa file ảnh kèm theo / Delete Post and Its Images**  
 `BE + Web` · 0.5 MD · dep: 4.8.15  
@@ -1017,7 +1017,7 @@ Người đăng xóa bài của mình; xóa bài thì xóa luôn file ảnh, kh�
 
 **4.8.17 — Kiểm thử phạm vi bảng tin / News Feed Scope Tests**  
 `QA` · 1 MD · dep: 4.8.11, 4.8.12  
-Học sinh và phụ huynh không thấy bài Nội bộ; giáo viên đăng được không cần trách nhiệm; School Admin và Principal ẩn được bài của người khác nhưng phải nhập lý do, Teacher và Vice Principal thì không; bảng tin không tạo thông báo.
+Học sinh và phụ huynh không thấy bài Nội bộ; giáo viên đăng được không cần trách nhiệm; School Admin không đăng và không ẩn được bài; chỉ Principal ẩn được bài của người khác và phải nhập lý do, Vice Principal và Teacher chỉ ẩn bài của mình; bảng tin không tạo thông báo.
 
 ---
 
@@ -1043,7 +1043,7 @@ School Admin xem quy mô trường, tài khoản theo loại, dữ liệu cần 
 
 **4.9.5 — Trang chủ / Home**  
 `Web + Mobile` · 2 MD · dep: 4.2.15, 4.2.17, 4.2.21, 4.2.42, 4.4.15  
-Màn đầu tiên của mọi loại tài khoản. Trên web cùng một nội dung cho mọi loại; chỉ chào và hiện thông tin chung, không có số liệu thống kê, lối tắt hay bảng tin (mục 5.1). Lời chào theo buổi kèm logo trường và đồng hồ của ngày; **Hôm nay**: khung giờ tiết của trường, đánh dấu tiết đang diễn ra theo giờ thực, giáo viên thấy thêm lớp và môn mình dạy ở từng tiết, ngày nghỉ cấp trường hoặc Chủ nhật thì báo trường nghỉ; **Năm học**: học kỳ hiện tại và tuần thứ mấy; **Ngày nghỉ sắp tới**: ba ngày gần nhất, ngày đầu có đếm ngược và lịch tháng. Trên mobile Trang chủ là điểm vào các việc trong ngày nên khác theo loại tài khoản (Design_Mobile §4): Teacher có tiết sắp tới kèm nút Điểm danh, bốn ô số (tiết hôm nay, chưa điểm danh, đơn nghỉ chờ duyệt hoặc tiết tuần này, tin nhắn chưa đọc), lối vào Chuyên cần lớp và Học sinh lớp khi chủ nhiệm, và các tiết hôm nay; Student có tiết đang hoặc sắp học và bốn ô bài chưa nộp, sắp hết hạn, điểm mới, chuyên cần tuần; Parent có bộ chọn con, sổ liên lạc tuần này và bốn ô xin nghỉ, đơn đang chờ, điểm mới, nhắn giáo viên. Các con số chỉ là việc cần làm của chính người dùng, không phải số liệu của Bảng điều khiển. Dùng lại dữ liệu đã có của SCH, lịch, điểm danh, bài tập, đơn nghỉ và hộp thư, không có API riêng.
+Màn đầu tiên của mọi loại tài khoản. Trên web cùng một nội dung cho mọi loại; chỉ chào và hiện thông tin chung, không có số liệu thống kê, lối tắt hay bảng tin (mục 5.1). Lời chào theo buổi kèm logo trường và đồng hồ của ngày; **Hôm nay**: khung giờ tiết của trường, đánh dấu tiết đang diễn ra theo giờ thực, giáo viên thấy thêm lớp và môn mình dạy ở từng tiết, ngày nghỉ cấp trường hoặc Chủ nhật thì báo trường nghỉ; **Năm học**: học kỳ hiện tại và tuần thứ mấy; **Ngày nghỉ sắp tới**: ba ngày gần nhất, ngày đầu có đếm ngược và lịch tháng. Trên mobile Trang chủ là điểm vào các việc trong ngày nên khác theo loại tài khoản (Design_Mobile §4): Teacher có tiết sắp tới kèm nút Điểm danh, bốn ô số (tiết hôm nay, chưa điểm danh, đơn nghỉ chờ duyệt hoặc tiết tuần này, tin nhắn chưa đọc), lối vào Chuyên cần lớp và Học sinh lớp khi chủ nhiệm, và các tiết hôm nay; Student có tiết đang hoặc sắp học và bốn ô bài chưa nộp, sắp hết hạn, điểm mới, chuyên cần tuần; Parent có bộ chọn con, báo cáo tuần này và bốn ô xin nghỉ, đơn đang chờ, điểm mới, nhắn giáo viên. Các con số chỉ là việc cần làm của chính người dùng, không phải số liệu của Bảng điều khiển. Dùng lại dữ liệu đã có của SCH, lịch, điểm danh, bài tập, đơn nghỉ và hộp thư, không có API riêng.
 
 **4.9.6 — Kiểm thử phạm vi Bảng điều khiển / Board Scope Tests**  
 `QA` · 1.5 MD · dep: 4.9.2, 4.9.3  

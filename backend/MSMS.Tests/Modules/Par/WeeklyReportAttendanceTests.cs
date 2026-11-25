@@ -5,10 +5,10 @@ using MSMS.Tests.Modules.Ppl;
 
 namespace MSMS.Tests.Modules.Par;
 
-/// <summary>BR-24: chuyên cần trong sổ liên lạc chỉ tính tiết Đã xếp lịch đã diễn ra, như màn Điểm danh.</summary>
+/// <summary>BR-24: chuyên cần trong báo cáo tuần chỉ tính tiết Đã xếp lịch đã diễn ra, như màn Điểm danh.</summary>
 public class WeeklyReportAttendanceTests
 {
-    [Fact(DisplayName = "PAR | Sổ liên lạc | Tiết Chờ xử lý và Đã hủy đã qua | không vào tổng tiết, không thành Chưa điểm danh")]
+    [Fact(DisplayName = "PAR | Báo cáo tuần | Tiết Chờ xử lý và Đã hủy đã qua | không vào tổng tiết, không thành Chưa điểm danh")]
     public async Task PendingAndCancelledSessions_AreNotCounted()
     {
         using var e = new PplEnv(AccountTypes.Parent, PplEnv.Parent1);

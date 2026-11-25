@@ -1,5 +1,4 @@
 import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart' show GlobalWidgetsLocalizations;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
@@ -36,7 +35,7 @@ class MsmsApp extends ConsumerWidget {
       routerConfig: ref.watch(routerProvider),
       locale: const Locale('vi'),
       supportedLocales: const [Locale('vi'), Locale('en')],
-      localizationsDelegates: const [GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
     );
   }
 }

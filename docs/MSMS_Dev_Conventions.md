@@ -294,7 +294,7 @@ Chốt chữ nào hiện trên màn hình. Mọi màn hình, mọi file xuất E
 | Assignment | Bài tập |
 | Submission | Lượt làm bài |
 | AiFeedback | Phân tích bằng AI |
-| WeeklyReport | Sổ liên lạc tuần |
+| WeeklyReport | Báo cáo tuần |
 | Conversation | Hộp thư |
 | Notification | Thông báo |
 | Post | Bài đăng |
@@ -370,8 +370,9 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Thời khóa biểu | Thời khóa biểu · Phụ trách chuyên môn · Lịch dạy · Giáo viên vắng |
 | Điểm danh | — |
 | Bài tập rèn luyện | Kho câu hỏi · Giao bài tập · Bài tập đã giao · Bài tập được giao · Danh sách bài tập · Kết quả của con |
-| Phụ huynh | Đơn xin nghỉ · Sổ liên lạc · Hộp thư |
+| Phụ huynh | Đơn xin nghỉ · Hộp thư |
 | Bảng tin | Đăng tin · Bảng tin |
+| Báo cáo tuần | — |
 | Quản trị | Tài khoản · Nhật ký · Xuất dữ liệu |
 
 - Nhóm chỉ có một màn hình thì không có cấp 2. Áp dụng cả sau khi lọc theo quyền: nhóm chỉ còn một mục con hiển thị cho loại tài khoản đó thì hiện thẳng thành mục cấp 1 (ví dụ giáo viên chỉ thấy **Lịch dạy**; chủ nhiệm chỉ có quyền xuất điểm danh thì nhóm Quản trị hiện thẳng thành **Xuất dữ liệu**). School Admin không thấy Thời khóa biểu và Xuất dữ liệu; nhóm Quản trị của School Admin gồm **Tài khoản** và **Nhật ký**. **Bảng điều khiển** là ngoại lệ có chủ ý: luôn giữ nhóm cha dù chỉ còn một mục con (School Admin chỉ có **Thống kê hệ thống**), cờ `keepGroup` trong `app/menu.tsx`.
@@ -386,6 +387,8 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Mục | Ai thấy |
 | --- | --- |
 | Trang chủ · Bảng tin | Mọi loại |
+| Bảng tin › Đăng tin | HT, HP, GV |
+| Báo cáo tuần | GV (chỉ chủ nhiệm), HS, PH |
 | Bảng điều khiển › Tình hình toàn trường | HT |
 | Bảng điều khiển › Tình hình phân hiệu | HP |
 | Bảng điều khiển › Tình hình tổ chuyên môn | GV (chỉ tổ trưởng) |
@@ -405,7 +408,6 @@ Sidebar web có menu con, **tối đa 2 cấp**. Tên mục con hiển thị ti�
 | Bài tập rèn luyện › Bài tập được giao · Danh sách bài tập | HS |
 | Bài tập rèn luyện › Kết quả của con | PH |
 | Phụ huynh › Đơn xin nghỉ | GV (chỉ chủ nhiệm), PH |
-| Phụ huynh › Sổ liên lạc | GV, HS, PH |
 | Phụ huynh › Hộp thư | GV, PH |
 | Quản trị › Tài khoản · Nhật ký | SA |
 | Quản trị › Xuất dữ liệu | HT, HP, GV |

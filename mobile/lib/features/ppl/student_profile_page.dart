@@ -11,7 +11,7 @@ import '../../core/widgets/common.dart';
 import '../../core/widgets/states.dart';
 import 'ppl_api.dart';
 
-/// Hồ sơ học sinh (PPL-02, Design_Mobile §5.8): chủ nhiệm mở từ Học sinh lớp. Chỉ xem; sổ liên lạc mở bằng nút ngay dưới đầu trang.
+/// Hồ sơ học sinh (PPL-02, Design_Mobile §5.8): chủ nhiệm mở từ Học sinh lớp. Chỉ xem; báo cáo tuần mở bằng nút ngay dưới đầu trang.
 class StudentProfilePage extends ConsumerWidget {
   const StudentProfilePage({super.key, required this.studentId});
 
@@ -39,8 +39,8 @@ class StudentProfilePage extends ConsumerWidget {
               FilledButton.icon(
                 onPressed: () => context.push('/report?studentId=${s.id}'),
                 style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-                icon: const Icon(LucideIcons.notebookText, size: 18),
-                label: const Text('Sổ liên lạc'),
+                icon: const Icon(LucideIcons.chartColumn, size: 18),
+                label: const Text('Báo cáo tuần'),
               ),
               const SectionTitle('Phụ huynh'),
               _GuardianCard(s.guardian),

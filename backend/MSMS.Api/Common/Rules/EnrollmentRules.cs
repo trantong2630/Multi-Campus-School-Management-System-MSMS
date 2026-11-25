@@ -15,7 +15,7 @@ public static class EnrollmentCloseReasons
 
 /// <summary>
 /// Quy tắc ghi danh dùng chung (BR-09): danh sách học sinh hiệu lực tại một ngày và kiểm khoảng ghi danh không chồng nhau.
-/// Điểm danh, giao bài và sổ liên lạc lấy danh sách lớp qua đây, không tự viết lại điều kiện.
+/// Điểm danh, giao bài và báo cáo tuần lấy danh sách lớp qua đây, không tự viết lại điều kiện.
 /// </summary>
 public static class EnrollmentRules
 {

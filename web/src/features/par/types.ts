@@ -205,7 +205,6 @@ export interface WeeklyAssignmentItem {
   dueAt: string;
   status: 'Submitted' | 'Unsubmitted' | 'Missed';
   score?: number | null;
-  aiFeedback?: string | null;
 }
 
 /**

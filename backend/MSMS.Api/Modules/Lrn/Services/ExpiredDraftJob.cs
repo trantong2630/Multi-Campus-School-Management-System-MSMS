@@ -10,7 +10,7 @@ public sealed class LrnOptions
 }
 
 /// <summary>
-/// BR-21: định kỳ tự nộp và chấm các bản nháp đã quá hạn thực tế, để sổ liên lạc, các màn Tình hình và MSMS AI có số nộp bài đúng
+/// BR-21: định kỳ tự nộp và chấm các bản nháp đã quá hạn thực tế, để báo cáo tuần, các màn Tình hình và MSMS AI có số nộp bài đúng
 /// mà không phải chờ ai mở trang bài tập. Trang bài tập vẫn tự nộp ngay lúc mở; hai đường đua nhau thì chỉ một đường nộp được
 /// (<see cref="AttemptGrader.FinalizeAsync"/>), nên chạy nhiều tiến trình cùng lúc vẫn an toàn.
 /// </summary>
