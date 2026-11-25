@@ -437,7 +437,7 @@ public class StudentImportFieldTests
         Assert.Equal(400, ex.StatusCode);
     }
 
-    [Fact(DisplayName = "PPL | Import học sinh | File mẫu | mẫu có đúng 10 cột cố định, điền sẵn năm học và phân hiệu khi mở từ màn Lớp & Ghi danh")]
+    [Fact(DisplayName = "PPL | Import học sinh | File mẫu | mẫu có đúng 10 cột cố định, điền sẵn năm học và phân hiệu khi mở từ màn Học sinh")]
     public async Task Template_Layout_AndPrefilledMeta()
     {
         using var e = new PplEnv();

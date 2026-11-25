@@ -79,7 +79,7 @@ export interface StudentEnrollment {
   className: string;
   campusName: string;
   startDate: string;
-  /** Ngày kết thúc thực tế: để trống ở ghi danh nghĩa là hết năm học. */
+  /** Ngày kết thúc thực tế: để trống ở lượt xếp lớp nghĩa là hết năm học. */
   endDate: string;
   reason: string | null;
   isCurrent: boolean;

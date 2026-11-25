@@ -147,7 +147,7 @@ public sealed class StudentService(MsmsDbContext db, IClock clock, CurrentUser u
         if (missing.Count > 0)
         {
             var names = await db.Person.Where(p => missing.Contains(p.PersonId)).Select(p => p.FullName).Take(3).ToListAsync();
-            throw ApiException.BadRequest($"{string.Join(", ", names)}: không còn học hoặc chưa có ghi danh đang mở. Tải lại danh sách rồi chọn lại.");
+            throw ApiException.BadRequest($"{string.Join(", ", names)}: không còn học hoặc chưa thuộc lớp nào. Tải lại danh sách rồi chọn lại.");
         }
 
         if (r.Reason == EnrollmentCloseReasons.Graduated)
