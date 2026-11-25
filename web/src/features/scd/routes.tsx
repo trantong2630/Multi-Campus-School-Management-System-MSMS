@@ -1,5 +1,6 @@
 import type { RouteObject } from 'react-router-dom';
 import { AbsencePage } from './pages/AbsencePage';
+import { DepartmentAbsencePage } from './pages/DepartmentAbsencePage';
 import { StudentSchedulePage } from './pages/StudentSchedulePage';
 import { ResponsibilityPage } from './pages/ResponsibilityPage';
 import { SchedulePage } from './pages/SchedulePage';
@@ -10,5 +11,6 @@ export const scdRoutes: RouteObject[] = [
   { path: 'scd/responsibilities', element: <ResponsibilityPage /> },
   { path: 'scd/schedule', element: <SchedulePage /> },
   { path: 'scd/absences', element: <AbsencePage /> },
+  { path: 'scd/department-absences', element: <DepartmentAbsencePage /> },
   { path: 'scd/my-class', element: <StudentSchedulePage /> },
 ];

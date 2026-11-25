@@ -27,6 +27,12 @@ public partial class TeachingSession
 
     public string? ChangeNote { get; set; }
 
+    /// <summary>Đề xuất của tổ trưởng cho tiết Chờ xử lý: Substitute (dạy thay) hoặc Cancel (hủy); trống là chưa quyết định. Hiệu phó duyệt (BR-16). Xóa khi tiết được xử lý.</summary>
+    public string? ProposedAction { get; set; }
+
+    /// <summary>Giáo viên được đề xuất dạy thay; chỉ có khi ProposedAction là Substitute.</summary>
+    public int? ProposedTeacherId { get; set; }
+
     public int? CreatedByPersonId { get; set; }
 
     public DateTime CreatedAt { get; set; }
@@ -46,6 +52,8 @@ public partial class TeachingSession
     public virtual Subject Subject { get; set; } = null!;
 
     public virtual StaffProfile? Teacher { get; set; }
+
+    public virtual StaffProfile? ProposedTeacher { get; set; }
 
     public virtual TeacherAbsence? TeacherAbsence { get; set; }
 

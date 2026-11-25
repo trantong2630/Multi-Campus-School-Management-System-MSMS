@@ -77,8 +77,8 @@ public sealed class ScheduleAdjustmentService(
         s.TeacherId = teacher.StaffId;
         support.MarkManual(s, $"Đổi giáo viên: {oldName} → {name}");
 
-        audit.AddLong(AuditCategories.ScheduleAdjust, "ChangeSessionTeacher", [s.SessionId],
-            new { sessionId = s.SessionId, classId = s.ClassId, date = s.SessionDate, fromTeacherId = oldTeacherId, toTeacherId = teacher.StaffId });
+        audit.AddLong(AuditCategories.ScheduleAdjust, AuditActions.ChangeSessionTeacher, [s.SessionId],
+            ("Lớp", s.ClassId), ("Ngày", s.SessionDate), ("Giáo viên cũ", oldTeacherId), ("Giáo viên mới", teacher.StaffId));
         var notified = await support.NotifyAsync([s.ClassId], s.SessionDate, [oldTeacherId, teacher.StaffId],
             "Tiết đổi giáo viên", $"{what}: {oldName} → {name}.", "TeachingSession", s.SessionId);
         await mailer.QueueAsync(teacher.StaffId, $"[MSMS] Phân công dạy thay: {what}",
@@ -103,8 +103,8 @@ public sealed class ScheduleAdjustmentService(
         s.Status = "Cancelled";
         support.MarkManual(s, "Hủy tiết");
         var what = ScheduleSupport.Describe(s.Subject.Name, s.Class.Name, s.SessionDate, s.PeriodSlot);
-        audit.AddLong(AuditCategories.ScheduleAdjust, "CancelSession", [s.SessionId],
-            new { sessionId = s.SessionId, classId = s.ClassId, date = s.SessionDate, teacherId = s.TeacherId });
+        audit.AddLong(AuditCategories.ScheduleAdjust, AuditActions.CancelSession, [s.SessionId],
+            ("Lớp", s.ClassId), ("Ngày", s.SessionDate), ("Giáo viên", s.TeacherId));
         var notified = await support.NotifyAsync([s.ClassId], s.SessionDate, [s.TeacherId],
             "Tiết đã hủy", $"{what} đã hủy.", "TeachingSession", s.SessionId);
         if (s.TeacherId is { } teacherId)
@@ -154,8 +154,8 @@ public sealed class ScheduleAdjustmentService(
 
         await using var tx = await db.Database.BeginTransactionAsync();
         await db.SaveChangesAsync();   // cần mã tiết mới để audit và thông báo trỏ tới
-        audit.AddLong(AuditCategories.ScheduleAdjust, "AddMakeUpSession", [makeUp.SessionId],
-            new { classId = r.ClassId, date = r.Date, periodSlotId = r.PeriodSlotId, subjectId = r.SubjectId, teacherId = r.TeacherId });
+        audit.AddLong(AuditCategories.ScheduleAdjust, AuditActions.AddMakeUpSession, [makeUp.SessionId],
+            ("Lớp", r.ClassId), ("Ngày", r.Date), ("Tiết", r.PeriodSlotId), ("Môn", r.SubjectId), ("Giáo viên", r.TeacherId));
         var what = ScheduleSupport.Describe(subject.Name, cls.Name, r.Date, slot);
         var notified = await support.NotifyAsync([r.ClassId], r.Date, [r.TeacherId], "Có tiết bù mới",
             $"Tiết bù: {what}, giáo viên {name}.", "TeachingSession", makeUp.SessionId);

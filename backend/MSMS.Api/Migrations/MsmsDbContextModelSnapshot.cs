@@ -1731,6 +1731,13 @@ namespace MSMS.Api.Migrations
                     b.Property<int>("PeriodSlotId")
                         .HasColumnType("int");
 
+                    b.Property<string>("ProposedAction")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<int?>("ProposedTeacherId")
+                        .HasColumnType("int");
+
                     b.Property<DateOnly>("SessionDate")
                         .HasColumnType("date");
 
@@ -1773,6 +1780,8 @@ namespace MSMS.Api.Migrations
                     b.HasIndex("CreatedByPersonId");
 
                     b.HasIndex("PeriodSlotId");
+
+                    b.HasIndex("ProposedTeacherId");
 
                     b.HasIndex("SubjectId");
 
@@ -2627,6 +2636,11 @@ namespace MSMS.Api.Migrations
                         .IsRequired()
                         .HasConstraintName("FK__TeachingS__Perio__43D61337");
 
+                    b.HasOne("MSMS.Api.Data.Entities.StaffProfile", "ProposedTeacher")
+                        .WithMany()
+                        .HasForeignKey("ProposedTeacherId")
+                        .HasConstraintName("FK_Session_ProposedTeacher");
+
                     b.HasOne("MSMS.Api.Data.Entities.Subject", "Subject")
                         .WithMany("TeachingSession")
                         .HasForeignKey("SubjectId")
@@ -2658,6 +2672,8 @@ namespace MSMS.Api.Migrations
                     b.Navigation("CreatedByPerson");
 
                     b.Navigation("PeriodSlot");
+
+                    b.Navigation("ProposedTeacher");
 
                     b.Navigation("Subject");
 

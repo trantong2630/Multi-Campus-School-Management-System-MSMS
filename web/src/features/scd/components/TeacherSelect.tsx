@@ -11,16 +11,20 @@ interface Props {
   excludeSessionId?: number;
   /** Chọn dạy thay cho tiết Chờ xử lý: chỉ hiện gợi ý giáo viên rảnh, tối đa 10, không xếp hạng ưu tiên. */
   suggestForSessionId?: number;
+  /** Tổ trưởng đề xuất người dạy thay: gợi ý tính theo tổ của mình thay vì phân hiệu của hiệu phó. */
+  asDepartmentHead?: boolean;
   placeholder?: string;
 }
 
 /** Ô chọn giáo viên có kiểm rảnh/bận ngay trong danh sách, để người dùng khỏi chọn nhầm rồi mới nhận lỗi trùng lịch. */
-export function TeacherSelect({ value, onChange, date, slotId, excludeSessionId, suggestForSessionId, placeholder = 'Chọn giáo viên' }: Props) {
+export function TeacherSelect({ value, onChange, date, slotId, excludeSessionId, suggestForSessionId, asDepartmentHead, placeholder = 'Chọn giáo viên' }: Props) {
   const suggest = suggestForSessionId !== undefined;
   const ready = suggest || (!!date && slotId !== undefined);
   const list = useQuery({
-    queryKey: ['scd', 'teacherAvailability', suggestForSessionId ?? 'all', date, slotId, excludeSessionId],
-    queryFn: () => (suggest ? scdApi.pendingSuggestions(suggestForSessionId) : scdApi.adjustTeachers(date!, slotId!, excludeSessionId)),
+    queryKey: ['scd', 'teacherAvailability', asDepartmentHead ? 'department' : 'vice', suggestForSessionId ?? 'all', date, slotId, excludeSessionId],
+    queryFn: () => (suggest
+      ? (asDepartmentHead ? scdApi.departmentSuggestions(suggestForSessionId) : scdApi.pendingSuggestions(suggestForSessionId))
+      : scdApi.adjustTeachers(date!, slotId!, excludeSessionId)),
     enabled: ready,
     gcTime: 0,
   });
@@ -33,7 +37,7 @@ export function TeacherSelect({ value, onChange, date, slotId, excludeSessionId,
       options={list.data?.map((t) => ({
         value: t.teacherId,
         disabled: t.busy || t.absent,
-        label: `${t.name}${t.abbr ? ` (${t.abbr})` : ''} · ${t.campusName}${t.busy ? ` — đang dạy ${t.busyNote}` : t.absent ? ' — đang vắng' : ''}`,
+        label: `${t.name}${t.abbr ? ` (${t.abbr})` : ''} · ${t.campusName}${t.busy ? ` — đang dạy ${t.busyNote}` : t.absent ? ' — đang vắng' : t.daySessionCount > 0 ? ` — hôm đó đã dạy ${t.daySessionCount} tiết` : ' — hôm đó chưa có tiết'}`,
       }))}
     />
   );

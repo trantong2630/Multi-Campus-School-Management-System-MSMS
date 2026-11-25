@@ -80,14 +80,15 @@ public record ChangeSessionTeacherRequest(int TeacherId);
 public record MakeUpRequest(int ClassId, DateOnly Date, int PeriodSlotId, int SubjectId, int TeacherId);
 public record AdjustResultDto(long SessionId, int NotifiedCount);
 
-/// <summary>Busy: đã có tiết Đã xếp lịch cùng khung giờ (BR-13). Absent: có khai báo vắng phủ ngày và tiết đó (BR-16).</summary>
-public record TeacherAvailabilityDto(int TeacherId, string Name, string? Abbr, string CampusName, bool Busy, string? BusyNote, bool Absent);
+/// <summary>Busy: đã có tiết Đã xếp lịch cùng khung giờ (BR-13). Absent: có khai báo vắng phủ ngày và tiết đó (BR-16). DaySessionCount: số tiết Đã xếp lịch của giáo viên trong ngày đó, để tránh dồn tiết cho một người.</summary>
+public record TeacherAvailabilityDto(int TeacherId, string Name, string? Abbr, string CampusName, bool Busy, string? BusyNote, bool Absent, int DaySessionCount);
 
 // ---- SCD-03: Giáo viên vắng (BR-16) ----
 /// <summary>SlotIds trống nghĩa là vắng cả ngày; có thì chỉ vắng các tiết đó và FromDate = ToDate. PendingCount chỉ tính tiết Chờ xử lý chưa kết thúc; MissedCount là tiết Chờ xử lý đã kết thúc mà không ai xử lý. IsPast: mọi tiết của khai báo đã kết thúc, chỉ để tra cứu.</summary>
 public record AbsenceDto(
     int AbsenceId, int TeacherId, string TeacherName, string? TeacherAbbr, DateOnly FromDate, DateOnly ToDate, IReadOnlyList<int> SlotIds,
-    string? Reason, string? DeclaredByName, DateTime CreatedAt, int PendingCount, int HandledCount, bool CanDelete, int MissedCount, bool IsPast);
+    string? Reason, string? DeclaredByName, DateTime CreatedAt, int PendingCount, int HandledCount, bool CanDelete, int MissedCount, bool IsPast,
+    int AwaitingCount, int DecidedCount, bool CanApprove);
 public record DeclareAbsenceRequest(int TeacherId, DateOnly FromDate, DateOnly ToDate, IReadOnlyList<int>? SlotIds, string? Reason);
 public record DeclareAbsenceResultDto(int AbsenceId, int PendingCount);
 public record DeleteAbsenceResultDto(int RestoredCount);
@@ -95,6 +96,12 @@ public record DeleteAbsenceResultDto(int RestoredCount);
 public record PendingSessionDto(
     long SessionId, DateOnly Date, int PeriodSlotId, string SessionOfDay, byte PeriodNo, TimeOnly StartTime, TimeOnly EndTime,
     int ClassId, string ClassName, int SubjectId, string SubjectName, string SubjectAbbr,
-    int? AbsenceId, string? AbsentTeacherName, string? Note);
+    int? AbsenceId, string? AbsentTeacherName, string? Note,
+    string CampusName, string? ProposedAction, int? ProposedTeacherId, string? ProposedTeacherName,
+    string? AbsenceReason, DateOnly? AbsenceFrom, DateOnly? AbsenceTo);
+/// <summary>Tổ trưởng quyết định một tiết Chờ xử lý bằng đề xuất. Action: Substitute (cần TeacherId), Cancel hoặc Clear (bỏ đề xuất). Hiệu phó duyệt.</summary>
+public record ProposeSessionRequest(string Action, int? TeacherId);
+/// <summary>Kết quả hiệu phó duyệt một khai báo: số tiết dạy thay và hủy đã áp ở phân hiệu mình; OtherCampusPendingCount là tiết còn chờ hiệu phó phân hiệu khác duyệt.</summary>
+public record ApproveAbsenceResultDto(int AbsenceId, int SubstitutedCount, int CancelledCount, int OtherCampusPendingCount);
 /// <summary>Action: Substitute (chọn giáo viên dạy thay) hoặc Cancel (hủy).</summary>
 public record ResolvePendingRequest(string Action, int? TeacherId);

@@ -97,7 +97,7 @@ export const menu: MenuGroup[] = [
       { key: 'ppl-staff', label: 'Cán bộ', path: '/ppl/staff', roles: MGMT, requires: { VicePrincipal: 'campus' }, ready: true },
       { key: 'ppl-student', label: 'Học sinh', path: '/ppl/students', roles: MGMT, ready: true },
       { key: 'ppl-parent', label: 'Phụ huynh', path: '/ppl/parents', roles: MGMT, ready: true },
-      { key: 'ppl-resp', label: 'Trách nhiệm', path: '/ppl/responsibilities', roles: ['SchoolAdmin', 'Principal'], ready: true },
+      { key: 'ppl-resp', label: 'Trách nhiệm', path: '/ppl/responsibilities', roles: ['Principal'], ready: true },
     ],
   },
   {
@@ -108,6 +108,7 @@ export const menu: MenuGroup[] = [
       { key: 'scd-schedule', label: 'Lịch dạy', path: '/scd/schedule', roles: ['Principal', 'VicePrincipal', 'Teacher'], requires: { VicePrincipal: 'campus' }, ready: true },
       { key: 'scd-my-class', label: 'Lịch học', path: '/scd/my-class', roles: ['Student', 'Parent'], ready: true },
       { key: 'scd-absence', label: 'Giáo viên vắng', path: '/scd/absences', roles: ['Principal', 'VicePrincipal'], requires: { VicePrincipal: 'campus' }, ready: true },
+      { key: 'scd-dept-absence', label: 'Giáo viên vắng của tổ', path: '/scd/department-absences', roles: ['Teacher'], requires: { Teacher: 'department' }, ready: true },
     ],
   },
   { key: 'att', label: 'Điểm danh', icon: ClipboardCheck, section: 'manage', path: '/att', roles: [...STAFF, 'Student', 'Parent'], requires: { VicePrincipal: 'campus' }, ready: true },
@@ -134,7 +135,6 @@ export const menu: MenuGroup[] = [
     children: [
       { key: 'adm-account', label: 'Tài khoản', path: '/adm/accounts', roles: ['SchoolAdmin'], ready: true },
       { key: 'adm-audit', label: 'Nhật ký', path: '/adm/audit-log', roles: ['SchoolAdmin'], ready: true },
-      { key: 'adm-export', label: 'Xuất dữ liệu', path: '/adm/exports', roles: ['Principal', 'VicePrincipal', 'Teacher'], requires: { Teacher: 'homeroom', VicePrincipal: 'campus' }, ready: true },
     ],
   },
 ];
