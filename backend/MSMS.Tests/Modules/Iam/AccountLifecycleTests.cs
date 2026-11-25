@@ -1,3 +1,4 @@
+using MSMS.Api.Common.Audit;
 using System.Text.Json;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Identity;
@@ -38,7 +39,7 @@ public class AccountLifecycleTests
         Assert.Equal(PasswordVerificationResult.Success, new PasswordHasher<Account>().VerifyHashedPassword(account, account.PasswordHash, result.TempPassword));
         Assert.Equal(person.PersonId, account.PersonId);
         var audit = await f.Db.AuditLog.SingleAsync();
-        Assert.Equal("CreateAccount", audit.Action);
+        Assert.Equal(AuditActions.CreateAccount, audit.Action);
         Assert.DoesNotContain(result.TempPassword, JsonSerializer.Serialize(audit));
         await Assert.ThrowsAsync<ApiException>(() => f.Accounts.CreateAsync(new(1, role)));
         Assert.Equal(1, await f.Db.Account.CountAsync());
@@ -76,7 +77,7 @@ public class AccountLifecycleTests
         Assert.Contains(result.Skipped, item => item.PersonId == 404);
         Assert.NotEqual(result.Created[0].TempPassword, result.Created[1].TempPassword);
         var audit = await f.Db.AuditLog.SingleAsync();
-        Assert.Equal("BulkCreateAccounts", audit.Action);
+        Assert.Equal(AuditActions.BulkCreateAccounts, audit.Action);
         Assert.Equal(2, JsonSerializer.Deserialize<int[]>(audit.TargetIds!)!.Length);
         Assert.All(result.Created, item => Assert.DoesNotContain(item.TempPassword, audit.Detail!));
         var repeat = await f.Accounts.BulkCreateAsync(new([2, 3], role));
@@ -96,7 +97,7 @@ public class AccountLifecycleTests
         var result = await f.Accounts.BulkCreateAsync(new([1, 2], AccountTypes.Teacher));
         Assert.Single(result.Created);
         Assert.Equal(1, Assert.Single(result.Skipped).PersonId);
-        Assert.Equal("BulkCreateAccounts", (await f.Db.AuditLog.SingleAsync()).Action);
+        Assert.Equal(AuditActions.BulkCreateAccounts, (await f.Db.AuditLog.SingleAsync()).Action);
         f.AddPerson(3);
         Assert.Empty((await f.Accounts.BulkCreateAsync(new([3], null))).Created);
     }
@@ -191,8 +192,8 @@ public class AccountLifecycleTests
         Assert.Equal(401, (await new AccountAccessValidator(f.Db, f.Sessions).ValidateAsync(oldPrincipal))!.StatusCode);
         Assert.True(await f.Sessions.IsActiveAsync(unrelated.SessionId, 2));
         using var detail = JsonDocument.Parse(f.Db.AuditLog.Single().Detail!);
-        Assert.Equal(2, detail.RootElement.GetProperty("pendingSessions").GetInt32());
-        Assert.Equal(4, detail.RootElement.GetProperty("closedDuties").GetInt32());
+        Assert.Equal(2, detail.RootElement.GetProperty("Số tiết chuyển Chờ xử lý").GetInt32());
+        Assert.Equal(4, detail.RootElement.GetProperty("Số trách nhiệm đã kết thúc").GetInt32());
 
         await f.Accounts.UnlockAsync(1);
         Assert.Equal(AccountStatuses.PendingPasswordChange, teacher.Status);
@@ -247,7 +248,7 @@ public class AccountLifecycleTests
         Assert.Equal("Pending", future.Status);
         Assert.Equal(f.Clock.Today, f.Db.HomeroomAssignment.Single().EndDate);
         var audit = Assert.Single(f.Db.AuditLog);
-        Assert.Equal("ChangeAccountType", audit.Action);
+        Assert.Equal(AuditActions.ChangeAccountType, audit.Action);
         Assert.DoesNotContain(result.TempPassword, audit.Detail!);
         Assert.DoesNotContain(oldHash, audit.Detail!);
     }
@@ -263,7 +264,7 @@ public class AccountLifecycleTests
         await f.Db.SaveChangesAsync();
         await f.Accounts.UnlockAsync(1);
         Assert.Equal(changedPassword ? AccountStatuses.Active : AccountStatuses.PendingPasswordChange, account.Status);
-        Assert.Equal("UnlockAccount", f.Db.AuditLog.Single().Action);
+        Assert.Equal(AuditActions.UnlockAccount, f.Db.AuditLog.Single().Action);
         await Assert.ThrowsAsync<ApiException>(() => f.Accounts.UnlockAsync(1));
     }
 
@@ -306,6 +307,6 @@ public class AccountLifecycleTests
         using var f = new AccountTestFixture();
         f.AddPerson(1, "Parent");
         await f.Accounts.BulkCreateAsync(new([1], null));
-        Assert.Equal("BulkCreateAccounts", f.Db.AuditLog.Single().Action);
+        Assert.Equal(AuditActions.BulkCreateAccounts, f.Db.AuditLog.Single().Action);
     }
 }

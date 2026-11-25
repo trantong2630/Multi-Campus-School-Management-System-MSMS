@@ -77,10 +77,10 @@ function useResponsibilities(kind: ResponsibilityKind, yearId?: number) {
   });
 }
 
-/** PPL-04: trách nhiệm có khoảng hiệu lực. Chỉ Principal và School Admin gán (spec 2.2). */
+/** PPL-04: trách nhiệm có khoảng hiệu lực. Chỉ Principal gán (spec 2.2). */
 export function ResponsibilitiesPage() {
   const { user } = useAuth();
-  const canWrite = user?.accountType === 'SchoolAdmin' || user?.accountType === 'Principal';
+  const canWrite = user?.accountType === 'Principal';
   const { current } = useCurrentYear();
   const [kind, setKind] = useState<ResponsibilityKind>('campus');
   const [yearId, setYearId] = useState<number | undefined>();

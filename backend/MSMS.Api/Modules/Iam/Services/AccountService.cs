@@ -139,8 +139,8 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
 
         if (created.Count > 0)
         {
-            audit.Add(AuditCategories.Account, bulk ? "BulkCreateAccounts" : "CreateAccount",
-                created.Select(c => c.Account.AccountId), new { count = created.Count });
+            audit.Add(AuditCategories.Account, bulk ? AuditActions.BulkCreateAccounts : AuditActions.CreateAccount,
+                created.Select(c => c.Account.AccountId), ("Số tài khoản", created.Count));
             await db.SaveChangesAsync();
         }
         await tx.CommitAsync();
@@ -176,7 +176,8 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
         var (sessionCount, dutyCount) = await ReleaseDutiesAsync(account);
         account.Status = AccountStatuses.Locked;
         await PasswordResetState.InvalidateAsync(db, accountId, clock.Now);
-        audit.Add(AuditCategories.Account, "LockAccount", [account.AccountId], new { pendingSessions = sessionCount, closedDuties = dutyCount });
+        audit.Add(AuditCategories.Account, AuditActions.LockAccount, [account.AccountId],
+            ("Số tiết chuyển Chờ xử lý", sessionCount), ("Số trách nhiệm đã kết thúc", dutyCount));
         await sessions.RevokeAllAsync(account.AccountId);
         await db.SaveChangesAsync();
         await tx.CommitAsync();
@@ -256,7 +257,7 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
         var account = await FindAsync(accountId);
         if (account.Status != AccountStatuses.Locked) throw ApiException.BadRequest("Tài khoản không ở trạng thái Đã khóa.");
         account.Status = account.UpdatedAt is null ? AccountStatuses.PendingPasswordChange : AccountStatuses.Active;
-        audit.Add(AuditCategories.Account, "UnlockAccount", [account.AccountId]);
+        audit.Add(AuditCategories.Account, AuditActions.UnlockAccount, [account.AccountId]);
         await db.SaveChangesAsync();
     }
 
@@ -269,7 +270,7 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
         account.Status = AccountStatuses.PendingPasswordChange;
         account.UpdatedAt = null;
         await PasswordResetState.InvalidateAsync(db, accountId, clock.Now);
-        audit.Add(AuditCategories.Account, "ResetPassword", [account.AccountId]);   // không ghi mật khẩu
+        audit.Add(AuditCategories.Account, AuditActions.ResetPassword, [account.AccountId]);   // không ghi mật khẩu
         await sessions.RevokeAllAsync(account.AccountId);
         await db.SaveChangesAsync();
         await tx.CommitAsync();
@@ -293,8 +294,9 @@ public sealed class AccountService(MsmsDbContext db, CurrentUser user, IClock cl
         account.Status = AccountStatuses.PendingPasswordChange;
         account.UpdatedAt = null;
         await PasswordResetState.InvalidateAsync(db, accountId, clock.Now);
-        audit.Add(AuditCategories.Account, "ChangeAccountType", [account.AccountId],
-            new { from, to = r.AccountType, pendingSessions = sessionCount, closedDuties = dutyCount });
+        audit.Add(AuditCategories.Account, AuditActions.ChangeAccountType, [account.AccountId],
+            ("Loại cũ", AuditLabels.AccountType(from)), ("Loại mới", AuditLabels.AccountType(r.AccountType)),
+            ("Số tiết chuyển Chờ xử lý", sessionCount), ("Số trách nhiệm đã kết thúc", dutyCount));
         await sessions.RevokeAllAsync(account.AccountId);
         await db.SaveChangesAsync();
         await tx.CommitAsync();

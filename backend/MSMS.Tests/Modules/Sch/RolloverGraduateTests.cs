@@ -108,7 +108,7 @@ public class RolloverGraduateTests
 
         var audit = await db.AuditLog.SingleAsync();
         Assert.Equal(AuditCategories.Account, audit.Category);
-        Assert.Equal("BulkLockAccounts", audit.Action);
+        Assert.Equal(AuditActions.BulkLockAccounts, audit.Action);
         Assert.Equal(accounts.Values.Order(), System.Text.Json.JsonSerializer.Deserialize<List<int>>(audit.TargetIds!)!.Order());
     }
 
@@ -121,7 +121,7 @@ public class RolloverGraduateTests
         await svc.CloseManyAsync(new CloseManyRequest(EnrollmentIds(db, 101, 102), EnrollmentCloseReasons.SchoolTransfer));
 
         var audit = await db.AuditLog.SingleAsync();
-        Assert.Equal("BulkLockAccounts", audit.Action);
+        Assert.Equal(AuditActions.BulkLockAccounts, audit.Action);
         Assert.Equal(accounts.Values.Order(), System.Text.Json.JsonSerializer.Deserialize<List<int>>(audit.TargetIds!)!.Order());
     }
 
@@ -133,7 +133,7 @@ public class RolloverGraduateTests
 
         await svc.CloseManyAsync(new CloseManyRequest(EnrollmentIds(db, 101), EnrollmentCloseReasons.SchoolTransfer));
 
-        Assert.Equal("LockAccount", (await db.AuditLog.SingleAsync()).Action);
+        Assert.Equal(AuditActions.LockAccount, (await db.AuditLog.SingleAsync()).Action);
     }
 
     [Fact]
@@ -146,6 +146,6 @@ public class RolloverGraduateTests
         Assert.Empty(db.AuditLog);
 
         await svc.CloseAsync(EnrollmentIds(db, 101).Single(), new CloseEnrollmentRequest(EnrollmentCloseReasons.SchoolTransfer));
-        Assert.Equal("LockAccount", (await db.AuditLog.SingleAsync()).Action);
+        Assert.Equal(AuditActions.LockAccount, (await db.AuditLog.SingleAsync()).Action);
     }
 }

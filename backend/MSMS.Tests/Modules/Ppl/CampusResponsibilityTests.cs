@@ -19,7 +19,7 @@ public class CampusResponsibilityTests
         f.AddAccount(10, AccountTypes.VicePrincipal);
         f.AddAccount(11, AccountTypes.VicePrincipal);
         var user = AccountTestFixture.User(AccountTypes.SchoolAdmin, 900);
-        return (f, new ResponsibilityService(f.Db, user, f.Clock, new ScopeResolver(f.Db, user, f.Clock)));
+        return (f, new ResponsibilityService(f.Db, user, f.Clock, new ScopeResolver(f.Db, user, f.Clock), new MSMS.Api.Common.Audit.AuditWriter(f.Db, user, f.Clock)));
     }
 
     private static ResponsibilityAssignRequest Assign(int campusId, int staffId, DateOnly start) =>

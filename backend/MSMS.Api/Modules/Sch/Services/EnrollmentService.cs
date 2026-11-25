@@ -200,7 +200,8 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
     private void AuditLocks(IReadOnlyCollection<int> accountIds, string reason, IEnumerable<int> enrollmentIds)
     {
         if (accountIds.Count == 0) return;
-        audit.Add(AuditCategories.Account, accountIds.Count == 1 ? "LockAccount" : "BulkLockAccounts", accountIds, new { reason, enrollmentIds });
+        audit.Add(AuditCategories.Account, accountIds.Count == 1 ? AuditActions.LockAccount : AuditActions.BulkLockAccounts, accountIds,
+            ("Lý do", AuditLabels.CloseReason(reason)), ("Mã xếp lớp", enrollmentIds));
     }
 
     /// <summary>Đặt ngày kết thúc cho một ghi danh (và khóa tài khoản nếu em rời trường); chưa lưu. Trả về tài khoản vừa khóa để bên gọi ghi nhật ký và hủy phiên sau khi lưu.</summary>

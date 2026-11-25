@@ -24,7 +24,7 @@ public class ResponsibilityIntradayTests
         Assert.Equal(T, records[0].EndDate);                     // từ ngày = đến ngày
         Assert.Equal(e.Clock.Now, records[0].EndedAt);           // giờ người cũ mất quyền
         Assert.Equal(PplEnv.OtherTeacher, records[1].StaffId);
-        Assert.Null(records[1].EndDate);
+        Assert.Equal(PplEnv.YearEnd, records[1].EndDate);   // chủ nhiệm tự hết vào ngày cuối năm học
         Assert.Null(records[1].EndedAt);
     }
 
@@ -53,7 +53,7 @@ public class ResponsibilityIntradayTests
         var records = await e.Db.HomeroomAssignment.OrderBy(x => x.Id).ToListAsync();
         Assert.Equal(3, records.Count);
         Assert.All(records.Take(2), r => { Assert.Equal(T, r.EndDate); Assert.NotNull(r.EndedAt); });
-        Assert.Null(records[2].EndDate);
+        Assert.Equal(PplEnv.YearEnd, records[2].EndDate);
         var row = (await e.Resp.ListCurrentAsync("homeroom", null)).Single(r => r.TargetId == PplEnv.Class6A);
         Assert.Equal(PplEnv.Teacher, row.StaffId);
         Assert.Equal(PplEnv.Teacher, (await new HomeroomService(e.Db).GetHomeroomAsync(PplEnv.Class6A, T))!.StaffId);
@@ -114,6 +114,6 @@ public class ResponsibilityIntradayTests
         var records = await e.Db.HomeroomAssignment.OrderBy(x => x.Id).ToListAsync();
         Assert.Equal(2, records.Count);
         Assert.Equal(T, records[0].EndDate);
-        Assert.Null(records[1].EndDate);
+        Assert.Equal(PplEnv.YearEnd, records[1].EndDate);   // chủ nhiệm tự hết vào ngày cuối năm học
     }
 }

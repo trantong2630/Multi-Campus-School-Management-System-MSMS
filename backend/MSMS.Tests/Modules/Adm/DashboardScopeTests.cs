@@ -313,13 +313,10 @@ public class DashboardScopeTests
 
         var d = await new AdminDashboardService(f.Db, f.Clock).GetAsync();
         int Gap(string key) => d.Gaps.Single(g => g.Key == key).Count;
-        Assert.Equal(2, Gap(AdminDashboardService.GapKeys.ClassesWithoutHomeroom));
         Assert.Equal(1, Gap(AdminDashboardService.GapKeys.StudentsWithoutClass));
         Assert.Equal(1, Gap(AdminDashboardService.GapKeys.StudentsWithoutParent));
         Assert.Equal(1, Gap(AdminDashboardService.GapKeys.StaffWithoutAccount));
         Assert.Equal(1, Gap(AdminDashboardService.GapKeys.TeachersWithoutDepartment));
-        Assert.Equal(1, Gap(AdminDashboardService.GapKeys.DepartmentsWithoutHead));
-        Assert.Equal(2, Gap(AdminDashboardService.GapKeys.CampusesWithoutLeader));
         Assert.Equal(1, d.Accounts.Single(a => a.AccountType == AccountTypes.Teacher).Total);
         Assert.Equal(14, d.Activity.Count);
     }

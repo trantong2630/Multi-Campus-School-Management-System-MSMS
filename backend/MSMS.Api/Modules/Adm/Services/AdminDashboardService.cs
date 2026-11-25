@@ -11,19 +11,16 @@ namespace MSMS.Api.Modules.Adm.Services;
 /// <summary>
 /// Thống kê hệ thống của School Admin: quy mô, tài khoản, thiếu sót dữ liệu cần bổ sung, hoạt động hệ thống và tiến độ thời khóa biểu.
 /// Quy mô và cấu trúc trường hiển thị trên các màn Cơ cấu nhà trường (StructureStatsService), không lặp lại ở đây.
-/// Chỉ những việc School Admin tự sửa được (danh mục, hồ sơ, tài khoản, trách nhiệm); không có số liệu giảng dạy đứng tên người khác (BR-02).
+/// Chỉ những việc School Admin tự sửa được (danh mục, hồ sơ, tài khoản); không có số liệu giảng dạy đứng tên người khác (BR-02).
 /// </summary>
 public sealed class AdminDashboardService(MsmsDbContext db, IClock clock)
 {
     public static class GapKeys
     {
-        public const string ClassesWithoutHomeroom = "ClassesWithoutHomeroom";
         public const string StudentsWithoutClass = "StudentsWithoutClass";
         public const string StudentsWithoutParent = "StudentsWithoutParent";
         public const string StaffWithoutAccount = "StaffWithoutAccount";
         public const string TeachersWithoutDepartment = "TeachersWithoutDepartment";
-        public const string DepartmentsWithoutHead = "DepartmentsWithoutHead";
-        public const string CampusesWithoutLeader = "CampusesWithoutLeader";
     }
 
     public async Task<AdminDashboardDto> GetAsync()
@@ -33,21 +30,10 @@ public sealed class AdminDashboardService(MsmsDbContext db, IClock clock)
 
         var classStats = await db.Class.AsNoTracking()
             .Where(c => c.IsActive && c.AcademicYearId == term.YearId && c.Campus.IsActive)
-            .Select(c => new
-            {
-                c.ClassId, c.CampusId,
-                HasHomeroom = c.HomeroomAssignment.AsQueryable().Any(EffectivePeriod.CurrentResponsibility<HomeroomAssignment>(today)),
-            }).ToListAsync();
+            .Select(c => new { c.ClassId, c.CampusId }).ToListAsync();
 
         var campuses = await db.Campus.AsNoTracking().Where(c => c.IsActive).OrderBy(c => c.Name)
-            .Select(c => new
-            {
-                c.CampusId, c.Name,
-                HasLeader = c.CampusLeadership.AsQueryable().Any(EffectivePeriod.CurrentResponsibility<CampusLeadership>(today)),
-            }).ToListAsync();
-
-        var departments = await db.SubjectDepartment.AsNoTracking().Where(d => d.IsActive)
-            .Select(d => d.DepartmentHead.AsQueryable().Any(EffectivePeriod.CurrentResponsibility<DepartmentHead>(today))).ToListAsync();
+            .Select(c => new { c.CampusId, c.Name }).ToListAsync();
 
         var accounts = (await db.Account.AsNoTracking()
                 .Select(a => new { a.AccountType, a.Status, NeverLoggedIn = a.LastLoginAt == null }).ToListAsync())
@@ -62,14 +48,11 @@ public sealed class AdminDashboardService(MsmsDbContext db, IClock clock)
         var studying = db.StudentProfile.AsNoTracking().Where(s => s.Status == "Studying");
         var gaps = new List<DataGap>
         {
-            new(GapKeys.ClassesWithoutHomeroom, classStats.Count(c => !c.HasHomeroom)),
             new(GapKeys.StudentsWithoutClass, await studying.CountAsync(s => !s.Enrollment.AsQueryable().Any(EnrollmentRules.ActiveAsOf(today)))),
             new(GapKeys.StudentsWithoutParent, await studying.CountAsync(s => !s.ParentStudentLink.Any())),
             new(GapKeys.StaffWithoutAccount, await db.StaffProfile.AsNoTracking().CountAsync(s => s.IsActive && s.Staff.Account == null)),
             new(GapKeys.TeachersWithoutDepartment, await db.StaffProfile.AsNoTracking()
                 .CountAsync(s => s.IsActive && s.DepartmentId == null && s.Staff.Account != null && s.Staff.Account.AccountType == AccountTypes.Teacher)),
-            new(GapKeys.DepartmentsWithoutHead, departments.Count(h => !h)),
-            new(GapKeys.CampusesWithoutLeader, campuses.Count(c => !c.HasLeader)),
         };
 
         var activityFrom = today.AddDays(-13);
