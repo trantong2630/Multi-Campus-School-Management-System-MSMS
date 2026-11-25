@@ -194,6 +194,7 @@ MSMS.Tests/
 | --- | --- | --- |
 | Tên file | trùng tên kiểu chính trong file, PascalCase | `TimetablePublishService.cs` |
 | Entity | danh từ số ít, một file một entity | `TeachingSession.cs` |
+| Tên bảng, cột | trùng tên entity và thuộc tính; riêng học sinh dùng chữ Pupil trong cơ sở dữ liệu: bảng `PupilProfile`, `ParentPupilLink` và cột `PupilId` (code vẫn là `StudentProfile`, `ParentStudentLink`, `StudentId`, ánh xạ trong `MsmsDbContext`) | `PupilProfile` ↔ `StudentProfile.cs` |
 | Service | `<Việc>Service`, hàm async hậu tố `Async` | `ScheduleAdjustmentService.ChangeTeacherAsync` |
 | Controller | `<Việc>Controller`, route `api/<module>/<việc>` | `AdjustmentController` → `api/scd/adjust` |
 | DTO | `record`, hậu tố `Dto`; request hậu tố `Request`; kết quả thao tác hậu tố `Result`. Mỗi module gom vào một file `<Module>Dtos.cs` | `GridCellDto`, `ChangeSessionTeacherRequest`, `TimetableImportResult` |
