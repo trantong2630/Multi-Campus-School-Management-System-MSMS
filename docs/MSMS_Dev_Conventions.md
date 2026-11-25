@@ -48,6 +48,8 @@ Giai đoạn này **chạy local**: `dotnet run` hoặc IIS Express, SQL Server 
 
 Triển khai thật (VPS Windows + IIS, Docker, CI/CD) **có thể làm sau**, chưa đụng tới ở giai đoạn coding.
 
+School Admin đầu tiên: dữ liệu mẫu `DevSeeder` chỉ chạy ở Development, nên cơ sở dữ liệu trống của môi trường thật chưa có tài khoản nào và không ai tạo được hồ sơ hay tài khoản (các chức năng đó chỉ School Admin gọi được). Đặt `Seed:AdminUsername` và `Seed:AdminPassword` (biến môi trường `Seed__AdminUsername`, `Seed__AdminPassword`, hoặc `dotnet user-secrets`; hai khóa trong `appsettings.json` để trống, không ghi giá trị vào mã nguồn). Khi khởi động, nếu chưa có tài khoản nào thì `AdminSeeder` tạo một School Admin ở trạng thái Chờ đổi mật khẩu; mật khẩu tối thiểu 8 ký tự, ngắn hơn thì ứng dụng không khởi động. Đã có tài khoản thì bỏ qua, nên đăng nhập và đổi mật khẩu xong có thể xóa hai biến.
+
 ### Không dùng
 
 | Bỏ | Lý do |
@@ -111,6 +113,7 @@ MSMS.Api/
     MsmsDbContext.cs
     Entities/        mỗi file một entity, tên số ít (Campus.cs, TeachingSession.cs)
     DevSeeder.cs     dữ liệu mẫu cho môi trường dev
+    AdminSeeder.cs   School Admin đầu tiên từ cấu hình (môi trường thật)
     TextbookSeeder.cs, Textbooks/   mục lục sách giáo khoa (JSON)
     PersonCodes.cs   sinh mã người
 
