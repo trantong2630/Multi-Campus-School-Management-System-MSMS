@@ -65,6 +65,8 @@ export const scdApi = {
   // ---- SCD-03: giáo viên vắng ----
   absences: (campusId: number) => apiClient.get<Absence[]>('/scd/absences', { params: { campusId } }).then((r) => r.data),
   approveAbsence: (id: number) => apiClient.post<ApproveResult>(`/scd/absences/${id}/approve`).then((r) => r.data),
+  returnAbsence: (id: number, reason: string) =>
+    apiClient.post<{ absenceId: number; status: string }>(`/scd/absences/${id}/return`, { reason }).then((r) => r.data),
   pending: (campusId: number, params: { from?: string; to?: string; classId?: number }) =>
     apiClient.get<PendingSession[]>('/scd/absences/pending', { params: { campusId, ...params } }).then((r) => r.data),
   pendingSuggestions: (sessionId: number) =>
@@ -77,6 +79,8 @@ export const scdApi = {
   departmentTeachers: () => apiClient.get<TeacherOption[]>('/scd/absences/department/teachers').then((r) => r.data),
   declareDepartmentAbsence: (body: DeclareAbsenceBody) =>
     apiClient.post<{ absenceId: number; pendingCount: number }>('/scd/absences/department', body).then((r) => r.data),
+  submitDepartmentAbsence: (id: number) =>
+    apiClient.post<{ absenceId: number; status: string }>(`/scd/absences/department/${id}/submit`).then((r) => r.data),
   deleteDepartmentAbsence: (id: number) =>
     apiClient.delete<{ restoredCount: number }>(`/scd/absences/department/${id}`).then((r) => r.data),
   departmentPending: () => apiClient.get<PendingSession[]>('/scd/absences/department/pending').then((r) => r.data),

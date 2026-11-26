@@ -9,6 +9,7 @@ using MSMS.Api.Common.Notifications;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
 using MSMS.Api.Data.Entities;
+using MSMS.Api.Modules.Com.Services;
 using MSMS.Api.Modules.Sch.Services;
 using MSMS.Api.Modules.Scd.Dtos;
 using MSMS.Api.Modules.Scd.Services;
@@ -17,8 +18,8 @@ using static MSMS.Tests.Modules.Sch.SchTestSupport;
 namespace MSMS.Tests.Modules.Scd;
 
 /// <summary>
-/// Tổ trưởng khai báo giáo viên vắng cho giáo viên của tổ (mọi phân hiệu) và quyết định từng tiết bằng đề xuất (dạy thay hoặc hủy); hiệu phó của phân hiệu
-/// có tiết chỉ duyệt, và chỉ duyệt được khi tổ trưởng đã quyết định hết mọi tiết của khai báo (BR-16). Hiệu phó không khai báo vắng.
+/// Tổ trưởng khai báo giáo viên vắng cho giáo viên của tổ (mọi phân hiệu), quyết định từng tiết bằng đề xuất (dạy thay hoặc hủy) rồi GỬI DUYỆT; hiệu phó của
+/// phân hiệu có tiết chỉ duyệt khai báo đã gửi hoặc trả lại kèm lý do (BR-16). Hiệu phó không khai báo vắng.
 /// Tổ Toán (tổ 1) có tổ trưởng; tổ Văn (tổ 2) thì không.
 /// </summary>
 public class DepartmentAbsenceTests
@@ -61,15 +62,20 @@ public class DepartmentAbsenceTests
         public required MsmsDbContext Db { get; init; }
         public required IClock Clock { get; init; }
         public RecordingSender Mail { get; } = new();
-        public TeacherAbsenceService For(string accountType, int personId)
+        public TeacherAbsenceService For(string accountType, int personId) => Build<TeacherAbsenceService>(accountType, personId);
+
+        /// <summary>Lưới Điều chỉnh (SCD-02) của hiệu phó 1.</summary>
+        public ScheduleAdjustmentService Adjust1 => Build<ScheduleAdjustmentService>(AccountTypes.VicePrincipal, Vice1);
+
+        private T Build<T>(string accountType, int personId) where T : class
         {
             var user = UserOf(accountType, personId);
             var provider = new ServiceCollection()
                 .AddSingleton(Db).AddSingleton(user).AddSingleton(Clock).AddLogging().AddSingleton<IEmailSender>(Mail)
                 .AddScoped<ScopeResolver>().AddScoped<AuditWriter>().AddScoped<NotificationSender>().AddScoped<ScheduleSupport>()
-                .AddScoped<AssignmentEmailNotifier>()
+                .AddScoped<SchoolDayService>().AddScoped<AssignmentEmailNotifier>()
                 .BuildServiceProvider();
-            return ActivatorUtilities.CreateInstance<TeacherAbsenceService>(provider);
+            return ActivatorUtilities.CreateInstance<T>(provider);
         }
 
         public TeacherAbsenceService HeadSvc => For(AccountTypes.Teacher, Head);
@@ -335,50 +341,123 @@ public class DepartmentAbsenceTests
         Assert.Equal(0, suggestions.Single(t => t.TeacherId == NotHead).DaySessionCount);
     }
 
-    [Fact(DisplayName = "SCD | Tổ trưởng | Quyết định xong tiết cuối | hiệu phó mỗi phân hiệu có tiết được báo chờ duyệt, đổi quyết định thì không báo lại")]
-    public async Task LastDecision_NotifiesVicesOnce()
+    [Fact(DisplayName = "SCD | Tổ trưởng | Gửi duyệt | hiệu phó mỗi phân hiệu có tiết được báo chờ duyệt, quyết định xong chưa gửi thì chưa báo; đề xuất bị khóa, có ghi nhật ký")]
+    public async Task Submit_NotifiesVices_AndLocksProposals()
     {
         var (env, s1, s2, _) = Create();
-        await env.HeadSvc.DeclareAsync(Declare(MathA));
+        var declared = await env.HeadSvc.DeclareAsync(Declare(MathA));
 
         await env.HeadSvc.ProposeAsync(s1, Sub(MathB));
-        Assert.Empty(env.Db.Notification.Where(n => n.NotificationType == NotificationTypes.SessionPending));   // mới 1/2 tiết
-
         await env.HeadSvc.ProposeAsync(s2, Cancel);
+        Assert.Empty(env.Db.Notification.Where(n => n.NotificationType == NotificationTypes.SessionPending));   // quyết định xong nhưng chưa gửi
+        Assert.Equal("Draft", (await env.HeadSvc.ListForDepartmentAsync()).Single().Status);
+
+        var state = await env.HeadSvc.SubmitAsync(declared.AbsenceId);
+
+        Assert.Equal("Submitted", state.Status);
         var told = await env.Db.Notification.Where(n => n.NotificationType == NotificationTypes.SessionPending).ToListAsync();
         Assert.Equal([Vice1, Vice2], told.Select(n => n.RecipientPersonId).Order());
         Assert.All(told, n => Assert.Equal("Khai báo vắng chờ duyệt", n.Title));
+        var log = await env.Db.AuditLog.SingleAsync(a => a.Action == AuditActions.SubmitAbsence);
+        Assert.Equal((AuditCategories.ScheduleAdjust, Head), (log.Category, log.ActorPersonId));
+        Assert.NotNull((await env.Db.TeacherAbsence.SingleAsync()).SubmittedAt);
 
-        await env.HeadSvc.ProposeAsync(s1, Cancel);   // đổi quyết định
-        Assert.Equal(2, await env.Db.Notification.CountAsync(n => n.NotificationType == NotificationTypes.SessionPending));
+        // Đã gửi: đề xuất và xóa khai báo bị khóa.
+        Assert.Equal(400, await StatusOf(() => env.HeadSvc.ProposeAsync(s1, Cancel)));
+        Assert.Equal(400, await StatusOf(() => env.HeadSvc.ProposeAsync(s1, Clear)));
+        Assert.Equal(400, await StatusOf(() => env.HeadSvc.DeleteAsync(declared.AbsenceId)));
+        Assert.Equal("Substitute", env.S(s1).ProposedAction);
+        var row = (await env.HeadSvc.ListForDepartmentAsync()).Single();
+        Assert.Equal("Submitted", row.Status);
+        Assert.False(row.CanSubmit);
+        Assert.False(row.CanDelete);
     }
 
-    // ---------------------------------------------------------------- Hiệu phó duyệt
-
-    [Fact(DisplayName = "SCD | Hiệu phó duyệt | Tổ trưởng chưa quyết định hết | không duyệt được, nói rõ đã quyết định bao nhiêu tiết")]
-    public async Task Approve_IsBlockedUntilEverySessionIsDecided()
+    [Fact(DisplayName = "SCD | Tổ trưởng | Gửi duyệt khi chưa quyết định hết tiết của tổ | bị từ chối, nói rõ còn bao nhiêu tiết; giáo viên khác hoặc gửi hai lần cũng bị từ chối")]
+    public async Task Submit_Rejections()
     {
-        var (env, s1, _, _) = Create();
+        var (env, s1, s2, _) = Create();
         var declared = await env.HeadSvc.DeclareAsync(Declare(MathA));
         await env.HeadSvc.ProposeAsync(s1, Sub(MathB));   // tiết ở phân hiệu 2 chưa quyết định
 
-        var message = await MessageOf(() => env.Vice1Svc.ApproveAsync(declared.AbsenceId));
+        Assert.Contains("1/2", await MessageOf(() => env.HeadSvc.SubmitAsync(declared.AbsenceId)));
+        Assert.False((await env.HeadSvc.ListForDepartmentAsync()).Single().CanSubmit);
+        Assert.Equal(403, await StatusOf(() => env.For(AccountTypes.Teacher, NotHead).SubmitAsync(declared.AbsenceId)));
+        Assert.Equal(403, await StatusOf(() => env.Vice1Svc.SubmitAsync(declared.AbsenceId)));
+        Assert.Equal(404, await StatusOf(() => env.HeadSvc.SubmitAsync(9999)));
+        Assert.Null((await env.Db.TeacherAbsence.SingleAsync()).SubmittedAt);
 
-        Assert.Contains("1/2", message);
-        Assert.Equal("Pending", env.S(s1).Status);
-        var row = (await env.Vice1Svc.ListAsync(Campus1)).Single();
-        Assert.Equal(2, row.AwaitingCount);
-        Assert.Equal(1, row.DecidedCount);
-        Assert.False(row.CanApprove);
+        await env.HeadSvc.ProposeAsync(s2, Cancel);
+        Assert.True((await env.HeadSvc.ListForDepartmentAsync()).Single().CanSubmit);
+        await env.HeadSvc.SubmitAsync(declared.AbsenceId);
+        Assert.Equal(400, await StatusOf(() => env.HeadSvc.SubmitAsync(declared.AbsenceId)));   // đã gửi rồi
     }
 
-    [Fact(DisplayName = "SCD | Hiệu phó duyệt | Đã quyết định hết | áp dạy thay và hủy ở phân hiệu mình, phân hiệu khác do hiệu phó đó duyệt")]
+    [Fact(DisplayName = "SCD | Tổ trưởng | Tiết môn của tổ khác | không chặn việc gửi duyệt; hiệu phó duyệt phần có đề xuất, tiết còn lại giữ Chờ xử lý để xử lý riêng")]
+    public async Task Submit_IgnoresOtherDepartmentSessions_AndApproveLeavesThemPending()
+    {
+        var (env, s1, s2, _) = Create();
+        env.Db.PeriodSlot.Add(new PeriodSlot { PeriodSlotId = 3, SessionOfDay = "Morning", PeriodNo = 3, StartTime = new TimeOnly(8, 40), EndTime = new TimeOnly(9, 25), IsActive = true });
+        env.Db.SaveChanges();
+        var cross = Session(env.Db, Class6A, LitSubject, MathA, 3).SessionId;   // giáo viên Toán dạy một tiết môn Văn (tổ khác)
+        var declared = await env.HeadSvc.DeclareAsync(Declare(MathA));
+        await env.HeadSvc.ProposeAsync(s1, Sub(MathB));
+        await env.HeadSvc.ProposeAsync(s2, Cancel);
+
+        var row = (await env.HeadSvc.ListForDepartmentAsync()).Single();
+        Assert.Equal((3, 2, 2), (row.AwaitingCount, row.DecidableCount, row.DecidedCount));
+        Assert.True(row.CanSubmit);
+        Assert.Equal(403, await StatusOf(() => env.HeadSvc.ProposeAsync(cross, Cancel)));   // môn Văn thuộc tổ khác
+
+        await env.HeadSvc.SubmitAsync(declared.AbsenceId);
+        var first = await env.Vice1Svc.ApproveAsync(declared.AbsenceId);
+
+        Assert.Equal((1, 0, 1, 1), (first.SubstitutedCount, first.CancelledCount, first.OtherCampusPendingCount, first.LeftPendingCount));
+        Assert.Equal("Scheduled", env.S(s1).Status);
+        Assert.Equal("Pending", env.S(cross).Status);   // chờ hiệu phó xử lý riêng
+        await env.Vice1Svc.ResolveAsync(cross, new ResolvePendingRequest("Cancel", null));
+        Assert.Equal("Cancelled", env.S(cross).Status);
+    }
+
+    [Fact(DisplayName = "SCD | Tổ trưởng | Khai báo chỉ còn tiết môn của tổ khác | không gửi duyệt được")]
+    public async Task Submit_IsRejected_WhenOnlyOtherDepartmentSessionsRemain()
+    {
+        var (env, _, _, lit) = Create();
+        var s = env.Db.TeachingSession.Find(lit)!;
+        s.TeacherId = MathA;   // giáo viên Toán dạy duy nhất một tiết môn Văn
+        env.Db.TeachingSession.RemoveRange(env.Db.TeachingSession.Where(x => x.SessionId != lit));
+        env.Db.SaveChanges();
+        var declared = await env.HeadSvc.DeclareAsync(Declare(MathA));
+
+        Assert.False((await env.HeadSvc.ListForDepartmentAsync()).Single().CanSubmit);
+        Assert.Equal(400, await StatusOf(() => env.HeadSvc.SubmitAsync(declared.AbsenceId)));
+    }
+
+    // ---------------------------------------------------------------- Hiệu phó duyệt hoặc trả lại
+
+    [Fact(DisplayName = "SCD | Hiệu phó duyệt | Tổ trưởng chưa gửi | không duyệt được dù đã quyết định hết; danh sách chưa cho duyệt hay trả lại")]
+    public async Task Approve_IsBlockedUntilTheHeadSubmits()
+    {
+        var (env, s1, s2, _) = Create();
+        var declared = await env.HeadSvc.DeclareAsync(Declare(MathA));
+        await env.HeadSvc.ProposeAsync(s1, Sub(MathB));
+        await env.HeadSvc.ProposeAsync(s2, Cancel);   // quyết định hết nhưng chưa gửi
+
+        Assert.Equal(400, await StatusOf(() => env.Vice1Svc.ApproveAsync(declared.AbsenceId)));
+        Assert.Equal(400, await StatusOf(() => env.Vice1Svc.ReturnAsync(declared.AbsenceId, new ReturnAbsenceRequest("Chưa đủ"))));
+        Assert.Equal("Pending", env.S(s1).Status);
+        var row = (await env.Vice1Svc.ListAsync(Campus1)).Single();
+        Assert.Equal(("Draft", 2, 2, false, false), (row.Status, row.AwaitingCount, row.DecidedCount, row.CanApprove, row.CanReturn));
+    }
+
+    [Fact(DisplayName = "SCD | Hiệu phó duyệt | Tổ trưởng đã gửi | áp dạy thay và hủy ở phân hiệu mình, phân hiệu khác do hiệu phó đó duyệt")]
     public async Task Approve_AppliesOwnCampus_ThenOtherViceApprovesTheRest()
     {
         var (env, s1, s2, _) = Create();
         var declared = await env.HeadSvc.DeclareAsync(Declare(MathA));
         await env.HeadSvc.ProposeAsync(s1, Sub(MathB));
         await env.HeadSvc.ProposeAsync(s2, Cancel);
+        await env.HeadSvc.SubmitAsync(declared.AbsenceId);
         Assert.True((await env.Vice1Svc.ListAsync(Campus1)).Single().CanApprove);
 
         var first = await env.Vice1Svc.ApproveAsync(declared.AbsenceId);
@@ -394,21 +473,22 @@ public class DepartmentAbsenceTests
 
         var second = await env.Vice2Svc.ApproveAsync(declared.AbsenceId);
 
-        Assert.Equal((0, 1, 0), (second.SubstitutedCount, second.CancelledCount, second.OtherCampusPendingCount));
+        Assert.Equal((0, 1, 0, 0), (second.SubstitutedCount, second.CancelledCount, second.OtherCampusPendingCount, second.LeftPendingCount));
         Assert.Equal("Cancelled", env.S(s2).Status);
         var logs = await env.Db.AuditLog.Where(a => a.Action == AuditActions.ApproveAbsence).ToListAsync();
         Assert.Equal(2, logs.Count);
         Assert.All(logs, l => Assert.Equal(AuditCategories.ScheduleAdjust, l.Category));
     }
 
-    [Fact(DisplayName = "SCD | Hiệu phó duyệt | Một đề xuất không còn hợp lệ | không áp tiết nào, nói rõ tiết lỗi để xử lý tay")]
+    [Fact(DisplayName = "SCD | Hiệu phó duyệt | Một đề xuất không còn hợp lệ | không áp tiết nào, nói rõ tiết lỗi để xử lý riêng hoặc trả lại")]
     public async Task Approve_IsAllOrNothing_WhenAProposalBecomesInvalid()
     {
         var (env, s1, s2, _) = Create();
         var declared = await env.HeadSvc.DeclareAsync(Declare(MathA));
         await env.HeadSvc.ProposeAsync(s1, Sub(MathB));
         await env.HeadSvc.ProposeAsync(s2, Cancel);
-        Session(env.Db, Class7A, MathSubject, MathB, Slot1);   // sau khi đề xuất, Toán B có tiết khác cùng khung giờ với tiết 1
+        await env.HeadSvc.SubmitAsync(declared.AbsenceId);
+        Session(env.Db, Class7A, MathSubject, MathB, Slot1);   // sau khi gửi, Toán B có tiết khác cùng khung giờ với tiết 1
 
         var message = await MessageOf(() => env.Vice1Svc.ApproveAsync(declared.AbsenceId));
 
@@ -418,15 +498,23 @@ public class DepartmentAbsenceTests
         Assert.Equal("Substitute", env.S(s1).ProposedAction);
     }
 
-    [Fact(DisplayName = "SCD | Hiệu phó duyệt | Xử lý tay một tiết rồi duyệt | tiết đã xử lý bỏ khỏi khai báo, các tiết còn lại duyệt được")]
-    public async Task Vice_ResolvesOneByHand_ThenApprovesTheRest()
+    [Fact(DisplayName = "SCD | Hiệu phó xử lý riêng | Tiết tổ trưởng đang quyết định | bị chặn và lưới đánh dấu chờ tổ trưởng; tổ trưởng gửi duyệt rồi thì xử lý riêng được")]
+    public async Task Vice_CannotResolve_WhileTheHeadIsDeciding()
     {
         var (env, s1, s2, _) = Create();
         var declared = await env.HeadSvc.DeclareAsync(Declare(MathA));
         await env.HeadSvc.ProposeAsync(s2, Cancel);   // tổ trưởng chưa quyết định tiết 1
 
-        Assert.Contains("1/2", await MessageOf(() => env.Vice2Svc.ApproveAsync(declared.AbsenceId)));
-        await env.Vice1Svc.ResolveAsync(s1, new ResolvePendingRequest("Substitute", NotHead));   // hiệu phó phân hiệu 1 xử lý tay
+        Assert.Contains("chờ tổ trưởng", await MessageOf(() => env.Vice1Svc.ResolveAsync(s1, new ResolvePendingRequest("Substitute", NotHead))));
+        Assert.Equal(400, await StatusOf(() => env.Vice2Svc.ResolveAsync(s2, new ResolvePendingRequest("Cancel", null))));
+        Assert.Equal("Pending", env.S(s1).Status);
+        var cell = (await env.Adjust1.WeekAsync(Class6A, Monday)).Sessions.Single(s => s.SessionId == s1);
+        Assert.True(cell.AwaitingHead);
+
+        await env.HeadSvc.ProposeAsync(s1, Sub(MathB));
+        await env.HeadSvc.SubmitAsync(declared.AbsenceId);
+        Assert.False((await env.Adjust1.WeekAsync(Class6A, Monday)).Sessions.Single(s => s.SessionId == s1).AwaitingHead);
+        await env.Vice1Svc.ResolveAsync(s1, new ResolvePendingRequest("Substitute", NotHead));   // đã gửi: hiệu phó xử lý riêng, khác đề xuất
         var result = await env.Vice2Svc.ApproveAsync(declared.AbsenceId);
 
         Assert.Equal(NotHead, env.S(s1).TeacherId);
@@ -434,13 +522,157 @@ public class DepartmentAbsenceTests
         Assert.Equal("Cancelled", env.S(s2).Status);
     }
 
-    [Fact(DisplayName = "SCD | Hiệu phó xử lý tay | Hủy tiết hoặc chọn người dạy thay | xóa đề xuất của tổ trưởng")]
+    [Fact(DisplayName = "SCD | Hiệu phó xử lý riêng | Tổ không còn tổ trưởng đương nhiệm | không ai gửi duyệt được nên hiệu phó xử lý như thường")]
+    public async Task Vice_Resolves_WhenTheDepartmentHasNoHead()
+    {
+        var (env, s1, _, _) = Create();
+        await env.HeadSvc.DeclareAsync(Declare(MathA));
+        env.Db.DepartmentHead.Single().EndDate = env.Clock.Today;   // tổ trưởng thôi trách nhiệm từ hôm nay
+        env.Db.SaveChanges();
+
+        Assert.False((await env.Adjust1.WeekAsync(Class6A, Monday)).Sessions.Single(s => s.SessionId == s1).AwaitingHead);
+        await env.Vice1Svc.ResolveAsync(s1, new ResolvePendingRequest("Substitute", MathB));
+        Assert.Equal(MathB, env.S(s1).TeacherId);
+    }
+
+    [Fact(DisplayName = "SCD | Hiệu phó xử lý riêng | Tiết môn của tổ khác trong khai báo | tổ trưởng không quyết định nên hiệu phó xử lý được ngay")]
+    public async Task Vice_Resolves_OtherDepartmentLesson_BeforeSubmit()
+    {
+        var (env, s1, _, _) = Create();
+        var lit = Session(env.Db, Class7A, LitSubject, MathA, Slot1);   // Toán A dạy thêm một tiết Văn ở 7A
+        await env.HeadSvc.DeclareAsync(Declare(MathA));
+        env.Db.DepartmentHead.Add(new DepartmentHead { DepartmentId = Dept2, StaffId = LitTeacher, StartDate = D(2026, 9, 5), CreatedAt = DateTime.UtcNow });
+        env.Db.SaveChanges();   // tổ Văn có tổ trưởng, nhưng khai báo là của giáo viên tổ Toán
+
+        await env.Vice2Svc.ResolveAsync(lit.SessionId, new ResolvePendingRequest("Cancel", null));
+        Assert.Equal("Cancelled", env.S(lit.SessionId).Status);
+        Assert.Equal(400, await StatusOf(() => env.Vice1Svc.ResolveAsync(s1, new ResolvePendingRequest("Cancel", null))));
+    }
+
+    [Fact(DisplayName = "SCD | Hiệu phó trả lại | Tổ đã đổi tổ trưởng | tổ trưởng mới được báo, xóa và gửi lại được; tổ trưởng cũ không được báo")]
+    public async Task Return_NotifiesTheCurrentHead()
+    {
+        var (env, s1, s2, _) = Create();
+        var declared = await env.HeadSvc.DeclareAsync(Declare(MathA));
+        await env.HeadSvc.ProposeAsync(s1, Sub(MathB));
+        await env.HeadSvc.ProposeAsync(s2, Cancel);
+        await env.HeadSvc.SubmitAsync(declared.AbsenceId);
+        env.Db.DepartmentHead.Single().EndDate = env.Clock.Today;
+        env.Db.DepartmentHead.Add(new DepartmentHead { DepartmentId = Dept1, StaffId = NotHead, StartDate = env.Clock.Today, CreatedAt = DateTime.UtcNow });
+        env.Db.SaveChanges();
+
+        await env.Vice1Svc.ReturnAsync(declared.AbsenceId, new ReturnAbsenceRequest("Đổi người dạy thay"));
+
+        Assert.True(await env.Db.Notification.AnyAsync(n => n.RecipientPersonId == NotHead && n.Title == "Khai báo vắng bị trả lại"));
+        Assert.False(await env.Db.Notification.AnyAsync(n => n.RecipientPersonId == Head && n.Title == "Khai báo vắng bị trả lại"));
+        var newHead = env.For(AccountTypes.Teacher, NotHead);
+        var row = (await newHead.ListForDepartmentAsync()).Single();
+        Assert.Equal((true, true), (row.CanSubmit, row.CanDelete));
+        await newHead.DeleteAsync(declared.AbsenceId);
+        Assert.Empty(env.Db.TeacherAbsence);
+    }
+
+    [Fact(DisplayName = "SCD | Danh sách | Đã gửi nhưng không còn tiết nào chờ (tiết chưa duyệt đã trôi qua) | khai báo chuyển Đã qua, không còn duyệt hay trả lại")]
+    public async Task Submitted_WithNothingLeftAwaiting_BecomesPast()
+    {
+        var (env, s1, s2, _) = Create();
+        var declared = await env.HeadSvc.DeclareAsync(Declare(MathA));
+        await env.HeadSvc.ProposeAsync(s1, Sub(MathB));
+        await env.HeadSvc.ProposeAsync(s2, Cancel);
+        await env.HeadSvc.SubmitAsync(declared.AbsenceId);
+        await env.Vice2Svc.ApproveAsync(declared.AbsenceId);   // tiết 2 (phân hiệu 2) đã hủy, tiết vẫn trong tương lai
+        env.Db.TeachingSession.Find(s1)!.SessionDate = env.Clock.Today.AddDays(-1);   // tiết 1 chưa duyệt đã trôi qua
+        env.Db.SaveChanges();
+
+        var vice = (await env.Vice1Svc.ListAsync(Campus1)).Single();
+        Assert.True(vice.IsPast);
+        Assert.Equal((false, false, 1), (vice.CanApprove, vice.CanReturn, vice.MissedCount));
+        Assert.True((await env.HeadSvc.ListForDepartmentAsync()).Single().IsPast);
+    }
+
+    [Fact(DisplayName = "SCD | Hiệu phó trả lại | Kèm lý do | khai báo về cho tổ trưởng, đề xuất mở khóa, tổ trưởng được báo, sửa rồi gửi lại thì xóa lý do cũ")]
+    public async Task Return_UnlocksProposals_NotifiesTheHead_AndResubmitClearsTheReason()
+    {
+        var (env, s1, s2, _) = Create();
+        var declared = await env.HeadSvc.DeclareAsync(Declare(MathA));
+        await env.HeadSvc.ProposeAsync(s1, Sub(MathB));
+        await env.HeadSvc.ProposeAsync(s2, Cancel);
+        await env.HeadSvc.SubmitAsync(declared.AbsenceId);
+        Assert.True((await env.Vice1Svc.ListAsync(Campus1)).Single().CanReturn);
+
+        var state = await env.Vice1Svc.ReturnAsync(declared.AbsenceId, new ReturnAbsenceRequest("  Toán B đã có việc cuối tuần  "));
+
+        Assert.Equal("Returned", state.Status);
+        var absence = await env.Db.TeacherAbsence.SingleAsync();
+        Assert.Null(absence.SubmittedAt);
+        Assert.Equal("Toán B đã có việc cuối tuần", absence.ReturnReason);
+        var told = await env.Db.Notification.SingleAsync(n => n.RecipientPersonId == Head && n.NotificationType == NotificationTypes.SessionPending);
+        Assert.Equal("Khai báo vắng bị trả lại", told.Title);
+        Assert.Contains("Toán B đã có việc cuối tuần", told.Body!);
+        var log = await env.Db.AuditLog.SingleAsync(a => a.Action == AuditActions.ReturnAbsence);
+        Assert.Equal((AuditCategories.ScheduleAdjust, Vice1), (log.Category, log.ActorPersonId));
+        var row = (await env.HeadSvc.ListForDepartmentAsync()).Single();
+        Assert.Equal(("Returned", "Toán B đã có việc cuối tuần", true), (row.Status, row.ReturnReason, row.CanSubmit));
+        Assert.False((await env.Vice1Svc.ListAsync(Campus1)).Single().CanApprove);
+        Assert.Equal(400, await StatusOf(() => env.Vice1Svc.ApproveAsync(declared.AbsenceId)));   // đã trả lại, chưa gửi lại
+
+        await env.HeadSvc.ProposeAsync(s1, Sub(NotHead));   // mở khóa: sửa được đề xuất
+        await env.HeadSvc.SubmitAsync(declared.AbsenceId);
+
+        absence = await env.Db.TeacherAbsence.SingleAsync();
+        Assert.NotNull(absence.SubmittedAt);
+        Assert.Null(absence.ReturnReason);
+        Assert.Equal(NotHead, env.S(s1).ProposedTeacherId);
+    }
+
+    [Fact(DisplayName = "SCD | Thông báo khai báo vắng | Hiệu phó mở thông báo chờ duyệt tới màn Giáo viên vắng; tổ trưởng mở thông báo bị trả lại tới danh sách của tổ, hết làm tổ trưởng thì không mở được")]
+    public async Task AbsenceNotifications_OpenTheRightScreen()
+    {
+        var (env, s1, s2, _) = Create();
+        var declared = await env.HeadSvc.DeclareAsync(Declare(MathA));
+        await env.HeadSvc.ProposeAsync(s1, Sub(MathB));
+        await env.HeadSvc.ProposeAsync(s2, Cancel);
+        await env.HeadSvc.SubmitAsync(declared.AbsenceId);
+        await env.Vice1Svc.ReturnAsync(declared.AbsenceId, new ReturnAbsenceRequest("Đổi người dạy thay"));
+        var toVice = await env.Db.Notification.SingleAsync(n => n.RecipientPersonId == Vice1);
+        var toHead = await env.Db.Notification.SingleAsync(n => n.RecipientPersonId == Head);
+
+        var viceOpen = await new NotificationService(env.Db, UserOf(AccountTypes.VicePrincipal, Vice1), env.Clock).OpenAsync(toVice.NotificationId);
+        var headOpen = await new NotificationService(env.Db, UserOf(AccountTypes.Teacher, Head), env.Clock).OpenAsync(toHead.NotificationId);
+
+        Assert.Equal((true, "/scd/absences"), (viceOpen.CanAccess, viceOpen.TargetRoute));
+        Assert.Equal((true, "/scd/department-absences"), (headOpen.CanAccess, headOpen.TargetRoute));
+
+        env.Db.DepartmentHead.Single().EndDate = env.Clock.Today;   // hết làm tổ trưởng từ hôm nay
+        env.Db.SaveChanges();
+        var afterEnd = await new NotificationService(env.Db, UserOf(AccountTypes.Teacher, Head), env.Clock).OpenAsync(toHead.NotificationId);
+        Assert.False(afterEnd.CanAccess);
+    }
+
+    [Fact(DisplayName = "SCD | Hiệu phó trả lại | Thiếu lý do, chưa gửi, hoặc không phải hiệu phó phụ trách | bị từ chối, khai báo giữ nguyên")]
+    public async Task Return_Rejections()
+    {
+        var (env, s1, s2, _) = Create();
+        var declared = await env.HeadSvc.DeclareAsync(Declare(MathA));
+        await env.HeadSvc.ProposeAsync(s1, Sub(MathB));
+        await env.HeadSvc.ProposeAsync(s2, Cancel);
+        await env.HeadSvc.SubmitAsync(declared.AbsenceId);
+
+        Assert.Equal(400, await StatusOf(() => env.Vice1Svc.ReturnAsync(declared.AbsenceId, new ReturnAbsenceRequest("   "))));
+        Assert.Equal(400, await StatusOf(() => env.Vice1Svc.ReturnAsync(declared.AbsenceId, new ReturnAbsenceRequest(new string('x', 301)))));
+        Assert.Equal(403, await StatusOf(() => env.HeadSvc.ReturnAsync(declared.AbsenceId, new ReturnAbsenceRequest("Không đủ quyền"))));
+        Assert.Equal(404, await StatusOf(() => env.Vice1Svc.ReturnAsync(9999, new ReturnAbsenceRequest("Không có"))));
+        Assert.NotNull((await env.Db.TeacherAbsence.SingleAsync()).SubmittedAt);
+    }
+
+    [Fact(DisplayName = "SCD | Hiệu phó xử lý riêng | Sau khi tổ trưởng gửi, hủy tiết hoặc chọn người dạy thay | xóa đề xuất của tổ trưởng")]
     public async Task Vice_Resolve_ClearsTheProposal()
     {
         var (env, s1, s2, _) = Create();
-        await env.HeadSvc.DeclareAsync(Declare(MathA));
+        var declared = await env.HeadSvc.DeclareAsync(Declare(MathA));
         await env.HeadSvc.ProposeAsync(s1, Sub(MathB));
         await env.HeadSvc.ProposeAsync(s2, Cancel);
+        await env.HeadSvc.SubmitAsync(declared.AbsenceId);
 
         await env.Vice1Svc.ResolveAsync(s1, new ResolvePendingRequest("Substitute", NotHead));
         await env.Vice2Svc.ResolveAsync(s2, new ResolvePendingRequest("Cancel", null));
@@ -458,6 +690,7 @@ public class DepartmentAbsenceTests
         var declared = await env.HeadSvc.DeclareAsync(Declare(MathA));
         await env.HeadSvc.ProposeAsync(s1, Sub(MathB));
         await env.HeadSvc.ProposeAsync(s2, Cancel);
+        await env.HeadSvc.SubmitAsync(declared.AbsenceId);
 
         Assert.Equal(403, await StatusOf(() => env.HeadSvc.ApproveAsync(declared.AbsenceId)));
         Assert.Equal("Pending", env.S(s1).Status);
@@ -474,8 +707,10 @@ public class DepartmentAbsenceTests
 
         var row = (await env.HeadSvc.ListForDepartmentAsync()).Single();
         Assert.Equal(2, row.PendingCount);
-        Assert.Equal((2, 1), (row.AwaitingCount, row.DecidedCount));
+        Assert.Equal((2, 2, 1), (row.AwaitingCount, row.DecidableCount, row.DecidedCount));
+        Assert.Equal("Draft", row.Status);
         Assert.False(row.CanApprove);   // chỉ hiệu phó duyệt
+        Assert.False(row.CanSubmit);    // còn một tiết chưa quyết định
         Assert.True(row.CanDelete);
 
         var result = await env.HeadSvc.DeleteAsync(declared.AbsenceId);
@@ -488,25 +723,29 @@ public class DepartmentAbsenceTests
         Assert.Empty(env.Db.TeacherAbsence);
     }
 
-    [Fact(DisplayName = "SCD | Tổ trưởng | Khai báo không do mình khai | thấy nhưng không xóa được")]
-    public async Task Head_CannotDelete_AbsenceDeclaredBySomeoneElse()
+    [Fact(DisplayName = "SCD | Tổ trưởng | Xóa khai báo | tổ trưởng đương nhiệm xóa được khai báo của người khác khai cho giáo viên tổ mình; giáo viên đã sang tổ khác hoặc hiệu phó thì không")]
+    public async Task Delete_FollowsTheCurrentHeadOfTheTeachersDepartment()
     {
         var (env, _, _, _) = Create();
-        var absence = new TeacherAbsence { TeacherId = MathA, FromDate = Monday, ToDate = Monday, DeclaredByPersonId = Vice1, CreatedAt = DateTime.UtcNow };
-        env.Db.TeacherAbsence.Add(absence);
+        var byFormerHead = new TeacherAbsence { TeacherId = MathA, FromDate = Monday, ToDate = Monday, DeclaredByPersonId = NotHead, CreatedAt = DateTime.UtcNow };
+        var movedAway = new TeacherAbsence { TeacherId = LitTeacher, FromDate = Monday, ToDate = Monday, DeclaredByPersonId = Head, CreatedAt = DateTime.UtcNow };
+        env.Db.TeacherAbsence.AddRange(byFormerHead, movedAway);
         env.Db.SaveChanges();
 
-        var row = (await env.HeadSvc.ListForDepartmentAsync()).Single();
-        Assert.False(row.CanDelete);
-        Assert.Equal(403, await StatusOf(() => env.HeadSvc.DeleteAsync(absence.AbsenceId)));
-        Assert.Equal(403, await StatusOf(() => env.Vice1Svc.DeleteAsync(absence.AbsenceId)));   // hiệu phó không xóa khai báo
+        var rows = (await env.HeadSvc.ListForDepartmentAsync()).ToDictionary(r => r.AbsenceId);
+        Assert.True(rows[byFormerHead.AbsenceId].CanDelete);
+        Assert.False(rows[movedAway.AbsenceId].CanDelete);   // mình khai nhưng giáo viên không thuộc tổ mình
+        Assert.Equal(403, await StatusOf(() => env.HeadSvc.DeleteAsync(movedAway.AbsenceId)));
+        Assert.Equal(403, await StatusOf(() => env.Vice1Svc.DeleteAsync(byFormerHead.AbsenceId)));   // hiệu phó không xóa khai báo
+        await env.HeadSvc.DeleteAsync(byFormerHead.AbsenceId);
+        Assert.Single(env.Db.TeacherAbsence);
     }
 
     // ---------------------------------------------------------------- Email và lịch dạy khi duyệt
 
     private static void GiveEmail(Env env, int teacherId, string email) { env.Db.Person.Find(teacherId)!.Email = email; env.Db.SaveChanges(); }
 
-    [Fact(DisplayName = "SCD | Duyệt | Email | giáo viên dạy thay nhận đúng một email như khi hiệu phó xử lý tay, thông báo trong ứng dụng vẫn có")]
+    [Fact(DisplayName = "SCD | Duyệt | Email | giáo viên dạy thay nhận đúng một email như khi hiệu phó xử lý riêng, thông báo trong ứng dụng vẫn có")]
     public async Task Approve_EmailsTheSubstitute_LikeAManualResolve()
     {
         var (env, s1, s2, _) = Create();
@@ -514,7 +753,8 @@ public class DepartmentAbsenceTests
         var declared = await env.HeadSvc.DeclareAsync(Declare(MathA));
         await env.HeadSvc.ProposeAsync(s1, Sub(MathB));
         await env.HeadSvc.ProposeAsync(s2, Cancel);
-        await env.Mail.AssertNoneAsync();   // khai báo và đề xuất chưa gửi email nào
+        await env.HeadSvc.SubmitAsync(declared.AbsenceId);
+        await env.Mail.AssertNoneAsync();   // khai báo, đề xuất và gửi duyệt chưa gửi email nào
 
         await env.Vice1Svc.ApproveAsync(declared.AbsenceId);
 
@@ -536,6 +776,7 @@ public class DepartmentAbsenceTests
         var declared = await env.HeadSvc.DeclareAsync(Declare(MathA));
         await env.HeadSvc.ProposeAsync(s1, Sub(MathB));
         await env.HeadSvc.ProposeAsync(s2, Sub(NotHead));
+        await env.HeadSvc.SubmitAsync(declared.AbsenceId);
         await env.Vice1Svc.ApproveAsync(declared.AbsenceId);
         await env.Vice2Svc.ApproveAsync(declared.AbsenceId);
 
@@ -557,8 +798,9 @@ public class DepartmentAbsenceTests
         var declared = await env.HeadSvc.DeclareAsync(Declare(MathA));
         await env.HeadSvc.ProposeAsync(s1, Sub(MathB));
 
-        await Assert.ThrowsAsync<ApiException>(() => env.Vice1Svc.ApproveAsync(declared.AbsenceId));   // tiết 2 chưa quyết định
+        await Assert.ThrowsAsync<ApiException>(() => env.Vice1Svc.ApproveAsync(declared.AbsenceId));   // tổ trưởng chưa gửi
         await env.HeadSvc.ProposeAsync(s2, Cancel);
+        await env.HeadSvc.SubmitAsync(declared.AbsenceId);
         Session(env.Db, Class7A, MathSubject, MathB, Slot1);   // Toán B bận cùng khung giờ với tiết 1
         await Assert.ThrowsAsync<ApiException>(() => env.Vice1Svc.ApproveAsync(declared.AbsenceId));    // đề xuất không còn hợp lệ
 
@@ -573,6 +815,7 @@ public class DepartmentAbsenceTests
         var declared = await env.HeadSvc.DeclareAsync(Declare(MathA));
         await env.HeadSvc.ProposeAsync(s1, Sub(MathB));
         await env.HeadSvc.ProposeAsync(s2, Cancel);
+        await env.HeadSvc.SubmitAsync(declared.AbsenceId);
 
         await env.Vice1Svc.ApproveAsync(declared.AbsenceId);
 
@@ -580,15 +823,19 @@ public class DepartmentAbsenceTests
         Assert.Equal(MathB, env.S(s1).TeacherId);
     }
 
-    [Fact(DisplayName = "SCD | Duyệt | Lịch dạy | tiết sau khi duyệt giống hệt tiết hiệu phó xử lý tay: trạng thái, giáo viên, nguồn, ghi chú, người sửa, khai báo gốc")]
+    [Fact(DisplayName = "SCD | Duyệt | Lịch dạy | tiết sau khi duyệt giống hệt tiết hiệu phó xử lý riêng: trạng thái, giáo viên, nguồn, ghi chú, người sửa, khai báo gốc")]
     public async Task ApprovedSession_MatchesAManuallyResolvedSession()
     {
         var (envA, a1, a2, _) = Create();
         var (envB, b1, b2, _) = Create();
         var declaredA = await envA.HeadSvc.DeclareAsync(Declare(MathA));
-        await envB.HeadSvc.DeclareAsync(Declare(MathA));
+        var declaredB = await envB.HeadSvc.DeclareAsync(Declare(MathA));
         await envA.HeadSvc.ProposeAsync(a1, Sub(NotHead));
         await envA.HeadSvc.ProposeAsync(a2, Cancel);
+        await envA.HeadSvc.SubmitAsync(declaredA.AbsenceId);
+        await envB.HeadSvc.ProposeAsync(b1, Sub(MathB));
+        await envB.HeadSvc.ProposeAsync(b2, Cancel);
+        await envB.HeadSvc.SubmitAsync(declaredB.AbsenceId);
 
         await envA.Vice1Svc.ApproveAsync(declaredA.AbsenceId);
         await envB.Vice1Svc.ResolveAsync(b1, new ResolvePendingRequest("Substitute", NotHead));
@@ -602,7 +849,7 @@ public class DepartmentAbsenceTests
         Assert.Null(approved.ProposedAction);
     }
 
-    [Fact(DisplayName = "SCD | Lịch dạy cũ | Tiết Chờ xử lý vì lý do khác (không có khai báo vắng) | tổ trưởng không thấy, không quyết định; hiệu phó vẫn xử lý tay như trước")]
+    [Fact(DisplayName = "SCD | Lịch dạy cũ | Tiết Chờ xử lý vì lý do khác (không có khai báo vắng) | tổ trưởng không thấy, không quyết định; hiệu phó vẫn xử lý riêng như trước")]
     public async Task PendingWithoutAbsence_IsLeftToTheVice()
     {
         var (env, s1, _, _) = Create();
@@ -617,15 +864,18 @@ public class DepartmentAbsenceTests
         Assert.Equal(MathB, env.S(s1).TeacherId);
     }
 
-    [Fact(DisplayName = "SCD | Lịch dạy cũ | Giáo viên bận hoặc vắng vẫn không được xếp dạy thay khi hiệu phó xử lý tay, như trước khi có đề xuất")]
+    [Fact(DisplayName = "SCD | Lịch dạy cũ | Giáo viên bận hoặc vắng vẫn không được xếp dạy thay khi hiệu phó xử lý riêng, như trước khi có đề xuất")]
     public async Task ManualResolve_StillEnforcesBusyAndAbsentRules()
     {
-        var (env, s1, _, _) = Create();
-        await env.HeadSvc.DeclareAsync(Declare(MathA));
+        var (env, s1, s2, _) = Create();
+        var declared = await env.HeadSvc.DeclareAsync(Declare(MathA));
+        await env.HeadSvc.ProposeAsync(s1, Sub(NotHead));
+        await env.HeadSvc.ProposeAsync(s2, Cancel);
+        await env.HeadSvc.SubmitAsync(declared.AbsenceId);
         Session(env.Db, Class7A, MathSubject, MathB, Slot1);   // Toán B bận cùng khung giờ với tiết 1
 
-        Assert.Equal(400, await StatusOf(() => env.Vice1Svc.ResolveAsync(s1, new ResolvePendingRequest("Substitute", MathB))));
-        Assert.Equal(400, await StatusOf(() => env.Vice1Svc.ResolveAsync(s1, new ResolvePendingRequest("Substitute", MathA))));   // đang vắng
+        Assert.DoesNotContain("chờ tổ trưởng", await MessageOf(() => env.Vice1Svc.ResolveAsync(s1, new ResolvePendingRequest("Substitute", MathB))));
+        Assert.DoesNotContain("chờ tổ trưởng", await MessageOf(() => env.Vice1Svc.ResolveAsync(s1, new ResolvePendingRequest("Substitute", MathA))));   // đang vắng
         Assert.Equal("Pending", env.S(s1).Status);
     }
 }

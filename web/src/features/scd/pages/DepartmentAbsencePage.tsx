@@ -1,11 +1,12 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Switch, Tag, Tooltip } from 'antd';
-import { ClipboardPen, Trash2, UserRoundMinus, UserRoundX } from 'lucide-react';
+import { ClipboardPen, Send, Trash2, UserRoundMinus, UserRoundX } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Key } from 'react';
 import { schApi } from '@/features/sch/api';
 import { DataTable } from '@/shared/components/DataTable';
 import { FilterBar } from '@/shared/components/FilterBar';
+import { InlineAlert } from '@/shared/components/InlineAlert';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { RowActions } from '@/shared/components/RowActions';
 import { message } from '@/shared/lib/antdStatic';
@@ -18,8 +19,8 @@ import type { Absence, PendingSession } from '../types';
 
 /**
  * SCD-03 cho tổ trưởng: một danh sách khai báo vắng của tổ. Bấm một khai báo thì dòng mở rộng, hiện các tiết của khai báo đó; mỗi tiết quyết định
- * trong ngăn kéo bên phải bằng một đề xuất (người dạy thay hoặc hủy tiết). Đề xuất chưa đổi lịch: hiệu phó của phân hiệu có tiết chỉ duyệt, và chỉ duyệt
- * khi tổ trưởng đã quyết định hết mọi tiết của khai báo (BR-16).
+ * trong ngăn kéo bên phải bằng một đề xuất (người dạy thay hoặc hủy tiết). Đề xuất chưa đổi lịch: quyết định hết các tiết của tổ rồi bấm Gửi duyệt cho cả
+ * khai báo; từ lúc gửi đề xuất bị khóa, hiệu phó của phân hiệu có tiết duyệt hoặc trả lại kèm lý do (BR-16).
  */
 export function DepartmentAbsencePage() {
   const qc = useQueryClient();
@@ -54,7 +55,7 @@ export function DepartmentAbsencePage() {
   useEffect(() => {
     if (!openNeedingDecision.current || !absences.data) return;
     openNeedingDecision.current = false;
-    setExpanded(absences.data.filter((a) => !a.isPast && a.decidedCount < a.awaitingCount).map((a) => a.absenceId));
+    setExpanded(absences.data.filter((a) => !a.isPast && a.status !== 'Submitted' && (a.status === 'Returned' || a.decidedCount < a.decidableCount)).map((a) => a.absenceId));
   }, [absences.data]);
 
   const remove = (a: Absence) => confirmAction({
@@ -73,9 +74,24 @@ export function DepartmentAbsencePage() {
     },
   });
 
+  const submit = (a: Absence) => confirmAction({
+    title: `Gửi khai báo vắng của ${a.teacherName} cho hiệu phó duyệt?`,
+    content: 'Sau khi gửi, bạn không sửa được đề xuất cho tới khi hiệu phó duyệt hoặc trả lại. Tiết môn của tổ khác (nếu có) do hiệu phó xử lý riêng.',
+    okText: 'Gửi duyệt',
+    onOk: async () => {
+      try {
+        await scdApi.submitDepartmentAbsence(a.absenceId);
+        refresh();
+        message.success('Đã gửi hiệu phó duyệt.');
+      } catch (e) {
+        showError(e, 'Không gửi duyệt được khai báo');
+      }
+    },
+  });
+
   const withdraw = (s: PendingSession) => confirmAction({
     title: `Bỏ quyết định cho tiết ${s.subjectName} lớp ${s.className}?`,
-    content: 'Tiết quay về chưa quyết định. Hiệu phó chưa duyệt được khai báo cho tới khi bạn quyết định lại.',
+    content: 'Tiết quay về chưa quyết định. Bạn chưa gửi duyệt được khai báo cho tới khi quyết định lại.',
     okText: 'Bỏ quyết định',
     onOk: async () => {
       try {
@@ -110,7 +126,12 @@ export function DepartmentAbsencePage() {
             expandRowByClick: true,
             rowExpandable: (a) => !a.isPast && (sessionsByAbsence.get(a.absenceId)?.length ?? 0) > 0,
             expandedRowRender: (a) => (
-              <SessionsTable sessions={sessionsByAbsence.get(a.absenceId) ?? []} onDecide={setDeciding} onWithdraw={withdraw} />
+              <>
+                {a.status === 'Returned' && a.returnReason && (
+                  <InlineAlert type="warning" title="Hiệu phó trả khai báo này về" description={a.returnReason} />
+                )}
+                <SessionsTable sessions={sessionsByAbsence.get(a.absenceId) ?? []} locked={a.status === 'Submitted'} onDecide={setDeciding} onWithdraw={withdraw} />
+              </>
             ),
           }}
           columns={[
@@ -126,19 +147,27 @@ export function DepartmentAbsencePage() {
               title: 'Trạng thái', key: 'state', width: 170, align: 'center',
               render: (_: unknown, a: Absence) => a.isPast ? <Tag>Đã qua</Tag>
                 : a.awaitingCount === 0 ? <Tag color="green">Đã duyệt</Tag>
-                  : a.decidedCount < a.awaitingCount ? <Tag color="gold">Đang quyết định</Tag> : <Tag color="blue">Chờ hiệu phó duyệt</Tag>,
+                  : a.status === 'Submitted' ? <Tag color="blue">Chờ hiệu phó duyệt</Tag>
+                    : a.status === 'Returned' ? <Tag color="red">Bị trả lại</Tag>
+                      : a.decidedCount < a.decidableCount ? <Tag color="gold">Đang quyết định</Tag> : <Tag color="geekblue">Sẵn sàng gửi</Tag>,
             },
             {
               title: 'Đã quyết định', key: 'decided', width: 130, align: 'right', className: 'tabular',
-              render: (_: unknown, a: Absence) => a.awaitingCount > 0 ? `${a.decidedCount}/${a.awaitingCount} tiết` : '—',
+              render: (_: unknown, a: Absence) => a.decidableCount > 0 ? `${a.decidedCount}/${a.decidableCount} tiết` : '—',
             },
             { title: 'Đã xử lý', dataIndex: 'handledCount', width: 100, align: 'right', className: 'tabular' },
             {
-              title: 'Thao tác', key: 'actions', width: 90, align: 'center', fixed: 'right',
+              title: 'Thao tác', key: 'actions', width: 120, align: 'center', fixed: 'right',
               render: (_: unknown, a: Absence) => a.isPast ? null : (
                 // Bấm nút không làm mở rộng hay thu gọn dòng.
                 <div className="row-actions" onClick={(e) => e.stopPropagation()}>
-                  <Tooltip title={a.canDelete ? 'Xóa khai báo' : 'Chỉ xóa được khai báo do bạn khai và chưa có tiết nào được xử lý'}>
+                  <Tooltip title={a.canSubmit ? 'Gửi hiệu phó duyệt' : a.status === 'Submitted' ? 'Đã gửi, chờ hiệu phó duyệt hoặc trả lại' : `Quyết định hết các tiết của tổ rồi mới gửi được (${a.decidedCount}/${a.decidableCount})`}>
+                    <Button
+                      type="text" className="icon-btn" disabled={!a.canSubmit} aria-label="Gửi duyệt"
+                      icon={<Send size={16} />} onClick={() => submit(a)}
+                    />
+                  </Tooltip>
+                  <Tooltip title={a.canDelete ? 'Xóa khai báo' : 'Chỉ xóa được khai báo của giáo viên tổ mình, chưa gửi duyệt, chưa qua và chưa có tiết nào được xử lý'}>
                     <Button
                       type="text" className="icon-btn" danger disabled={!a.canDelete} aria-label="Xóa khai báo"
                       icon={<Trash2 size={16} />} onClick={() => remove(a)}
@@ -169,8 +198,10 @@ function DecisionTag({ s }: { s: PendingSession }) {
   return <span className="muted">Chưa quyết định</span>;
 }
 
-function SessionsTable({ sessions, onDecide, onWithdraw }: {
+function SessionsTable({ sessions, locked, onDecide, onWithdraw }: {
   sessions: PendingSession[];
+  /** Khai báo đã gửi duyệt: chỉ xem, không sửa đề xuất. */
+  locked: boolean;
   onDecide: (s: PendingSession) => void;
   onWithdraw: (s: PendingSession) => void;
 }) {
@@ -194,7 +225,7 @@ function SessionsTable({ sessions, onDecide, onWithdraw }: {
         { title: 'Quyết định', key: 'decision', render: (_: unknown, s: PendingSession) => <DecisionTag s={s} /> },
         {
           title: 'Thao tác', key: 'actions', width: 100, align: 'center',
-          render: (_: unknown, s: PendingSession) => (
+          render: (_: unknown, s: PendingSession) => locked ? <span className="muted">Đã gửi</span> : (
             <RowActions actions={[
               { key: 'decide', label: s.proposedAction ? 'Đổi quyết định' : 'Quyết định', icon: <ClipboardPen size={16} />, onClick: () => onDecide(s) },
               { key: 'withdraw', label: 'Bỏ quyết định', icon: <UserRoundMinus size={16} />, hidden: !s.proposedAction, onClick: () => onWithdraw(s) },

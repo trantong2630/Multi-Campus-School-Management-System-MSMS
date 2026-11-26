@@ -275,7 +275,7 @@ Sửa tên lớp và khối trong cùng phân hiệu và năm học.
 `BE + Web` · 0.5 MD · dep: 4.2.26  
 Ngừng dùng lớp mà giữ nguyên dữ liệu đã phát sinh. Bị chặn nếu lớp còn học sinh đang học hoặc sắp vào lớp, còn tiết Đã xếp lịch hoặc Chờ xử lý chưa diễn ra, hoặc còn chủ nhiệm đang giữ hay đã hẹn; thông báo nêu rõ từng việc phải dọn và dọn ở đâu (BR-07).
 
-**4.2.29 — Xem danh sách học sinh của lớp / View Class Roster**  
+**4.2.29 — Xem danh sách học sinh của lớp / View Class List (Pupils)**  
 `BE + Web + Mobile` · 1 MD · dep: 4.2.26  
 Xem học sinh đang thuộc lớp tại ngày đang xem, kèm ngày bắt đầu xếp lớp. Đọc được: School Admin, Principal, Vice Principal của phân hiệu đó và giáo viên chủ nhiệm lớp. School Admin, Principal và Vice Principal mở từ màn Xếp lớp: cột trái là danh sách lớp của năm học và phân hiệu đang lọc, nhóm theo khối kèm sĩ số và chủ nhiệm (lớp ngừng hoạt động ẩn sau công tắc), bấm một lớp thì cột phải hiện học sinh của lớp đó; giáo viên chủ nhiệm mở từ màn Danh sách học sinh (chỉ xem): đầu màn có khung gồm tên lớp, phân hiệu, năm học, ngày xem, sĩ số, tỉ lệ nam nữ và học sinh có sinh nhật trong tháng; bảng đánh số thứ tự, không chia trang, cột Kết thúc chỉ hiện khi có em đã rời lớp; chủ nhiệm nhiều lớp thì chuyển lớp bằng các nút ở đầu trang; bấm tên một em mở Hồ sơ học sinh (4.3.12). Trên mobile chủ nhiệm có danh sách gọn Học sinh lớp (họ tên, mã, lớp; tìm theo tên hoặc mã, dùng chung danh sách học sinh lớp chủ nhiệm của báo cáo tuần 4.7.13), mở từ Trang chủ; bấm một em mở Hồ sơ học sinh.
 
@@ -613,7 +613,7 @@ Không thao tác được trên tiết bị khóa; tiết bù trùng khung giờ
 
 ### SCD-03 Teacher Absence (Xử lý giáo viên vắng)
 
-Tổ trưởng có menu Giáo viên vắng của tổ: một danh sách khai báo của tổ (mọi phân hiệu) kèm tiến độ "đã quyết định x/y tiết"; bấm một khai báo thì dòng mở rộng, hiện các tiết của khai báo đó, mỗi tiết quyết định trong ngăn kéo bên phải bằng một đề xuất (dạy thay hoặc hủy). Vice Principal có menu Giáo viên vắng với hai tab Khai báo vắng (có nút Duyệt) và Tiết chờ xử lý (xử lý tay), không khai báo hay xóa khai báo. Principal có cùng menu chỉ xem: hai danh sách của phân hiệu đã chọn (mọi phân hiệu), ẩn các nút Duyệt và Xử lý tay. Mọi thao tác ghi lên lịch dạy vẫn chỉ Vice Principal phụ trách phân hiệu.
+Tổ trưởng có menu Giáo viên vắng của tổ: một danh sách khai báo của tổ (mọi phân hiệu) kèm tiến độ "đã quyết định x/y tiết"; bấm một khai báo thì dòng mở rộng, hiện các tiết của khai báo đó, mỗi tiết quyết định trong ngăn kéo bên phải bằng một đề xuất (dạy thay hoặc hủy), xong thì bấm Gửi duyệt ở dòng khai báo. Vice Principal có menu Giáo viên vắng với hai tab Khai báo vắng (danh sách giống của tổ trưởng: bấm một khai báo thì mở các tiết kèm quyết định của tổ trưởng, có nút Duyệt và Trả lại; chỉ hiện khai báo tổ trưởng đã gửi, khai báo đang soạn hoặc bị trả lại không hiện) và Tiết chờ xử lý (chỉ xem, kèm gợi ý mở lưới Điều chỉnh để xử lý), không khai báo hay xóa khai báo. Principal có cùng menu chỉ xem: hai danh sách của phân hiệu đã chọn (mọi phân hiệu), ẩn nút Duyệt và Trả lại. Mọi thao tác ghi lên lịch dạy vẫn chỉ Vice Principal phụ trách phân hiệu.
 
 **4.4.25 — Khai báo giáo viên vắng / Declare Teacher Absence**  
 `BE + Web` · 2 MD  
@@ -625,7 +625,7 @@ Khai báo không tự đổi lịch dạy: mọi tiết Đã xếp lịch chưa 
 
 **4.4.27 — Xem danh sách tiết Chờ xử lý / View Pending Lessons**  
 `BE + Web` · 1.5 MD · dep: 4.4.26  
-Danh sách tiết Chờ xử lý chưa kết thúc theo phân hiệu (tối đa 500 tiết), lọc theo khoảng ngày và lớp, mỗi dòng ghi nguyên nhân (giáo viên vắng nào), quyết định của tổ trưởng (dạy thay, hủy hoặc chưa quyết định) và mở được màn hình xử lý tay từng tiết. Màn hình Giáo viên vắng của Vice Principal có hai tab: Khai báo vắng (mở đầu, ghi tiến độ "tổ trưởng đã quyết định x/y tiết" và có nút Duyệt) và Tiết chờ xử lý. Tab Khai báo vắng ghi trạng thái mỗi khai báo: Đang hiệu lực (còn tiết chưa kết thúc) hoặc Đã qua (mọi tiết đã kết thúc, chỉ để tra cứu, không xóa được); mặc định chỉ hiện khai báo đang hiệu lực, có công tắc hiện cả khai báo đã qua. "Còn chờ xử lý" chỉ đếm tiết chưa kết thúc, tiết Chờ xử lý đã kết thúc mà không ai xử lý đếm ở cột "Bỏ lỡ".
+Danh sách tiết Chờ xử lý chưa kết thúc theo phân hiệu (tối đa 500 tiết), lọc theo khoảng ngày và lớp, mỗi dòng ghi nguyên nhân (giáo viên vắng nào) và kèm gợi ý mở lưới Điều chỉnh để xử lý từng tiết. Màn hình Giáo viên vắng của Vice Principal có hai tab: Khai báo vắng (mở đầu, ghi tiến độ "tổ trưởng đã quyết định x/y tiết" và có nút Duyệt) và Tiết chờ xử lý. Tab Khai báo vắng ghi trạng thái mỗi khai báo: Đang hiệu lực (còn tiết chưa kết thúc) hoặc Đã qua (mọi tiết đã kết thúc, hoặc không còn tiết nào chờ mà có tiết đã trôi qua không ai xử lý; chỉ để tra cứu, không xóa, không duyệt, không trả lại được); mặc định chỉ hiện khai báo đang hiệu lực, có công tắc hiện cả khai báo đã qua. "Còn chờ xử lý" chỉ đếm tiết chưa kết thúc, tiết Chờ xử lý đã kết thúc mà không ai xử lý đếm ở cột "Bỏ lỡ".
 
 **4.4.28 — Xem gợi ý giáo viên rảnh / View Free Teacher Suggestions**  
 `BE + Web` · 2 MD · dep: 4.4.27  
@@ -633,7 +633,7 @@ Teacher đủ điều kiện dạy, cùng tổ chuyên môn với môn của ti�
 
 **4.4.29 — Xử lý tiết chờ bằng cách chọn giáo viên dạy thay / Resolve by Substitute Teacher**  
 `BE + Web` · 1.5 MD · dep: 4.4.28  
-Vice Principal xử lý tay một tiết (kể cả tiết lỗi lúc duyệt và tiết môn của tổ khác). Lựa chọn 1: gán giáo viên được chọn, tiết quay lại Đã xếp lịch, xóa đề xuất của tổ trưởng. Backend kiểm lại điều kiện dạy và xung đột lịch toàn trường lúc lưu; giáo viên dạy thay nhận email phân công (4.4.23) (BR-06, BR-13, BR-16).
+Vice Principal xử lý một tiết ngay trên lưới Lịch dạy ở chế độ Điều chỉnh, bấm vào tiết đang Chờ xử lý (kể cả tiết lỗi lúc duyệt và tiết môn của tổ khác). Tiết đang chờ tổ trưởng (khai báo chưa gửi duyệt, môn thuộc tổ của giáo viên vắng, tổ đang có tổ trưởng) hiện "Chờ TT" trên lưới, mở ra chỉ xem, Backend từ chối xử lý cho tới khi tổ trưởng gửi duyệt; tổ không còn tổ trưởng thì xử lý như thường. Lựa chọn 1: gán giáo viên được chọn, tiết quay lại Đã xếp lịch, xóa đề xuất của tổ trưởng. Backend kiểm lại điều kiện dạy và xung đột lịch toàn trường lúc lưu; giáo viên dạy thay nhận email phân công (4.4.23) (BR-06, BR-13, BR-16).
 
 **4.4.30 — Xử lý tiết chờ bằng cách hủy / Resolve by Cancelling**  
 `BE + Web` · 0.5 MD · dep: 4.4.27  
@@ -645,7 +645,7 @@ Tiết Chờ xử lý đã kết thúc bị khóa (mục 6.2): không còn trong
 
 **4.4.32 — Xóa khai báo giáo viên vắng / Delete Teacher Absence**  
 `BE + Web` · 1.5 MD · dep: 4.4.26  
-Chỉ tổ trưởng đã khai (cho giáo viên thuộc tổ mình) xóa được. Xóa khai báo theo kiểu tất cả hoặc không: không xóa được khai báo đã qua; chỉ xóa được khi chưa có tiết nào của khai báo bị xử lý (dạy thay, hủy), giáo viên vẫn đủ điều kiện dạy (tài khoản Teacher không bị khóa, BR-06) và không trùng lịch ở tiết nào (BR-13). Khi đó mọi tiết của khai báo từ hôm nay trở đi trở về giáo viên, trạng thái Đã xếp lịch, các đề xuất bị bỏ, tiết đã qua ngày giữ nguyên; không đạt thì báo lỗi nêu nguyên nhân và không xóa gì. Tiết trống do khóa hoặc đổi loại tài khoản không tự khôi phục. Ghi Audit, thông báo giáo viên và học sinh của lớp (BR-06, BR-13, BR-16, BR-26, BR-28).
+Tổ trưởng đương nhiệm của tổ giáo viên vắng xóa được, kể cả khai báo do tổ trưởng trước khai. Xóa khai báo theo kiểu tất cả hoặc không: không xóa được khai báo đã qua; chỉ xóa được khi chưa có tiết nào của khai báo bị xử lý (dạy thay, hủy), giáo viên vẫn đủ điều kiện dạy (tài khoản Teacher không bị khóa, BR-06) và không trùng lịch ở tiết nào (BR-13). Khi đó mọi tiết của khai báo từ hôm nay trở đi trở về giáo viên, trạng thái Đã xếp lịch, các đề xuất bị bỏ, tiết đã qua ngày giữ nguyên; không đạt thì báo lỗi nêu nguyên nhân và không xóa gì. Tiết trống do khóa hoặc đổi loại tài khoản không tự khôi phục. Ghi Audit, thông báo giáo viên và học sinh của lớp (BR-06, BR-13, BR-16, BR-26, BR-28).
 
 **4.4.33 — Chọn giáo viên toàn trường kèm trạng thái rảnh hoặc bận / Pick School-wide Teacher with Availability**  
 `BE + Web` · 1.5 MD · dep: 4.4.14  
@@ -657,15 +657,23 @@ Tiết Chờ xử lý để trống giáo viên và không điểm danh được
 
 **4.4.38 — Tổ trưởng quyết định tiết bằng đề xuất / Department Head Proposes Resolution**
 `BE + Web` · 2 MD · dep: 4.4.26, 4.4.28
-Tổ trưởng quyết định từng tiết Chờ xử lý của khai báo, thuộc môn của tổ mình, ở mọi phân hiệu: đề xuất giáo viên dạy thay (cùng tổ, đủ điều kiện dạy, rảnh, không có khai báo vắng phủ tiết) hoặc đề xuất hủy tiết; đổi hoặc bỏ đề xuất được. Đề xuất chưa đổi lịch: tiết vẫn Chờ xử lý, để trống giáo viên. Tiết Chờ xử lý không thuộc khai báo nào (khóa hoặc đổi loại tài khoản) tổ trưởng không thấy và không quyết định. Khi quyết định xong tiết cuối của khai báo, Vice Principal của mỗi phân hiệu có tiết chờ duyệt nhận thông báo; đổi quyết định sau đó không báo lại. Ghi Audit mỗi đề xuất (BR-06, BR-13, BR-16, BR-26, BR-28).
+Tổ trưởng quyết định từng tiết Chờ xử lý của khai báo, thuộc môn của tổ mình, ở mọi phân hiệu: đề xuất giáo viên dạy thay (cùng tổ, đủ điều kiện dạy, rảnh, không có khai báo vắng phủ tiết) hoặc đề xuất hủy tiết; đổi hoặc bỏ đề xuất được. Đề xuất chưa đổi lịch: tiết vẫn Chờ xử lý, để trống giáo viên. Tiết Chờ xử lý không thuộc khai báo nào (khóa hoặc đổi loại tài khoản) tổ trưởng không thấy và không quyết định. Sửa đề xuất được cho tới khi gửi duyệt (4.4.41); từ lúc gửi đề xuất bị khóa. Ghi Audit mỗi đề xuất (BR-06, BR-13, BR-16, BR-28).
 
 **4.4.39 — Vice Principal duyệt khai báo giáo viên vắng / Approve Teacher Absence**
 `BE + Web` · 2.5 MD · dep: 4.4.38, 4.4.29, 4.4.30
-Chỉ duyệt được khi tổ trưởng đã quyết định mọi tiết còn chờ của khai báo (ở mọi phân hiệu); chưa đủ thì báo đã quyết định bao nhiêu trên tổng số tiết. Vice Principal mỗi phân hiệu duyệt một lần cho phần của mình: mọi đề xuất cho tiết ở phân hiệu mình được áp cùng lúc (Đã xếp lịch với giáo viên dạy thay, hoặc Đã hủy), kèm thông báo cho giáo viên dạy thay và học sinh của lớp, email phân công dạy thay (4.4.23) và một bản ghi Audit kèm danh sách mã tiết. Tất cả hoặc không: đề xuất không còn hợp lệ (giáo viên đã bận, đang vắng, không còn đủ điều kiện dạy, hoặc được đề xuất dạy hai lớp cùng khung giờ) thì không áp tiết nào và nêu tiết lỗi; Vice Principal xử lý tay tiết đó (4.4.29, 4.4.30) rồi duyệt lại. Tiết ở phân hiệu khác do Vice Principal phân hiệu đó duyệt (BR-06, BR-13, BR-15, BR-16, BR-26, BR-28).
+Chỉ duyệt được khai báo tổ trưởng đã gửi (4.4.41); chưa gửi hoặc đã bị trả lại thì từ chối. Vice Principal mỗi phân hiệu duyệt một lần cho phần của mình: mọi đề xuất cho tiết ở phân hiệu mình được áp cùng lúc (Đã xếp lịch với giáo viên dạy thay, hoặc Đã hủy), kèm thông báo cho giáo viên dạy thay và học sinh của lớp, email phân công dạy thay (4.4.23) và một bản ghi Audit kèm danh sách mã tiết. Tất cả hoặc không: đề xuất không còn hợp lệ (giáo viên đã bận, đang vắng, không còn đủ điều kiện dạy, hoặc được đề xuất dạy hai lớp cùng khung giờ) thì không áp tiết nào và nêu tiết lỗi; Vice Principal xử lý riêng tiết đó (4.4.29, 4.4.30) rồi duyệt lại. Tiết chưa có đề xuất (môn của tổ khác) giữ Chờ xử lý để Vice Principal xử lý riêng, không chặn việc duyệt phần còn lại. Tiết ở phân hiệu khác do Vice Principal phân hiệu đó duyệt (BR-06, BR-13, BR-15, BR-16, BR-26, BR-28).
+
+**4.4.41 — Tổ trưởng gửi duyệt khai báo giáo viên vắng / Submit Teacher Absence for Approval**
+`BE + Web` · 1.5 MD · dep: 4.4.38
+Khi đã quyết định mọi tiết thuộc môn của tổ mình còn chờ của khai báo (tiết môn của tổ khác không chặn), tổ trưởng bấm Gửi duyệt cho cả khai báo; chưa đủ thì báo còn bao nhiêu tiết chưa quyết định. Từ lúc gửi, đề xuất bị khóa và khai báo không xóa được; Vice Principal của mỗi phân hiệu có tiết nhận thông báo "Khai báo vắng chờ duyệt". Gửi lại sau khi bị trả về xóa lý do cũ. Ghi Audit (BR-16, BR-26, BR-28).
+
+**4.4.42 — Vice Principal trả lại khai báo giáo viên vắng / Return Teacher Absence**
+`BE + Web` · 1 MD · dep: 4.4.41
+Vice Principal của phân hiệu có tiết chờ của khai báo đã gửi trả lại cho tổ trưởng kèm lý do bắt buộc (tối đa 300 ký tự): đề xuất mở khóa, tổ trưởng đương nhiệm của tổ giáo viên vắng nhận thông báo (tổ không còn tổ trưởng thì người đã khai) và thấy lý do cho tới khi gửi lại; không đổi lịch. Chỉ trả lại được khai báo đã gửi. Ghi Audit (BR-16, BR-26, BR-28).
 
 **4.4.40 — Kiểm thử tổ trưởng khai báo và Vice Principal duyệt / Department Head and Approval Tests**
-`QA` · 2 MD · dep: 4.4.38, 4.4.39
-Tổ trưởng chỉ khai và đề xuất cho giáo viên và môn thuộc tổ mình, giáo viên khác và Vice Principal bị từ chối; không duyệt được khi còn tiết chưa quyết định; duyệt áp đúng dạy thay và hủy ở phân hiệu mình, phân hiệu khác do hiệu phó đó duyệt; duyệt thất bại thì không áp tiết nào và không gửi email; xử lý tay xóa đề xuất và cho duyệt phần còn lại; email dạy thay đúng người, hủy tiết không có email; tiết sau duyệt giống hệt tiết xử lý tay; xóa khai báo chỉ tổ trưởng đã khai, trả tiết và bỏ đề xuất.
+`QA` · 2 MD · dep: 4.4.38, 4.4.39, 4.4.41, 4.4.42
+Tổ trưởng chỉ khai và đề xuất cho giáo viên và môn thuộc tổ mình, giáo viên khác và Vice Principal bị từ chối; không gửi duyệt được khi còn tiết của tổ chưa quyết định, đề xuất và xóa bị khóa sau khi gửi, không duyệt được khai báo chưa gửi; trả lại cần lý do, mở khóa đề xuất và báo tổ trưởng; duyệt áp đúng dạy thay và hủy ở phân hiệu mình, tiết môn tổ khác giữ Chờ xử lý, phân hiệu khác do hiệu phó đó duyệt; duyệt thất bại thì không áp tiết nào và không gửi email; hiệu phó không xử lý riêng được tiết đang chờ tổ trưởng (trừ tổ không có tổ trưởng và tiết môn tổ khác), xử lý riêng sau khi gửi thì xóa đề xuất và cho duyệt phần còn lại; email dạy thay đúng người, hủy tiết không có email; tiết sau duyệt giống hệt tiết xử lý riêng; trả lại báo tổ trưởng đương nhiệm; khai báo không còn tiết chờ chuyển Đã qua; xóa khai báo do tổ trưởng đương nhiệm của tổ, trả tiết và bỏ đề xuất.
 
 ### SCD-04 Teaching Responsibility View (Phụ trách chuyên môn)
 
@@ -1085,4 +1093,4 @@ Không có API sửa hay xóa nhật ký; quyền CSDL chặn UPDATE và DELETE;
 
 ---
 
-**Tổng:** 240 task · 347 MD
+**Tổng:** 242 task · 349.5 MD
