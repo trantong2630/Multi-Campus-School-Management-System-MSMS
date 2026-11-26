@@ -90,7 +90,7 @@ public sealed class AttendanceService(MsmsDbContext db, CurrentUser user, ScopeR
 
     /// <summary>
     /// Ghi hoặc sửa điểm danh của một tiết. Mỗi học sinh đúng một bản ghi mỗi tiết; lưu lại là cập nhật bản ghi đó, hiệu lực ngay (BR-17).
-    /// - Giáo viên của tiết: tiết Đã xếp lịch, đúng ngày của tiết (4.5.3, 4.5.4).
+    /// - Giáo viên của tiết: tiết Đã xếp lịch, đúng ngày của tiết và từ 10 phút trước giờ bắt đầu tiết (4.5.3, 4.5.4).
     /// - School Admin: nhập bù hoặc sửa tiết Đã xếp lịch có ngày ≤ hôm nay; bản ghi mới mang cờ nhập bù (4.5.7, 4.5.8).
     /// - Mọi trường hợp khác bị chặn ở đây, không dựa vào giao diện (4.5.5).
     /// </summary>
@@ -98,8 +98,8 @@ public sealed class AttendanceService(MsmsDbContext db, CurrentUser user, ScopeR
     {
         var session = await LoadSessionAsync(sessionId);
         var isAdmin = user.AccountType == AccountTypes.SchoolAdmin;
-        var today = clock.Today;
-        var block = AttendanceRules.WriteBlockReason(user.AccountType, session.Status, session.TeacherId, session.SessionDate, user.PersonId, today);
+        var startTime = await db.PeriodSlot.AsNoTracking().Where(p => p.PeriodSlotId == session.PeriodSlotId).Select(p => p.StartTime).FirstAsync();
+        var block = AttendanceRules.WriteBlockReason(user.AccountType, session.Status, session.TeacherId, session.SessionDate, startTime, user.PersonId, clock.Now);
         // Tiết Chờ xử lý / Đã hủy: báo đúng điều kiện nghiệp vụ trước (BR-16). Sau đó mới tới phạm vi: không phải giáo viên của tiết → 403.
         if (block is not null && session.Status != AttendanceRules.SessionScheduled) throw ApiException.BadRequest(block);
         if (!isAdmin && session.TeacherId != user.PersonId)
@@ -309,7 +309,6 @@ public sealed class AttendanceService(MsmsDbContext db, CurrentUser user, ScopeR
 
     private async Task<AttendanceSheetDto> BuildSheetAsync(TeachingSession session)
     {
-        var today = clock.Today;
         var students = await db.Enrollment.AsNoTracking().RosterAt(session.ClassId, session.SessionDate)
             .Select(e => new { e.StudentId, e.Student.Student.FullName, e.Student.Student.PersonCode })
             .ToListAsync();
@@ -333,7 +332,7 @@ public sealed class AttendanceService(MsmsDbContext db, CurrentUser user, ScopeR
         }).OrderBy(r => LastName(r.FullName)).ThenBy(r => r.FullName).ToList();
 
         var dto = (await ProjectSessionsAsync([session.SessionId])).Single();
-        var readOnly = AttendanceRules.WriteBlockReason(user.AccountType, session.Status, session.TeacherId, session.SessionDate, user.PersonId, today);
+        var readOnly = AttendanceRules.WriteBlockReason(user.AccountType, session.Status, session.TeacherId, session.SessionDate, slot.StartTime, user.PersonId, clock.Now);
         var counts = session.Status == AttendanceRules.SessionScheduled ? Count(rows.Select(r => r.Label)) : new AttendanceCountsDto(0, 0, 0, 0, 0);
         return new AttendanceSheetDto(dto, user.AccountType == AccountTypes.SchoolAdmin && readOnly is null, readOnly, counts, rows);
     }
@@ -342,6 +341,7 @@ public sealed class AttendanceService(MsmsDbContext db, CurrentUser user, ScopeR
     private async Task<List<AttendanceSessionDto>> ProjectSessionsAsync(IReadOnlyCollection<long> sessionIds)
     {
         if (sessionIds.Count == 0) return [];
+        var now = clock.Now;
         var today = clock.Today;
         var rows = await db.TeachingSession.AsNoTracking().Where(s => sessionIds.Contains(s.SessionId))
             .OrderBy(s => s.SessionDate).ThenBy(s => s.PeriodSlot.StartTime).ThenBy(s => s.Class.Name)
@@ -368,7 +368,7 @@ public sealed class AttendanceService(MsmsDbContext db, CurrentUser user, ScopeR
             enrollments.Count(e => e.ClassId == r.ClassId && e.StartDate <= r.SessionDate && e.End >= r.SessionDate),
             r.Marked,
             r.Status == AttendanceRules.SessionScheduled && r.SessionDate < today && r.Marked == 0,
-            AttendanceRules.WriteBlockReason(user.AccountType, r.Status, r.TeacherId, r.SessionDate, user.PersonId, today) is null
+            AttendanceRules.WriteBlockReason(user.AccountType, r.Status, r.TeacherId, r.SessionDate, r.StartTime, user.PersonId, now) is null
         )).ToList();
     }
 

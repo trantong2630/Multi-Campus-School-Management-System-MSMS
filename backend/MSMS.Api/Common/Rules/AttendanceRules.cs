@@ -34,12 +34,8 @@ public static class AttendanceRules
     public const string LeaveApproved = "Approved";
     private const string AllDay = "AllDay";
 
-    /// <summary>
-    /// Giáo viên của tiết ghi hoặc sửa được: tiết Đã xếp lịch, đúng ngày của tiết (tới 23:59, giờ VN) — BR-17.
-    /// Dựa vào tiết chứ không dựa vào phụ trách chuyên môn nên giáo viên dạy thay ghi được.
-    /// </summary>
-    public static bool TeacherCanWrite(string sessionStatus, int? sessionTeacherId, DateOnly sessionDate, int personId, DateOnly today) =>
-        sessionStatus == SessionScheduled && sessionTeacherId == personId && sessionDate == today;
+    /// <summary>Giáo viên của tiết được mở bảng điểm danh sớm nhất bao nhiêu phút trước giờ bắt đầu tiết (BR-17.1).</summary>
+    public const int OpenEarlyMinutes = 10;
 
     /// <summary>School Admin nhập bù hoặc sửa: tiết Đã xếp lịch có ngày ≤ hôm nay (BR-02, BR-17).</summary>
     public static bool AdminCanWrite(string sessionStatus, DateOnly sessionDate, DateOnly today) =>
@@ -47,9 +43,12 @@ public static class AttendanceRules
 
     /// <summary>
     /// Lý do không ghi được, null nếu ghi được. Trả câu nêu nguyên nhân kèm cách xử lý (Conventions §4.6).
+    /// Giáo viên của tiết ghi được từ <see cref="OpenEarlyMinutes"/> phút trước giờ bắt đầu tiết tới hết ngày của tiết (giờ VN) — BR-17.1;
+    /// dựa vào tiết chứ không dựa vào phụ trách chuyên môn nên giáo viên dạy thay ghi được. <paramref name="now"/> là giờ VN.
     /// </summary>
-    public static string? WriteBlockReason(string accountType, string sessionStatus, int? sessionTeacherId, DateOnly sessionDate, int personId, DateOnly today)
+    public static string? WriteBlockReason(string accountType, string sessionStatus, int? sessionTeacherId, DateOnly sessionDate, TimeOnly startTime, int personId, DateTime now)
     {
+        var today = DateOnly.FromDateTime(now);
         if (sessionStatus == "Pending") return "Tiết đang Chờ xử lý, chưa có giáo viên nên chưa điểm danh được. Hiệu phó cần xếp giáo viên dạy thay trước.";
         if (sessionStatus != SessionScheduled) return "Tiết đã hủy nên không điểm danh.";
         if (accountType == AccountTypes.SchoolAdmin)
@@ -58,6 +57,9 @@ public static class AttendanceRules
         if (sessionTeacherId != personId) return "Chỉ giáo viên của tiết mới điểm danh được tiết này.";
         if (sessionDate > today) return "Tiết chưa tới ngày. Điểm danh vào đúng ngày của tiết.";
         if (sessionDate < today) return "Tiết đã qua ngày, giáo viên không sửa được nữa. Liên hệ quản trị hệ thống nếu cần sửa.";
+        var opensAt = startTime.ToTimeSpan() - TimeSpan.FromMinutes(OpenEarlyMinutes);
+        if (now.TimeOfDay < opensAt)
+            return $"Tiết chưa tới giờ. Điểm danh được từ {OpenEarlyMinutes} phút trước giờ bắt đầu tiết ({TimeOnly.FromTimeSpan(opensAt):HH:mm}).";
         return null;
     }
 
