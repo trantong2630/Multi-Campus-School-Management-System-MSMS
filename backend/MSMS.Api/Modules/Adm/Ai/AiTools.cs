@@ -227,11 +227,12 @@ internal sealed class AiTools(MsmsDbContext db, AiScope scope, SubjectResponsibi
             .ThenByDescending(s => kind == "unexcused" ? s.Sessions : s.Sessions - s.Excused).ThenBy(s => s.StudentId).ToList();
         var res = Result(f, period, "student", null);
         res["kind"] = kind;
+        res["definition"] = "days_with_absence = số ngày có ít nhất một tiết vắng (em có thể vẫn học các tiết còn lại trong ngày, không phải nghỉ cả ngày); absent_sessions = số tiết vắng.";
         res["total_students"] = perStudent.Count;
         AddRows(res, picked.Select(s => StudentRow(s.StudentId, classOf[current[s.StudentId]], new JsonObject
         {
             ["absent_sessions"] = s.Sessions, ["absent_excused"] = s.Excused, ["absent_unexcused"] = s.Sessions - s.Excused,
-            ["absent_days"] = s.Days, ["attendance_rate"] = s.Rate,
+            ["days_with_absence"] = s.Days, ["attendance_rate"] = s.Rate,
         })), limit);
         AddTies(res, picked.Select(s => (double?)key(s.Sessions, s.Excused)).ToList(), limit);
         return res;
@@ -496,7 +497,7 @@ internal sealed class AiTools(MsmsDbContext db, AiScope scope, SubjectResponsibi
 
         var attendance = AttendanceRow(mine, myAbsences);
         attendance.Remove("students_absent");
-        attendance["absent_days"] = myAbsences.Select(a => a.Date).Distinct().Count();
+        attendance["days_with_absence"] = myAbsences.Select(a => a.Date).Distinct().Count();
         attendance["streak_days"] = streak;
         attendance["class_rate"] = (double?)AttendanceRow(classTallies, classAbsences)["rate"];
 
@@ -535,6 +536,7 @@ internal sealed class AiTools(MsmsDbContext db, AiScope scope, SubjectResponsibi
         {
             ["student"] = StudentRow(studentId, cls, new JsonObject { ["gender"] = gender switch { "Male" => "Nam", "Female" => "Nữ", _ => null } }),
             ["period"] = period.ToJson(),
+            ["definition"] = "days_with_absence = số ngày có ít nhất một tiết vắng (em có thể vẫn học các tiết còn lại trong ngày, không phải nghỉ cả ngày); absent_sessions = số tiết vắng. streak_days = số ngày học liên tiếp vắng mọi tiết đã điểm danh.",
             ["attendance"] = attendance,
             ["practice"] = practice,
             ["group_by"] = "week",
@@ -660,7 +662,7 @@ internal sealed class AiTools(MsmsDbContext db, AiScope scope, SubjectResponsibi
             _ => rows.Select(r => r.Row).OrderByDescending(r => (int)r["affected_sessions"]!),
         };
         var result = Result(f with { Grades = [], ClassIds = [] }, period, groupBy, previous is not null ? period.Previous : null, subjects: true);
-        result["definition"] = "absent_days = số ngày vắng đã khai báo (trừ Chủ nhật); affected_sessions = tiết của giáo viên vắng (dạy thay, hủy, chờ xử lý) và tiết bị hủy ở các lớp trong phạm vi, không tính tiết hủy vì ngày nghỉ; "
+        result["definition"] = "absent_days = số ngày giáo viên có tiết bị khai vắng (không tính ngày nghỉ); affected_sessions = tiết của giáo viên vắng (dạy thay, hủy, chờ xử lý) và tiết bị hủy ở các lớp trong phạm vi, không tính tiết hủy vì ngày nghỉ; "
             + "theo tổ thì tiết của giáo viên vắng tính cho tổ của người vắng, tiết hủy không có ai vắng tính cho tổ của môn; pending = chưa có người dạy; pending_now = tiết sắp tới chưa có người dạy, cùng bộ lọc giáo viên, tổ.";
         // Tiết sắp tới còn chờ người dạy, lọc cùng giáo viên, tổ như phần trên.
         var pending = db.TeachingSession.AsNoTracking().Where(SessionLockRules.NotEnded(clock))

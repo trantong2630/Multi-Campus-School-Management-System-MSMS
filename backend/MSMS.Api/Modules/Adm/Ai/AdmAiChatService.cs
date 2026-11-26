@@ -117,7 +117,7 @@ public sealed class AdmAiChatService(MsmsDbContext db, CurrentUser user, ScopeRe
 
     private static readonly HashSet<string> LowerIsBetter =
     [
-        "unexcused_rate", "absent_excused", "absent_unexcused", "students_absent", "absent_sessions", "absent_days", "absent_teachers",
+        "unexcused_rate", "absent_excused", "absent_unexcused", "students_absent", "absent_sessions", "absent_days", "days_with_absence", "absent_teachers",
         "affected_sessions", "substituted", "cancelled", "pending", "streak_days",
     ];
 

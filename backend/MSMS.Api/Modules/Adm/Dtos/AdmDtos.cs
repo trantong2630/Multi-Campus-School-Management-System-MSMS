@@ -55,7 +55,7 @@ public sealed record LeadershipDepartmentRow(
     int DepartmentId, string Name, int TeacherCount, int AbsentTeachers, int AffectedSessions, int UnmarkedSessions,
     int AssignmentCount, double? SubmissionRate);
 
-/// <summary>Một giáo viên có việc cần nhắc trong 4 tuần: số ngày vắng (trừ Chủ nhật) và tiết đã qua chưa điểm danh.</summary>
+/// <summary>Một giáo viên có việc cần nhắc trong 4 tuần: số ngày có tiết bị khai vắng và tiết đã qua chưa điểm danh.</summary>
 public sealed record LeadershipTeacherRow(int StaffId, string Name, string? DepartmentName, int AbsentDays, int UnmarkedSessions);
 
 /// <summary>
