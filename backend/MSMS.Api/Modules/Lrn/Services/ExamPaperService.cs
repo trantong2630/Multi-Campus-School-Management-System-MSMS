@@ -73,6 +73,8 @@ public sealed class ExamPaperService(MsmsDbContext db, LrnAccess access, Subject
         if (questions.Count != ids.Count) throw ApiException.BadRequest("Có câu hỏi không còn tồn tại. Tải lại ngân hàng câu hỏi rồi chọn lại.");
         if (questions.Any(q => q.SubjectId != subject.SubjectId))
             throw ApiException.BadRequest($"Đề môn {subject.Name} chỉ gồm câu hỏi cùng môn. Bỏ các câu thuộc môn khác.");
+        if (questions.Select(q => q.GradeLevel).Where(g => g is not null).Distinct().Count() > 1)
+            throw ApiException.BadRequest("Đề chỉ gồm câu hỏi cùng một khối. Bỏ các câu thuộc khối khác.");
         if (questions.Any(q => q.Status != QuestionStatuses.Ready || q.IsHidden))
             throw ApiException.BadRequest("Có câu hỏi chưa Sẵn dùng hoặc đã bị ẩn khỏi ngân hàng. Bỏ các câu đó rồi thử lại.");
         if (questions.Any(q => q.Difficulty is null))

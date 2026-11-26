@@ -103,21 +103,20 @@ internal static class OperationsSupport
         return weekStarts.Select(w => byWeek.TryGetValue(w, out var g) ? DashboardSupport.Percent(g.Sum(a => a.Submitted), g.Sum(a => a.Recipients)) : null).ToList();
     }
 
-    /// <summary>Số ngày vắng (trừ Chủ nhật) của từng giáo viên trong [from, to], gộp các lần khai báo chồng nhau.</summary>
+    /// <summary>
+    /// Số ngày vắng của từng giáo viên trong [from, to]: số ngày khác nhau có ít nhất một tiết của giáo viên bị khai vắng, gộp các lần khai báo chồng nhau.
+    /// Khai theo tiết chỉ tính ngày có tiết bị khai; ngày nghỉ của trường hoặc phân hiệu (tiết hủy vì ngày nghỉ) và ngày giáo viên không có tiết không tính.
+    /// </summary>
     public static async Task<Dictionary<int, int>> AbsentDaysAsync(MsmsDbContext db, List<int> staffIds, DateOnly from, DateOnly to)
     {
         if (staffIds.Count == 0) return [];
-        var absences = await db.TeacherAbsence.AsNoTracking()
-            .Where(a => staffIds.Contains(a.TeacherId) && a.FromDate <= to && a.ToDate >= from)
-            .Select(a => new { a.TeacherId, a.FromDate, a.ToDate }).ToListAsync();
-        return absences.GroupBy(a => a.TeacherId).ToDictionary(g => g.Key, g => g
-            .SelectMany(a =>
-            {
-                var start = a.FromDate < from ? from : a.FromDate;
-                var end = a.ToDate > to ? to : a.ToDate;
-                return Enumerable.Range(0, end.DayNumber - start.DayNumber + 1).Select(i => start.AddDays(i));
-            })
-            .Where(d => d.DayOfWeek != DayOfWeek.Sunday).Distinct().Count());
+        var rows = await db.TeachingSession.AsNoTracking()
+            .Where(s => s.TeacherAbsenceId != null && staffIds.Contains(s.TeacherAbsence!.TeacherId)
+                && s.SessionDate >= from && s.SessionDate <= to
+                && !(s.Status == Outcomes.Cancelled && db.Holiday.Any(h => h.HolidayDate == s.SessionDate
+                    && h.AcademicYearId == s.Class.AcademicYearId && (h.CampusId == null || h.CampusId == s.Class.CampusId))))
+            .Select(s => new { TeacherId = s.TeacherAbsence!.TeacherId, s.SessionDate }).Distinct().ToListAsync();
+        return rows.GroupBy(r => r.TeacherId).ToDictionary(g => g.Key, g => g.Count());
     }
 
     /// <summary>Tiết đã qua (trước hôm nay), Đã xếp lịch, chưa có bản ghi điểm danh, theo giáo viên đứng lớp.</summary>

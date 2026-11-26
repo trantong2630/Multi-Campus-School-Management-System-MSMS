@@ -233,9 +233,10 @@ public sealed class WeeklyReportService(MsmsDbContext db, IClock clock, CurrentU
                 r.Assignment.Title,
                 SubjectName = r.Assignment.Subject.Name,
                 r.Assignment.DueAt,
+                r.Assignment.DurationMinutes,
                 Submission = r.Assignment.Submission
                     .Where(sb => sb.StudentId == studentId)
-                    .Select(sb => new { sb.SubmittedAt, sb.Score })
+                    .Select(sb => new { sb.SubmittedAt, sb.Score, sb.StartedAt })
                     .FirstOrDefault(),
             })
             .OrderBy(r => r.DueAt)
@@ -247,8 +248,8 @@ public sealed class WeeklyReportService(MsmsDbContext db, IClock clock, CurrentU
             string status;
             if (submittedAt != null)
                 status = "Submitted";
-            else if (now < r.DueAt)
-                status = "Unsubmitted";
+            else if (!AssignmentRules.IsPastDeadline(AssignmentRules.EffectiveDeadline(r.DueAt, r.DurationMinutes, r.Submission?.StartedAt), now))
+                status = "Unsubmitted";   // hạn thực tế như màn học sinh: bài có thời lượng đóng sớm hơn hạn nộp nếu đã bắt đầu
             else
                 status = "Missed";
 

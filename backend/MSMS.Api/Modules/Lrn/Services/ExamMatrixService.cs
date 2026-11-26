@@ -35,8 +35,48 @@ public sealed class ExamMatrixService(MsmsDbContext db, CurrentUser user)
             var counts = rows.TryGetValue(topic, out var c) ? c : rows[topic] = new int[Difficulties.All.Length];
             counts[Array.IndexOf(Difficulties.All, g.Difficulty)] += g.Count;
         }
-        return rows.OrderBy(r => r.Key, StringComparer.CurrentCultureIgnoreCase)
+        // Thứ tự bài trong sách (tập rồi thứ tự trong tập) cho chủ đề trùng tên bài; chủ đề tự gõ không có bài thì xếp sau, theo thứ tự tự nhiên.
+        var lessons = await db.TextbookLesson.AsNoTracking()
+            .Where(l => l.Book.SubjectId == subjectId && l.Book.GradeLevel == gradeLevel)
+            .Select(l => new { l.Title, l.Book.Volume, l.SortOrder }).ToListAsync();
+        var bookOrder = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var l in lessons) bookOrder.TryAdd(TextNormalizer.Normalize(l.Title), l.Volume * 10000 + l.SortOrder);
+        return rows.OrderBy(r => bookOrder.TryGetValue(r.Key, out var o) ? o : int.MaxValue)
+            .ThenBy(r => r.Key, NaturalComparer.Instance)
             .Select(r => new MatrixRowDto(r.Key, r.Value[0], r.Value[1], r.Value[2], r.Value[3])).ToList();
+    }
+
+    /// <summary>So sánh chữ có số theo giá trị số ("Bài 2" trước "Bài 10"), không phân biệt hoa thường.</summary>
+    internal sealed class NaturalComparer : IComparer<string>
+    {
+        public static readonly NaturalComparer Instance = new();
+
+        public int Compare(string? x, string? y)
+        {
+            x ??= ""; y ??= "";
+            int i = 0, j = 0;
+            while (i < x.Length && j < y.Length)
+            {
+                if (char.IsDigit(x[i]) && char.IsDigit(y[j]))
+                {
+                    var si = i; var sj = j;
+                    while (i < x.Length && char.IsDigit(x[i])) i++;
+                    while (j < y.Length && char.IsDigit(y[j])) j++;
+                    var a = x[si..i].TrimStart('0'); var b = y[sj..j].TrimStart('0');
+                    var byLength = a.Length.CompareTo(b.Length);
+                    if (byLength != 0) return byLength;
+                    var byDigits = string.CompareOrdinal(a, b);
+                    if (byDigits != 0) return byDigits;
+                }
+                else
+                {
+                    var c = string.Compare(x[i].ToString(), y[j].ToString(), StringComparison.CurrentCultureIgnoreCase);
+                    if (c != 0) return c;
+                    i++; j++;
+                }
+            }
+            return (x.Length - i).CompareTo(y.Length - j);
+        }
     }
 
     public async Task<PickQuestionsResultDto> PickAsync(PickQuestionsDto dto)
