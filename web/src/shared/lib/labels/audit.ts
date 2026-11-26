@@ -1,4 +1,9 @@
-// Nhật ký (AuditLog, BR-28): ba nhóm sự kiện, các hành động và trường nội dung của bản ghi.
+// Nhật ký (AuditLog, BR-28). Bản ghi mới lưu nhóm, hành động và tên trường nội dung bằng tiếng Việt nên hiện nguyên văn.
+// Các bảng dưới đây chỉ để đọc bản ghi cũ còn lưu bằng mã tiếng Anh.
+
+/** Năm nhóm sự kiện hiện có, dùng cho ô lọc theo nhóm. */
+export const auditCategories = ['Tài khoản', 'Phát hành thời khóa biểu', 'Điều chỉnh lịch', 'Trách nhiệm', 'Điểm danh'];
+
 export const auditCategoryLabel: Record<string, string> = {
   Account: 'Tài khoản',
   TimetablePublish: 'Phát hành thời khóa biểu',

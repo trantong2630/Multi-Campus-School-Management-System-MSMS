@@ -237,9 +237,8 @@ public sealed class CalendarService(MsmsDbContext db, CurrentUser user, IClock c
         foreach (var byTeacher in sessions.Where(s => s.TeacherId != null).GroupBy(s => s.TeacherId!.Value))
             notifier.Add([byTeacher.Key], NotificationTypes.ScheduleChanged, title, Body(byTeacher.Count()), "TeachingSession", byTeacher.First().SessionId);
 
-        var detail = new Dictionary<string, object?> { ["date"] = date, ["cancelled"] = sessions.Count };
-        if (holiday.CampusId is { } campusId) detail["campusId"] = campusId;
-        audit.AddLong(AuditCategories.ScheduleAdjust, "CancelSessionsForHoliday", sessions.Select(s => s.SessionId), detail);
+        audit.AddLong(AuditCategories.ScheduleAdjust, AuditActions.CancelSessionsForHoliday, sessions.Select(s => s.SessionId),
+            ("Ngày", date), ("Số tiết hủy", sessions.Count), ("Phân hiệu", holiday.CampusId));
         return sessions.Count;
     }
 

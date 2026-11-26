@@ -29,14 +29,18 @@ public sealed class ScheduleSupport(MsmsDbContext db, ScopeResolver scope, Curre
     /// <summary>Tải tiết kèm lớp, khung giờ, môn, giáo viên; người gọi phải là hiệu phó đang phụ trách phân hiệu của lớp.</summary>
     public async Task<TeachingSession> LoadManagedSessionAsync(long sessionId)
     {
-        var session = await db.TeachingSession
+        var session = await LoadSessionAsync(sessionId);
+        await scope.EnsureCanManageCampusAsync(session.Class.CampusId);
+        return session;
+    }
+
+    /// <summary>Tải tiết kèm lớp, khung giờ, môn, giáo viên, không kiểm phạm vi; người gọi tự kiểm (hiệu phó theo phân hiệu, tổ trưởng theo tổ).</summary>
+    public async Task<TeachingSession> LoadSessionAsync(long sessionId) =>
+        await db.TeachingSession
             .Include(s => s.Class).ThenInclude(c => c.Campus)
             .Include(s => s.PeriodSlot).Include(s => s.Subject)
             .Include(s => s.Teacher!).ThenInclude(t => t.Staff)
             .FirstOrDefaultAsync(s => s.SessionId == sessionId) ?? throw ApiException.NotFound("Không tìm thấy tiết.");
-        await scope.EnsureCanManageCampusAsync(session.Class.CampusId);
-        return session;
-    }
 
     /// <summary>Tiết bị khóa (mục 6.2): tiết đã kết thúc, hoặc đã có điểm danh. Tiết bị khóa không đổi giáo viên, không hủy.</summary>
     public async Task EnsureNotLockedAsync(TeachingSession s)
@@ -111,10 +115,19 @@ public sealed class ScheduleSupport(MsmsDbContext db, ScopeResolver scope, Curre
             .GroupBy(x => x.TeacherId).ToDictionary(g => g.Key, g => $"{g.First().Class} · {g.First().Campus}");
         var absent = (await db.TeacherAbsence.AsNoTracking().Covering(date, slot.PeriodSlotId)
                 .Select(a => a.TeacherId).ToListAsync()).ToHashSet();
+        var dayCounts = (await db.TeachingSession.AsNoTracking()
+                .Where(s => s.TeacherId != null && s.SessionDate == date && s.Status == "Scheduled" && s.SessionId != excludeSessionId)
+                .GroupBy(s => s.TeacherId!.Value).Select(g => new { TeacherId = g.Key, Count = g.Count() }).ToListAsync())
+            .ToDictionary(x => x.TeacherId, x => x.Count);
 
         return teachers.Select(t => new TeacherAvailabilityDto(
-            t.StaffId, t.Name, t.TeacherAbbr, t.Campus, busy.ContainsKey(t.StaffId), busy.GetValueOrDefault(t.StaffId), absent.Contains(t.StaffId))).ToList();
+            t.StaffId, t.Name, t.TeacherAbbr, t.Campus, busy.ContainsKey(t.StaffId), busy.GetValueOrDefault(t.StaffId), absent.Contains(t.StaffId),
+            dayCounts.GetValueOrDefault(t.StaffId))).ToList();
     }
+
+    /// <summary>Báo cho hiệu phó đang phụ trách phân hiệu (loại SessionPending, BR-26): có tiết Chờ xử lý hoặc có đề xuất dạy thay cần xem.</summary>
+    public async Task NotifyVicesAsync(int campusId, string title, string body) =>
+        notifier.Add(await ViceIdsAsync(campusId), NotificationTypes.SessionPending, title, body);
 
     public Task<List<int>> ViceIdsAsync(int campusId)
     {

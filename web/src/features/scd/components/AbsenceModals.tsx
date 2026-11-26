@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Checkbox, DatePicker, Form, Input, Modal, Radio, Select } from 'antd';
+import { Checkbox, DatePicker, Form, Input, Modal, Progress, Radio, Select, Tag } from 'antd';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { useState } from 'react';
@@ -8,10 +8,10 @@ import { FormModal } from '@/shared/components/FormModal';
 import { InlineAlert } from '@/shared/components/InlineAlert';
 import { getErrorMessage } from '@/app/apiClient';
 import { message } from '@/shared/lib/antdStatic';
-import { toDateString } from '@/shared/lib/format';
+import { formatDate, formatTime, sessionOfDayLabel, toDateString, weekdayOfDate } from '@/shared/lib/format';
 import { scdApi } from '../api';
 import { slotLabel } from '../labels';
-import type { ResolveAction } from '../types';
+import type { PendingSession, ResolveAction } from '../types';
 import { TeacherSelect } from './TeacherSelect';
 import './scd.css';
 
@@ -45,7 +45,7 @@ type Scope = 'days' | 'slots';
  * Khai báo không tự đổi lịch — các tiết bị ảnh hưởng ở phân hiệu của bạn chuyển sang Chờ xử lý và để trống giáo viên.
  * Đây không phải đơn xin nghỉ của cán bộ.
  */
-export function DeclareAbsenceModal({ open, campusId, onClose, onDone }: { open: boolean; campusId: number; onClose: () => void; onDone: () => void }) {
+export function DeclareAbsenceModal({ open, onClose, onDone }: { open: boolean; onClose: () => void; onDone: () => void }) {
   const qc = useQueryClient();
   const [teacherId, setTeacherId] = useState<number | undefined>();
   const [scope, setScope] = useState<Scope>('days');
@@ -56,7 +56,7 @@ export function DeclareAbsenceModal({ open, campusId, onClose, onDone }: { open:
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const teachers = useQuery({ queryKey: ['scd', 'absenceTeachers', campusId], queryFn: () => scdApi.absenceTeachers(campusId), enabled: open });
+  const teachers = useQuery({ queryKey: ['scd', 'departmentTeachers'], queryFn: scdApi.departmentTeachers, enabled: open });
   const slots = useQuery({ queryKey: ['sch', 'slots'], queryFn: schApi.periodSlots.list, enabled: open });
   const activeSlots = (slots.data ?? []).filter((p) => p.isActive)
     .sort((a, b) => (a.sessionOfDay === b.sessionOfDay ? a.periodNo - b.periodNo : a.sessionOfDay === 'Morning' ? -1 : 1));
@@ -73,11 +73,12 @@ export function DeclareAbsenceModal({ open, campusId, onClose, onDone }: { open:
     try {
       const from = scope === 'days' ? range![0] : day!;
       const to = scope === 'days' ? range![1] : day!;
-      const res = await scdApi.declareAbsence({
+      const body = {
         teacherId, fromDate: toDateString(from), toDate: toDateString(to),
         slotIds: scope === 'slots' ? slotIds : undefined, reason: reason.trim() || undefined,
-      });
-      message.success(`Đã khai báo: ${res.pendingCount} tiết chuyển sang Chờ xử lý. Nhấp vào tiết viền vàng trên lưới Điều chỉnh hoặc mở danh sách Tiết chờ xử lý để xử lý.`);
+      };
+      const res = await scdApi.declareDepartmentAbsence(body);
+      message.success(`Đã khai báo: ${res.pendingCount} tiết chuyển sang Chờ xử lý. Quyết định từng tiết (người dạy thay hoặc hủy) ở tab Tiết cần dạy thay; hiệu phó sẽ duyệt khi bạn quyết định xong.`);
       await qc.invalidateQueries({ queryKey: ['scd'] });
       reset();
       onDone();
@@ -94,13 +95,14 @@ export function DeclareAbsenceModal({ open, campusId, onClose, onDone }: { open:
       okText="Khai báo vắng" cancelText="Đóng" onOk={submit} confirmLoading={submitting} okButtonProps={{ disabled: !ready }}
     >
       <p className="muted" style={{ marginTop: 0 }}>
-        Chỉ ghi nhận hệ quả lên lịch dạy, không phải đơn xin nghỉ của cán bộ. Chỉ ảnh hưởng tiết ở phân hiệu của bạn; giáo viên dạy phân hiệu khác thì hiệu phó phân hiệu đó tự khai.
+        Chỉ ghi nhận hệ quả lên lịch dạy, không phải đơn xin nghỉ của cán bộ. Khai cho giáo viên của tổ mình, ảnh hưởng tiết ở mọi phân hiệu giáo viên đó dạy.
+        Sau khi khai, bạn quyết định từng tiết (người dạy thay hoặc hủy); hiệu phó phân hiệu có tiết chỉ duyệt.
       </p>
       <Form layout="vertical" requiredMark={false} onValuesChange={() => setError(null)}>
         <Form.Item label="Giáo viên" required>
           <Select
             showSearch optionFilterProp="label" placeholder="Chọn giáo viên" loading={teachers.isLoading} value={teacherId} onChange={setTeacherId}
-            notFoundContent="Phân hiệu chưa có giáo viên nào còn tiết từ hôm nay"
+            notFoundContent="Tổ chưa có giáo viên nào"
             options={teachers.data?.map((t) => ({ value: t.teacherId, label: t.abbr ? `${t.name} (${t.abbr})` : t.name }))}
           />
         </Form.Item>
@@ -148,6 +150,8 @@ export interface ResolveTarget {
   title: string;
   /** Dòng mô tả: ngày, khung giờ, nguyên nhân. */
   summary: string;
+  /** Quyết định của tổ trưởng cho tiết (ví dụ "Tổ trưởng đề xuất Toán B dạy thay."): hiện cho hiệu phó tham khảo, hiệu phó vẫn được chọn cách khác. */
+  proposal?: string | null;
 }
 
 interface ResolveValues {
@@ -176,6 +180,7 @@ export function ResolveModal({ target, onClose, onDone }: { target: ResolveTarge
       initialValues={{ action: 'Substitute' }}
     >
       {target && <p className="muted" style={{ marginTop: 0 }}>{target.summary}</p>}
+      {target?.proposal && <InlineAlert type="info" title={`${target.proposal} Bạn có thể làm theo hoặc chọn cách khác.`} />}
       <Form.Item name="action" label="Cách xử lý" rules={[{ required: true }]}>
         <ResolveChoice />
       </Form.Item>
@@ -187,6 +192,81 @@ export function ResolveModal({ target, onClose, onDone }: { target: ResolveTarge
       {action === 'Cancel' && (
         <InlineAlert type="info" title="Tiết chuyển sang Đã hủy: không dạy, không điểm danh, không tính chuyên cần. Giáo viên và học sinh của lớp được thông báo." />
       )}
+    </FormModal>
+  );
+}
+
+// ---------------------------------------------------------------- Tổ trưởng quyết định từng tiết
+interface DecideValues {
+  action: 'Substitute' | 'Cancel';
+  teacherId?: number;
+}
+
+/**
+ * Tổ trưởng quyết định một tiết Chờ xử lý của môn thuộc tổ mình: giáo viên dạy thay (gợi ý giáo viên rảnh cùng tổ) hoặc hủy tiết.
+ * Quyết định chưa đổi lịch: hiệu phó của phân hiệu duyệt khi tổ trưởng đã quyết định hết mọi tiết của khai báo (BR-16).
+ * Mở từ bên phải như các form nhiều thông tin khác; hiện bối cảnh của tiết (giờ học, lý do vắng) và tiến độ cả danh sách.
+ */
+export function ProposeModal({ target, decided, total, onClose, onDone }: {
+  target: PendingSession | null;
+  /** Số tiết đã có quyết định trên tổng số tiết đang chờ của tổ. */
+  decided: number;
+  total: number;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [form] = Form.useForm<DecideValues>();
+  const action = Form.useWatch('action', form) as DecideValues['action'] | undefined;
+
+  const submit = async (v: DecideValues) => {
+    await scdApi.proposeSession(target!.sessionId, { action: v.action, teacherId: v.action === 'Substitute' ? v.teacherId : null });
+    message.success('Đã lưu quyết định cho tiết này.');
+    onDone();
+  };
+
+  const slotText = target ? `${sessionOfDayLabel(target.sessionOfDay)} · Tiết ${target.periodNo} · ${formatTime(target.startTime)}–${formatTime(target.endTime)}` : '';
+  const absenceRange = target?.absenceFrom && target.absenceTo
+    ? (target.absenceFrom === target.absenceTo ? formatDate(target.absenceFrom) : `${formatDate(target.absenceFrom)} – ${formatDate(target.absenceTo)}`)
+    : null;
+
+  return (
+    <FormModal
+      open={target !== null} form={form} onClose={onClose} onSubmit={submit} variant="drawer" width={560} okText="Lưu quyết định"
+      title="Quyết định tiết cần dạy thay"
+      initialValues={{ action: target?.proposedAction ?? 'Substitute', teacherId: target?.proposedTeacherId }}
+    >
+      {target && (
+        <>
+          <div className="dc-progress">
+            <span className="tabular">Đã quyết định {decided}/{total} tiết của tổ</span>
+            <Progress percent={total > 0 ? Math.round((decided / total) * 100) : 0} size="small" showInfo={false} />
+          </div>
+          <div className="dc-card">
+            <div className="dc-card__title">
+              <span>{target.subjectName} — lớp {target.className}</span>
+              <small>{target.campusName}</small>
+              {target.proposedAction === 'Cancel' && <Tag color="red">Đang đề xuất hủy</Tag>}
+              {target.proposedAction === 'Substitute' && <Tag color="blue">Đang đề xuất {target.proposedTeacherName}</Tag>}
+            </div>
+            <dl className="dc-card__grid">
+              <div><dt>Ngày</dt><dd className="tabular">{weekdayOfDate(target.date)}, {formatDate(target.date)}</dd></div>
+              <div><dt>Tiết</dt><dd className="tabular">{slotText}</dd></div>
+              <div><dt>Giáo viên vắng</dt><dd>{target.absentTeacherName ?? '—'}</dd></div>
+              <div><dt>Khoảng vắng</dt><dd className="tabular">{absenceRange ?? '—'}</dd></div>
+              <div className="dc-card__wide"><dt>Lý do vắng</dt><dd>{target.absenceReason ?? <span className="muted">Không ghi lý do</span>}</dd></div>
+            </dl>
+          </div>
+        </>
+      )}
+      <Form.Item name="action" label="Quyết định" rules={[{ required: true }]}>
+        <ResolveChoice />
+      </Form.Item>
+      {action === 'Substitute' && target && (
+        <Form.Item name="teacherId" label="Giáo viên dạy thay (giáo viên rảnh trong tổ, tối đa 10, sắp theo tên)" rules={[{ required: true, message: 'Chọn giáo viên' }]}>
+          <TeacherSelect suggestForSessionId={target.sessionId} asDepartmentHead />
+        </Form.Item>
+      )}
+      <InlineAlert type="info" title="Quyết định chưa đổi lịch: tiết vẫn Chờ xử lý cho tới khi hiệu phó duyệt, và hiệu phó chỉ duyệt khi bạn quyết định hết mọi tiết của khai báo." />
     </FormModal>
   );
 }

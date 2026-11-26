@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, DatePicker, Select, Switch, Tabs, Tag, Tooltip } from 'antd';
 import type { Dayjs } from 'dayjs';
-import { ClipboardCheck, Trash2, UserRoundX } from 'lucide-react';
+import { BadgeCheck, ClipboardCheck } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/app/AuthProvider';
 import { schApi } from '@/features/sch/api';
@@ -14,34 +14,28 @@ import { message } from '@/shared/lib/antdStatic';
 import { confirmAction, showError } from '@/shared/lib/feedback';
 import { formatDate, formatTime, sessionOfDayLabel, toDateString, weekdayOfDate } from '@/shared/lib/format';
 import { scdApi } from '../api';
-import { DeclareAbsenceModal, ResolveModal } from '../components/AbsenceModals';
+import { ResolveModal } from '../components/AbsenceModals';
 import type { ResolveTarget } from '../components/AbsenceModals';
 import { absenceScopeLabel } from '../labels';
 import type { Absence, PendingSession } from '../types';
 import { useScdCampus } from '../useScdCampus';
 
-/** SCD-03: giáo viên vắng. Khai báo không tự đổi lịch — tiết bị ảnh hưởng về Chờ xử lý, hiệu phó quyết định từng tiết (BR-16). */
+/**
+ * SCD-03: giáo viên vắng. Tổ trưởng khai báo và quyết định từng tiết; hiệu phó chỉ duyệt khi tổ trưởng đã quyết định hết (BR-16), hoặc xử lý tay từng tiết.
+ * Hiệu trưởng xem được cả hai danh sách (toàn trường) nhưng không duyệt hay xử lý tiết: đó là việc của Hiệu phó.
+ */
 export function AbsencePage() {
   const qc = useQueryClient();
-  // Hiệu trưởng xem được cả hai danh sách (toàn trường) nhưng không khai báo, xóa hay xử lý tiết: đó là việc của Hiệu phó (BR-16).
   const canManage = useAuth().user?.accountType === 'VicePrincipal';
   const { campuses, effective: effectiveCampus, select: campusSelect, head: campusHead } = useScdCampus();
-  const [declareOpen, setDeclareOpen] = useState(false);
-  const [tab, setTab] = useState('pending');
+  const [tab, setTab] = useState('absences');
 
   // Không làm mới gợi ý giáo viên: ô chọn trong hộp "Xử lý tiết" vẫn đang mở, gọi lại cho tiết vừa xử lý xong sẽ bị báo lỗi vì tiết không còn Chờ xử lý.
   const refresh = () => qc.invalidateQueries({ queryKey: ['scd'], predicate: (q) => q.queryKey[1] !== 'teacherAvailability' });
 
   return (
     <>
-      <PageHeader
-        title="Giáo viên vắng"
-        extra={canManage && (
-          <Button type="primary" icon={<UserRoundX size={16} />} disabled={effectiveCampus === undefined} onClick={() => setDeclareOpen(true)}>
-            Khai báo vắng
-          </Button>
-        )}
-      />
+      <PageHeader title="Giáo viên vắng" />
       {campusHead}
       {campuses.isSuccess && campuses.data.length === 0 && canManage && (
         <InlineAlert type="warning" title="Chưa có phân hiệu nào để thao tác" description="Hiệu phó cần được gán phụ trách phân hiệu ở Hồ sơ → Trách nhiệm." />
@@ -50,15 +44,9 @@ export function AbsencePage() {
         <Tabs
           activeKey={tab} onChange={setTab}
           items={[
-            { key: 'pending', label: 'Tiết chờ xử lý', children: <PendingTab campusId={effectiveCampus} lead={campusSelect} canManage={canManage} onChanged={refresh} /> },
             { key: 'absences', label: 'Khai báo vắng', children: <AbsenceTab campusId={effectiveCampus} lead={campusSelect} canManage={canManage} onChanged={refresh} /> },
+            { key: 'pending', label: 'Tiết chờ xử lý', children: <PendingTab campusId={effectiveCampus} lead={campusSelect} canManage={canManage} onChanged={refresh} /> },
           ]}
-        />
-      )}
-      {effectiveCampus !== undefined && canManage && (
-        <DeclareAbsenceModal
-          open={declareOpen} campusId={effectiveCampus} onClose={() => setDeclareOpen(false)}
-          onDone={() => { setDeclareOpen(false); setTab('pending'); }}
         />
       )}
     </>
@@ -85,6 +73,7 @@ function PendingTab({ campusId, lead, canManage, onChanged }: { campusId: number
   const resolve = (s: PendingSession) => setResolving({
     sessionId: s.sessionId, title: `${s.subjectName} — lớp ${s.className}`,
     summary: `${weekdayOfDate(s.date)} ${formatDate(s.date)}, ${sessionOfDayLabel(s.sessionOfDay)} tiết ${s.periodNo}. ${s.absentTeacherName ? `Giáo viên vắng: ${s.absentTeacherName}.` : (s.note ?? '')}`,
+    proposal: s.proposedAction === 'Cancel' ? 'Tổ trưởng đề xuất hủy tiết.' : s.proposedAction === 'Substitute' ? `Tổ trưởng đề xuất ${s.proposedTeacherName} dạy thay.` : null,
   });
 
   return (
@@ -119,13 +108,18 @@ function PendingTab({ campusId, lead, canManage, onChanged }: { campusId: number
               render: (_: unknown, s: PendingSession) => s.absentTeacherName ? `${s.absentTeacherName} vắng` : (s.note ?? '—'),
             },
             {
+              title: 'Quyết định của tổ trưởng', key: 'proposal', width: 210,
+              render: (_: unknown, s: PendingSession) => s.proposedAction === 'Cancel' ? <Tag color="red">Hủy tiết</Tag>
+                : s.proposedAction === 'Substitute' ? <Tag color="blue">Dạy thay: {s.proposedTeacherName}</Tag> : <span className="muted">Chưa quyết định</span>,
+            },
+            {
               title: 'Tình trạng', key: 'state', width: 130, align: 'center',
               render: () => <Tag color="gold">Chờ xử lý</Tag>,
             },
             ...(canManage ? [{
               title: 'Thao tác', key: 'actions', width: 90, align: 'center' as const, fixed: 'right' as const,
               render: (_: unknown, s: PendingSession) => (
-                <RowActions actions={[{ key: 'resolve', label: 'Xử lý tiết', icon: <ClipboardCheck size={16} />, onClick: () => resolve(s) }]} />
+                <RowActions actions={[{ key: 'resolve', label: 'Xử lý tay', icon: <ClipboardCheck size={16} />, onClick: () => resolve(s) }]} />
               ),
             }] : []),
           ]}
@@ -144,18 +138,18 @@ function AbsenceTab({ campusId, lead, canManage, onChanged }: { campusId: number
   const visible = (absences.data ?? []).filter((a) => showPast || !a.isPast);
   const hiddenPast = (absences.data ?? []).length - (absences.data ?? []).filter((a) => !a.isPast).length;
 
-  const remove = (a: Absence) => confirmAction({
-    title: `Xóa khai báo vắng của ${a.teacherName}?`,
-    content: `${a.pendingCount} tiết đang Chờ xử lý sẽ trở về ${a.teacherName}. Nếu giáo viên đã có tiết khác trùng lịch ở một tiết nào đó thì không xóa được, và bạn xử lý tiết đó trước.`,
-    okText: 'Xóa khai báo',
-    danger: true,
+  // Duyệt: áp mọi quyết định của tổ trưởng cho tiết ở phân hiệu này cùng lúc, tất cả hoặc không. Chỉ duyệt được khi tổ trưởng đã quyết định hết mọi tiết.
+  const approve = (a: Absence) => confirmAction({
+    title: `Duyệt khai báo vắng của ${a.teacherName}?`,
+    content: `${a.pendingCount} tiết ở phân hiệu này được áp theo quyết định của tổ trưởng (giáo viên dạy thay hoặc hủy tiết). Giáo viên dạy thay và học sinh của lớp được thông báo. Nếu một quyết định không còn hợp lệ thì không tiết nào được áp và bạn xử lý tay tiết đó trước.`,
+    okText: 'Duyệt',
     onOk: async () => {
       try {
-        const res = await scdApi.deleteAbsence(a.absenceId);
+        const res = await scdApi.approveAbsence(a.absenceId);
         onChanged();
-        message.success(`Đã xóa khai báo, ${res.restoredCount} tiết trở về giáo viên.`);
+        message.success(`Đã duyệt: ${res.substitutedCount} tiết có người dạy thay, ${res.cancelledCount} tiết hủy${res.otherCampusPendingCount > 0 ? `. ${res.otherCampusPendingCount} tiết ở phân hiệu khác chờ hiệu phó đó duyệt` : ''}.`);
       } catch (e) {
-        showError(e, 'Không xóa được khai báo');
+        showError(e, 'Không duyệt được khai báo');
       }
     },
   });
@@ -186,18 +180,22 @@ function AbsenceTab({ campusId, lead, canManage, onChanged }: { campusId: number
               title: 'Trạng thái', key: 'state', width: 130, align: 'center',
               render: (_: unknown, a: Absence) => a.isPast ? <Tag>Đã qua</Tag> : <Tag color="green">Đang hiệu lực</Tag>,
             },
+            {
+              title: 'Tổ trưởng đã quyết định', key: 'decided', width: 160, align: 'right', className: 'tabular',
+              render: (_: unknown, a: Absence) => a.awaitingCount > 0 ? `${a.decidedCount}/${a.awaitingCount} tiết` : '—',
+            },
             { title: 'Còn chờ xử lý', dataIndex: 'pendingCount', width: 120, align: 'right', className: 'tabular' },
             { title: 'Bỏ lỡ', dataIndex: 'missedCount', width: 90, align: 'right', className: 'tabular', render: (v: number) => v > 0 ? <span style={{ color: 'var(--c-amber)' }}>{v}</span> : v },
             { title: 'Đã xử lý', dataIndex: 'handledCount', width: 100, align: 'right', className: 'tabular' },
             ...(canManage ? [{
               title: 'Thao tác', key: 'actions', width: 90, align: 'center' as const, fixed: 'right' as const,
               // Khai báo đã qua không còn thao tác nào: để trống thay vì một nút tắt.
-              render: (_: unknown, a: Absence) => a.isPast ? null : (
+              render: (_: unknown, a: Absence) => a.isPast || a.pendingCount === 0 ? null : (
                 <div className="row-actions">
-                  <Tooltip title={a.canDelete ? 'Xóa khai báo' : 'Đã có tiết được xử lý (dạy thay hoặc hủy), không xóa được'}>
+                  <Tooltip title={a.canApprove ? 'Duyệt khai báo' : `Chờ tổ trưởng quyết định hết các tiết (${a.decidedCount}/${a.awaitingCount})`}>
                     <Button
-                      type="text" className="icon-btn" danger disabled={!a.canDelete} aria-label="Xóa khai báo"
-                      icon={<Trash2 size={16} />} onClick={() => remove(a)}
+                      type="text" className="icon-btn" disabled={!a.canApprove} aria-label="Duyệt khai báo"
+                      icon={<BadgeCheck size={16} />} onClick={() => approve(a)}
                     />
                   </Tooltip>
                 </div>

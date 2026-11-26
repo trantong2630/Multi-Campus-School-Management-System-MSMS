@@ -39,10 +39,10 @@ public class AuditLogTests
     private static void Seed(MsmsDbContext db)
     {
         db.AuditLog.AddRange(
-            Entry(1, AuditCategories.Account, "CreateAccount", Admin, Day, "[10]"),
-            Entry(2, AuditCategories.TimetablePublish, "PublishTimetable", Vice, Day.AddDays(1), "[5]"),
-            Entry(3, AuditCategories.ScheduleAdjust, "CancelSession", Vice, Day.AddDays(2), "[77]"),
-            Entry(4, AuditCategories.Account, "BulkCreateAccounts", Admin, Day.AddDays(2), "[10,11,12]"));
+            Entry(1, AuditCategories.Account, AuditActions.CreateAccount, Admin, Day, "[10]"),
+            Entry(2, AuditCategories.TimetablePublish, AuditActions.PublishTimetable, Vice, Day.AddDays(1), "[5]"),
+            Entry(3, AuditCategories.ScheduleAdjust, AuditActions.CancelSession, Vice, Day.AddDays(2), "[77]"),
+            Entry(4, AuditCategories.Account, AuditActions.BulkCreateAccounts, Admin, Day.AddDays(2), "[10,11,12]"));
         db.SaveChanges();
     }
 
@@ -88,10 +88,10 @@ public class AuditLogTests
     {
         var (db, svc) = Create();
         db.AuditLog.AddRange(
-            Entry(1, AuditCategories.Account, "LockAccount", Admin, new DateTime(2026, 11, 1, 23, 59, 59)),
-            Entry(2, AuditCategories.Account, "LockAccount", Admin, new DateTime(2026, 11, 2, 0, 0, 0)),
-            Entry(3, AuditCategories.Account, "LockAccount", Admin, new DateTime(2026, 11, 3, 23, 59, 59)),
-            Entry(4, AuditCategories.Account, "LockAccount", Admin, new DateTime(2026, 11, 4, 0, 0, 0)));
+            Entry(1, AuditCategories.Account, AuditActions.LockAccount, Admin, new DateTime(2026, 11, 1, 23, 59, 59)),
+            Entry(2, AuditCategories.Account, AuditActions.LockAccount, Admin, new DateTime(2026, 11, 2, 0, 0, 0)),
+            Entry(3, AuditCategories.Account, AuditActions.LockAccount, Admin, new DateTime(2026, 11, 3, 23, 59, 59)),
+            Entry(4, AuditCategories.Account, AuditActions.LockAccount, Admin, new DateTime(2026, 11, 4, 0, 0, 0)));
         db.SaveChanges();
 
         var page = await svc.ListAsync(null, null, new DateOnly(2026, 11, 2), new DateOnly(2026, 11, 3), 1, 20);
@@ -121,7 +121,7 @@ public class AuditLogTests
     {
         var (db, svc) = Create();
         db.Account.Add(new Account { AccountId = 10, PersonId = Teacher, Username = "chaugv", AccountType = "Teacher", Status = "Active", PasswordHash = "x", CreatedAt = Day });
-        db.AuditLog.Add(Entry(1, AuditCategories.Account, "BulkCreateAccounts", Admin, Day, "[10,99]", JsonSerializer.Serialize(new { count = 2 })));
+        db.AuditLog.Add(Entry(1, AuditCategories.Account, AuditActions.BulkCreateAccounts, Admin, Day, "[10,99]", JsonSerializer.Serialize(new Dictionary<string, object?> { ["Số tài khoản"] = 2 })));
         db.SaveChanges();
 
         var d = await svc.GetAsync(1);
@@ -129,15 +129,19 @@ public class AuditLogTests
         Assert.Equal("Account", d.TargetKind);
         Assert.Equal("Châu Giáo Viên (chaugv)", d.Targets.Single(t => t.Id == 10).Label);
         Assert.Null(d.Targets.Single(t => t.Id == 99).Label);
-        Assert.Equal("2", d.Fields.Single(f => f.Key == "count").Value);
+        Assert.Equal("2", d.Fields.Single(f => f.Key == "Số tài khoản").Value);
     }
 
     [Fact]
     public async Task Detail_NamesKnownIds_FallsBackToHashId_AndSkipsEmptyValues()
     {
         var (db, svc) = Create();
-        db.AuditLog.Add(Entry(1, AuditCategories.ScheduleAdjust, "ChangeSessionTeacher", Vice, Day, "[77]",
-            JsonSerializer.Serialize(new { sessionId = 77, classId = 404, date = new DateOnly(2026, 11, 2), fromTeacherId = Teacher, toTeacherId = 500, absenceId = (int?)null, slotIds = Array.Empty<int>() })));
+        db.AuditLog.Add(Entry(1, AuditCategories.ScheduleAdjust, AuditActions.ChangeSessionTeacher, Vice, Day, "[77]",
+            JsonSerializer.Serialize(new Dictionary<string, object?>
+            {
+                ["Lớp"] = 404, ["Ngày"] = "02/11/2026", ["Giáo viên cũ"] = Teacher, ["Giáo viên mới"] = 500,
+                ["Mã khai báo vắng"] = null, ["Các tiết"] = Array.Empty<int>(),
+            })));
         db.SaveChanges();
 
         var d = await svc.GetAsync(1);
@@ -145,20 +149,47 @@ public class AuditLogTests
 
         Assert.Equal("TeachingSession", d.TargetKind);
         Assert.Null(Assert.Single(d.Targets).Label);
-        Assert.Equal("Châu Giáo Viên", fields["fromTeacherId"]);
-        Assert.Equal("#500", fields["toTeacherId"]);
-        Assert.Equal("#404", fields["classId"]);
-        Assert.Equal("77", fields["sessionId"]);
-        Assert.Equal("2026-11-02", fields["date"]);
-        Assert.False(fields.ContainsKey("absenceId"));
-        Assert.False(fields.ContainsKey("slotIds"));
+        Assert.Equal("Châu Giáo Viên", fields["Giáo viên cũ"]);
+        Assert.Equal("#500", fields["Giáo viên mới"]);
+        Assert.Equal("#404", fields["Lớp"]);
+        Assert.Equal("02/11/2026", fields["Ngày"]);
+        Assert.False(fields.ContainsKey("Mã khai báo vắng"));
+        Assert.False(fields.ContainsKey("Các tiết"));
+    }
+
+    [Fact]
+    public async Task Detail_LegacyRecordsWithEnglishCodes_StillResolveNamesAndTargetKind()
+    {
+        var (db, svc) = Create();
+        db.AuditLog.Add(Entry(1, "ScheduleAdjust", "DeclareTeacherAbsence", Vice, Day, "[5]",
+            JsonSerializer.Serialize(new { teacherId = Teacher, slotIds = Array.Empty<int>() })));
+        db.SaveChanges();
+
+        var d = await svc.GetAsync(1);
+
+        Assert.Equal("TeacherAbsence", d.TargetKind);
+        Assert.Equal("Châu Giáo Viên", d.Fields.Single(f => f.Key == "teacherId").Value);
+    }
+
+    [Fact]
+    public async Task Filter_ByVietnameseCategory_AlsoFindsLegacyRecords()
+    {
+        var (db, svc) = Create();
+        db.AuditLog.AddRange(
+            Entry(1, "Account", "LockAccount", Admin, Day, "[10]"),
+            Entry(2, AuditCategories.Account, AuditActions.LockAccount, Admin, Day.AddDays(1), "[11]"),
+            Entry(3, AuditCategories.Responsibility, AuditActions.AssignResponsibility, Admin, Day.AddDays(2)));
+        db.SaveChanges();
+
+        Assert.Equal([2L, 1L], (await svc.ListAsync(AuditCategories.Account, null, null, null, 1, 20)).Items.Select(i => i.AuditId));
     }
 
     [Theory]
-    [InlineData(AuditCategories.TimetablePublish, "PublishTimetable", "TimetableVersion")]
-    [InlineData(AuditCategories.ScheduleAdjust, "DeclareTeacherAbsence", "TeacherAbsence")]
-    [InlineData(AuditCategories.ScheduleAdjust, "DeleteTeacherAbsence", "TeacherAbsence")]
-    [InlineData(AuditCategories.ScheduleAdjust, "ResolvePendingCancel", "TeachingSession")]
+    [InlineData(AuditCategories.TimetablePublish, AuditActions.PublishTimetable, "TimetableVersion")]
+    [InlineData(AuditCategories.ScheduleAdjust, AuditActions.DeclareTeacherAbsence, "TeacherAbsence")]
+    [InlineData(AuditCategories.ScheduleAdjust, AuditActions.DeleteTeacherAbsence, "TeacherAbsence")]
+    [InlineData(AuditCategories.ScheduleAdjust, AuditActions.ResolvePendingCancel, "TeachingSession")]
+    [InlineData(AuditCategories.Attendance, AuditActions.CorrectAttendance, "TeachingSession")]
     public async Task Detail_TargetKindFollowsTheAction(string category, string action, string kind)
     {
         var (db, svc) = Create();
@@ -208,22 +239,35 @@ public class AuditLogTests
     }
 
     [Fact]
-    public void ExactlyThreeCategories()
+    public void ExactlyFiveCategories_AllInVietnamese()
     {
-        var categories = typeof(AuditCategories).GetFields().Select(f => (string)f.GetRawConstantValue()!).Order();
+        var categories = typeof(AuditCategories).GetFields().Where(f => f.FieldType == typeof(string)).Select(f => (string)f.GetRawConstantValue()!).Order();
 
-        Assert.Equal(["Account", "ScheduleAdjust", "TimetablePublish"], categories);
+        Assert.Equal(new[] { "Tài khoản", "Phát hành thời khóa biểu", "Điều chỉnh lịch", "Trách nhiệm", "Điểm danh" }.Order(), categories);
+        Assert.All(AuditCategories.All, c => Assert.True(c.Length <= 30));   // cột Category dài tối đa 30
     }
 
-    /// <summary>Đăng nhập, nộp bài, điểm danh, trách nhiệm, kết chuyển không vào nhật ký: chỉ các service của ba nhóm mới được giữ AuditWriter.</summary>
     [Fact]
-    public void OnlyTheThreeGroupsServicesCanWrite()
+    public void EveryAction_IsVietnameseAndFitsTheColumn()
+    {
+        var actions = typeof(AuditActions).GetFields().Select(f => (string)f.GetRawConstantValue()!).ToList();
+
+        Assert.NotEmpty(actions);
+        Assert.All(actions, a => Assert.Matches("[^\x00-\x7F]", a));      // có chữ có dấu, không phải mã tiếng Anh
+        Assert.All(actions, a => Assert.DoesNotMatch("^[A-Za-z]+$", a));   // không có mã dạng CamelCase
+        Assert.All(actions, a => Assert.True(a.Length <= 50));              // cột Action dài tối đa 50
+    }
+
+    /// <summary>Đăng nhập, nộp bài, kết chuyển không vào nhật ký; điểm danh chỉ vào khi School Admin nhập bù hoặc sửa. Chỉ các service của năm nhóm mới được giữ AuditWriter.</summary>
+    [Fact]
+    public void OnlyTheFiveGroupsServicesCanWrite()
     {
         var writers = typeof(AuditWriter).Assembly.GetTypes()
             .Where(t => t.GetConstructors().Any(c => c.GetParameters().Any(p => p.ParameterType == typeof(AuditWriter))))
             .Select(t => t.Name).Order();
 
         // CalendarService: khai ngày nghỉ hủy các tiết chưa khóa trong ngày, thuộc nhóm Điều chỉnh lịch.
-        Assert.Equal(["AccountService", "CalendarService", "EnrollmentService", "ScheduleAdjustmentService", "TeacherAbsenceService", "TimetablePublishService"], writers);
+        Assert.Equal(["AccountService", "AttendanceService", "CalendarService", "EnrollmentService", "ResponsibilityService",
+            "ScheduleAdjustmentService", "TeacherAbsenceService", "TimetablePublishService"], writers);
     }
 }

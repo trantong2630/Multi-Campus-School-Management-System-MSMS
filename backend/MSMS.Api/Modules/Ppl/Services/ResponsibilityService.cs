@@ -1,9 +1,7 @@
-using ClosedXML.Excel;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MSMS.Api.Common.Audit;
 using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
-using MSMS.Api.Common.Excel;
 using MSMS.Api.Common.Rules;
 using MSMS.Api.Common.Time;
 using MSMS.Api.Data;
@@ -23,7 +21,7 @@ public static class ResponsibilityKinds
 /// PPL-04: trách nhiệm có khoảng hiệu lực (BR-09). Mỗi đích tối đa một bản đang hiệu lực;
 /// thay người là một transaction: bản cũ kết thúc vào ngày liền trước ngày hiệu lực của bản mới.
 /// </summary>
-public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IClock clock, ScopeResolver scope)
+public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IClock clock, ScopeResolver scope, AuditWriter audit)
 {
     public async Task<List<ResponsibilityRow>> ListCurrentAsync(string kind, int? yearId)
     {
@@ -110,45 +108,6 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
         }
     }
 
-    /// <summary>Xuất danh sách một loại trách nhiệm ra Excel, cùng phạm vi và trạng thái với màn hình.</summary>
-    public async Task<FileContentResult> ExportAsync(string kind, int? yearId)
-    {
-        var rows = await ListCurrentAsync(kind, yearId);
-        var (sheet, file, target) = kind switch
-        {
-            ResponsibilityKinds.Campus => ("Phụ trách phân hiệu", "MSMS_Trach_nhiem_phu_trach_phan_hieu.xlsx", "Phân hiệu"),
-            ResponsibilityKinds.Department => ("Tổ trưởng", "MSMS_Trach_nhiem_to_truong.xlsx", "Tổ chuyên môn"),
-            _ => ("Chủ nhiệm", "MSMS_Trach_nhiem_chu_nhiem.xlsx", "Lớp"),
-        };
-        var homeroom = kind == ResponsibilityKinds.Homeroom;
-        string[] headers = [..(kind == ResponsibilityKinds.Campus ? new[] { "Mã phân hiệu" } : []), target, ..(homeroom ? new[] { "Phân hiệu" } : []),
-            "Người phụ trách", "Mã hồ sơ", "Từ ngày", "Đến ngày", "Trạng thái"];
-
-        using var wb = new XLWorkbook();
-        var ws = wb.AddWorksheet(sheet);
-        for (var c = 0; c < headers.Length; c++) ws.Cell(1, c + 1).Value = headers[c];
-        ws.StyleHeaderRow(1, headers.Length, 22);
-        var r = 2;
-        foreach (var row in rows)
-        {
-            var status = row.StaffId is not null ? "Đã phân công" : row.NextStaffName is not null ? "Sắp hiệu lực"
-                : row.EndedStaffName is not null ? "Đã kết thúc" : "Chưa phân công";
-            var cells = new List<object?>();
-            if (kind == ResponsibilityKinds.Campus) cells.Add(row.TargetCode);
-            cells.Add(row.TargetName);
-            if (homeroom) cells.Add(row.TargetGroup);
-            cells.Add(row.StaffName ?? row.NextStaffName ?? row.EndedStaffName);
-            cells.Add(row.StaffCode);
-            cells.Add(row.StartDate is { } s ? s.ToString("dd/MM/yyyy") : row.NextStartDate is { } n ? n.ToString("dd/MM/yyyy") : null);
-            cells.Add(row.EndDate is { } e ? e.ToString("dd/MM/yyyy") : row.EndedDate is { } ed ? ed.ToString("dd/MM/yyyy") : null);
-            cells.Add(status);
-            for (var c = 0; c < cells.Count; c++) ws.Cell(r, c + 1).Value = cells[c]?.ToString() ?? "";
-            r++;
-        }
-        ws.Columns().AdjustToContents();
-        return wb.ToFile(file);
-    }
-
     public async Task<List<ResponsibilityHistoryRow>> HistoryAsync(string kind, int targetId)
     {
         if (user.AccountType == AccountTypes.VicePrincipal)
@@ -188,26 +147,42 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
             throw ApiException.BadRequest("Ngày hiệu lực không được trước hôm nay. Chọn hôm nay hoặc một ngày sau đó.");
         await EnsureEligibleAsync(r.Kind, r.StaffId);
         await using var tx = await db.Database.BeginTransactionAsync();
+        int? replacedStaffId = null;
+        DateOnly? endDate = null;
         switch (r.Kind)
         {
             case ResponsibilityKinds.Campus:
                 if (!await db.Campus.AnyAsync(c => c.CampusId == r.TargetId && c.IsActive)) throw ApiException.BadRequest("Phân hiệu không tồn tại hoặc đã ngừng hoạt động.");
                 await EnsureSingleCampusAsync(r);
-                await ReplaceAsync(db.CampusLeadership, x => x.CampusId == r.TargetId, r, () => new CampusLeadership { CampusId = r.TargetId });
+                replacedStaffId = await ReplaceAsync(db.CampusLeadership, x => x.CampusId == r.TargetId, r, () => new CampusLeadership { CampusId = r.TargetId });
                 break;
             case ResponsibilityKinds.Department:
                 if (!await db.SubjectDepartment.AnyAsync(d => d.DepartmentId == r.TargetId && d.IsActive)) throw ApiException.BadRequest("Tổ chuyên môn không tồn tại hoặc đã ngừng hoạt động.");
                 await EnsureSingleDepartmentAsync(r);
-                await ReplaceAsync(db.DepartmentHead, x => x.DepartmentId == r.TargetId, r, () => new DepartmentHead { DepartmentId = r.TargetId });
+                replacedStaffId = await ReplaceAsync(db.DepartmentHead, x => x.DepartmentId == r.TargetId, r, () => new DepartmentHead { DepartmentId = r.TargetId });
                 break;
             case ResponsibilityKinds.Homeroom:
-                if (!await db.Class.AnyAsync(c => c.ClassId == r.TargetId && c.IsActive)) throw ApiException.BadRequest("Lớp không tồn tại hoặc đã ngừng hoạt động.");
+            {
+                var yearEnd = await db.Class.Where(c => c.ClassId == r.TargetId && c.IsActive)
+                    .Select(c => (DateOnly?)c.AcademicYear.EndDate).FirstOrDefaultAsync()
+                    ?? throw ApiException.BadRequest("Lớp không tồn tại hoặc đã ngừng hoạt động.");
+                if (r.StartDate > yearEnd)
+                    throw ApiException.BadRequest($"Năm học của lớp đã kết thúc ngày {yearEnd:dd/MM/yyyy}. Chọn ngày hiệu lực trong năm học của lớp.");
                 await EnsureSingleHomeroomAsync(r);
-                await ReplaceAsync(db.HomeroomAssignment, x => x.ClassId == r.TargetId, r, () => new HomeroomAssignment { ClassId = r.TargetId });
+                // Chủ nhiệm gắn với lớp của một năm học: tự hết hiệu lực vào ngày cuối năm học đó (BR-09).
+                endDate = yearEnd;
+                replacedStaffId = await ReplaceAsync(db.HomeroomAssignment, x => x.ClassId == r.TargetId, r, () => new HomeroomAssignment { ClassId = r.TargetId }, yearEnd);
                 break;
+            }
             default:
                 throw ApiException.BadRequest("Loại trách nhiệm không hợp lệ.");
         }
+        audit.Add(AuditCategories.Responsibility,
+            replacedStaffId is null ? AuditActions.AssignResponsibility : AuditActions.ReplaceResponsibility, null,
+            ("Loại trách nhiệm", KindLabel(r.Kind)), ("Đối tượng", await TargetNameAsync(r.Kind, r.TargetId)),
+            ("Người đảm nhiệm", await StaffNameAsync(r.StaffId)),
+            ("Người đảm nhiệm cũ", replacedStaffId is int old ? await StaffNameAsync(old) : null),
+            ("Từ ngày", r.StartDate), ("Đến ngày", endDate));
         await db.SaveChangesAsync();
         await tx.CommitAsync();
     }
@@ -230,6 +205,9 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
             throw ApiException.BadRequest($"Ngày kết thúc không được trước ngày bắt đầu ({record.StartDate:dd/MM/yyyy}).");
         record.EndDate = r.EndDate;
         if (r.EndDate <= clock.Today) record.EndedAt = clock.Now;   // mất quyền ngay: ghi lại giờ để đọc lịch sử
+        audit.Add(AuditCategories.Responsibility, AuditActions.EndResponsibility, null,
+            ("Loại trách nhiệm", KindLabel(r.Kind)), ("Đối tượng", await TargetNameAsync(r.Kind, TargetIdOf(record))),
+            ("Người đảm nhiệm", await StaffNameAsync(record.StaffId)), ("Từ ngày", record.StartDate), ("Kết thúc ngày", r.EndDate));
         await db.SaveChangesAsync();
     }
 
@@ -248,6 +226,10 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
         };
         if (record.StartDate <= clock.Today)
             throw ApiException.BadRequest("Trách nhiệm này đã bắt đầu nên không hủy được. Dùng Kết thúc trách nhiệm.");
+        // Bản hẹn bị xóa hẳn nên nhật ký là dấu vết duy nhất: ghi lại trước khi xóa.
+        audit.Add(AuditCategories.Responsibility, AuditActions.CancelResponsibility, null,
+            ("Loại trách nhiệm", KindLabel(r.Kind)), ("Đối tượng", await TargetNameAsync(r.Kind, TargetIdOf(record))),
+            ("Người được hẹn", await StaffNameAsync(record.StaffId)), ("Hẹn từ ngày", record.StartDate));
         db.Remove(record);
         await db.SaveChangesAsync();
     }
@@ -277,8 +259,8 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
         return cancelled;
     }
 
-    private async Task ReplaceAsync<T>(DbSet<T> set, System.Linq.Expressions.Expression<Func<T, bool>> forTarget,
-        ResponsibilityAssignRequest r, Func<T> create) where T : class, IResponsibilityRecord
+    private async Task<int?> ReplaceAsync<T>(DbSet<T> set, System.Linq.Expressions.Expression<Func<T, bool>> forTarget,
+        ResponsibilityAssignRequest r, Func<T> create, DateOnly? endDate = null) where T : class, IResponsibilityRecord
     {
         var records = await set.Where(forTarget).ToListAsync();
         if (records.Any(x => x.StartDate > r.StartDate))
@@ -287,6 +269,7 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
         // Người đương nhiệm tại ngày này: bản kết thúc đúng ngày này (đã kết thúc hoặc vừa được thay) không còn đương nhiệm (BR-09).
         var current = records.Where(x => x.StartDate <= r.StartDate && (x.EndDate == null || x.EndDate > r.StartDate))
             .OrderByDescending(x => x.StartDate).ThenByDescending(x => x.CreatedAt).ThenByDescending(x => x.Id).FirstOrDefault();
+        var replacedStaffId = current?.StaffId;
         if (current is not null)
         {
             if (current.StaffId == r.StaffId) throw ApiException.BadRequest("Người này đang đảm nhiệm sẵn. Chọn người khác để thay.");
@@ -301,11 +284,38 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
         var record = create();
         record.StaffId = r.StaffId;
         record.StartDate = r.StartDate;
-        record.EndDate = null;
+        record.EndDate = endDate;
         record.AssignedByPersonId = user.PersonId;
         record.CreatedAt = clock.Now;
         set.Add(record);
+        return replacedStaffId;
     }
+
+    private static string KindLabel(string kind) => kind switch
+    {
+        ResponsibilityKinds.Campus => "Phụ trách phân hiệu",
+        ResponsibilityKinds.Department => "Tổ trưởng",
+        _ => "Chủ nhiệm",
+    };
+
+    private static int TargetIdOf(IResponsibilityRecord record) => record switch
+    {
+        CampusLeadership c => c.CampusId,
+        DepartmentHead d => d.DepartmentId,
+        HomeroomAssignment h => h.ClassId,
+        _ => 0,
+    };
+
+    /// <summary>Tên đích (phân hiệu, tổ hoặc lớp) để ghi nhật ký bằng chữ, vì bản hẹn bị hủy sẽ mất khỏi bảng.</summary>
+    private async Task<string> TargetNameAsync(string kind, int targetId) => (kind switch
+    {
+        ResponsibilityKinds.Campus => await db.Campus.Where(c => c.CampusId == targetId).Select(c => c.Name).FirstOrDefaultAsync(),
+        ResponsibilityKinds.Department => await db.SubjectDepartment.Where(d => d.DepartmentId == targetId).Select(d => d.Name).FirstOrDefaultAsync(),
+        _ => await db.Class.Where(c => c.ClassId == targetId).Select(c => c.Name).FirstOrDefaultAsync(),
+    }) ?? $"#{targetId}";
+
+    private async Task<string> StaffNameAsync(int staffId) =>
+        await db.Person.Where(p => p.PersonId == staffId).Select(p => p.FullName).FirstOrDefaultAsync() ?? $"#{staffId}";
 
     /// <summary>
     /// Mỗi Hiệu phó chỉ phụ trách một phân hiệu tại một thời điểm: chặn nếu người này đang giữ, hoặc đã được hẹn giữ, phân hiệu khác

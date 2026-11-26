@@ -1,7 +1,7 @@
 import { apiClient } from '@/app/apiClient';
 import type {
-  Absence, AdjustResult, AdjustWeek, CampusOption, DaySchedule, DeclareAbsenceBody, DraftOptions,
-  GridClass, MakeUpBody, MySession, PendingSession, PublishPreview, PublishResult, ResolveBody, ResponsibilityList, TeacherAvailability, TeacherOption,
+  Absence, AdjustResult, AdjustWeek, ApproveResult, CampusOption, DaySchedule, DeclareAbsenceBody, DraftOptions,
+  GridClass, MakeUpBody, MySession, PendingSession, ProposeBody, PublishPreview, PublishResult, ResolveBody, ResponsibilityList, TeacherAvailability, TeacherOption,
   StudentClass, TimetableImportResult, TimetableVersion, VersionGrid, ViewSession,
 } from './types';
 
@@ -64,14 +64,24 @@ export const scdApi = {
 
   // ---- SCD-03: giáo viên vắng ----
   absences: (campusId: number) => apiClient.get<Absence[]>('/scd/absences', { params: { campusId } }).then((r) => r.data),
-  absenceTeachers: (campusId: number) => apiClient.get<TeacherOption[]>('/scd/absences/teachers', { params: { campusId } }).then((r) => r.data),
-  declareAbsence: (body: DeclareAbsenceBody) =>
-    apiClient.post<{ absenceId: number; pendingCount: number }>('/scd/absences', body).then((r) => r.data),
-  deleteAbsence: (id: number) => apiClient.delete<{ restoredCount: number }>(`/scd/absences/${id}`).then((r) => r.data),
+  approveAbsence: (id: number) => apiClient.post<ApproveResult>(`/scd/absences/${id}/approve`).then((r) => r.data),
   pending: (campusId: number, params: { from?: string; to?: string; classId?: number }) =>
     apiClient.get<PendingSession[]>('/scd/absences/pending', { params: { campusId, ...params } }).then((r) => r.data),
   pendingSuggestions: (sessionId: number) =>
     apiClient.get<TeacherAvailability[]>(`/scd/absences/pending/${sessionId}/suggestions`).then((r) => r.data),
   resolvePending: (sessionId: number, body: ResolveBody) =>
     apiClient.post<AdjustResult>(`/scd/absences/pending/${sessionId}/resolve`, body).then((r) => r.data),
+
+  // ---- SCD-03: tổ trưởng khai vắng cho giáo viên của tổ và đề xuất người dạy thay ----
+  departmentAbsences: () => apiClient.get<Absence[]>('/scd/absences/department').then((r) => r.data),
+  departmentTeachers: () => apiClient.get<TeacherOption[]>('/scd/absences/department/teachers').then((r) => r.data),
+  declareDepartmentAbsence: (body: DeclareAbsenceBody) =>
+    apiClient.post<{ absenceId: number; pendingCount: number }>('/scd/absences/department', body).then((r) => r.data),
+  deleteDepartmentAbsence: (id: number) =>
+    apiClient.delete<{ restoredCount: number }>(`/scd/absences/department/${id}`).then((r) => r.data),
+  departmentPending: () => apiClient.get<PendingSession[]>('/scd/absences/department/pending').then((r) => r.data),
+  departmentSuggestions: (sessionId: number) =>
+    apiClient.get<TeacherAvailability[]>(`/scd/absences/department/pending/${sessionId}/suggestions`).then((r) => r.data),
+  proposeSession: (sessionId: number, body: ProposeBody) =>
+    apiClient.post<AdjustResult>(`/scd/absences/department/pending/${sessionId}/propose`, body).then((r) => r.data),
 };

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MSMS.Api.Common.Audit;
 using MSMS.Api.Common.Auth;
 using MSMS.Api.Common.Errors;
 using MSMS.Api.Common.Rules;
@@ -13,9 +14,10 @@ namespace MSMS.Api.Modules.Att.Services;
 /// ATT-01 Điểm danh theo tiết (BR-17, BR-18).
 /// Kiểm quyền hai tầng: policy ở controller chặn loại tài khoản; service kiểm đối tượng có nằm trong phạm vi người gọi (BR-01).
 /// Nhãn có phép/không phép không lưu, luôn tính lúc đọc qua <see cref="AttendanceRules"/>.
-/// Điểm danh không ghi Audit Log; người nhập, thời điểm và cờ nhập bù lưu ngay trên bản ghi (BR-28, 4.5.9).
+/// Người nhập, thời điểm và cờ nhập bù lưu ngay trên bản ghi (4.5.9). Điểm danh hằng ngày của giáo viên không ghi Audit Log;
+/// riêng nhập bù và sửa của School Admin được ghi kèm giá trị trước và sau, vì bản ghi bị ghi đè khi sửa (BR-28).
 /// </summary>
-public sealed class AttendanceService(MsmsDbContext db, CurrentUser user, ScopeResolver scope, AccountScopeResolver accountScope, IClock clock)
+public sealed class AttendanceService(MsmsDbContext db, CurrentUser user, ScopeResolver scope, AccountScopeResolver accountScope, IClock clock, AuditWriter audit)
 {
     private const int MaxRangeDays = 62;
 
@@ -122,11 +124,14 @@ public sealed class AttendanceService(MsmsDbContext db, CurrentUser user, ScopeR
 
         var now = clock.Now;
         var existing = await db.AttendanceRecord.Where(a => a.SessionId == sessionId).ToDictionaryAsync(a => a.StudentId);
+        var backfilled = 0;
+        var edits = new List<(int StudentId, string? From, string To)>();   // From = null: chỉ đổi ghi chú
         foreach (var (studentId, status, note) in items)
         {
             if (existing.TryGetValue(studentId, out var rec))
             {
                 if (rec.Status == status && rec.Note == note) continue;
+                edits.Add((studentId, rec.Status == status ? null : rec.Status, status));
                 rec.Status = status;
                 rec.Note = note;
                 rec.UpdatedByPersonId = user.PersonId;
@@ -134,6 +139,7 @@ public sealed class AttendanceService(MsmsDbContext db, CurrentUser user, ScopeR
             }
             else
             {
+                backfilled++;
                 db.AttendanceRecord.Add(new AttendanceRecord
                 {
                     SessionId = sessionId, StudentId = studentId, Status = status, Note = note,
@@ -142,6 +148,9 @@ public sealed class AttendanceService(MsmsDbContext db, CurrentUser user, ScopeR
                 });
             }
         }
+
+        if (isAdmin && (backfilled > 0 || edits.Count > 0))
+            await AuditCorrectionAsync(session, backfilled, edits);
 
         try
         {
@@ -154,6 +163,20 @@ public sealed class AttendanceService(MsmsDbContext db, CurrentUser user, ScopeR
         }
 
         return await BuildSheetAsync(session);
+    }
+
+    /// <summary>Ghi nhật ký lần nhập bù hoặc sửa của School Admin: số bản ghi mới và từng thay đổi (trước → sau) bằng chữ.</summary>
+    private async Task AuditCorrectionAsync(TeachingSession session, int backfilled, List<(int StudentId, string? From, string To)> edits)
+    {
+        var ids = edits.Select(e => e.StudentId).ToList();
+        var names = await db.Person.AsNoTracking().Where(p => ids.Contains(p.PersonId)).ToDictionaryAsync(p => p.PersonId, p => p.FullName);
+        string Name(int id) => names.GetValueOrDefault(id, $"#{id}");
+        var lines = edits.Select(e => e.From is null
+            ? $"{Name(e.StudentId)}: sửa ghi chú"
+            : $"{Name(e.StudentId)}: {AuditLabels.Attendance(e.From)} → {AuditLabels.Attendance(e.To)}").ToList();
+        audit.AddLong(AuditCategories.Attendance, AuditActions.CorrectAttendance, [session.SessionId],
+            ("Lớp", session.ClassId), ("Ngày", session.SessionDate), ("Tiết", session.PeriodSlotId),
+            ("Số bản ghi nhập bù", backfilled), ("Số bản ghi sửa", edits.Count), ("Các thay đổi", lines));
     }
 
     // ---------------------------------------------------------------- 4.5.11, 4.5.12 Chuyên cần của học sinh
@@ -280,69 +303,6 @@ public sealed class AttendanceService(MsmsDbContext db, CurrentUser user, ScopeR
         }).ToList();
 
         return new ClassAttendanceDto(classId, className, from, to, sessions, students);
-    }
-
-    // ---------------------------------------------------------------- 4.9.12 Dữ liệu xuất điểm danh (ADM-03)
-
-    /// <summary>
-    /// 4.9.12: bản ghi điểm danh của lớp trong khoảng ngày, kèm nhãn cuối suy ra (BR-18, spec 5.2).
-    /// Chỉ chủ nhiệm (lớp đang chủ nhiệm) và Hiệu phó (lớp thuộc phân hiệu phụ trách); School Admin và Hiệu trưởng không xuất.
-    /// Gồm tiết Đã xếp lịch tới hôm nay; tiết đã qua mà học sinh chưa có bản ghi thì hiện Chưa điểm danh.
-    /// </summary>
-    public async Task<AttendanceExportDto> ExportAsync(int classId, DateOnly from, DateOnly to)
-    {
-        ExportRules.CheckRange(from, to);
-        var cls = await db.Class.AsNoTracking().Where(c => c.ClassId == classId)
-            .Select(c => new { c.Name, c.CampusId, CampusName = c.Campus.Name }).FirstOrDefaultAsync()
-            ?? throw ApiException.NotFound("Không tìm thấy lớp.");
-        var allowed = user.AccountType switch
-        {
-            AccountTypes.Principal => true,
-            AccountTypes.VicePrincipal => (await scope.LedCampusIdsAsync()).Contains(cls.CampusId),
-            AccountTypes.Teacher => (await HomeroomClassIdsAsync()).Contains(classId),
-            _ => false,
-        };
-        if (!allowed) throw ApiException.Forbidden("Chỉ xuất được điểm danh của lớp đang chủ nhiệm hoặc lớp thuộc phân hiệu đang phụ trách.");
-
-        var today = clock.Today;
-        var until = to < today ? to : today;
-        var sessions = await db.TeachingSession.AsNoTracking()
-            .Where(s => s.ClassId == classId && s.SessionDate >= from && s.SessionDate <= until && s.Status == AttendanceRules.SessionScheduled)
-            .OrderBy(s => s.SessionDate).ThenBy(s => s.PeriodSlot.StartTime)
-            .Select(s => new
-            {
-                s.SessionId, s.SessionDate, s.PeriodSlot.SessionOfDay, s.PeriodSlot.PeriodNo, SubjectName = s.Subject.Name,
-                TeacherName = s.Teacher == null ? null : s.Teacher.Staff.FullName,
-            })
-            .ToListAsync();
-        if (sessions.Count == 0) return new AttendanceExportDto(cls.Name, cls.CampusName, from, to, []);
-
-        var sessionIds = sessions.Select(s => s.SessionId).ToList();
-        var enrollments = await EnrollmentsOverlappingAsync(classId, from, until);
-        var studentIds = enrollments.Select(e => e.StudentId).Distinct().ToList();
-        var people = (await db.Person.AsNoTracking().Where(p => studentIds.Contains(p.PersonId))
-                .Select(p => new { p.PersonId, p.FullName, p.PersonCode }).ToListAsync())
-            .OrderBy(p => LastName(p.FullName)).ThenBy(p => p.FullName).ToList();
-        var records = await db.AttendanceRecord.AsNoTracking().Where(a => sessionIds.Contains(a.SessionId))
-            .Select(a => new { a.SessionId, a.StudentId, a.Status, a.Note }).ToListAsync();
-        var recordMap = records.ToDictionary(a => (a.SessionId, a.StudentId));
-        var leaves = await ApprovedLeavesAsync(studentIds, from, until);
-
-        var rows = new List<AttendanceExportRowDto>();
-        foreach (var s in sessions)
-        {
-            foreach (var p in people)
-            {
-                // Chỉ học sinh có ghi danh hiệu lực ở lớp vào ngày của tiết (BR-17).
-                if (!enrollments.Any(e => e.StudentId == p.PersonId && e.Start <= s.SessionDate && e.End >= s.SessionDate)) continue;
-                recordMap.TryGetValue((s.SessionId, p.PersonId), out var rec);
-                var label = AttendanceRules.Label(rec?.Status,
-                    AttendanceRules.IsExcused(p.PersonId, s.SessionDate, s.SessionOfDay, s.PeriodNo, leaves));
-                rows.Add(new AttendanceExportRowDto(s.SessionDate, s.SessionOfDay, s.PeriodNo, s.SubjectName, s.TeacherName,
-                    p.PersonCode, p.FullName, label, rec?.Note));
-            }
-        }
-        return new AttendanceExportDto(cls.Name, cls.CampusName, from, to, rows);
     }
 
     // ---------------------------------------------------------------- Dựng dữ liệu

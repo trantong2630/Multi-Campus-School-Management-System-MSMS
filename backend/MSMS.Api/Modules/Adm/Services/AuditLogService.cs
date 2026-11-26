@@ -20,9 +20,34 @@ public sealed class AuditLogService(MsmsDbContext db)
 
     private enum NameKind { Person, Class, Subject, Campus, Semester, PeriodSlot }
 
+    /// <summary>
+    /// Bản ghi cũ lưu nhóm và hành động bằng mã tiếng Anh; bản ghi mới lưu thẳng tiếng Việt. Bảng này đổi mã cũ sang tiếng Việt
+    /// để bộ lọc và phần đích của bản ghi cũ vẫn chạy đúng.
+    /// </summary>
+    private static readonly Dictionary<string, string> LegacyNames = new()
+    {
+        ["Account"] = AuditCategories.Account,
+        ["TimetablePublish"] = AuditCategories.TimetablePublish,
+        ["ScheduleAdjust"] = AuditCategories.ScheduleAdjust,
+        ["DeclareTeacherAbsence"] = AuditActions.DeclareTeacherAbsence,
+        ["DeleteTeacherAbsence"] = AuditActions.DeleteTeacherAbsence,
+    };
+
+    private static string Canonical(string name) => LegacyNames.GetValueOrDefault(name, name);
+
     /// <summary>Các khóa trong Detail mang ID tra được ra tên. Khóa khác giữ nguyên giá trị.</summary>
     private static readonly Dictionary<string, NameKind> NamedKeys = new()
     {
+        ["Giáo viên"] = NameKind.Person,
+        ["Giáo viên cũ"] = NameKind.Person,
+        ["Giáo viên mới"] = NameKind.Person,
+        ["Lớp"] = NameKind.Class,
+        ["Môn"] = NameKind.Subject,
+        ["Phân hiệu"] = NameKind.Campus,
+        ["Học kỳ"] = NameKind.Semester,
+        ["Tiết"] = NameKind.PeriodSlot,
+        ["Các tiết"] = NameKind.PeriodSlot,
+        // Khóa của bản ghi cũ.
         ["teacherId"] = NameKind.Person,
         ["fromTeacherId"] = NameKind.Person,
         ["toTeacherId"] = NameKind.Person,
@@ -39,7 +64,11 @@ public sealed class AuditLogService(MsmsDbContext db)
         if (from > to) throw ApiException.BadRequest("Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.");
 
         var query = db.AuditLog.AsNoTracking();
-        if (!string.IsNullOrEmpty(category)) query = query.Where(a => a.Category == category);
+        if (!string.IsNullOrEmpty(category))
+        {
+            var legacy = LegacyNames.FirstOrDefault(x => x.Value == category).Key ?? category;
+            query = query.Where(a => a.Category == category || a.Category == legacy);
+        }
         if (actorPersonId is int actor) query = query.Where(a => a.ActorPersonId == actor);
         if (from is DateOnly start)
         {
@@ -81,11 +110,11 @@ public sealed class AuditLogService(MsmsDbContext db)
     private static List<long> ParseIds(string? targetIds) =>
         targetIds is null ? [] : JsonSerializer.Deserialize<List<long>>(targetIds) ?? [];
 
-    private static string TargetKindOf(string category, string action) => category switch
+    private static string TargetKindOf(string category, string action) => Canonical(category) switch
     {
         AuditCategories.Account => TargetKinds.Account,
         AuditCategories.TimetablePublish => TargetKinds.TimetableVersion,
-        _ => action is "DeclareTeacherAbsence" or "DeleteTeacherAbsence" ? TargetKinds.TeacherAbsence : TargetKinds.TeachingSession,
+        _ => Canonical(action) is AuditActions.DeclareTeacherAbsence or AuditActions.DeleteTeacherAbsence ? TargetKinds.TeacherAbsence : TargetKinds.TeachingSession,
     };
 
     /// <summary>Chỉ tài khoản mới tra tên. Tiết và khai báo vắng có thể đã bị xóa (phát hành lại, xóa khai báo) nên hiện theo ID, kèm ngày trong nội dung bản ghi.</summary>

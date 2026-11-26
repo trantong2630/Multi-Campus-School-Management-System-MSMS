@@ -238,8 +238,8 @@ public class PplAuthorizationTests
     [InlineData(AccountTypes.Teacher, false)] [InlineData(AccountTypes.Student, false)] [InlineData(AccountTypes.Parent, false)]
     public async Task CampusReader_Matrix(string type, bool expected) => Assert.Equal(expected, await CanAsync(type, Policies.CampusReader));
 
-    [Theory(DisplayName = "PPL | Phân quyền | Policy ResponsibilityManager | chỉ School Admin và Hiệu trưởng gán trách nhiệm")]
-    [InlineData(AccountTypes.SchoolAdmin, true)] [InlineData(AccountTypes.Principal, true)] [InlineData(AccountTypes.VicePrincipal, false)]
+    [Theory(DisplayName = "PPL | Phân quyền | Policy ResponsibilityManager | chỉ Hiệu trưởng gán trách nhiệm")]
+    [InlineData(AccountTypes.SchoolAdmin, false)] [InlineData(AccountTypes.Principal, true)] [InlineData(AccountTypes.VicePrincipal, false)]
     [InlineData(AccountTypes.Teacher, false)] [InlineData(AccountTypes.Student, false)] [InlineData(AccountTypes.Parent, false)]
     public async Task ResponsibilityManager_Matrix(string type, bool expected) => Assert.Equal(expected, await CanAsync(type, Policies.ResponsibilityManager));
 

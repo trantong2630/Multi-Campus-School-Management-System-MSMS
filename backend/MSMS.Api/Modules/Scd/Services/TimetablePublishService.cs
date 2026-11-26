@@ -120,8 +120,9 @@ public sealed class TimetablePublishService(
         version.DeletedSessionCount = deleted;
         version.CreatedSessionCount = created.Count;
 
-        audit.Add(AuditCategories.TimetablePublish, "PublishTimetable", [versionId],
-            new { campusId, semesterId = plan.Semester.SemesterId, classes = plan.ClassIds.Count, deleted, created = created.Count });
+        audit.Add(AuditCategories.TimetablePublish, AuditActions.PublishTimetable, [versionId],
+            ("Phân hiệu", campusId), ("Học kỳ", plan.Semester.SemesterId), ("Số lớp", plan.ClassIds.Count),
+            ("Số tiết xóa", deleted), ("Số tiết tạo", created.Count));
 
         // Một thông báo chung cho giáo viên có tiết trong phiên bản và học sinh của các lớp trong phiên bản (BR-26).
         var today = clock.Today;
