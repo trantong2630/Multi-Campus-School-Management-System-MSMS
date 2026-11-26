@@ -44,6 +44,8 @@ public static class AuditActions
     public const string ResolvePendingCancel = "Xử lý tiết chờ: hủy tiết";
     public const string ProposeSession = "Tổ trưởng đề xuất xử lý tiết chờ";
     public const string ApproveAbsence = "Hiệu phó duyệt khai báo vắng";
+    public const string SubmitAbsence = "Tổ trưởng gửi khai báo vắng chờ duyệt";
+    public const string ReturnAbsence = "Hiệu phó trả lại khai báo vắng";
 
     public const string AssignResponsibility = "Gán trách nhiệm";
     public const string ReplaceResponsibility = "Thay người đảm nhiệm";

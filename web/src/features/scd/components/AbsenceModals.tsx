@@ -204,7 +204,7 @@ interface DecideValues {
 
 /**
  * Tổ trưởng quyết định một tiết Chờ xử lý của môn thuộc tổ mình: giáo viên dạy thay (gợi ý giáo viên rảnh cùng tổ) hoặc hủy tiết.
- * Quyết định chưa đổi lịch: hiệu phó của phân hiệu duyệt khi tổ trưởng đã quyết định hết mọi tiết của khai báo (BR-16).
+ * Quyết định chưa đổi lịch: quyết định hết các tiết của tổ rồi gửi duyệt ở danh sách khai báo, hiệu phó của phân hiệu mới duyệt (BR-16).
  * Mở từ bên phải như các form nhiều thông tin khác; hiện bối cảnh của tiết (giờ học, lý do vắng) và tiến độ cả danh sách.
  */
 export function ProposeModal({ target, decided, total, onClose, onDone }: {
@@ -266,7 +266,37 @@ export function ProposeModal({ target, decided, total, onClose, onDone }: {
           <TeacherSelect suggestForSessionId={target.sessionId} asDepartmentHead />
         </Form.Item>
       )}
-      <InlineAlert type="info" title="Quyết định chưa đổi lịch: tiết vẫn Chờ xử lý cho tới khi hiệu phó duyệt, và hiệu phó chỉ duyệt khi bạn quyết định hết mọi tiết của khai báo." />
+      <InlineAlert type="info" title="Quyết định chưa đổi lịch: tiết vẫn Chờ xử lý cho tới khi hiệu phó duyệt. Quyết định hết các tiết của tổ rồi bấm Gửi duyệt ở danh sách khai báo; từ lúc gửi, bạn không sửa được cho tới khi hiệu phó duyệt hoặc trả lại." />
+    </FormModal>
+  );
+}
+
+// ---------------------------------------------------------------- Hiệu phó trả khai báo về
+/**
+ * Hiệu phó trả cả khai báo về cho tổ trưởng kèm lý do (BR-16): đề xuất mở khóa để tổ trưởng sửa rồi gửi lại. Không đổi lịch.
+ */
+export function ReturnAbsenceModal({ target, onClose, onDone }: {
+  target: { absenceId: number; title: string } | null;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [form] = Form.useForm<{ reason: string }>();
+
+  const submit = async (v: { reason: string }) => {
+    await scdApi.returnAbsence(target!.absenceId, v.reason.trim());
+    message.success('Đã trả khai báo về cho tổ trưởng.');
+    onDone();
+  };
+
+  return (
+    <FormModal
+      open={target !== null} form={form} onClose={onClose} onSubmit={submit} width={520} okText="Trả lại"
+      title={target ? `Trả lại khai báo vắng của ${target.title}` : ''}
+    >
+      <InlineAlert type="info" title="Tổ trưởng được báo, sửa đề xuất rồi gửi lại. Lịch dạy chưa đổi." />
+      <Form.Item name="reason" label="Lý do trả lại" rules={[{ required: true, whitespace: true, message: 'Nhập lý do để tổ trưởng biết cần sửa gì' }, { max: 300 }]}>
+        <Input.TextArea rows={4} maxLength={300} showCount />
+      </Form.Item>
     </FormModal>
   );
 }

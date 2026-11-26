@@ -217,6 +217,8 @@ export interface AdjustSession {
   locked: boolean;
   isMakeUp: boolean;
   changeNote: string | null;
+  /** Tiết Chờ xử lý của khai báo vắng tổ trưởng chưa gửi duyệt (BR-16): hiệu phó chưa xử lý được. */
+  awaitingHead: boolean;
 }
 
 export interface AdjustWeek {
@@ -279,8 +281,18 @@ export interface Absence {
   /** Tiết còn chờ ở mọi phân hiệu của khai báo, và số tiết tổ trưởng đã quyết định (đề xuất dạy thay hoặc hủy). */
   awaitingCount: number;
   decidedCount: number;
-  /** Chỉ hiệu phó, khi tổ trưởng đã quyết định hết mọi tiết và có tiết ở phân hiệu của mình. */
+  /** Chỉ hiệu phó, khi tổ trưởng đã gửi khai báo và có tiết có đề xuất ở phân hiệu của mình. */
   canApprove: boolean;
+  /** Draft: tổ trưởng đang quyết định; Returned: hiệu phó trả về kèm returnReason; Submitted: đã gửi, chờ hiệu phó duyệt. */
+  status: 'Draft' | 'Returned' | 'Submitted';
+  submittedAt: string | null;
+  returnReason: string | null;
+  /** Số tiết tổ trưởng quyết định được (môn thuộc tổ); decidedCount là số tiết trong đó đã có đề xuất. */
+  decidableCount: number;
+  /** Tổ trưởng: gửi duyệt được khi đã quyết định hết các tiết của tổ và chưa gửi. */
+  canSubmit: boolean;
+  /** Hiệu phó: trả lại được khi khai báo đã gửi và còn tiết chờ ở phân hiệu mình. */
+  canReturn: boolean;
 }
 
 export interface DeclareAbsenceBody {
@@ -330,6 +342,8 @@ export interface ApproveResult {
   cancelledCount: number;
   /** Tiết còn chờ hiệu phó phân hiệu khác duyệt. */
   otherCampusPendingCount: number;
+  /** Tiết ở phân hiệu mình chưa có đề xuất (môn của tổ khác): hiệu phó xử lý riêng trên lưới Điều chỉnh. */
+  leftPendingCount: number;
 }
 
 export type ResolveAction = 'Substitute' | 'Cancel';

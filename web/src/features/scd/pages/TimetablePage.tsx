@@ -28,7 +28,7 @@ import { useScdCampus } from '../useScdCampus';
 /** SCD-01: tải mẫu → sửa → tải lên → sửa bản Nháp trên lưới → Phát hành. Mỗi phiên bản là hồ sơ của một lần import, đọc lại được như lịch sử. */
 export function TimetablePage() {
   const qc = useQueryClient();
-  // Hiệu trưởng chỉ xem (UC28); import, sửa nháp và phát hành là việc của Hiệu phó.
+  // Hiệu trưởng chỉ xem (UC32); import, sửa nháp và phát hành là việc của Hiệu phó.
   const canManage = useAuth().user?.accountType === 'VicePrincipal';
   const { campuses, effective: effectiveCampus, select: campusSelect, head: campusHead } = useScdCampus();
   const years = useYears();

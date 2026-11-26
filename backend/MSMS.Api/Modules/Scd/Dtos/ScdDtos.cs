@@ -71,7 +71,8 @@ public record TeacherClassSubject(int ClassId, string ClassName, byte GradeLevel
 /// <summary>Locked: tiết bị khóa (ngày đã qua hoặc đã có điểm danh, mục 6.2) nên không đổi giáo viên, không hủy.</summary>
 public record AdjustSessionDto(
     long SessionId, DateOnly Date, int PeriodSlotId, int SubjectId, string SubjectName, string SubjectAbbr,
-    int? TeacherId, string? TeacherName, string? TeacherAbbr, string Status, string Source, bool Locked, bool IsMakeUp, string? ChangeNote);
+    int? TeacherId, string? TeacherName, string? TeacherAbbr, string Status, string Source, bool Locked, bool IsMakeUp, string? ChangeNote,
+    bool AwaitingHead);
 public record AdjustHolidayDto(DateOnly Date, string? Reason);
 public record AdjustWeekDto(int ClassId, string ClassName, int CampusId, DateOnly From, DateOnly To, bool CanManage,
     IReadOnlyList<AdjustSessionDto> Sessions, IReadOnlyList<AdjustHolidayDto> Holidays);
@@ -84,11 +85,15 @@ public record AdjustResultDto(long SessionId, int NotifiedCount);
 public record TeacherAvailabilityDto(int TeacherId, string Name, string? Abbr, string CampusName, bool Busy, string? BusyNote, bool Absent, int DaySessionCount);
 
 // ---- SCD-03: Giáo viên vắng (BR-16) ----
-/// <summary>SlotIds trống nghĩa là vắng cả ngày; có thì chỉ vắng các tiết đó và FromDate = ToDate. PendingCount chỉ tính tiết Chờ xử lý chưa kết thúc; MissedCount là tiết Chờ xử lý đã kết thúc mà không ai xử lý. IsPast: mọi tiết của khai báo đã kết thúc, chỉ để tra cứu.</summary>
+/// <summary>
+/// SlotIds trống nghĩa là vắng cả ngày; có thì chỉ vắng các tiết đó và FromDate = ToDate. PendingCount chỉ tính tiết Chờ xử lý chưa kết thúc; MissedCount là tiết Chờ xử lý đã kết thúc mà không ai xử lý. IsPast: mọi tiết của khai báo đã kết thúc, chỉ để tra cứu.
+/// Status: Draft (tổ trưởng đang quyết định), Returned (hiệu phó trả về, kèm ReturnReason) hoặc Submitted (đã gửi, chờ hiệu phó duyệt). AwaitingCount là mọi tiết còn chờ;
+/// DecidableCount là các tiết tổ trưởng quyết định được (môn thuộc tổ) và DecidedCount là số tiết trong đó đã có đề xuất. CanSubmit: tổ trưởng gửi được; CanApprove, CanReturn: hiệu phó duyệt hoặc trả lại được.
+/// </summary>
 public record AbsenceDto(
     int AbsenceId, int TeacherId, string TeacherName, string? TeacherAbbr, DateOnly FromDate, DateOnly ToDate, IReadOnlyList<int> SlotIds,
     string? Reason, string? DeclaredByName, DateTime CreatedAt, int PendingCount, int HandledCount, bool CanDelete, int MissedCount, bool IsPast,
-    int AwaitingCount, int DecidedCount, bool CanApprove);
+    int AwaitingCount, int DecidedCount, bool CanApprove, string Status, DateTime? SubmittedAt, string? ReturnReason, int DecidableCount, bool CanSubmit, bool CanReturn);
 public record DeclareAbsenceRequest(int TeacherId, DateOnly FromDate, DateOnly ToDate, IReadOnlyList<int>? SlotIds, string? Reason);
 public record DeclareAbsenceResultDto(int AbsenceId, int PendingCount);
 public record DeleteAbsenceResultDto(int RestoredCount);
@@ -101,7 +106,14 @@ public record PendingSessionDto(
     string? AbsenceReason, DateOnly? AbsenceFrom, DateOnly? AbsenceTo);
 /// <summary>Tổ trưởng quyết định một tiết Chờ xử lý bằng đề xuất. Action: Substitute (cần TeacherId), Cancel hoặc Clear (bỏ đề xuất). Hiệu phó duyệt.</summary>
 public record ProposeSessionRequest(string Action, int? TeacherId);
-/// <summary>Kết quả hiệu phó duyệt một khai báo: số tiết dạy thay và hủy đã áp ở phân hiệu mình; OtherCampusPendingCount là tiết còn chờ hiệu phó phân hiệu khác duyệt.</summary>
-public record ApproveAbsenceResultDto(int AbsenceId, int SubstitutedCount, int CancelledCount, int OtherCampusPendingCount);
+/// <summary>
+/// Kết quả hiệu phó duyệt một khai báo: số tiết dạy thay và hủy đã áp ở phân hiệu mình; OtherCampusPendingCount là tiết còn chờ hiệu phó phân hiệu khác duyệt;
+/// LeftPendingCount là tiết ở phân hiệu mình chưa có đề xuất (môn của tổ khác), hiệu phó xử lý riêng trên lưới Điều chỉnh.
+/// </summary>
+public record ApproveAbsenceResultDto(int AbsenceId, int SubstitutedCount, int CancelledCount, int OtherCampusPendingCount, int LeftPendingCount);
+/// <summary>Lý do hiệu phó trả khai báo về cho tổ trưởng (bắt buộc, tối đa 300 ký tự).</summary>
+public record ReturnAbsenceRequest(string Reason);
+/// <summary>Trạng thái khai báo sau khi tổ trưởng gửi duyệt hoặc hiệu phó trả lại.</summary>
+public record AbsenceStateDto(int AbsenceId, string Status);
 /// <summary>Action: Substitute (chọn giáo viên dạy thay) hoặc Cancel (hủy).</summary>
 public record ResolvePendingRequest(string Action, int? TeacherId);

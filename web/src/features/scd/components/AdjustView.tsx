@@ -56,9 +56,9 @@ export function AdjustView({ campusId, lead, tail }: { campusId: number; lead: R
   const refresh = () => qc.invalidateQueries({ queryKey: ['scd'] });
   const today = dayjs();
 
-  /** Tiết Chờ xử lý mở thẳng hộp xử lý (dạy thay hoặc hủy); các tiết khác mở hộp thao tác. */
+  /** Tiết Chờ xử lý mở thẳng hộp xử lý (dạy thay hoặc hủy); tiết đang chờ tổ trưởng và các tiết khác mở hộp xem chi tiết. */
   const open = (s: AdjustSession) => {
-    if (s.status !== 'Pending' || s.locked || !w?.canManage) { setPicked(s); return; }
+    if (s.status !== 'Pending' || s.locked || s.awaitingHead || !w?.canManage) { setPicked(s); return; }
     const slot = slots.data?.find((p) => p.periodSlotId === s.periodSlotId);
     setResolving({
       sessionId: s.sessionId, title: `${s.subjectName} — lớp ${w.className}`,
@@ -141,11 +141,11 @@ export function AdjustView({ campusId, lead, tail }: { campusId: number; lead: R
 function AdjustChip({ s, onClick }: { s: AdjustSession; onClick: () => void }) {
   const state = s.status === 'Cancelled' ? 'tt-chip--cancelled' : s.status === 'Pending' ? 'tt-chip--pending' : '';
   const locked = s.locked && s.status !== 'Cancelled';
-  const note = s.status === 'Pending' ? 'Chờ GV' : s.teacherAbbr ?? s.teacherName ?? '—';
+  const note = s.status === 'Pending' ? (s.awaitingHead ? 'Chờ TT' : 'Chờ GV') : s.teacherAbbr ?? s.teacherName ?? '—';
   return (
     <div
       role="button" tabIndex={0} className={`tt-chip tt-chip--click ${state}`} style={subjectColorStyle(s.subjectId)}
-      title={`${s.subjectName} — ${s.teacherName ?? 'Chờ phân công giáo viên'}${locked ? ' (bị khóa)' : ''}`}
+      title={`${s.subjectName} — ${s.awaitingHead ? 'Chờ tổ trưởng gửi duyệt' : s.teacherName ?? 'Chờ phân công giáo viên'}${locked ? ' (bị khóa)' : ''}`}
       onClick={onClick} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
     >
       <div className="tt-subject">
@@ -226,6 +226,12 @@ function SessionActionModal({ session: s, week, slotText, onClose, onChangeTeach
             />
           )}
           {s.status === 'Cancelled' && <InlineAlert type="info" title="Tiết đã hủy" description="Muốn dạy lại thì thêm tiết bù vào một ô trống." />}
+          {s.status === 'Pending' && s.awaitingHead && !s.locked && (
+            <InlineAlert
+              type="info" title="Chờ tổ trưởng gửi duyệt"
+              description="Giáo viên của tiết này vắng, tổ trưởng đang quyết định dạy thay hoặc hủy. Khi tổ trưởng gửi, bạn duyệt ở màn Giáo viên vắng hoặc xử lý riêng tiết này tại đây."
+            />
+          )}
           {!canManage && <InlineAlert type="info" title="Chỉ hiệu phó phụ trách phân hiệu mới thao tác được." />}
         </>
       )}

@@ -12,9 +12,10 @@ namespace MSMS.Api.Modules.Scd.Services;
 /// <summary>
 /// SCD-03: giáo viên vắng (BR-16). Tổ trưởng khai báo vắng cho giáo viên thuộc tổ mình: các tiết Đã xếp lịch chưa bị khóa của giáo viên trong khoảng,
 /// ở mọi phân hiệu, chuyển sang Chờ xử lý (Chỉnh tay) và để trống giáo viên. Tổ trưởng quyết định từng tiết bằng một ĐỀ XUẤT (giáo viên dạy thay hoặc
-/// hủy tiết); đề xuất chưa đổi lịch. Hiệu phó của phân hiệu có tiết chỉ DUYỆT: khi tổ trưởng đã quyết định hết mọi tiết của khai báo thì duyệt một lần,
-/// mọi đề xuất ở phân hiệu mình được áp cùng lúc, tất cả hoặc không. Hiệu phó vẫn xử lý tay từng tiết (chọn người khác hoặc hủy) khi cần.
-/// Đây không phải đơn xin nghỉ của cán bộ.
+/// hủy tiết); đề xuất chưa đổi lịch. Quyết định xong các tiết thuộc môn của tổ, tổ trưởng GỬI DUYỆT cả khai báo: đề xuất bị khóa, hiệu phó các phân hiệu có
+/// tiết được báo, và chỉ từ lúc đó mới thấy khai báo để duyệt. Hiệu phó duyệt một lần: mọi đề xuất ở phân hiệu mình được áp cùng lúc, tất cả hoặc không;
+/// hoặc TRẢ LẠI kèm lý do để tổ trưởng sửa và gửi lại. Tiết môn của tổ khác (tổ trưởng không quyết định được) và tiết lỗi lúc duyệt thì hiệu phó xử lý riêng
+/// trên lưới Điều chỉnh. Đây không phải đơn xin nghỉ của cán bộ.
 /// </summary>
 public sealed class TeacherAbsenceService(
     MsmsDbContext db, CurrentUser user, ScopeResolver scope, IClock clock, AuditWriter audit, ScheduleSupport support,
@@ -93,7 +94,7 @@ public sealed class TeacherAbsenceService(
                             && (s.TeacherId == r.TeacherId || (s.TeacherAbsence != null && s.TeacherAbsence.TeacherId == r.TeacherId)))
                 .Select(s => new { s.Status, s.SessionDate, s.PeriodSlot, Marked = s.AttendanceRecord.Any() }).ToListAsync();
             if (mine.Any(m => m.Status == "Pending" && !support.HasEnded(m.SessionDate, m.PeriodSlot)))
-                throw ApiException.BadRequest($"Các tiết của {name} trong phạm vi này đã được khai vắng và đang Chờ xử lý. Xử lý ở tab Tiết cần dạy thay.");
+                throw ApiException.BadRequest($"Các tiết của {name} trong phạm vi này đã được khai vắng và đang Chờ xử lý. Xem khai báo đó trong danh sách Giáo viên vắng của tổ.");
             if (mine.Any(m => m.Marked || support.HasEnded(m.SessionDate, m.PeriodSlot)))
                 throw ApiException.BadRequest($"Các tiết của {name} trong phạm vi này đã kết thúc hoặc đã có điểm danh nên bị khóa, không khai vắng được.");
             if (mine.Count > 0)
@@ -130,20 +131,28 @@ public sealed class TeacherAbsenceService(
     {
         await scope.EnsureCanReadCampusAsync(campusId);
         return await BuildAbsencesAsync(db.TeacherAbsence.AsNoTracking()
-            .Where(a => a.TeachingSession.Any(s => s.Class.CampusId == campusId)), campusId, false);
+            .Where(a => a.TeachingSession.Any(s => s.Class.CampusId == campusId)), campusId);
     }
 
-    /// <summary>Khai báo vắng của giáo viên thuộc tổ mình (mọi phân hiệu), kèm khai báo do chính tổ trưởng khai. Chỉ khai báo của chính mình mới xóa được.</summary>
+    /// <summary>Khai báo vắng của giáo viên thuộc tổ mình (mọi phân hiệu), kèm khai báo do chính tổ trưởng khai. Chỉ khai báo của giáo viên đang thuộc tổ mình mới xóa, gửi duyệt được.</summary>
     public async Task<List<AbsenceDto>> ListForDepartmentAsync()
     {
         var departments = await RequireHeadAsync();
         return await BuildAbsencesAsync(db.TeacherAbsence.AsNoTracking()
             .Where(a => a.DeclaredByPersonId == user.PersonId
-                        || (a.Teacher.DepartmentId != null && departments.Contains(a.Teacher.DepartmentId.Value))), null, true);
+                        || (a.Teacher.DepartmentId != null && departments.Contains(a.Teacher.DepartmentId.Value))), null, departments);
     }
 
-    /// <summary><paramref name="campusId"/> null: đếm tiết ở mọi phân hiệu (tổ trưởng).</summary>
-    private async Task<List<AbsenceDto>> BuildAbsencesAsync(IQueryable<TeacherAbsence> source, int? campusId, bool deleteOwnOnly)
+    private const string StatusDraft = "Draft", StatusReturned = "Returned", StatusSubmitted = "Submitted";
+
+    private static string StatusOf(TeacherAbsence a) =>
+        a.SubmittedAt != null ? StatusSubmitted : a.ReturnReason != null ? StatusReturned : StatusDraft;
+
+    /// <summary>
+    /// <paramref name="campusId"/> null: đếm tiết ở mọi phân hiệu (tổ trưởng). <paramref name="headDepartments"/>: các tổ tổ trưởng đang làm; không có (hiệu phó, Principal)
+    /// thì "tiết tổ trưởng quyết định được" là tiết có môn thuộc tổ của giáo viên vắng, và không xóa, không gửi duyệt được.
+    /// </summary>
+    private async Task<List<AbsenceDto>> BuildAbsencesAsync(IQueryable<TeacherAbsence> source, int? campusId, IReadOnlyCollection<int>? headDepartments = null)
     {
         var rows = await source
             .OrderByDescending(a => a.FromDate).ThenByDescending(a => a.AbsenceId).Take(200)
@@ -151,13 +160,14 @@ public sealed class TeacherAbsenceService(
             {
                 a.AbsenceId, a.TeacherId, TeacherName = a.Teacher.Staff.FullName, a.Teacher.TeacherAbbr, a.FromDate, a.ToDate, a.SlotIds, a.Reason,
                 DeclaredBy = a.DeclaredByPerson == null ? null : a.DeclaredByPerson.FullName, a.CreatedAt, a.DeclaredByPersonId,
+                a.SubmittedAt, a.ReturnReason, TeacherDepartmentId = a.Teacher.DepartmentId,
             }).ToListAsync();
 
         // Đếm trong bộ nhớ vì "đã kết thúc" cần so giờ kết thúc của khung giờ.
         var ids = rows.Select(a => a.AbsenceId).ToList();
         var sessions = (await db.TeachingSession.AsNoTracking()
                 .Where(s => s.TeacherAbsenceId != null && ids.Contains(s.TeacherAbsenceId.Value))
-                .Select(s => new { Id = s.TeacherAbsenceId!.Value, s.Class.CampusId, s.Status, s.SessionDate, s.PeriodSlot, s.ProposedAction })
+                .Select(s => new { Id = s.TeacherAbsenceId!.Value, s.Class.CampusId, s.Status, s.SessionDate, s.PeriodSlot, s.ProposedAction, SubjectDepartmentId = s.Subject.DepartmentId })
                 .ToListAsync())
             .ToLookup(s => s.Id);
         var isVice = user.AccountType == AccountTypes.VicePrincipal;
@@ -170,22 +180,31 @@ public sealed class TeacherAbsenceService(
             var pending = here.Count(s => s.Status == "Pending" && !Ended(s.SessionDate, s.PeriodSlot));
             var missed = here.Count(s => s.Status == "Pending" && Ended(s.SessionDate, s.PeriodSlot));
             var handled = here.Count(s => s.Status != "Pending");
-            var isPast = all.Count > 0 && all.All(s => Ended(s.SessionDate, s.PeriodSlot));
             var handledAnywhere = all.Count(s => s.Status != "Pending");   // DeleteAsync đếm mọi phân hiệu
-            // Tiết còn chờ ở mọi phân hiệu: tổ trưởng phải quyết định hết trước khi hiệu phó được duyệt.
+            var status = StatusOf(new TeacherAbsence { SubmittedAt = a.SubmittedAt, ReturnReason = a.ReturnReason });
+            // Tiết còn chờ ở mọi phân hiệu; trong đó tổ trưởng chỉ quyết định tiết môn thuộc tổ mình, tiết môn tổ khác để hiệu phó xử lý riêng.
             var awaiting = all.Where(s => s.Status == "Pending" && !Ended(s.SessionDate, s.PeriodSlot)).ToList();
-            var decided = awaiting.Count(s => s.ProposedAction != null);
-            var canApprove = isVice && awaiting.Count > 0 && decided == awaiting.Count && pending > 0;
+            // Đã qua: mọi tiết đã kết thúc, hoặc không còn tiết nào chờ mà có tiết đã trôi qua không ai xử lý — không còn gì để quyết định, gửi hay duyệt.
+            var isPast = all.Count > 0 && (all.All(s => Ended(s.SessionDate, s.PeriodSlot))
+                                           || (awaiting.Count == 0 && all.Any(s => s.Status == "Pending")));
+            var mineToManage = headDepartments is not null && a.TeacherDepartmentId is { } td && headDepartments.Contains(td);
+            var decidable = awaiting.Where(s => headDepartments is not null ? headDepartments.Contains(s.SubjectDepartmentId) : s.SubjectDepartmentId == a.TeacherDepartmentId).ToList();
+            var decided = decidable.Count(s => s.ProposedAction != null);
+            var proposalsHere = here.Count(s => s.Status == "Pending" && !Ended(s.SessionDate, s.PeriodSlot) && s.ProposedAction != null);
+            var isSubmitted = status == StatusSubmitted;
+            var canApprove = isVice && isSubmitted && proposalsHere > 0;
+            var canReturn = isVice && isSubmitted && pending > 0;
+            var canSubmit = mineToManage && !isSubmitted && !isPast && decidable.Count > 0 && decided == decidable.Count;
             return new AbsenceDto(
                 a.AbsenceId, a.TeacherId, a.TeacherName, a.TeacherAbbr, a.FromDate, a.ToDate, AbsenceQueries.ParseSlots(a.SlotIds), a.Reason,
                 a.DeclaredBy, a.CreatedAt, pending, handled,
-                handledAnywhere == 0 && !isPast && (!deleteOwnOnly || a.DeclaredByPersonId == user.PersonId), missed, isPast,
-                awaiting.Count, decided, canApprove);
+                mineToManage && handledAnywhere == 0 && !isPast && !isSubmitted, missed, isPast,
+                awaiting.Count, decided, canApprove, status, a.SubmittedAt, a.ReturnReason, decidable.Count, canSubmit, canReturn);
         }).ToList();
     }
 
     /// <summary>
-    /// Xóa khai báo theo kiểu tất cả hoặc không: chỉ tổ trưởng đã khai (cho giáo viên thuộc tổ mình) xóa được, khi chưa có tiết nào của khai báo bị xử lý
+    /// Xóa khai báo theo kiểu tất cả hoặc không: tổ trưởng đương nhiệm của tổ giáo viên vắng xóa được (kể cả khi người khai đã thôi làm tổ trưởng), khi chưa có tiết nào của khai báo bị xử lý
     /// (dạy thay, hủy) và giáo viên vẫn đủ điều kiện dạy (BR-06), không trùng lịch ở tiết nào (BR-13). Khi đó mọi tiết trở về giáo viên, trạng thái
     /// Đã xếp lịch, và các đề xuất bị bỏ.
     /// </summary>
@@ -199,15 +218,18 @@ public sealed class TeacherAbsenceService(
         var restorable = linked.Where(s => !support.HasEnded(s.SessionDate, s.PeriodSlot)).ToList();   // tiết đã qua bị khóa: giữ nguyên
 
         var departments = await HeadDepartmentIdsAsync();
-        if (absence.DeclaredByPersonId != user.PersonId || absence.Teacher.DepartmentId is not { } d || !departments.Contains(d))
-            throw ApiException.Forbidden("Chỉ tổ trưởng đã khai báo (cho giáo viên thuộc tổ mình) mới xóa được.");
+        if (absence.Teacher.DepartmentId is not { } d || !departments.Contains(d))
+            throw ApiException.Forbidden("Chỉ tổ trưởng đương nhiệm của tổ giáo viên vắng mới xóa được khai báo.");
+
+        if (absence.SubmittedAt != null)
+            throw ApiException.BadRequest("Khai báo đã gửi hiệu phó duyệt nên không xóa được. Chờ hiệu phó duyệt, hoặc nhờ hiệu phó trả lại rồi xóa.");
 
         if (linked.Count > 0 && restorable.Count == 0)
             throw ApiException.BadRequest("Khai báo này đã qua: mọi tiết đã kết thúc nên bị khóa. Khai báo chỉ để tra cứu, không xóa được.");
 
         var handled = linked.Count(s => s.Status != "Pending");
         if (handled > 0)
-            throw ApiException.BadRequest($"Đã xử lý {handled} tiết của khai báo này (dạy thay hoặc hủy) nên không xóa được. Xử lý nốt các tiết còn lại ở lưới Điều chỉnh.");
+            throw ApiException.BadRequest($"Đã xử lý {handled} tiết của khai báo này (dạy thay hoặc hủy) nên không xóa được. Quyết định các tiết còn lại và gửi duyệt như thường.");
 
         var teacher = absence.Teacher;
         var teacherName = teacher.Staff.FullName;
@@ -318,16 +340,17 @@ public sealed class TeacherAbsenceService(
     /// <summary>
     /// Tổ trưởng quyết định một tiết Chờ xử lý của môn thuộc tổ mình bằng một đề xuất: Substitute (giáo viên cùng tổ dạy thay), Cancel (hủy tiết) hoặc
     /// Clear (bỏ đề xuất). Không đổi lịch: tiết vẫn Chờ xử lý cho tới khi hiệu phó duyệt. Giáo viên đề xuất phải cùng tổ, đủ điều kiện dạy, rảnh và không có
-    /// khai báo vắng phủ tiết đó (BR-06, BR-13, BR-16). Khi mọi tiết còn chờ của khai báo đều đã có đề xuất, hiệu phó các phân hiệu có tiết được báo để duyệt.
+    /// khai báo vắng phủ tiết đó (BR-06, BR-13, BR-16). Chỉ sửa được khi khai báo chưa gửi duyệt; đã gửi thì đề xuất bị khóa cho tới khi hiệu phó trả lại.
     /// </summary>
     public async Task<AdjustResultDto> ProposeAsync(long sessionId, ProposeSessionRequest r)
     {
         var s = await LoadDepartmentSessionAsync(sessionId);
         EnsurePending(s);
-        if (s.TeacherAbsenceId is null)
-            throw ApiException.BadRequest("Tiết này không thuộc khai báo vắng nào nên hiệu phó xử lý tay, tổ trưởng không quyết định được.");
+        if (s.TeacherAbsenceId is not { } absenceId)
+            throw ApiException.BadRequest("Tiết này không thuộc khai báo vắng nào nên hiệu phó xử lý riêng, tổ trưởng không quyết định được.");
+        if (await db.TeacherAbsence.AsNoTracking().AnyAsync(a => a.AbsenceId == absenceId && a.SubmittedAt != null))
+            throw ApiException.BadRequest("Khai báo đã gửi hiệu phó duyệt nên không sửa đề xuất được. Chờ hiệu phó duyệt hoặc trả lại.");
         await support.EnsureNotLockedAsync(s);
-        var hadProposal = s.ProposedAction is not null;
 
         switch (r.Action)
         {
@@ -363,30 +386,91 @@ public sealed class TeacherAbsenceService(
         }
 
         await db.SaveChangesAsync();
-        if (!hadProposal && s.TeacherAbsenceId is { } absenceId) await NotifyIfReadyAsync(absenceId);
         return new AdjustResultDto(s.SessionId, 1);
     }
 
-    /// <summary>Tổ trưởng vừa quyết định xong tiết cuối của khai báo: báo hiệu phó từng phân hiệu có tiết chờ duyệt (loại SessionPending, BR-26).</summary>
-    private async Task NotifyIfReadyAsync(int absenceId)
+    // ---------------------------------------------------------------- Tổ trưởng gửi duyệt
+    /// <summary>
+    /// Tổ trưởng gửi cả khai báo cho hiệu phó duyệt khi đã quyết định mọi tiết thuộc môn của tổ mình còn chờ (tiết môn tổ khác để hiệu phó xử lý riêng, không chặn việc gửi).
+    /// Từ lúc gửi, đề xuất bị khóa; hiệu phó từng phân hiệu có tiết được báo (loại SessionPending, BR-26) và chỉ từ lúc này mới duyệt được. Gửi lại sau khi bị trả về xóa lý do cũ.
+    /// </summary>
+    public async Task<AbsenceStateDto> SubmitAsync(int absenceId)
     {
-        var awaiting = (await db.TeachingSession.AsNoTracking().Include(s => s.PeriodSlot).Include(s => s.Class)
+        var departments = await RequireHeadAsync();
+        var absence = await db.TeacherAbsence.Include(a => a.Teacher).ThenInclude(t => t.Staff)
+                          .FirstOrDefaultAsync(a => a.AbsenceId == absenceId)
+                      ?? throw ApiException.NotFound("Không tìm thấy khai báo vắng.");
+        if (absence.Teacher.DepartmentId is not { } d || !departments.Contains(d))
+            throw ApiException.Forbidden("Chỉ tổ trưởng của giáo viên vắng mới gửi duyệt được.");
+        if (absence.SubmittedAt != null) throw ApiException.BadRequest("Khai báo này đã gửi hiệu phó duyệt rồi.");
+
+        var awaiting = (await db.TeachingSession.AsNoTracking().Include(s => s.PeriodSlot).Include(s => s.Class).Include(s => s.Subject)
                 .Where(s => s.TeacherAbsenceId == absenceId && s.Status == "Pending").ToListAsync())
             .Where(s => !support.HasEnded(s.SessionDate, s.PeriodSlot)).ToList();
-        if (awaiting.Count == 0 || awaiting.Any(s => s.ProposedAction is null)) return;
+        if (awaiting.Count == 0) throw ApiException.BadRequest("Khai báo này không còn tiết nào chờ xử lý.");
+        var decidable = awaiting.Where(s => departments.Contains(s.Subject.DepartmentId)).ToList();
+        var undecided = decidable.Count(s => s.ProposedAction is null);
+        if (decidable.Count == 0)
+            throw ApiException.BadRequest("Khai báo này chỉ còn tiết môn của tổ khác, tổ trưởng không quyết định được. Hiệu phó xử lý riêng các tiết đó.");
+        if (undecided > 0)
+            throw ApiException.BadRequest($"Còn {undecided}/{decidable.Count} tiết chưa quyết định. Quyết định hết các tiết của tổ rồi gửi duyệt.");
 
-        var absence = await db.TeacherAbsence.AsNoTracking().Include(a => a.Teacher).ThenInclude(t => t.Staff).FirstAsync(a => a.AbsenceId == absenceId);
+        absence.SubmittedAt = clock.Now;
+        absence.ReturnReason = null;
+        audit.Add(AuditCategories.ScheduleAdjust, AuditActions.SubmitAbsence, [absenceId],
+            ("Giáo viên", absence.TeacherId), ("Từ ngày", absence.FromDate), ("Đến ngày", absence.ToDate),
+            ("Số tiết có đề xuất", decidable.Count), ("Số tiết để hiệu phó xử lý riêng", awaiting.Count - decidable.Count));
         foreach (var campus in awaiting.GroupBy(s => s.Class.CampusId))
-            await support.NotifyVicesAsync(campus.Key, "Khai báo vắng chờ duyệt",
-                $"Tổ trưởng đã xử lý xong khai báo vắng của {absence.Teacher.Staff.FullName} {Range(absence.FromDate, absence.ToDate)}: {campus.Count()} tiết của phân hiệu chờ bạn duyệt.");
+        {
+            var proposals = campus.Count(s => s.ProposedAction != null);
+            var others = campus.Count() - proposals;
+            var body = $"Tổ trưởng đã gửi khai báo vắng của {absence.Teacher.Staff.FullName} {Range(absence.FromDate, absence.ToDate)}: {proposals} tiết của phân hiệu chờ bạn duyệt"
+                       + (others > 0 ? $", {others} tiết môn của tổ khác bạn xử lý riêng trên lưới Điều chỉnh." : ".");
+            await support.NotifyVicesAsync(campus.Key, "Khai báo vắng chờ duyệt", body, absenceId);
+        }
         await db.SaveChangesAsync();
+        return new AbsenceStateDto(absenceId, StatusSubmitted);
+    }
+
+    // ---------------------------------------------------------------- Hiệu phó trả lại
+    /// <summary>
+    /// Hiệu phó (phân hiệu có tiết chờ của khai báo đã gửi) trả khai báo về cho tổ trưởng kèm lý do: đề xuất mở khóa để tổ trưởng sửa rồi gửi lại. Không đổi lịch.
+    /// Trả lại áp cho cả khai báo, nên tổ trưởng được báo (loại SessionPending, BR-26).
+    /// </summary>
+    public async Task<AbsenceStateDto> ReturnAsync(int absenceId, ReturnAbsenceRequest r)
+    {
+        var reason = Guard.Required(r.Reason, "Lý do trả lại", 300);
+        var absence = await db.TeacherAbsence.Include(a => a.Teacher).ThenInclude(t => t.Staff)
+                          .FirstOrDefaultAsync(a => a.AbsenceId == absenceId)
+                      ?? throw ApiException.NotFound("Không tìm thấy khai báo vắng.");
+        var led = (await scope.LedCampusIdsAsync()).ToList();
+        var awaiting = (await db.TeachingSession.AsNoTracking().Include(s => s.Class).Include(s => s.PeriodSlot)
+                .Where(s => s.TeacherAbsenceId == absenceId && s.Status == "Pending").ToListAsync())
+            .Where(s => !support.HasEnded(s.SessionDate, s.PeriodSlot)).ToList();
+        if (awaiting.Count == 0) throw ApiException.BadRequest("Khai báo này không còn tiết nào chờ duyệt.");
+        if (!awaiting.Any(s => led.Contains(s.Class.CampusId))) throw ApiException.Forbidden("Khai báo này không có tiết ở phân hiệu bạn phụ trách.");
+        if (absence.SubmittedAt == null) throw ApiException.BadRequest("Tổ trưởng chưa gửi khai báo này, chưa có gì để trả lại.");
+
+        absence.SubmittedAt = null;
+        absence.ReturnReason = reason;
+        audit.Add(AuditCategories.ScheduleAdjust, AuditActions.ReturnAbsence, [absenceId],
+            ("Giáo viên", absence.TeacherId), ("Từ ngày", absence.FromDate), ("Đến ngày", absence.ToDate), ("Lý do", reason));
+        // Báo tổ trưởng đương nhiệm của tổ giáo viên vắng (người sửa và gửi lại); tổ không còn tổ trưởng thì báo người đã khai.
+        var heads = absence.Teacher.DepartmentId is { } dept ? await support.HeadIdsAsync(dept) : [];
+        if (heads.Count == 0 && absence.DeclaredByPersonId is { } declarer) heads = [declarer];
+        if (heads.Count > 0)
+            support.NotifyAbsenceReturned(heads, absenceId, "Khai báo vắng bị trả lại",
+                $"Khai báo vắng của {absence.Teacher.Staff.FullName} {Range(absence.FromDate, absence.ToDate)} bị trả lại: {reason}");
+        await db.SaveChangesAsync();
+        return new AbsenceStateDto(absenceId, StatusReturned);
     }
 
     // ---------------------------------------------------------------- Hiệu phó duyệt
     /// <summary>
-    /// Hiệu phó duyệt khai báo: chỉ khi tổ trưởng đã quyết định MỌI tiết còn chờ của khai báo (ở mọi phân hiệu). Áp các đề xuất cho tiết ở phân hiệu mình
-    /// phụ trách (dạy thay hoặc hủy), gửi thông báo và email như xử lý thường. Tất cả hoặc không: một đề xuất không còn hợp lệ (giáo viên đã bận hoặc vắng)
-    /// thì không áp tiết nào, hiệu phó xử lý tay tiết đó rồi duyệt lại. Tiết ở phân hiệu khác do hiệu phó phân hiệu đó duyệt.
+    /// Hiệu phó duyệt khai báo tổ trưởng đã gửi: áp các đề xuất cho tiết ở phân hiệu mình phụ trách (dạy thay hoặc hủy), gửi thông báo và email như xử lý thường.
+    /// Tất cả hoặc không: một đề xuất không còn hợp lệ (giáo viên đã bận hoặc vắng) thì không áp tiết nào, hiệu phó xử lý riêng tiết đó trên lưới Điều chỉnh rồi duyệt
+    /// lại, hoặc trả khai báo về cho tổ trưởng. Tiết chưa có đề xuất (môn của tổ khác) giữ Chờ xử lý cho hiệu phó xử lý riêng. Tiết ở phân hiệu khác do hiệu phó
+    /// phân hiệu đó duyệt.
     /// </summary>
     public async Task<ApproveAbsenceResultDto> ApproveAsync(int absenceId)
     {
@@ -398,12 +482,14 @@ public sealed class TeacherAbsenceService(
                 .Where(s => s.TeacherAbsenceId == absenceId && s.Status == "Pending").ToListAsync())
             .Where(s => !support.HasEnded(s.SessionDate, s.PeriodSlot)).ToList();
         if (awaiting.Count == 0) throw ApiException.BadRequest("Khai báo này không còn tiết nào chờ duyệt.");
-        var mine = awaiting.Where(s => led.Contains(s.Class.CampusId)).ToList();
-        if (mine.Count == 0) throw ApiException.Forbidden("Khai báo này không có tiết ở phân hiệu bạn phụ trách.");
+        var inCampus = awaiting.Where(s => led.Contains(s.Class.CampusId)).ToList();
+        if (inCampus.Count == 0) throw ApiException.Forbidden("Khai báo này không có tiết ở phân hiệu bạn phụ trách.");
 
-        var undecided = awaiting.Count(s => s.ProposedAction is null);
-        if (undecided > 0)
-            throw ApiException.BadRequest($"Tổ trưởng mới quyết định {awaiting.Count - undecided}/{awaiting.Count} tiết. Chờ tổ trưởng quyết định hết các tiết rồi duyệt.");
+        if (absence.SubmittedAt == null)
+            throw ApiException.BadRequest("Tổ trưởng chưa gửi khai báo này duyệt. Chờ tổ trưởng quyết định và gửi.");
+        var mine = inCampus.Where(s => s.ProposedAction is not null).ToList();
+        if (mine.Count == 0)
+            throw ApiException.BadRequest("Khai báo này không có đề xuất nào ở phân hiệu bạn (các tiết còn lại thuộc môn của tổ khác). Xử lý riêng các tiết đó trên lưới Điều chỉnh.");
 
         // Kiểm trước mọi đề xuất (kể cả hai đề xuất cùng giáo viên, cùng khung giờ) để áp tất cả hoặc không.
         var problems = new List<string>();
@@ -427,7 +513,7 @@ public sealed class TeacherAbsenceService(
             }
         }
         if (problems.Count > 0)
-            throw ApiException.BadRequest($"Chưa duyệt được vì {problems.Count} tiết không còn hợp lệ: {string.Join(" | ", problems.Take(3))}{(problems.Count > 3 ? $" | và {problems.Count - 3} tiết nữa" : "")}. Xử lý tay các tiết đó (chọn người khác hoặc hủy) rồi duyệt lại.");
+            throw ApiException.BadRequest($"Chưa duyệt được vì {problems.Count} tiết không còn hợp lệ: {string.Join(" | ", problems.Take(3))}{(problems.Count > 3 ? $" | và {problems.Count - 3} tiết nữa" : "")}. Xử lý riêng các tiết đó trên lưới Điều chỉnh (chọn người khác hoặc hủy) rồi duyệt lại, hoặc trả khai báo về cho tổ trưởng.");
 
         int substituted = 0, cancelled = 0;
         foreach (var s in mine)
@@ -450,16 +536,21 @@ public sealed class TeacherAbsenceService(
             ("Số tiết dạy thay", substituted), ("Số tiết hủy", cancelled), ("Mã các tiết", mine.Select(s => s.SessionId)));
         await db.SaveChangesAsync();
         _ = mailer.Dispatch();
-        return new ApproveAbsenceResultDto(absenceId, substituted, cancelled, awaiting.Count - mine.Count);
+        return new ApproveAbsenceResultDto(absenceId, substituted, cancelled, awaiting.Count - inCampus.Count, inCampus.Count - mine.Count);
     }
 
-    // ---------------------------------------------------------------- Hiệu phó xử lý tay từng tiết
-    /// <summary>Hai lựa chọn cho tiết Chờ xử lý chưa bị khóa: chọn giáo viên dạy thay, hoặc hủy. Muốn bù thì thêm tiết bù sau khi hủy.</summary>
+    // ---------------------------------------------------------------- Hiệu phó xử lý riêng từng tiết (lưới Điều chỉnh)
+    /// <summary>
+    /// Hai lựa chọn cho tiết Chờ xử lý chưa bị khóa: chọn giáo viên dạy thay, hoặc hủy. Muốn bù thì thêm tiết bù sau khi hủy.
+    /// Tiết đang chờ tổ trưởng (khai báo chưa gửi duyệt, môn của tổ giáo viên vắng, tổ có tổ trưởng) thì chưa xử lý được.
+    /// </summary>
     public async Task<AdjustResultDto> ResolveAsync(long sessionId, ResolvePendingRequest r)
     {
         var s = await support.LoadManagedSessionAsync(sessionId);
         EnsurePending(s);
         await support.EnsureNotLockedAsync(s);
+        if (await db.TeachingSession.Where(x => x.SessionId == s.SessionId).AnyAsync(support.AwaitingHead()))
+            throw ApiException.BadRequest("Tiết này đang chờ tổ trưởng quyết định. Hiệu phó xử lý được sau khi tổ trưởng gửi khai báo duyệt.");
 
         if (r.Action == "Substitute")
         {

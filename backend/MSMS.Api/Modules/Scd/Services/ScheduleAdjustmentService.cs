@@ -37,8 +37,15 @@ public sealed class ScheduleAdjustmentService(
             .Select(s => new AdjustSessionDto(
                 s.SessionId, s.SessionDate, s.PeriodSlotId, s.SubjectId, s.Subject.Name, s.Subject.Abbreviation,
                 s.TeacherId, s.Teacher == null ? null : s.Teacher.Staff.FullName, s.Teacher == null ? null : s.Teacher.TeacherAbbr,
-                s.Status, s.Source, s.SessionDate < today || (s.SessionDate == today && s.PeriodSlot.EndTime <= now) || s.AttendanceRecord.Any(), s.VersionId == null, s.ChangeNote))
+                s.Status, s.Source, s.SessionDate < today || (s.SessionDate == today && s.PeriodSlot.EndTime <= now) || s.AttendanceRecord.Any(), s.VersionId == null, s.ChangeNote, false))
             .ToListAsync();
+        // Tiết Chờ xử lý đang chờ tổ trưởng quyết định và gửi duyệt (BR-16): hiện trên lưới nhưng hiệu phó chưa xử lý được.
+        var awaitingHead = (await db.TeachingSession.AsNoTracking()
+                .Where(s => s.ClassId == classId && s.SessionDate >= from && s.SessionDate <= to)
+                .Where(support.AwaitingHead()).Select(s => s.SessionId).ToListAsync())
+            .ToHashSet();
+        if (awaitingHead.Count > 0)
+            sessions = sessions.Select(s => awaitingHead.Contains(s.SessionId) ? s with { AwaitingHead = true } : s).ToList();
         var holidays = await db.Holiday.AsNoTracking()
             .Where(h => h.AcademicYearId == cls.AcademicYearId && (h.CampusId == null || h.CampusId == cls.CampusId)
                         && h.HolidayDate >= from && h.HolidayDate <= to)

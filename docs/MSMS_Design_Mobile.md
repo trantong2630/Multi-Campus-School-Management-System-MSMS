@@ -193,7 +193,7 @@ Target: a teacher finishes one class in **under 60 seconds, one-handed**.
 
 ### 5.1b People lists (avatar rows)
 
-Lists of people (class roster, children, inbox counterparts, teachers) use the web person-cell pattern (`MSMS_Design_Web.md` §8.2b) as a **row card** instead of a table row: card radius 18, height 68, 40px round avatar on a stable-hash accent `Bg`, name 15/500, one 12px `text3` line below (student code, class, role), status pill or trailing control on the right. Same avatar tint function as web so one person has the same color on both platforms. Long accented names truncate with an ellipsis inside the card.
+Lists of people (class list, children, inbox counterparts, teachers) use the web person-cell pattern (`MSMS_Design_Web.md` §8.2b) as a **row card** instead of a table row: card radius 18, height 68, 40px round avatar on a stable-hash accent `Bg`, name 15/500, one 12px `text3` line below (student code, class, role), status pill or trailing control on the right. Same avatar tint function as web so one person has the same color on both platforms. Long accented names truncate with an ellipsis inside the card.
 
 ### 5.2 Teaching / learning schedule
 

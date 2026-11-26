@@ -151,10 +151,18 @@ public sealed class NotificationService(MsmsDbContext db, CurrentUser user, IClo
                 return isTeacher || isStudent || isParent ? (true, scheduleRoute, null) : (false, null, Gone);
 
             case NotificationTypes.SessionPending:
-                // Chỉ người phụ trách phân hiệu còn hiệu lực xử lý tiết Chờ xử lý.
-                return isVice && await db.CampusLeadership.AnyAsync(l => l.StaffId == me && l.StartDate <= today && (l.EndDate == null || l.EndDate > today))
-                    ? (true, "/scd/schedule", null)
-                    : (false, null, Denied);
+            {
+                // Thông báo về khai báo vắng (tổ trưởng gửi duyệt, hiệu phó trả lại) trỏ vào khai báo; thông báo tiết Chờ xử lý do khóa tài khoản thì không.
+                var aboutAbsence = n.RefEntityType == "TeacherAbsence";
+                // Hiệu phó phụ trách phân hiệu còn hiệu lực: khai báo chờ duyệt mở màn Giáo viên vắng, tiết Chờ xử lý khác mở lịch dạy để xử lý riêng.
+                if (isVice && await db.CampusLeadership.AnyAsync(l => l.StaffId == me && l.StartDate <= today && (l.EndDate == null || l.EndDate > today)))
+                    return (true, aboutAbsence ? "/scd/absences" : "/scd/schedule", null);
+                // Tổ trưởng còn giữ trách nhiệm nhận thông báo khai báo vắng bị trả lại: mở danh sách khai báo của tổ.
+                if (isTeacher && aboutAbsence
+                    && await db.DepartmentHead.AnyAsync(h => h.StaffId == me && h.StartDate <= today && (h.EndDate == null || h.EndDate > today)))
+                    return (true, "/scd/department-absences", null);
+                return (false, null, Denied);
+            }
 
             case NotificationTypes.AssignmentAssigned when n.RefEntityId is { } aid:
             {

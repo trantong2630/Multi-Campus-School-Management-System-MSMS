@@ -9,7 +9,7 @@ namespace MSMS.Api.Modules.Scd.Controllers;
 [ApiController, Route("api/scd/responsibilities")]
 public class ResponsibilityController(SubjectResponsibilityService service) : ControllerBase
 {
-    // Chỉ đọc, toàn trường: Hiệu trưởng và Hiệu phó (UC36).
+    // Chỉ đọc, toàn trường: Hiệu trưởng và Hiệu phó (UC42).
     [HttpGet, Authorize(Policy = Policies.TimetableReader)]
     public Task<ResponsibilityDto> List([FromQuery] int? campusId, [FromQuery] int? subjectId) => service.ListAsync(campusId, subjectId);
 }

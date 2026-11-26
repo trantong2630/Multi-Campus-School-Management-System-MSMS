@@ -26,6 +26,23 @@ public sealed class ScheduleSupport(MsmsDbContext db, ScopeResolver scope, Curre
     /// <summary>Điều kiện truy vấn: tiết chưa kết thúc (ngược của <see cref="HasEnded"/>).</summary>
     public Expression<Func<TeachingSession, bool>> NotEnded() => SessionLockRules.NotEnded(clock);
 
+    /// <summary>
+    /// Điều kiện truy vấn: tiết Chờ xử lý đang chờ tổ trưởng (BR-16) — thuộc khai báo vắng chưa gửi duyệt, môn thuộc tổ của giáo viên vắng, và tổ đang có tổ trưởng.
+    /// Hiệu phó chưa xử lý được tiết này cho tới khi tổ trưởng gửi duyệt. Tổ không có tổ trưởng đương nhiệm thì không ai gửi được nên hiệu phó xử lý như thường.
+    /// </summary>
+    public Expression<Func<TeachingSession, bool>> AwaitingHead()
+    {
+        var heads = db.DepartmentHead.Where(EffectivePeriod.CurrentResponsibility<DepartmentHead>(clock.Today));
+        return s => s.Status == "Pending" && s.TeacherAbsence != null && s.TeacherAbsence.SubmittedAt == null
+                    && s.TeacherAbsence.Teacher.DepartmentId == s.Subject.DepartmentId
+                    && heads.Any(h => h.DepartmentId == s.Subject.DepartmentId);
+    }
+
+    /// <summary>Tổ trưởng đương nhiệm của một tổ (BR-09).</summary>
+    public Task<List<int>> HeadIdsAsync(int departmentId) =>
+        db.DepartmentHead.AsNoTracking().Where(EffectivePeriod.CurrentResponsibility<DepartmentHead>(clock.Today))
+            .Where(h => h.DepartmentId == departmentId).Select(h => h.StaffId).Distinct().ToListAsync();
+
     /// <summary>Tải tiết kèm lớp, khung giờ, môn, giáo viên; người gọi phải là hiệu phó đang phụ trách phân hiệu của lớp.</summary>
     public async Task<TeachingSession> LoadManagedSessionAsync(long sessionId)
     {
@@ -125,9 +142,17 @@ public sealed class ScheduleSupport(MsmsDbContext db, ScopeResolver scope, Curre
             dayCounts.GetValueOrDefault(t.StaffId))).ToList();
     }
 
-    /// <summary>Báo cho hiệu phó đang phụ trách phân hiệu (loại SessionPending, BR-26): có tiết Chờ xử lý hoặc có đề xuất dạy thay cần xem.</summary>
-    public async Task NotifyVicesAsync(int campusId, string title, string body) =>
-        notifier.Add(await ViceIdsAsync(campusId), NotificationTypes.SessionPending, title, body);
+    /// <summary>
+    /// Báo cho hiệu phó đang phụ trách phân hiệu (loại SessionPending, BR-26): có tiết Chờ xử lý hoặc có khai báo vắng chờ duyệt.
+    /// Truyền <paramref name="absenceId"/> khi thông báo nói về một khai báo, để mở thông báo dẫn tới màn Giáo viên vắng.
+    /// </summary>
+    public async Task NotifyVicesAsync(int campusId, string title, string body, int? absenceId = null) =>
+        notifier.Add(await ViceIdsAsync(campusId), NotificationTypes.SessionPending, title, body,
+            absenceId is null ? null : "TeacherAbsence", absenceId);
+
+    /// <summary>Báo tổ trưởng khi hiệu phó trả khai báo vắng về (loại SessionPending, BR-26); mở thông báo dẫn tới danh sách khai báo của tổ.</summary>
+    public void NotifyAbsenceReturned(IReadOnlyCollection<int> personIds, int absenceId, string title, string body) =>
+        notifier.Add(personIds, NotificationTypes.SessionPending, title, body, "TeacherAbsence", absenceId);
 
     public Task<List<int>> ViceIdsAsync(int campusId)
     {

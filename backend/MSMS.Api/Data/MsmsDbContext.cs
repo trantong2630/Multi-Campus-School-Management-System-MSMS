@@ -981,7 +981,9 @@ public partial class MsmsDbContext : DbContext
                 .HasPrecision(0)
                 .HasDefaultValueSql("(CONVERT([datetime2](0),(sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time')))");
             entity.Property(e => e.Reason).HasMaxLength(255);
+            entity.Property(e => e.ReturnReason).HasMaxLength(300);
             entity.Property(e => e.SlotIds).HasMaxLength(200);
+            entity.Property(e => e.SubmittedAt).HasPrecision(0);
 
             entity.HasOne(d => d.DeclaredByPerson).WithMany(p => p.TeacherAbsence)
                 .HasForeignKey(d => d.DeclaredByPersonId)
