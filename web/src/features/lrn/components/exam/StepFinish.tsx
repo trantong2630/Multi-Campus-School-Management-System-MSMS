@@ -46,9 +46,10 @@ interface Props {
 export function StepFinish({ subjectId, grade, title, instruction, duration, lines, points, classes, onGiven }: Props) {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  // Mặc định chọn các lớp cùng khối với đề; giáo viên bấm là chuyển sang danh sách tự chọn.
+  // Đề chỉ giao được cho lớp cùng khối (BR-21.1); mặc định chọn hết các lớp đó, giáo viên bấm để bỏ bớt.
+  const eligible = useMemo(() => classes.filter((c) => c.gradeLevel === grade), [classes, grade]);
   const [override, setOverride] = useState<number[] | null>(null);
-  const picked = override ?? classes.filter((c) => c.gradeLevel === grade).map((c) => c.classId);
+  const picked = override ?? eligible.map((c) => c.classId);
   const [given, setGiven] = useState<number[]>([]);
   const [scheduled, setScheduled] = useState(false);
   const [openAt, setOpenAt] = useState<Dayjs | null>(null);
@@ -64,12 +65,13 @@ export function StepFinish({ subjectId, grade, title, instruction, duration, lin
   const toggle = (id: number) => setOverride(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id]);
 
   const problems: string[] = [];
-  if (picked.length === 0) problems.push('chọn ít nhất một lớp');
+  if (eligible.length === 0) problems.push(`không có lớp khối ${grade} nào bạn đang phụ trách môn này`);
+  else if (picked.length === 0) problems.push('chọn ít nhất một lớp');
   if (!dueAt) problems.push('chọn hạn nộp');
   else if (!dueAt.isAfter(dayjs())) problems.push('chọn hạn nộp ở tương lai');
   else if (scheduled && openAt && !dueAt.isAfter(openAt)) problems.push('hạn nộp phải sau giờ mở bài');
 
-  const chosen = classes.filter((c) => picked.includes(c.classId) && !given.includes(c.classId));
+  const chosen = eligible.filter((c) => picked.includes(c.classId) && !given.includes(c.classId));
 
   const assign = () => {
     if (problems.length || !dueAt || chosen.length === 0) return;
@@ -136,7 +138,7 @@ export function StepFinish({ subjectId, grade, title, instruction, duration, lin
       </header>
       {given.length > 0 && (
         <p className="xfinish__locked">
-          Đề đã giao cho lớp {classes.filter((c) => given.includes(c.classId)).map((c) => c.className).join(', ')} nên không sửa nữa, để mọi lớp nhận cùng một đề. Giao tiếp cho các lớp còn lại ở đây.
+          Đề đã giao cho lớp {eligible.filter((c) => given.includes(c.classId)).map((c) => c.className).join(', ')} nên không sửa nữa, để mọi lớp nhận cùng một đề. Giao tiếp cho các lớp còn lại ở đây.
         </p>
       )}
       <div className="xfinish__cards">
@@ -147,7 +149,7 @@ export function StepFinish({ subjectId, grade, title, instruction, duration, lin
               <span>Lớp</span>
               <div className="when__ctl">
                 <div className="pillset pillset--wrap">
-                  {classes.map((c) => {
+                  {eligible.map((c) => {
                     const done = given.includes(c.classId);
                     return (
                       <button key={c.classId} type="button" disabled={done} className={picked.includes(c.classId) || done ? 'is-on' : ''} aria-pressed={picked.includes(c.classId)} onClick={() => toggle(c.classId)}>

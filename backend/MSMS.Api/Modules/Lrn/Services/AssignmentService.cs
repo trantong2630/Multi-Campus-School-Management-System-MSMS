@@ -83,11 +83,13 @@ public sealed class AssignmentService(
         var ids = items.Select(i => i.QuestionId).ToList();
         await questions.LockQuestionsAsync(ids);
         var found = await db.Question.AsNoTracking().Where(q => ids.Contains(q.QuestionId))
-            .Select(q => new { q.QuestionId, q.SubjectId, q.Status, q.IsHidden, q.Difficulty }).ToListAsync();
+            .Select(q => new { q.QuestionId, q.SubjectId, q.GradeLevel, q.Status, q.IsHidden, q.Difficulty }).ToListAsync();
         if (found.Count != ids.Count)
             throw ApiException.BadRequest("Có câu hỏi không còn tồn tại. Tải lại ngân hàng câu hỏi rồi chọn lại.");
         if (found.Any(q => q.SubjectId != subject.SubjectId))
             throw ApiException.BadRequest($"Bài tập môn {subject.Name} chỉ gồm câu hỏi cùng môn. Bỏ các câu thuộc môn khác.");
+        if (found.Any(q => q.GradeLevel is { } g && g != cls.GradeLevel))   // câu cũ chưa ghi khối thì không chặn
+            throw ApiException.BadRequest($"Lớp {cls.Name} học khối {cls.GradeLevel} nên chỉ giao được câu hỏi khối {cls.GradeLevel}. Bỏ các câu thuộc khối khác.");
         if (found.Any(q => q.Status != QuestionStatuses.Ready || q.IsHidden))
             throw ApiException.BadRequest("Có câu hỏi chưa Sẵn dùng hoặc đã bị ẩn khỏi ngân hàng. Bỏ các câu đó rồi giao lại.");
 
