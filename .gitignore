@@ -30,4 +30,5 @@ backend/MSMS.Tests/ParTests/
 sgk-source/
 
 windows/
-web/
+/web/dist
+/web/node_modules
