@@ -705,7 +705,7 @@ Danh sách là học sinh đang thuộc lớp VÀO NGÀY CỦA TIẾT, không ph
 
 **4.5.3 — Ghi điểm danh cho tiết / Save Lesson Attendance**  
 `BE + Web + Mobile` · 2 MD · dep: 4.5.2  
-Giáo viên của tiết gửi một trong ba giá trị Có mặt / Muộn / Vắng kèm ghi chú tùy chọn. Quyền dựa vào TIẾT chứ không dựa vào phụ trách chuyên môn, nên giáo viên dạy thay điểm danh được. Mỗi học sinh có đúng một bản ghi cho mỗi tiết, có hiệu lực ngay, không có bước chốt; lưu lại là cập nhật bản ghi đó. Một lần lưu chỉ gồm học sinh đã chọn trạng thái; có nút "Còn lại có mặt" để đặt Có mặt cho các em chưa chọn. Giáo viên chưa điểm danh được tiết chưa tới ngày (BR-17).
+Giáo viên của tiết gửi một trong ba giá trị Có mặt / Muộn / Vắng kèm ghi chú tùy chọn. Quyền dựa vào TIẾT chứ không dựa vào phụ trách chuyên môn, nên giáo viên dạy thay điểm danh được. Mỗi học sinh có đúng một bản ghi cho mỗi tiết, có hiệu lực ngay, không có bước chốt; lưu lại là cập nhật bản ghi đó. Một lần lưu chỉ gồm học sinh đã chọn trạng thái; có nút "Còn lại có mặt" để đặt Có mặt cho các em chưa chọn. Giáo viên chưa điểm danh được tiết chưa tới ngày, và trong ngày của tiết chỉ điểm danh được từ 10 phút trước giờ bắt đầu (BR-17).
 
 **4.5.4 — Sửa điểm danh trong ngày của tiết / Update Attendance Same Day**  
 `BE + Web + Mobile` · 1 MD · dep: 4.5.3  
