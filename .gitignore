@@ -32,3 +32,4 @@ sgk-source/
 windows/
 /web/dist
 /web/node_modules
+mobile/web
