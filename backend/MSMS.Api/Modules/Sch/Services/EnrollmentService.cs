@@ -105,6 +105,14 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
     /// <summary>Kiểm tra rồi đánh dấu chuyển lớp trên các thực thể đang theo dõi; chưa lưu.</summary>
     private void TransferCore(Enrollment old, Class target, DateOnly effectiveDate)
     {
+        // Kiểm trạng thái hồ sơ trước để nêu đúng lý do; em rời trường thì ghi danh vốn đã bị đóng nên đường "đã rời lớp" bên dưới cũng chặn, nhưng không nói rõ.
+        if (old.Student.Status != Studying)
+            throw ApiException.BadRequest(old.Student.Status switch
+            {
+                "Transferred" => "Học sinh đã chuyển trường nên không chuyển lớp được.",
+                "Graduated" => "Học sinh đã tốt nghiệp nên không chuyển lớp được.",
+                _ => "Chỉ chuyển lớp được học sinh đang học.",
+            });
         if (old.EndDate != null)
             throw ApiException.BadRequest("Học sinh này đã rời lớp hoặc đã có lịch chuyển lớp. Chỉ chuyển lớp được học sinh đang ở lớp.");
         if (target.ClassId == old.ClassId) throw ApiException.BadRequest("Lớp chuyển đến trùng lớp hiện tại. Chọn lớp khác.");
@@ -208,6 +216,9 @@ public sealed class EnrollmentService(MsmsDbContext db, IClock clock, CurrentUse
     private async Task<int?> CloseCoreAsync(Enrollment e, string reason, DateOnly today)
     {
         var leaving = reason != EnrollmentCloseReasons.ClassTransfer;
+        // Tốt nghiệp chỉ có ở khối cuối cấp, cùng quy tắc với GraduateAsync; khối thấp hơn mà em rời trường thì chọn Chuyển trường.
+        if (reason == EnrollmentCloseReasons.Graduated && RolloverRules.NextGrade(e.Class.GradeLevel) is not null)
+            throw ApiException.BadRequest($"Lớp {e.Class.Name} chưa phải khối cuối cấp nên không cho tốt nghiệp được. Em rời trường thì chọn lý do Chuyển trường.");
 
         DateOnly leftDate;
         if (leaving && e.StartDate > today)
