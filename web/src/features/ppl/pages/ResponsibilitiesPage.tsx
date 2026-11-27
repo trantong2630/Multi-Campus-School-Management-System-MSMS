@@ -25,6 +25,16 @@ import type { ResponsibilityHistoryRow, ResponsibilityKind, ResponsibilityRow } 
 const timeOn = (at: string | null | undefined, date: string | null | undefined) =>
   at && date && dayjs(at).isSame(dayjs(date), 'day') ? ` lúc ${dayjs(at).format('HH:mm')}` : '';
 
+/**
+ * Hệ quả khi kết thúc trách nhiệm mà chưa có người nhận, hiện trong hộp thoại Kết thúc. Phân hiệu bị chặn cứng ở backend khi còn lớp hoạt động
+ * (BR-09); tổ trưởng và chủ nhiệm chỉ nhắc, vì thiếu người không làm hệ thống ngừng chạy (BR-16, BR-19).
+ */
+const END_EFFECT: Record<ResponsibilityKind, string> = {
+  campus: 'Phân hiệu còn lớp hoạt động thì không kết thúc được khi chưa có người nhận: dùng Thay người để giao cho Hiệu phó khác. Kết thúc vào ngày sau để bàn giao có hẹn.',
+  department: 'Tổ sẽ không còn tổ trưởng. Từ lúc này không ai khai báo giáo viên vắng của tổ; Hiệu phó xử lý riêng các tiết Chờ xử lý.',
+  homeroom: 'Lớp sẽ chưa có chủ nhiệm. Đơn xin nghỉ của lớp nằm chờ cho tới khi có chủ nhiệm mới được gán, nên nhớ gán người mới.',
+};
+
 interface AssignValues { targetId?: number; staffId: number; startDate: Dayjs }
 interface EndValues { endDate: Dayjs }
 
@@ -353,7 +363,7 @@ function KindTable({ kind, rows, loading, canWrite, yearId, onYear }: KindTableP
         <InlineAlert
           type="warning"
           title={`${ending?.staffName ?? ''} sẽ mất quyền tương ứng từ ngày kết thúc.`}
-          description="Chọn hôm nay hoặc một ngày sau đó. Loại tài khoản không đổi."
+          description={`Chọn hôm nay hoặc một ngày sau đó. Loại tài khoản không đổi. ${END_EFFECT[kind]}`}
         />
         <Form.Item label="Ngày kết thúc" name="endDate" rules={[{ required: true, message: 'Chọn ngày kết thúc.' }]}>
           <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabledDate={(d) => d.isBefore(dayjs(), 'day')} />
