@@ -400,6 +400,8 @@ Bản cũ giữ nguyên làm lịch sử; dữ liệu đã phát sinh không b�
 
 **Kết thúc không do thay người** (khóa tài khoản, đổi loại tài khoản, bấm kết thúc trách nhiệm): ngày kết thúc là **ngày thao tác** — riêng bấm kết thúc trách nhiệm cho chọn ngày, mặc định hôm nay — và với ngày kết thúc là hôm nay quyền **mất ngay tại thời điểm thao tác**, không đợi hết ngày. Khoảng hiệu lực chỉ dùng để tra cứu theo ngày; kiểm quyền tại thời điểm xử lý dựa trên việc bản ghi đã có ngày kết thúc từ hôm nay trở về trước hay chưa. Mở khóa tài khoản không mở lại bản cũ; gán lại trong cùng ngày thì tạo **bản mới** bắt đầu từ hôm nay, không sửa bản cũ; bản cũ và bản mới có thể cùng nằm trong một ngày nhưng chỉ có một bản đang hiệu lực tại mọi thời điểm. **Lịch hẹn** (bản có ngày bắt đầu sau hôm nay) chưa từng có hiệu lực nên **hủy được** (xóa hẳn, không để lại lịch sử); hủy xong thì gán được người khác cho đích từ hôm nay. Khóa tài khoản, đổi loại tài khoản và ngừng hoạt động hồ sơ cán bộ tự hủy mọi lịch hẹn của người đó, để tới ngày hẹn đích không rơi vào người không còn làm việc.
 
+**Phân hiệu đang hoạt động không bị bỏ trống Hiệu phó.** Chỉ Hiệu phó đang phụ trách mới thao tác thời khóa biểu, lịch dạy và khai báo giáo viên vắng của phân hiệu (Hiệu trưởng chỉ đọc). Vì vậy bấm kết thúc phụ trách phân hiệu **có hiệu lực hôm nay** bị chặn khi phân hiệu còn lớp hoạt động trong năm học hiện hành và chưa có người kế nhiệm: dùng Thay người để giao cho Hiệu phó khác. Kết thúc vào **ngày sau** (bàn giao có hẹn) vẫn được. Phân hiệu không còn lớp hoạt động thì kết thúc tự do. Khóa hoặc đổi loại tài khoản (BR-05) vẫn đóng trách nhiệm như đã nêu, không bị chặn bởi quy tắc này.
+
 Phụ trách phân hiệu chỉ gán cho Vice Principal; tổ trưởng và chủ nhiệm chỉ gán cho Teacher.
 
 **BR-10 — Hồ sơ người.** Ba loại hồ sơ: học sinh, cán bộ, phụ huynh. **Họ tên, ngày sinh và số định danh cá nhân (12 chữ số) bắt buộc** với hồ sơ học sinh và cán bộ; số định danh **duy nhất toàn trường** và là khóa nhận diện khi import. Ngày sinh phải cho tuổi tròn tính đến hôm nay từ 18 đến 75 với cán bộ, từ 5 đến 25 với học sinh. Số định danh không sửa được sau khi tạo. Cán bộ bắt buộc có **phân hiệu chính**, có thể có **viết tắt giáo viên duy nhất toàn trường, chỉ gồm chữ và số**; không có viết tắt thì không xuất hiện được trong file thời khóa biểu. Hồ sơ cán bộ ngừng hoạt động chứ không xóa, và bị chặn khi người đó còn giữ trách nhiệm hoặc còn tiết Đã xếp lịch chưa kết thúc. Phụ huynh bắt buộc có **số điện thoại** — đó là khóa nhận diện của phụ huynh.
@@ -579,10 +581,11 @@ Nhóm, hành động, tên trường nội dung và giá trị của mọi bản
 
 Mỗi điều dưới đây nếu thêm vào sẽ làm lược đồ khó thiết kế mà chặn được rất ít tình huống thật:
 
+- **Không chặn học sinh lệch tuổi so với khối** khi xếp lớp: học sinh đi học muộn hoặc học lại sau thời gian nghỉ là chuyện có thật; khoảng tuổi hợp lệ chỉ kiểm ở hồ sơ (BR-10). Màn Xếp lớp chỉ **cảnh báo** em lệch từ 3 tuổi trở lên so với tuổi thường gặp của khối (khối N → N + 5 tuổi, tính theo năm sinh) và cho xếp sau khi School Admin xác nhận.
 - Giáo viên **không bắt buộc** dạy môn thuộc tổ chuyên môn của mình.
 - Giáo viên **không bắt buộc** thuộc phân hiệu của lớp — đây là hệ thống đa phân hiệu, dạy liên phân hiệu là chuyện thường.
 - **Dạy thay không thành phụ trách chuyên môn:** phụ trách chuyên môn chỉ tính từ thời khóa biểu đã phát hành, không tính từ tiết điều chỉnh (BR-14).
-- **Không giới hạn sĩ số lớp**, không quy định số tiết mỗi môn mỗi tuần.
+- **Không giới hạn sĩ số lớp** (màn Xếp lớp chỉ cảnh báo khi xếp hoặc chuyển thêm làm lớp có hơn 45 học sinh, vẫn cho làm), không quy định số tiết mỗi môn mỗi tuần.
 - **Không kiểm lại lớp khi nộp bài** — chuyển lớp giữa chừng không làm mất bài đã nộp.
 - **Không sửa, không xóa, không gia hạn bài sau khi giao** — giao nhầm thì chấp nhận, muốn bài khác thì giao bài mới.
 - **Khớp loại tài khoản với loại hồ sơ kiểm ở tầng dịch vụ**, không ở cơ sở dữ liệu.

@@ -186,11 +186,59 @@ public class EnrollmentFollowUpTests
         var old = await Add(db, Row(Bao, ClassA, Year1Start));
         await Add(db, Row(Bao, ClassB, Year2Start));
 
-        await enrollments.CloseAsync(old.EnrollmentId, new CloseEnrollmentRequest(EnrollmentCloseReasons.Graduated));
+        await enrollments.CloseAsync(old.EnrollmentId, new CloseEnrollmentRequest(EnrollmentCloseReasons.SchoolTransfer));
 
         Assert.Equal(ClassA, (await db.Enrollment.SingleAsync(e => e.StudentId == Bao)).ClassId);
         Assert.Equal(Year1End, (await db.Enrollment.SingleAsync(e => e.StudentId == Bao)).EndDate);
-        Assert.Equal("Graduated", (await db.StudentProfile.SingleAsync(s => s.StudentId == Bao)).Status);
+        Assert.Equal("Transferred", (await db.StudentProfile.SingleAsync(s => s.StudentId == Bao)).Status);
+    }
+
+    // Chuyển lớp kiểm trạng thái hồ sơ trực tiếp để nêu đúng lý do: em đã chuyển trường / đã tốt nghiệp, kể cả khi ghi danh còn mở (dữ liệu lệch).
+    [Theory]
+    [InlineData("Transferred", "chuyển trường")]
+    [InlineData("Graduated", "tốt nghiệp")]
+    public async Task Transfer_OfAStudentWhoLeftTheSchool_IsRejectedWithTheRightReason(string status, string expected)
+    {
+        var (db, enrollments, _) = Create(Autumn);
+        var open = await Add(db, Row(Bao, ClassA, Year1Start));
+        (await db.StudentProfile.SingleAsync(s => s.StudentId == Bao)).Status = status;
+        await db.SaveChangesAsync();
+        var request = new TransferRequest(ClassA2, Autumn);
+
+        var ex = await Assert.ThrowsAsync<ApiException>(() => enrollments.TransferAsync(open.EnrollmentId, request));
+        Assert.Contains(expected, ex.Message);
+        var many = await Assert.ThrowsAsync<ApiException>(() =>
+            enrollments.TransferManyAsync(new TransferManyRequest([open.EnrollmentId], ClassA2, Autumn)));
+        Assert.Contains(expected, many.Message);
+
+        Assert.Single(await db.Enrollment.Where(e => e.StudentId == Bao).ToListAsync());   // không tạo ghi danh mới
+    }
+
+    [Fact]
+    public async Task Transfer_OfAStudentWhoAlreadyLeftClass_KeepsTheOldMessage()
+    {
+        var (db, enrollments, _) = Create(Autumn);
+        var ended = await Add(db, Row(Bao, ClassA, Year1Start, end: Autumn.AddDays(-1), reason: EnrollmentCloseReasons.ClassTransfer));
+
+        var ex = await Assert.ThrowsAsync<ApiException>(() => enrollments.TransferAsync(ended.EnrollmentId, new TransferRequest(ClassA2, Autumn)));
+        Assert.Contains("đã rời lớp", ex.Message);
+    }
+
+    // Tốt nghiệp chỉ cho khối cuối cấp (cùng quy tắc với GraduateAsync): lớp 6 chọn Tốt nghiệp thì bị từ chối, không đổi gì.
+    [Fact]
+    public async Task Graduating_FromANonFinalGrade_IsRejected_AndChangesNothing()
+    {
+        var (db, enrollments, _) = Create(Autumn);
+        var current = await Add(db, Row(Bao, ClassA, Year1Start));
+
+        var ex = await Assert.ThrowsAsync<ApiException>(() =>
+            enrollments.CloseAsync(current.EnrollmentId, new CloseEnrollmentRequest(EnrollmentCloseReasons.Graduated)));
+        Assert.Contains("khối cuối cấp", ex.Message);
+        await Assert.ThrowsAsync<ApiException>(() =>
+            enrollments.CloseManyAsync(new CloseManyRequest([current.EnrollmentId], EnrollmentCloseReasons.Graduated)));
+
+        Assert.Null((await db.Enrollment.AsNoTracking().SingleAsync(e => e.StudentId == Bao)).EndDate);
+        Assert.Equal("Studying", (await db.StudentProfile.AsNoTracking().SingleAsync(s => s.StudentId == Bao)).Status);
     }
 
     [Fact]
@@ -232,7 +280,7 @@ public class EnrollmentFollowUpTests
         var current = await Add(db, Row(Bao, ClassA, new DateOnly(2026, 10, 11)));
         var otherStudent = await Add(db, Row(An, ClassB, Year2Start));
 
-        await enrollments.CloseAsync(current.EnrollmentId, new CloseEnrollmentRequest(EnrollmentCloseReasons.Graduated));
+        await enrollments.CloseAsync(current.EnrollmentId, new CloseEnrollmentRequest(EnrollmentCloseReasons.SchoolTransfer));
 
         var before = await db.Enrollment.AsNoTracking().SingleAsync(e => e.EnrollmentId == endedEarlier.EnrollmentId);
         Assert.Equal(new DateOnly(2026, 10, 10), before.EndDate);

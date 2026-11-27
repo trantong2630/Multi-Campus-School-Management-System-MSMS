@@ -1,17 +1,19 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, DatePicker, Form, Input, Modal, Radio, Select, Table } from 'antd';
+import { Button, DatePicker, Form, Input, Modal, Radio, Select, Table, Tag, Tooltip } from 'antd';
 import { message } from '@/shared/lib/antdStatic';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { ArrowRightLeft, LogOut, Search, UserPlus } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DataTable } from '@/shared/components/DataTable';
 import { FormModal } from '@/shared/components/FormModal';
 import { InlineAlert } from '@/shared/components/InlineAlert';
 import { RowActions } from '@/shared/components/RowActions';
-import { showError } from '@/shared/lib/feedback';
+import { confirmAction, showError } from '@/shared/lib/feedback';
 import { formatDate, toDateString } from '@/shared/lib/format';
 import { schApi } from '../api';
+import { classSizeNotice } from '../classSize';
+import { gradeAgeNotice } from '../gradeAge';
 import './school.css';
 import { useYears } from '../hooks/useCatalogs';
 import type { RosterItem, SchoolClass, StudentCandidate } from '../types';
@@ -81,7 +83,36 @@ export function ClassRosterPanel({ cls, canWrite }: Props) {
     ]);
   };
 
-  const closeEnroll = () => { setEnrolling(false); setCandidateSearch(''); setChosen([]); setEnrollDate(null); };
+  // Nhớ học sinh đã từng hiện trong danh sách để cảnh báo cả những em tích ở lần tìm trước (ô tìm kiếm đổi thì danh sách đổi).
+  const seenCandidates = useRef(new Map<number, StudentCandidate>());
+  useEffect(() => {
+    for (const c of candidates.data ?? []) seenCandidates.current.set(c.studentId, c);
+  }, [candidates.data]);
+  const ageNoticeOf = (c: StudentCandidate) => gradeAgeNotice(c.dateOfBirth, cls.gradeLevel, year?.startDate);
+
+  const closeEnroll = () => { setEnrolling(false); setCandidateSearch(''); setChosen([]); setEnrollDate(null); seenCandidates.current.clear(); };
+  // Lệch tuổi chỉ là cảnh báo: hỏi xác nhận rồi vẫn cho xếp (học sinh đi học muộn, học lại là chuyện có thật).
+  const askEnroll = () => {
+    const flagged = chosen.flatMap((id) => {
+      const c = seenCandidates.current.get(id);
+      const notice = c && ageNoticeOf(c);
+      return c && notice ? [{ c, notice }] : [];
+    });
+    if (flagged.length === 0) { void enrollMany(); return; }
+    confirmAction({
+      title: `Xếp ${flagged.length} học sinh lệch tuổi vào lớp ${cls.name}?`,
+      content: (
+        <>
+          <p>Kiểm tra lại ngày sinh. Nếu đúng (em đi học muộn hoặc học lại) thì xác nhận để tiếp tục.</p>
+          <ul>
+            {flagged.map(({ c, notice }) => <li key={c.studentId}><b>{c.fullName}</b>: {notice.text}</li>)}
+          </ul>
+        </>
+      ),
+      okText: 'Vẫn xếp lớp',
+      onOk: enrollMany,
+    });
+  };
   const enrollMany = async () => {
     setEnrollSaving(true);
     try {
@@ -112,6 +143,11 @@ export function ClassRosterPanel({ cls, canWrite }: Props) {
   const openRows = roster.data?.students.filter((r) => selected.includes(r.enrollmentId)) ?? [];
   const candidateIds = new Set((candidates.data ?? []).map((c) => c.studentId));
   const closeCount = closing?.length ?? 1;
+  // Cảnh báo mềm sĩ số: không chặn, chỉ nhắc khi xếp hoặc chuyển thêm làm lớp vượt mức thường gặp.
+  const enrollSizeNotice = classSizeNotice(cls.name, cls.studentCount, chosen.length);
+  const toClassId = Form.useWatch('toClassId', transferForm);
+  const targetClass = sameGradeClasses?.find((c) => c.classId === toClassId);
+  const transferSizeNotice = targetClass && classSizeNotice(targetClass.name, targetClass.studentCount, transferring?.length ?? 0);
 
   return (
     <>
@@ -158,7 +194,7 @@ export function ClassRosterPanel({ cls, canWrite }: Props) {
         footer={(
           <>
             <Button onClick={closeEnroll}>Hủy</Button>
-            <Button type="primary" loading={enrollSaving} disabled={chosen.length === 0} onClick={enrollMany}>
+            <Button type="primary" loading={enrollSaving} disabled={chosen.length === 0} onClick={askEnroll}>
               {chosen.length > 0 ? `Thêm ${chosen.length} học sinh vào lớp` : 'Thêm vào lớp'}
             </Button>
           </>
@@ -177,7 +213,9 @@ export function ClassRosterPanel({ cls, canWrite }: Props) {
         </div>
         <p className="muted">
           Chỉ hiện học sinh đang học và chưa thuộc lớp nào trong năm học {year?.name}. Tích nhiều em rồi bấm Thêm; học sinh ở lớp tới hết năm học.
+          Em lệch tuổi nhiều so với khối được gắn nhãn "Lệch tuổi"; chỉ là nhắc kiểm tra ngày sinh, vẫn xếp lớp được sau khi xác nhận.
         </p>
+        {enrollSizeNotice && <InlineAlert type="warning" title={enrollSizeNotice} />}
         <Table<StudentCandidate>
           className="data-table" size="small" rowKey="studentId" loading={candidates.isFetching} dataSource={candidates.data ?? []}
           pagination={false} scroll={{ y: 360 }}
@@ -189,7 +227,18 @@ export function ClassRosterPanel({ cls, canWrite }: Props) {
           columns={[
             { title: 'Mã HS', dataIndex: 'personCode', width: 120, className: 'tabular' },
             { title: 'Họ tên', dataIndex: 'fullName' },
-            { title: 'Ngày sinh', dataIndex: 'dateOfBirth', width: 120, className: 'tabular', render: (v: string | null) => formatDate(v) },
+            {
+              title: 'Ngày sinh', dataIndex: 'dateOfBirth', width: 170, className: 'tabular',
+              render: (v: string | null, c: StudentCandidate) => {
+                const notice = ageNoticeOf(c);
+                return (
+                  <div>
+                    <div>{formatDate(v)}</div>
+                    {notice && <Tooltip title={notice.text}><Tag color="warning" style={{ marginInlineEnd: 0 }}>Lệch tuổi</Tag></Tooltip>}
+                  </div>
+                );
+              },
+            },
             { title: 'Giới tính', dataIndex: 'gender', width: 100, render: (v: string | null) => genderText(v) },
           ]}
         />
@@ -216,6 +265,7 @@ export function ClassRosterPanel({ cls, canWrite }: Props) {
             options={sameGradeClasses?.map((c) => ({ value: c.classId, label: `${c.name} · ${c.campusName}` }))}
           />
         </Form.Item>
+        {transferSizeNotice && <InlineAlert type="warning" title={transferSizeNotice} />}
         <Form.Item
           label="Ngày hiệu lực" name="effectiveDate" rules={[{ required: true, message: 'Chọn ngày hiệu lực.' }]}
         >
@@ -231,7 +281,8 @@ export function ClassRosterPanel({ cls, canWrite }: Props) {
         initialValues={{ reason: 'ClassTransfer' }}
       >
         <Form.Item label="Lý do" name="reason" rules={[{ required: true, message: 'Chọn lý do rời lớp.' }]}>
-          <Radio.Group options={CLOSE_REASONS} className="roster-reasons" />
+          {/* Tốt nghiệp chỉ có ở khối cuối cấp (khối 9); khối thấp hơn mà em rời trường thì chọn Chuyển trường. */}
+          <Radio.Group options={CLOSE_REASONS.filter((r) => r.value !== 'Graduated' || cls.gradeLevel === 9)} className="roster-reasons" />
         </Form.Item>
         <InlineAlert
           type="warning"

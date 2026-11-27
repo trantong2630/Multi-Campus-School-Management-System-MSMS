@@ -203,12 +203,33 @@ public sealed class ResponsibilityService(MsmsDbContext db, CurrentUser user, IC
             throw ApiException.BadRequest("Ngày kết thúc không được trước hôm nay. Chọn hôm nay hoặc một ngày sau đó.");
         if (r.EndDate < record.StartDate)
             throw ApiException.BadRequest($"Ngày kết thúc không được trước ngày bắt đầu ({record.StartDate:dd/MM/yyyy}).");
+        if (r.Kind == ResponsibilityKinds.Campus && r.EndDate <= clock.Today)
+            await EnsureCampusKeepsLeaderAsync((CampusLeadership)record);
         record.EndDate = r.EndDate;
         if (r.EndDate <= clock.Today) record.EndedAt = clock.Now;   // mất quyền ngay: ghi lại giờ để đọc lịch sử
         audit.Add(AuditCategories.Responsibility, AuditActions.EndResponsibility, null,
             ("Loại trách nhiệm", KindLabel(r.Kind)), ("Đối tượng", await TargetNameAsync(r.Kind, TargetIdOf(record))),
             ("Người đảm nhiệm", await StaffNameAsync(record.StaffId)), ("Từ ngày", record.StartDate), ("Kết thúc ngày", r.EndDate));
         await db.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Chỉ Hiệu phó đang phụ trách mới thao tác được thời khóa biểu, lịch dạy và khai báo giáo viên vắng của phân hiệu, Hiệu trưởng chỉ đọc.
+    /// Kết thúc có hiệu lực hôm nay mà phân hiệu còn lớp hoạt động trong năm học hiện hành và chưa có người kế nhiệm thì phân hiệu bị bỏ trống: chặn,
+    /// bắt dùng Thay người. Kết thúc vào ngày sau (bàn giao có hẹn) vẫn được, vì khi đó người dùng còn gán người mới từ ngày hẹn.
+    /// Khóa hoặc đổi loại tài khoản (BR-05) cũng đóng trách nhiệm nhưng là hệ quả có cảnh báo riêng, không đi qua đây.
+    /// </summary>
+    private async Task EnsureCampusKeepsLeaderAsync(CampusLeadership record)
+    {
+        var today = clock.Today;
+        var hasSuccessor = await db.CampusLeadership.AnyAsync(x =>
+            x.CampusId == record.CampusId && x.Id != record.Id && (x.EndDate == null || x.EndDate >= today));
+        if (hasSuccessor) return;
+        var activeClasses = await db.Class.CountAsync(c => c.CampusId == record.CampusId && c.IsActive && c.AcademicYear.IsCurrent);
+        if (activeClasses == 0) return;
+        var campus = await db.Campus.Where(c => c.CampusId == record.CampusId).Select(c => c.Name).FirstAsync();
+        throw ApiException.BadRequest(
+            $"{campus} còn {activeClasses} lớp hoạt động. Dùng Thay người để giao cho Hiệu phó khác, không kết thúc khi chưa có người nhận.");
     }
 
     /// <summary>
