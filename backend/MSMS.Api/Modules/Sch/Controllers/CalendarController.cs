@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MSMS.Api.Common.Auth;
+using MSMS.Api.Common.Errors;
 using MSMS.Api.Modules.Sch.Dtos;
 using MSMS.Api.Modules.Sch.Services;
 
@@ -31,7 +32,8 @@ public class CalendarController(CalendarService service) : ControllerBase
     public Task<List<HolidayDto>> ListHolidays([FromQuery] int? yearId, [FromQuery] int? campusId) => service.ListHolidaysAsync(yearId, campusId);
 
     [HttpGet("holidays/impact"), Authorize(Policy = Policies.SchoolAdmin)]
-    public Task<HolidayImpactDto> HolidayImpact([FromQuery] int? campusId, [FromQuery] DateOnly date) => service.HolidayImpactAsync(campusId, date);
+    public Task<HolidayImpactDto> HolidayImpact([FromQuery] int? campusId, [FromQuery] DateOnly? date)
+        => service.HolidayImpactAsync(campusId, date ?? throw ApiException.BadRequest("Chọn ngày cần xem trước."));
 
     [HttpPost("holidays"), Authorize(Policy = Policies.SchoolAdmin)]
     public Task<HolidayDto> CreateHoliday(HolidayRequest r) => service.CreateHolidayAsync(r);
