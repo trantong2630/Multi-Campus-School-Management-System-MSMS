@@ -32,3 +32,6 @@ sgk-source/
 windows/
 /web/dist
 /web/node_modules
+# IDE and test run output
+.idea/
+backend/MSMS.Tests/TestResults/
